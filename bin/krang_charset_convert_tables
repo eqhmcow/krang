@@ -21,9 +21,10 @@ please, B<please> back up before using this.
 This script will convert your MySQL database tables to the given
 character set. 
 
-If your data isn't already in the C<--to> format you will need to
-use the F<bin/krang_charset_convert_data> script to make it so
-or you could have some funky data on your hands.
+NOTE: If your data isn't already in the C<--to> format, 
+F<bin/krang_charset_convert_data> must be run BEFORE this script.
+Either way, the charset directive in krang.conf should not be changed
+to the C<--to> format until both your data and tables are updated.
 
 =head1 OPTIONS
 
@@ -40,6 +41,16 @@ configuration directive.
 By default this will just run for all of the tables in the given
 instance (as set in C<$ENV{KRANG_INSTANCE}>). But you can optionally
 tell it to run for every instance installed.
+
+=item --only-table
+
+This optional parameter (which may be used multiple times) limits
+the conversion to a particular table.
+
+=item --skip-table
+
+This optional parameter (which may be used multiple times) skips a 
+particular table.
 
 =item --verbose
 
@@ -99,26 +110,32 @@ use Getopt::Long;
 # anyway.
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Script';
-use Krang::ClassLoader 'Conf';
 use Krang::ClassLoader 'Charset';
 use Krang::ClassLoader DB => qw(dbh);
 
 # options
-my ($to, $help, $man, $all_instances, @instances, $v);
+my ($to, $help, $man, $all_instances, @instances, @only_tables, @skip_tables, $v);
 GetOptions(
     'to=s'          => \$to,
     'help'          => \$help,
     'man'           => \$man,
     'all-instances' => \$all_instances,
+    'only-table=s'  => \@only_tables,
+    'skip-table=s'  => \@skip_tables,
     'verbose'       => \$v,
 ) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 die "You must supply a --to encoding!\n"   unless $to;
+die "You cannot use --only-table and --skip-table at the same time!\n" if (@only_tables && @skip_tables);
 
 # which instances are we going to use
 @instances = $all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE});
+
+# which tables are we going to process (if not all)
+my %do_these   = @only_tables ? map { $_ => 1 } @only_tables : ();
+my %skip_these = @skip_tables ? map { $_ => 1 } @skip_tables : ();
 
 foreach my $instance (@instances) {
     pkg('Conf')->instance($instance);
@@ -135,6 +152,8 @@ foreach my $instance (@instances) {
     }
 
     foreach my $table (@tables) {
+        next if %do_these && !$do_these{$table};
+        next if %skip_these && $skip_these{$table};
         print "  Altering $table\n" if $v;
         my @cols;
         $sth = $dbh->prepare_cached("DESCRIBE $table");

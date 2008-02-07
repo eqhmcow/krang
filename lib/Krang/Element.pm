@@ -644,25 +644,23 @@ returns a list of available child classes for new children.
 
 sub available_child_classes {
     my $self = shift;
-    my ($name, $max, %max, %hidden);
+    my (%remain, %hidden);
 
-    # find maximums and hiddens
+    # find maximums and hiddens for the classes our child supports
     foreach my $child_class ($self->{class}->children()) {
-        $name = $child_class->name;
-        $max  = $child_class->max;
-        $max{$name} = $max == 0 ? ~0 : $max;
+        my $name = $child_class->name;
+        $remain{$name} = $child_class->max;
         $hidden{$name} = 1 if $child_class->hidden;
     }
 
     # loop through children, removing classes that have reached their max
     foreach my $child ($self->children()) {
-        $name = $child->name;
-        $max  = $child->max;
-        assert(exists($max{$name})) if ASSERT;
-        delete $max{$name} if --$max{$name} == 0;
+        my $name = $child->name;
+        assert(exists($remain{$name})) if ASSERT;
+        delete $remain{$name} if --$remain{$name} == 0;
     }
 
-    return grep { exists $max{$_->name} or $hidden{$_->name} } $self->{class}->children;
+    return grep { exists $remain{$_->name} and !$hidden{$_->name} } $self->{class}->children;
 }
 
 =item C<< $element = Krang::Element->load(element_id => $id, object => $object) >>

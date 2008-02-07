@@ -63,10 +63,12 @@ Using the --everything flag will cause krang_publish to ignore the
 
 =item --all_instances
 
-Normally we will just publish the content for the instance specified
-in the C<KRANG_INSTANCE> environment variable. But sometimes after
-and upgrade (or installation of a new addon or element library uprade)
-it's convenient to be able to publish everything in all instances.
+Normally we just publish the content for a single instance:
+either the one specified in the C<KRANG_INSTANCE> environment 
+variable, or, if there's only one specified in krang.conf, for 
+that. But sometimes after an upgrade (or installation 
+of a new addon or element library uprade) it's convenient to be able 
+to publish everything in all instances.
 
 This only works along with the C<--everything> flag.
 
@@ -359,7 +361,8 @@ if ($everything) {
     if( $all_instances ) {
         @instances = pkg('Conf')->instances();
     } else {
-        @instances = ($ENV{KRANG_INSTANCE});
+        @instances = ($ENV{KRANG_INSTANCE} || 
+                      (pkg('Conf')->instances == 1 && (pkg('Conf')->instances)[0]));
     }
     foreach my $instance (@instances) {
         print "INSTANCE $instance\n" if @instances > 1;

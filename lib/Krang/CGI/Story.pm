@@ -546,7 +546,7 @@ sub edit {
 
         $template->param(version_selector => scalar
                          $query->popup_menu(-name    => 'version',
-                                            -values  => [1 .. $story->version],
+                                            -values  => $story->all_versions,
                                             -default => $story->version,
                                             -override => 1));
 
@@ -612,14 +612,21 @@ sub view {
     croak("Unable to get story_id!") unless $story_id;
 
     # load story from DB
-    my $version = $query->param('version');
-    my ($story) = pkg('Story')->find(story_id => $story_id,
-                                     ($version && length($version) ?
-                                      (version => $version) : ()),
-                                    );
-    croak("Unable to load story '" . $query->param('story_id') . "'" .
-          (defined $version ? ", version '$version'." : "."))
-      unless $story;
+    my ($story) = pkg('Story')->find(story_id => $story_id);
+    croak("Unable to load latest version of story $story_id")
+        unless $story;
+
+    # if we're being asked for a version that isn't the latest, get that version now
+    # (we do this as a separate find() so that the latest version is always pulled
+    # from the element table and not the story_version table)
+    if (my $version = $query->param('version')) {
+        if ($version != $story->version) {
+            ($story) = pkg('Story')->find(story_id => $story_id,
+                                          version => $version);
+            croak("Unable to load version $version of story $story_id")
+                unless $story;
+        }
+    }
 
     # run the element editor edit
     $self->element_view(template => $template, 
@@ -666,10 +673,10 @@ sub view {
                      return_params_loop => 
                      [ map { { name => $_, value => $return_params{$_} } } keys %return_params ]);
     $template->param( was_edit => 1 ) if ($return_params{rm} eq 'edit');
-    $template->param( can_edit => 1 ) 
-      unless ( $story->checked_out and 
-               ($story->checked_out_by ne $ENV{REMOTE_USER})) or 
-                 not $story->may_edit;
+    $template->param ( prevent_edit => 1)
+      if ( $story->checked_out and 
+            ($story->checked_out_by ne $ENV{REMOTE_USER})) or 
+          not $story->may_edit;
 
     return $template->output();
 }
@@ -719,10 +726,8 @@ sub copy {
     my $clone = $session{story} = $story->clone();
     
     # make sure it's checked out in case we want to save it later
-    unless( $clone->{checked_out} ) {
-        $clone->{checked_out}    = 1;
-        $clone->{checked_out_by} = $ENV{REMOTE_USER};
-    }
+    $clone->{checked_out}    = 1;
+    $clone->{checked_out_by} = $ENV{REMOTE_USER};
 
     # talk about it, get it all out
     if ($clone->categories) {
@@ -950,7 +955,7 @@ sub preview_and_stay {
     my $self = shift;
 
     # call internal _save and return output from it on error
-    my $output = $self->_save();
+    my $output = $self->_save(previewing_story => 1);
     return $output if length $output;
 
     # re-load edit window and have it launch new window for preview
@@ -1256,7 +1261,7 @@ sub save_and_go_up {
 # underlying save routine.  returns false on success or HTML to show
 # to the user on failure.
 sub _save {
-    my $self = shift;
+    my ($self, %args) = @_;
     my $query = $self->query;
 
     my $story = $session{story};
@@ -1264,7 +1269,7 @@ sub _save {
       unless $story;
 
     # run element editor save and return to edit mode if errors were found.
-    my $elements_ok = $self->element_save(element => $story->element);
+    my $elements_ok = $self->element_save(element => $story->element, previewing_story => $args{previewing_story});
     return $self->edit() unless $elements_ok;
 
     # if we're saving in the root then save the story data
@@ -1572,6 +1577,11 @@ sub find {
     my $template = $self->load_tmpl('find.tmpl', associate=>$q);
     my %tmpl_data = ();
 
+    # read-only users don't see everything....
+    my %user_permissions = (pkg('Group')->user_asset_permissions);
+    my $read_only = ( $user_permissions{story} eq 'read-only' );
+    $tmpl_data{read_only} = $read_only;
+
     # if the user clicked 'clear', nuke the cached params in the session.
     if (defined($q->param('clear_search_form'))) {
         delete $session{KRANG_PERSIST}{pkg('Story')};
@@ -1724,9 +1734,9 @@ sub find {
                                                      url 
                                                      cover_date 
                                                      commands_column 
-                                                     status 
-                                                     checkbox_column
-                                                    )],
+                                                     status),
+                                                  ($read_only ? () : 'checkbox_column')
+                                                 ],
                                       column_labels => {
                                                         pub_status => '',
                                                         story_id => 'ID',
@@ -1749,7 +1759,7 @@ sub find {
     );
     $pager->fill_template($pager_tmpl);
     $pager_tmpl->param(show_type_and_version => $show_type_and_version);
-
+    
     # Set up output
     $template->param(
         %tmpl_data,
@@ -1991,6 +2001,10 @@ sub find_story_row_handler {
     my $q = $self->query;
     my $show_type_and_version = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version};
 
+    # Read-only users don't see everything....
+    my %user_permissions = (pkg('Group')->user_asset_permissions);
+    my $read_only = ( $user_permissions{story} eq 'read-only' );
+
     # Columns:
     $row->{story_id}   = $story->story_id();
     $row->{title}      = $story->title;
@@ -2022,6 +2036,12 @@ sub find_story_row_handler {
         . localize('Copy')
         . qq|" onclick="copy_story('| . $story->story_id 
         . qq|')" type="button" class="button">|;
+
+    unless ($read_only) {
+        $row->{commands_column} .= ' '
+          . qq|<input value="Copy" onclick="copy_story('| . $story->story_id 
+          . qq|')" type="button" class="button">|;
+    }
 
     if (($story->checked_out) and 
         ($story->checked_out_by ne $ENV{REMOTE_USER})
@@ -2264,8 +2284,8 @@ sub alert_duplicate_url {
     if ($error->stories) {
 
       # dupe story alerts get a special easily-readable table of IDs/URLs; we build the rows here
-      my $dupes = join ('', map { sprintf(qq{<tr>  <td> %d </td>  <td> <a href="%s" target='_blank'>%s</a> </td>  </tr>},
-					  $_->{id}, 'http://'.$_->{url}, $_->{url}) } @{$error->stories});
+      my $dupes = join ('', map { sprintf(qq{<tr>  <td> %d </td>  <td> <a href="javascript:Krang.preview('story',%d)">%s</a> </td>  </tr>},
+					  $_->{id}, $_->{id}, $_->{url}) } @{$error->stories});
       # and we throw (using $s for plural messages, $q for quotes, $f for form)...
       my $s = @{$error->stories} > 1 ? 's' : '';
       my $f = $self->query->param('returning_from_root') ? 'edit' : 'new_story';

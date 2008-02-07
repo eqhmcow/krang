@@ -9,8 +9,8 @@
 # Krang processes run as this user/group and all files must be owned by
 # this user.
 #
-KrangUser  jesse
-KrangGroup jesse
+KrangUser  krang
+KrangGroup krang
 
 #
 # MySQL user and password for Krang
@@ -123,6 +123,12 @@ PreviewSSL 0
 # Secret is a shared secret used for encryption and checksumming
 Secret 'ad0243-1j!@LdaAWEOIGFa-39021-:skj'
 
+# ContactEmail provides an optional way for you to specify how
+# users are to contact you in case of problems or compliments (heh).
+# It will place into the UI templates to fill the 'cms_contact_email'
+# template variable.
+# ContactEmail cms@company.org
+
 #
 # Localization directives
 #
@@ -144,6 +150,32 @@ Secret 'ad0243-1j!@LdaAWEOIGFa-39021-:skj'
 #
 #DefaultLanguage de
 #AvailableLanguages en de
+
+#
+# The three optional variables below limit the number of versions
+# saved in the database for Story, Media, and Template objects.
+# The default for each is 0, meaning all versions are kept. 
+#
+# For Stories, specific classes may override the universal
+# value via a method called versions_to_keep() (see TopLevel.pm)
+#
+# For Media, versions refer to the metadata associated with
+# a media file, and not the file itself (of which only the latest
+# copy is kept, in the file system rather than the database).
+#
+# NOTE: Changing one of these variables does not automatically
+# prune existing versions from the database - to do that, you
+# must run the script /bin/krang_prune_versions
+#
+# SavedVersionsPerMedia 0
+# SavedVersionsPerStory 0
+# SavedVersionsPerTemplate 0
+
+#
+# This variable prevents the user from creating an unreliable number
+# of session cookies. (When absent, the default is 10.)
+#
+#MaxConcurrentKrangSessions 10
 
 ###########################################################################
 #

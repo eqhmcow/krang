@@ -81,10 +81,25 @@ instance is active and change that url to 'http://hostname.org/instance_name/my_
 
 sub get {
     my ($self, $url, @other_args) = @_;
-    if ( $url !~ /^http/ && $url =~ /^(\w+\.pl)/ ) {
+    if($url !~ /^http/ && $url =~ /^(\w+\.pl)/) {
         $url = $self->script_url($url);
     }
+
+    $self->_set_window_cookie();
+
     return $self->SUPER::get($url, @other_args);
+}
+
+sub _make_request {
+    my $self = shift;
+    $self->_set_window_cookie();
+    return $self->SUPER::_make_request(@_);
+}
+
+# set the cookie_jar to hold our window_id
+sub _set_window_cookie {
+    my $self = shift;
+    $self->cookie_jar->set_cookie(0, 'krang_window_id', 1, '/', HostName, undef, 1,);
 }
 
 =item C<< contains_message($key, $class [, %args ]) >>
@@ -105,7 +120,7 @@ will be, you can pass a regular expression instead.
 sub contains_message {
     my ($self, $key, $class, %args) = @_;
     my $text = $self->_get_message_text($key, $class, \%args);
-    if (!defined $text) {
+    if(!defined $text) {
         carp "No such message '$key' in class '$class'";
     }
 
@@ -114,7 +129,7 @@ sub contains_message {
     # content_contains()
     {
         local $Test::Builder::Level = $Test::Builder::Level + 1;
-        if( ref $text eq 'Regexp' ) {
+        if(ref $text eq 'Regexp') {
             $self->content_like($text, "contains message $key");
         } else {
             $self->content_contains($text, "contains message $key");
@@ -125,11 +140,11 @@ sub contains_message {
 sub _get_message_text {
     my ($self, $key, $class, $args) = @_;
     my (%msg_vars, %regex_vars);
-    
+
     foreach my $k (keys %$args) {
         my $val = $args->{$k};
-        if( ref $val eq 'Regexp' ) {
-            $msg_vars{$k} = "__Regexp__${k}__";
+        if(ref $val eq 'Regexp') {
+            $msg_vars{$k}   = "__Regexp__${k}__";
             $regex_vars{$k} = $val;
         } else {
             $msg_vars{$k} = $val;
@@ -138,7 +153,8 @@ sub _get_message_text {
 
     # get the actual text from Krang::Message
     my $text = get_message_text($key, $class, %msg_vars);
-    if( $text ) {
+    if($text) {
+
         # since the messages are JS encoded in the template, we need to
         # do the same here
         $text =~ s/\\/\\\\/g;
@@ -148,7 +164,7 @@ sub _get_message_text {
         $text =~ s/\r/\\r/g;
 
         # now replace our regexp markers with the real thing
-        if( %regex_vars ) {
+        if(%regex_vars) {
             $text = quotemeta($text);
             foreach my $k (keys %regex_vars) {
                 $text =~ /(.*)(__Regexp__${k}__)(.*)/;
@@ -172,7 +188,7 @@ by passing in extra C<%args>.
 sub lacks_message {
     my ($self, $key, $class, %args) = @_;
     my $text = $self->_get_message_text($key, $class, \%args);
-    if (!defined $text) {
+    if(!defined $text) {
         carp "No such message '$key' in class '$class'";
     }
 
@@ -181,7 +197,7 @@ sub lacks_message {
     # content_contains()
     {
         local $Test::Builder::Level = $Test::Builder::Level + 1;
-        if( ref $text eq 'Regexp' ) {
+        if(ref $text eq 'Regexp') {
             $self->content_unlike($text, "contains message $key");
         } else {
             $self->content_lacks($text, "contains message $key");
@@ -200,20 +216,19 @@ will use 'admin' and 'whale' respectively.
 
 sub login {
     my ($self, $user, $pw) = @_;
-    $user ||= ( $ENV{KRANG_USERNAME} || 'admin' );
-    $pw   ||= ( $ENV{KRANG_PASSWORD} || 'whale' );
+    $user ||= ($ENV{KRANG_USERNAME} || 'admin');
+    $pw   ||= ($ENV{KRANG_PASSWORD} || 'whale');
 
     $self->get('login.pl');
     $self->submit_form(
         form_name => 'form-login',
         fields    => {
-            username => $user, 
+            username => $user,
             password => $pw,
         },
     );
     return $self->success;
 }
-
 
 =item C<< login_ok($username, $password, $description) >>
 
@@ -243,34 +258,36 @@ sub login_not_ok {
     my ($self, $username, $password, $desc) = @_;
     local $Test::Builder::Level = $Test::Builder::Level + 1;
     my $test = Test::Builder->new();
-    my $ok = ! $self->_do_login($username, $password);
+    my $ok = !$self->_do_login($username, $password);
     $test->ok($ok, $desc);
     return $ok;
 }
 
 sub _do_login {
     my ($self, $user, $pw) = @_;
-    $user ||= ( $ENV{KRANG_USERNAME} || 'admin' );
-    $pw   ||= ( $ENV{KRANG_PASSWORD} || 'whale' );
+    $user ||= ($ENV{KRANG_USERNAME} || 'admin');
+    $pw   ||= ($ENV{KRANG_PASSWORD} || 'whale');
     my $ok = 0;
 
     # don't follow redirects for the time being
-    my $redirectables =  $self->requests_redirectable();
+    my $redirectables = $self->requests_redirectable();
     $self->requests_redirectable([]);
 
     $self->get('login.pl');
     $self->submit_form(
         form_name => 'form-login',
         fields    => {
-            username => $user, 
+            username => $user,
             password => $pw,
         },
     );
+
     # should get a redirect
-    if( $self->status == 302 ) {
+    if($self->status == 302) {
+
         # try to request env.pl, which will only work if the login succeeded
         $self->get('env.pl');
-        if( $self->status == 200 && $self->content =~ /REMOTE_USER/ ) {
+        if($self->status == 200 && $self->content =~ /REMOTE_USER/) {
             $ok = 1;
         }
     }
@@ -318,7 +335,7 @@ sub script_url {
 
     my $uri = URI->new();
     $uri->scheme(EnableSSL ? 'https' : 'http');
-    $uri->host(HostName . ':' . (EnableSSL ? SSLApachePort : ApachePort));
+    $uri->host(HostName . ':' . (EnableSSL ? SSLApachePort: ApachePort));
 
     # pull off any query params from the path
     $path =~ s/\?(.*)$//;
@@ -332,7 +349,6 @@ sub script_url {
 
     return $uri->as_string . $params;
 }
-
 
 =back
 

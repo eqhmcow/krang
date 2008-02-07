@@ -96,6 +96,7 @@ use Time::Piece::MySQL;
 ################################
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Conf => qw(SavedVersionsPerTemplate);
 use Krang::ClassLoader History => qw(add_history);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Site';
@@ -1062,6 +1063,50 @@ SQL
     return $self;
 }
 
+=item C<< $all_version_numbers = $template->all_versions(); >>
+
+Returns an arrayref containing all the existing version numbers for this template object.
+
+=cut
+
+sub all_versions {
+    my $self = shift;
+    my $dbh = dbh;
+    return $dbh->selectcol_arrayref('SELECT version FROM template_version WHERE template_id=?', 
+                                    undef, $self->template_id);
+}
+
+
+=item C<< $template->prune_versions(number_to_keep => 10); >>
+
+Deletes old versions of this template object. By default prune_versions() keeps
+the number of versions specified by SavedVersionsPerTemplate in krang.conf;
+this can be overridden as above. In either case, it returns the number of 
+versions actually deleted.
+
+=cut
+
+sub prune_versions {
+    my ($self, %args) = @_;
+    my $dbh = dbh;
+
+    # figure out how many versions to keep
+    my $number_to_keep = $args{number_to_keep} || SavedVersionsPerTemplate;
+    return 0 unless $number_to_keep;
+
+    # figure out how many versions can be deleted
+    my @all_versions     = @{$self->all_versions};
+    my $number_to_delete = @all_versions - $number_to_keep;
+    return 0 unless $number_to_delete > 0;
+    
+    # delete the oldest ones (which will be first since the list is ascending)
+    my @versions_to_delete = splice(@all_versions, 0, $number_to_delete);
+    $dbh->do('DELETE FROM template_version WHERE template_id = ? AND version IN ('.
+             join(',', ("?") x @versions_to_delete) . ')',
+             undef, $self->template_id, @versions_to_delete);
+    return $number_to_delete;
+}
+
 =item $template->revert( $version )
 
 Reverts template object data to that of a previous version.
@@ -1222,6 +1267,9 @@ sub save {
              $frozen,
              $self->{template_id},
              $self->{version});
+
+    # prune previous versions from the version table
+    $self->prune_versions();
 
     add_history(object => $self, action => 'new') if $self->{version} == 1;
     add_history(object => $self, action => 'save',);

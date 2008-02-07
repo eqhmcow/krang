@@ -18,7 +18,7 @@ Krang::Info - info about the CMS
   use Krang::ClassLoader 'Info';
   print "This CMS is called ", pkg('Info')->product_name, "\n";
   print "This is Krang version ", pkg('Info')->version, "\n";
-  print "This string uniquely identifies an install", pkg('Info')->install_uuid, "\n";
+  print "This string uniquely identifies an install", pkg('Info')->install_id, "\n";
 
 =head1 DESCRIPTION
 

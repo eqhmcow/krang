@@ -169,7 +169,6 @@ use Getopt::Long;
 use Pod::Usage;
 use HTML::Template;
 use File::Temp qw(tempdir);
-use Krang::Charset;
 
 my @original_args = ();
 my $uniqueness = time();
@@ -443,8 +442,7 @@ sub check_prereqs {
             die $@; # nothing more we can do
         }
 
-        require Krang::Charset;
-        my $mysql_charset = Krang::Charset->mysql_charset($charset);
+        my $mysql_charset = mysql_charset($charset);
         $test_sql = qq/SHOW CHARACTER SET LIKE "$mysql_charset"/;
         $mysql_test_output = `$ECHO_BIN '$test_sql' | $mysql_cmd`;
         unless( $mysql_test_output =~ /\Q$mysql_charset\E/ ) {
@@ -982,3 +980,25 @@ sub _generate_secret {
     return $secret;
 }
 
+
+
+my %MYSQL_MAP = (
+    iso88591    => 'latin1',
+    iso88592    => 'latin2',
+    iso88598    => 'hebrew',
+    iso88599    => 'latin5',
+    cp1252      => 'latin1',
+    windows1252 => 'latin1',
+                 );
+sub mysql_charset {
+    my ($charset) = @_;
+    $charset = _munge_charset($charset);
+    return $MYSQL_MAP{$charset} || $charset;
+}
+
+sub _munge_charset {
+    my $charset = lc shift;
+    $charset =~ s/\s*//g; # remove ws
+    $charset =~ s/-//g;   # remove hyphens
+    return $charset;
+}

@@ -1,0 +1,216 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_charset_to_utf8 - utf8 conversion helper
+
+=head1 SYNOPSIS
+
+This script runs the necessary programs and makes the necessary 
+configuration changes to convert a Krang installation to UTF8,
+asking the user several questions to determine how best to proceed.
+
+=head1 DESCRIPTION
+
+This script will convert your Krang installation to UTF8.
+
+=head1 OPTIONS
+
+This script requires no command-line options.
+
+=over
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
+
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+
+    # add in $KRANG_ROOT/platform for platform build modules
+    my $plib = catdir($ENV{KRANG_ROOT}, "platform");
+    $ENV{PERL5LIB} = "$ENV{PERL5LIB}:${plib}";
+    unshift @INC, $plib;
+}
+my $bin = catdir($ENV{KRANG_ROOT}, "bin");
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Charset';
+use Krang::ClassLoader 'Script';
+
+sub confirm {
+    while (1) {
+	if (<STDIN> =~ /^\s*(y|yes|n|no)\s*$/i) {
+	    return ($1 =~ /^y/i);
+	}
+	print "(yes/no) ";
+    };
+}
+
+print "\nkrang_to_utf8\n".
+        "-------------\n\n";
+print "Hi there! This script will upgrade your whole Krang installation to UTF8.\n\nDo you wish to proceed?\n";
+unless (confirm) {
+    print "\nVery well then. Have a nice day.\n\n";
+    exit;
+}
+print "\nGreat.\n";
+
+if (pkg('Charset')->is_utf8) {
+    print "\nBut I'm confused: your krang.conf file already specifies UTF8 as the character set.\n\nIf this is a recent change and you haven't actually converted or saved any data since making it, please revert the change and re-run this script.\n\n";
+    exit;
+}
+
+my $old_charset = pkg('Charset')->mysql_charset;
+unless ($old_charset) {
+    print "\nYour krang.conf has no character set specified.\n\nIs it safe to assume your data is stored in Latin1 (i.e. ISO-8859 or Windows-1252)?\n";
+    unless (confirm) {
+	print "\nPlease add the line \"Charset <YOUR_OLD_CHARACTER_SET>\" to Krang.conf and rerun this script.\n\n";
+	exit;
+    }
+}
+$old_charset ||= "latin1";
+
+print "\nHave you already backed up all of your data?\n";
+my $backup_data = !confirm();
+if ($backup_data) {
+    print "\nOK - We will back it up before performing the conversions.\n";
+}
+
+my $convert_manual_1252;
+if ($old_charset eq 'latin1') {
+    print "\nDo any of your stories or templates include Windows specific hexadecimal strings like '&#147;' which insert special characters like curly quotes and emdashes?\n"; 
+    my $convert_manual_1252 = confirm();
+    if ($convert_manual_1252) {
+	print "\nOK - We will convert them to their Unicode equivalents.\n";
+    } 
+}
+
+print "\nWould you like to automatically delete all but the latest (converted) versions of Stories, Templates, and Media objects?\n";
+my $remove_old_versions = confirm();
+if ($remove_old_versions) {
+    print "\nOK - We will keep only the latest versions.\n";
+} else {
+    print "\nOK - Just to warn you, reverting to old versions in the CMS may cause errors since the old versions may not be UTF8 compliant.\n";
+}
+
+print "\nLooks like we have all the information we need. Are you ready to begin?\n";
+unless (confirm) {
+    print "\nCome back when you're ready.\n\n";
+    exit;
+}
+print "\nExcellent. Please sit back and enjoy the conversion.\n";
+
+print "\nSTOPPING KRANG\n\n";
+system ($bin.'/krang_ctl stop');
+
+if ($backup_data) {
+    print "\nBACKING UP EVERYTHING\n\n";
+    if (system ($bin.'/krang_backup --verbose')) {
+	print "\nBACKUP FAILED: UTF8 UPGRADE ABORTED\n\n";
+	exit;
+    }
+}
+
+print "\nCONVERTING DATA TO UTF8\n\n";
+if (system ($bin.'/krang_charset_convert_data --from '.$old_charset.' --to utf8 --all-instances --verbose')) {
+    print "\nDATA-CONVERSION FAILED: UTF8 UPGRADE INCOMPLETE (YOU MAY NEED TO RESTORE BACKUP!)\n\n";
+    exit;
+}
+
+print "\nCONVERING SQL TABLES TO UTF8\n\n";  # skip history - it's huge and only has ASCII anyway
+if (system($bin.'/krang_charset_convert_tables --to utf8 --all-instances --skip-table history --verbose')) {
+    print "\nTABLE-CONVERSION FAILED: UTF8 UPGRADE INCOMPLETE (YOU MAY NEED TO RESTORE BACKUP!)\n\n";
+    exit;
+}
+
+if ($convert_manual_1252) {
+    print "\nREPLACING WINDOWS-1252 HEXADECIMAL STRINGS WITH UNICODE SYMBOLS\n\n";
+    if (system($bin.'/krang_charset_convert_data --from manual-1252 --to utf8 --all-instances --verbose')) {
+	print "\nHEX-STRING CONVERSION FAILED: UTF8 UPGRADE INCOMPLETE (YOU MAY NEED TO RESTORE BACKUP!)\n\n";
+	exit;
+    }
+}
+
+my $krang_conf_file = catfile($ENV{KRANG_ROOT}, "conf", "krang.conf");
+unless (-e $krang_conf_file) {
+    print "\nCOULDN'T FIND KRANG.CONF! PLEASE LOCATE IT AND ADD THE LINE 'CHARSET UTF8'; ASSUMING THERE WERE NO OTHER ERRORS, YOUR DATA AND TABLES SHOULD NOW BE CONVERTED.\n\n";
+    print "THE ERROR DID PREVENT DELETION OF OLD VERSIONS: AFTER CHANGING KRANG.CONF, SEE BIN/KRANG_PRUNE_VERSIONS TO ACCOMPLISH THIS MANUALLY.\n\n" if $remove_old_versions;
+    exit;
+}
+
+my $output;
+open KRANG_CONF, "<$krang_conf_file"; 
+my $added_charset;
+while (<KRANG_CONF>) {
+    if ($_ =~ /^\s*\#*\s*Charset\s/i) {
+	chomp($_);
+	if ($added_charset++) {
+	    print "\nREMOVING '$_' FROM $krang_conf_file\n";
+	} else {
+	    print "\nREPLACING '$_' WITH 'Charset UTF-8' IN $krang_conf_file\n";
+	    $output .= "Charset UTF-8\n";
+	}
+    } else {
+	$output .= $_;
+    }
+}
+unless ($added_charset) {
+    print "\nADDING 'Charset UTF-8' AT THE END OF $krang_conf_file\n";
+    $output =~ s/\s+$//;
+    $output .= "\n\nCharset UTF-8\n";
+}
+close KRANG_CONF;
+open KRANG_CONF, "> $krang_conf_file";
+print KRANG_CONF $output;
+close KRANG_CONF;
+
+my $versions;
+if ($remove_old_versions) {
+    print "\nREMOVING OLD VERSIONS OF STORIES, TEMPLATES, AND MEDIA OBJECTS FROM DATABASE\n";
+    $versions = 1;
+} else {
+    print "\nADDING LATEST VERSION OF STORIES, TEMPLATES, AND MEDIA OBJECTS TO VERSION TABLES\n(THIS CALL TO KRANG_PRUNE_VERSIONS WILL NOT ACTUALLY DELETE ANYTHING, JUST UPDATE THE VERSION TABLES)\n";
+    $versions = 999999;
+}
+
+if (system ("$bin/krang_prune_versions --first-resave --versions-per-media $versions --versions-per-story $versions --versions-per-template $versions --verbose")) {
+    print "KRANG_PRUNE_VERSIONS FAILED: NOT THE END OF THE WORLD; YOU CAN RUN THIS BY HAND LATER.\n";
+}
+
+print "\nRE-STARTING KRANG\n\n";
+system ($bin.'/krang_ctl start');
+
+print "\nUTF8 UPGRADE COMPLETE!\n\nASSUMING NO ERRORS ABOVE, ALL YOU HAVE TO DO NOW IS MAKE SURE YOUR CATEGORY TEMPLATES AND/OR SERVER CONFIGURATION INCLUDE A UTF8 HEADER (E.G. \"Content-Type: text/html; charset=utf-8\") AND THEN RE-PUBLISH!\n\n";
+
+

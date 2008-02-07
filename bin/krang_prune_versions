@@ -1,0 +1,165 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_prune_versions - delete old versions of stories, medias, and/or templates from the database
+
+=head1 SYNOPSIS
+
+   krang_prune_versions --versions-per-story 10 --versions-per-media default --versions-per-template 5
+
+=head1 DESCRIPTION
+
+Cleans up the story_version, template_version, and media_version tables from the database.
+
+=head1 OPTIONS
+
+The script takes the following options:
+
+=over
+
+=item --versions-per-story
+
+Use this argument if you wish to clean up the story_version table, and
+pass it the number of versions to keep, or 'default' to use the value returned
+by the class's versions_to_keep() method (which normally just checks 
+SavedVersionsPerStory in krang.conf)
+
+=item --versions-per-media
+
+Use this argument if you wish to clean up the media_version table, and
+pass the number of versions to keep or 'default' to use the value of 
+SavedVersionsPerMedia in krang.conf
+
+=item --versions-per-template
+
+Use this argument if you wish to clean up the template_version table, and
+pass the number of versions to keep or 'default' to use the value of 
+SavedVersionsPerTemplate in krang.conf
+
+=item --all-instances
+
+By default, the script only processes stories for the instance specified
+in the environmental variable KRANG_INSTANCE. This parameter causes it
+to process all instances.
+
+=item --first-resave
+
+This optional argument causes every object to be opened & resaved before
+it is pruned, ensuring that the database's version table has the latest copy.
+(NOTE: Running in this mode forcibly checks in any checked-out objects.)
+
+=item --verbose
+
+If specified once, every object that has versions deleted will be displayed. If
+specified twice, every object that is unchanged will also be displayed.
+
+=item --help
+
+=item --man
+
+=back
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Story';
+use Krang::Conf qw(SavedVersionsPerStory SavedVersionsPerMedia SavedVersionsPerTemplate);
+
+use Getopt::Long;
+use Pod::Usage;
+
+my ($help, $man, $per_story, $per_media, $per_template, $all_instances, $first_resave);
+my $verbose = 0;
+
+print "\nkrang_prune_versions\n".
+        "--------------------\n";
+
+pod2usage(2) unless
+  GetOptions(
+             'versions-per-story=s' => \$per_story,
+             'versions-per-media=s' => \$per_media,
+             'versions-per-template=s' => \$per_template,
+             'all-instances'    => \$all_instances,
+	     'first-resave'     => \$first_resave,
+             'verbose+'         => \$verbose,
+             'help'             => \$help,
+             'man'              => \$man,
+            );
+
+pod2usage(1) if $help or $man or not($per_story or $per_media or $per_template);
+my %versions_to_keep = (story => $per_story, media => $per_media, template => $per_template);
+
+# make sure we weren't passed anything strange for arguments
+foreach my $type ('story', 'media', 'template') {
+    if (my $versions = $versions_to_keep{$type}) {
+        die "\nversions-per-$type must be an integer or 'default'\n\n" 
+            unless $versions =~ /^\d+$/ || $versions eq 'default';
+    }
+}
+
+# begin actual work
+foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE})) {
+    print "\n$instance:\n";
+    pkg('Conf')->instance($instance);
+    foreach my $type ('story', 'media', 'template') {
+        my $pkg_name = uc(substr($type, 0, 1)) . substr($type, 1); # convert 'story' to 'Story', etc.
+        if (my $versions_to_keep = $versions_to_keep{$type}) {
+            print "\npruning $type objects\n";
+            my %args = ($versions_to_keep eq 'default' ? () : (number_to_keep => $versions_to_keep));
+            foreach my $object_id (pkg($pkg_name)->find(ids_only => 1)) {
+                my ($object) = pkg($pkg_name)->find($type.'_id' => $object_id);
+		if ($first_resave) {
+		    $object->checkin if ($object->checked_out);
+		    $object->checkout;
+		    $object->save(keep_version => 1);
+		    $object->checkin;
+		}
+                my $number_deleted = $object->prune_versions(%args);
+                if ($verbose and ($number_deleted or $verbose > 1)) {
+                    print "#$object_id: deleted $number_deleted version" . 
+                        ($number_deleted == 1 ? '' : 's') . "\n";
+                }
+            }
+        }
+    }
+}
+print "\ndone\n\n";

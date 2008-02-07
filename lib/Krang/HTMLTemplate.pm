@@ -26,8 +26,17 @@ See L<HTML::Template>.
 
 use base 'HTML::Template';
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Conf => qw(InstanceDisplayName KrangRoot Skin CustomCSS
-                                  EnableBugzilla ContactEmail Charset DefaultLanguage);
+use Krang::ClassLoader Conf => qw(
+    InstanceDisplayName 
+    KrangRoot 
+    Skin 
+    CustomCSS 
+    EnableBugzilla 
+    ContactEmail 
+    Charset 
+    EnableTemplateCache
+    DefaultLanguage
+);
 use Krang::ClassLoader Message => qw(get_messages clear_messages get_alerts clear_alerts);
 use Krang::ClassLoader 'Navigation';
 use Krang::ClassLoader Log => qw(debug);
@@ -58,6 +67,7 @@ BEGIN { reload_paths() }
 sub new {
     my ($pkg, %arg) = @_;
     $arg{path} = $arg{path} ? _compute_path($arg{path}) : \@PATH;
+    $arg{cache} = EnableTemplateCache ? 1 : 0;
 
     # by default we search the whole path on includes so that addons
     # (which come first in the paths) can override even included templates.

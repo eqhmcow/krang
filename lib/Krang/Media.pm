@@ -3,7 +3,7 @@ use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 use Krang::ClassLoader DB => qw(dbh);
-use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot SavedVersionsPerMedia);
 use Krang::ClassLoader Log => qw(debug assert ASSERT);
 use Krang::ClassLoader 'Contrib';
 use Krang::ClassLoader 'Category';
@@ -450,6 +450,51 @@ Removes all contributor associatisons.
 
 sub clear_contribs { shift->{contrib_ids} = []; }
 
+=item C<< $all_version_numbers = $media->all_versions(); >>
+
+Returns an arrayref containing all the existing version numbers for this media object.
+
+=cut
+
+sub all_versions {
+    my $self = shift;
+    my $dbh = dbh;
+    return $dbh->selectcol_arrayref('SELECT version FROM media_version WHERE media_id=?', 
+                                    undef, $self->media_id);
+}
+
+
+=item C<< $media->prune_versions(number_to_keep => 10); >>
+
+Deletes old versions of this media object. By default prune_versions() keeps
+the number of versions specified by SavedVersionsPerMedia in krang.conf;
+this can be overridden as above. In either case, it returns the number of 
+versions actually deleted.
+
+=cut
+
+sub prune_versions {
+    my ($self, %args) = @_;
+    my $dbh = dbh;
+
+    # figure out how many versions to keep
+    my $number_to_keep = $args{number_to_keep} || SavedVersionsPerMedia;
+    return 0 unless $number_to_keep;
+
+    # figure out how many versions can be deleted
+    my @all_versions     = @{$self->all_versions};
+    my $number_to_delete = @all_versions - $number_to_keep;
+    return 0 unless $number_to_delete > 0;
+    
+    # delete the oldest ones (which will be first since the list is ascending)
+    my @versions_to_delete = splice(@all_versions, 0, $number_to_delete);
+    $dbh->do('DELETE FROM media_version WHERE media_id = ? AND version IN ('.
+             join(',', ("?") x @versions_to_delete) . ')',
+             undef, $self->media_id, @versions_to_delete);
+    return $number_to_delete;
+}
+
+
 =item $media->upload_file(filehandle => $filehandle, filename => $filename)
 
 Stores media file to temporary location on filesystem. Sets $media->filename() also. 
@@ -752,6 +797,9 @@ sub save {
         eval { $serialized = nfreeze($self); };
         croak ("Unable to serialize object: $@") if $@;
         $dbh->do('INSERT into media_version (media_id, version, data) values (?,?,?)', undef, $media_id, $self->{version}, $serialized);
+
+        # prune previous versions from the version table
+        $self->prune_versions();
     }
 
     add_history(    object => $self,

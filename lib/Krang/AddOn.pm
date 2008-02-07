@@ -501,6 +501,7 @@ sub _addon_conf {
                                             uninstallscript
                                             navigationhandler
                                             inithandler
+                                            preloadhandler
                                             priority
                                             EnableAdminSchedulerActions 
                                             EnableObjectSchedulerActions 

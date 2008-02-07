@@ -334,32 +334,23 @@ sub authen_handler ($$) {
 
     # Determine window ID of request
     my $window_id = '';
-    my $new_login_id;
-    if ($new_login_id = ($cookies{krang_login_id} && $cookies{krang_login_id}->value)) {
+    if ($cookies{krang_login_id} && $cookies{krang_login_id}->value) {
       # 1. This is a new window: login.pm passed us the ID
-      $window_id = $new_login_id;
+      $window_id = $cookies{krang_login_id}->value;
     } elsif ($r->args && $r->args =~ /logout/i && $r->args =~ /window=(\d+)/i) {
-      # 2. A dying window: the page passed us the ID via Krang.Window.log_out/log_out_all
+      # 2. A dying window: krang.js passed us the ID via Krang.Window.log_out/log_out_all()
       $window_id = $1;   
     } elsif ($cookies{krang_window_id} && $cookies{krang_window_id}->value) {
-      # 3. An active window: the page passed us the ID via Krang.Window.pass_id
+      # 3. An existing window: krang.js passed us the ID via Krang.Window.pass_id()
       $window_id = $cookies{krang_window_id}->value;
-    } elsif ($cookies{krang_redirect_wid} && $cookies{krang_redirect_wid}->value) {
-      # 4. An active window: CGI.pm passed us the ID along with a redirect request
-      $window_id = $cookies{krang_redirect_wid}->value;
-    } elsif ($r->uri !~ /((\.pl)|(\/))$/ || $r->uri =~ /\/bug\.cgi/ || $r->uri =~ /\/help\.pl$/) {
-      # 5. A non-PERL request (e.g. image), or a bug: inherit ID from previous request
+    } elsif ($r->uri !~ /((\.pl)|(\/))$/ || $r->uri =~ /\/bug\.cgi$/ || $r->uri =~ /\/help\.pl$/) {
+      # 4. A non-PERL request (e.g. image), bug, or help file: inherit ID from previous request
       $window_id = $cookies{krang_previous_wid} && $cookies{krang_previous_wid}->value;
     }
 
-    # Clean window cookies used by CGI
-    Apache::Cookie->new($r, -name => 'krang_redirect_wid', -value => '0', -path => '/')->bake; 
-    Apache::Cookie->new($r, -name => 'krang_login_id', -value => '0', -path => '/')->bake; 
-
-    # Update window cookies used by JS
-    $r->headers_out->add("Set-Cookie" => "krang_window_id=0");                 # So next request starts fresh
-    $r->headers_out->add("Set-Cookie" => "krang_previous_wid=$window_id");     #     (unless it needs our ID)!
-    $r->headers_out->add("Set-Cookie" => "krang_new_window_id=$new_login_id"); # For JS Krang.Window.init()...
+    # Clean/update window cookies (so next dynamic request requires a new ID, and next static request uses this ID)
+    Apache::Cookie->new($r, -name => 'krang_window_id', -value => '0', -path => '/')->bake;  
+    Apache::Cookie->new($r, -name => 'krang_previous_wid', -value => $window_id || '', -path => '/')->bake; 
 
     # If there's no ID or no session cookie, redirect to Login
     unless ($window_id && $cookies{"krang_window_$window_id"}) {

@@ -113,6 +113,14 @@ You can also specify IDs for addon objects here.  So if you have an
 addon which provides widgets you can get widget 10 with '--widget_id
 10'.
 
+=item --skip_dependencies
+
+Omits all related/linked objects, limiting the KDS file to the specific
+items you specify. Use this with caution: this is a new, only lightly-tested
+feature, and if you're going to do anything other than re-importing to the same 
+system (or aren't sure the related objects will be present and have unchanged 
+IDs when you do), you'll be missing essential data!
+
 =item --verbose
 
 Prints a running dialog of what's happening.  Repeat (--verbose
@@ -163,7 +171,8 @@ use Krang::ClassLoader 'DataSet';
 # process args and open the output file before dropping privs
 # process args and open the output file before dropping privs
 our ($help, $man, $compress, $overwrite, $output, $verbose, 
-     %all, %all_shortcut, %id, %classes, $file, $set);
+     %all, %all_shortcut, %id, %classes, $file, $set,
+     $skip_dependencies);
 BEGIN { 
     eval {
         %classes = map { ($_, 0) } pkg('DataSet')->classes;
@@ -208,6 +217,7 @@ BEGIN {
                      'verbose+' => \$verbose,
                      'compress' => \$compress,
                      'overwrite'=> \$overwrite,
+		     'skip_dependencies' => \$skip_dependencies,
                      
                      'output=s' => \$output,                     
                      
@@ -218,7 +228,7 @@ BEGIN {
         pod2usage("Unrecognized options to krang_export: '" . 
                   join(' ', @ARGV) . "'\n")
           if @ARGV;
-        
+	
         # figure out target filename
         $file = $output;
         
@@ -249,8 +259,8 @@ use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Temp qw(tempfile);
 
 # open up the data set
-$set = pkg('DataSet')->new($verbose ? 
-                           (add_callback => \&add_callback) : ());
+$set = pkg('DataSet')->new($verbose ? (add_callback => \&add_callback) : (),
+			   skip_dependencies => $skip_dependencies || 0);
 
 # keep a count of things added
 my $added = 0;

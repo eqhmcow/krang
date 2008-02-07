@@ -100,6 +100,14 @@ upgrade:
 	@echo "Use bin/krang_upgrade to upgrade."
 	@bin/krang_upgrade --help
 
+TIDY_ARGS = --backup-and-modify-in-place --indent-columns=4 --cuddled-else --maximum-line-length=100 --nooutdent-long-quotes --paren-tightness=2 --brace-tightness=2 --square-bracket-tightness=2
+tidy:
+	- find lib/Krang/ -name '*.pm' | xargs perltidy $(TIDY_ARGS)
+	- find t/ -name '*.t' | xargs perltidy $(TIDY_ARGS)
+	- perltidy $(TIDY_ARGS) bin/
+
+tidy_modified:
+	svn -q status | grep '^\(M\|A\).*\.\(pm\|pl\|t\)$$' | cut -c 8- | xargs perltidy $(TIDY_ARGS)
 
 .PHONY : all dist test clean TAGS bench docs bench_clean elements install upgrade build
 

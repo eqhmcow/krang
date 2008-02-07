@@ -66,6 +66,10 @@ Note that the sites and categories are still used to place the
 templates in the proper place on the target system, but they will not
 overwrite any existing data.
 
+=item --skip_dependencies
+
+This option is necessary when importing a KDS file created via "krang_export --skip_dependencies"
+
 =item --verbose
 
 Prints a running dialog of what's happening.  Repeat (--verbose
@@ -113,7 +117,7 @@ use Getopt::Long;
 use Pod::Usage;
 
 our ($help, $man, $list, $no_update, $verbose, $file, @skip, @skip_classes,
-     $no_uuid, $uuid_only);
+     $no_uuid, $uuid_only, $skip_dependencies);
 BEGIN {
     $verbose = 0;
     pod2usage(2)
@@ -124,7 +128,8 @@ BEGIN {
                         'no-update' => \$no_update,
                         'no-uuid'   => \$no_uuid,
                         'uuid-only' => \$uuid_only,
-                        'skip=s'    => \@skip);
+                        'skip=s'    => \@skip,
+			'skip_dependencies' => \$skip_dependencies);
    pod2usage(1)             if $help;
     pod2usage(-verbose => 2) if $man;
     
@@ -190,7 +195,8 @@ $file = $tempfile;
 
 # open up the dataset
 my $set = pkg('DataSet')->new(path            => $file, 
-                              import_callback => \&import_callback);
+                              import_callback => \&import_callback,
+			      skip_dependencies => $skip_dependencies || 0);
 
 # produce a listing?
 if ($list) {
@@ -222,7 +228,7 @@ eval {
     $set->import_all(($no_update    ? (no_update    => 1)              : ()),
                      ($no_uuid      ? (no_uuid      => 1)              : ()),
                      ($uuid_only    ? (uuid_only    => 1)              : ()),
-                     (@skip_classes ? (skip_classes => \@skip_classes) : ()),
+                     (@skip_classes ? (skip_classes => \@skip_classes) : ())
                     );
 };
 if ($@ and ref $@ and $@->isa('Krang::DataSet::ImportRejected')) {

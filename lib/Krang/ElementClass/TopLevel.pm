@@ -7,6 +7,7 @@ use Carp qw(croak);
 use Data::Dumper qw();
 
 use Krang::ClassLoader Log => qw(debug info critical);
+use Krang::ClassLoader Conf => qw(SavedVersionsPerStory);
 use Krang::ClassLoader base => 'ElementClass';
 
 =head1 NAME
@@ -138,6 +139,17 @@ Returns the file extension (see filename()) to be used when writing to disk data
 sub extension {
     return '.html';
 }
+
+=item C<< $class->versions_to_keep >>
+
+This method can be used to override the number of versions kept in the
+database for stories of this type. The default implementation returns the 
+value SavedVersionsPerStory from krang.conf, or, if that's undefined,
+0 (which indicates that there is no maximum: all versions are kept).
+
+=cut
+
+sub versions_to_keep { SavedVersionsPerStory || 0 }
 
 =item C<< $class->save_hook(element => $element) >>
 

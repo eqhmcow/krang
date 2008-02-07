@@ -120,7 +120,6 @@ document.onunload = function() {
     Krang.Window.log_out_all();
 */
 Krang.Window = {
-
     init : function() {
         // set name and title of our window
         var id = Krang.Window.get_id();
@@ -141,22 +140,22 @@ Krang.Window = {
     },
 
     get_id : function() {
-	var id = Krang.Window._id_from_name() || Krang.Window._id_from_pool();
-	return parseInt(id);
+        var id = Krang.Window._id_from_name() || Krang.Window._id_from_pool();
+        return parseInt(id);
     },
 
     pass_id : function() {
-	var id = Krang.Window.get_id();
-	if (id) {
-  	  Krang.Cookie.set('krang_window_id', id);	
-	}
+        var id = Krang.Window.get_id();
+        if (id) {
+            Krang.Cookie.set('krang_window_id', id);    
+        }
     },
-	
+    
     log_out : function() {
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
-	   window.location = 'login.pl?rm=logout&window='+Krang.Window.get_id();
-	   window.name = '';
-	}	
+            window.location = 'login.pl?rm=logout&window='+Krang.Window.get_id();
+            window.name = '';
+        }    
     },
 
     log_out_all : function() {
@@ -177,20 +176,20 @@ Krang.Window = {
             }
         }
 
-	// then log out this window
+        // then log out this window
         window.location = 'login.pl?rm=logout&window='+Krang.Window.get_id();
-	window.name = '';
+        window.name = '';
     },
 
     _id_from_name : function() {
-	return window.name.match(/^krang_window_/) && window.name.match(/\d+$/);		
-    },	
+        return window.name.match(/^krang_window_/) && window.name.match(/\d+$/);        
+    },    
 
     _id_from_pool : function() {
-	var id = Krang.Cookie.get('krang_new_window_id');
-	Krang.Cookie.set('krang_new_window_id', '0'); // so next window doesn't find our ID!
-	return id;
-    }	
+        var id = Krang.Cookie.get('krang_login_id');
+        Krang.Cookie.set('krang_login_id', '0'); // so next window doesn't find our ID!
+        return id;
+    }    
 }
 
 
@@ -239,7 +238,7 @@ Krang.Cookie = {
         return value;
     },
     set : function(name, value) {
-        document.cookie = name + '=' + encodeURIComponent(value);
+	document.cookie = name + '=' + encodeURIComponent(value) + "; path=/";
     },
     json_get : function(name) {
         var json = Krang.Cookie.get(name);
@@ -459,7 +458,7 @@ Krang.Ajax.update = function(args) {
                 // update the navigation if we need to
                 if( json && json.krang_update_nav ) {
                     Krang.Ajax.update({ url: 'nav.pl', target: 'S', to_top: false });
-	        }
+                }
             },
             onComplete  : function(transport, json) {
                 // wait 12 ms so we know that the JS in our request has been evaled
@@ -539,8 +538,8 @@ Krang.Form = {
         form = typeof form == 'object' ? form : document.forms[form];
         if( inputs ) Krang.Form.set(form, inputs);
 
-	// pass window ID to handler
-	Krang.Window.pass_id();
+        // pass window ID to handler
+        Krang.Window.pass_id();
 
         // take care of our default options
         if(options == null ) options = {};
@@ -1158,7 +1157,7 @@ Krang.Slug = {};
 Krang.Slug.title_to_slug = function(title) {
     var slug = title;
     slug = slug.replace(Krang.Slug.high_latin1_re, function(notNeeded, code_position) {
-	return Krang.Slug.high_latin1_map[code_position];
+        return Krang.Slug.high_latin1_map[code_position];
     })
     .replace(/[^\s\w\-]/g,'') // remove illegal chars
     .replace(/^\s+/,'')       // remove leading whitespace
@@ -1311,7 +1310,7 @@ Krang.Slug.high_latin1_re = '';
 (function() {
     var codePoints = '';
     for (codePoint in Krang.Slug.high_latin1_map) {
-	codePoints += codePoint;
+        codePoints += codePoint;
     }
     Krang.Slug.high_latin1_re = new RegExp('([' + codePoints + '])', 'g');
 })();
@@ -1587,7 +1586,7 @@ Krang.Base64 = {
         }  
         return output;  
     }
-}  
+}
 
 Krang.ElementEditor = {
     save_hooks     : [],

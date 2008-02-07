@@ -121,6 +121,10 @@ sub find {
 
     my $t = $self->load_tmpl('list_view.tmpl', associate=>$q);
 
+    # figure out if user should see add, publish, checkin, delete
+    my %user_permissions = (pkg('Group')->user_asset_permissions);
+    $t->param(read_only => ($user_permissions{media} eq 'read-only'));
+    
     # Persist data for return from view in "return_params"
     my @return_param_list = qw(
                                rm
@@ -204,6 +208,10 @@ sub advanced_find {
 
     my $t = $self->load_tmpl('list_view.tmpl', associate=>$q);
     $t->param(do_advanced_search=>1);
+
+    # figure out if user should see add, publish, checkin, delete
+    my %user_permissions = (pkg('Group')->user_asset_permissions);
+    $t->param(read_only => ($user_permissions{media} eq 'read-only'));
 
     # if the user clicked 'clear', nuke the cached params in the session.
     if (defined($q->param('clear_search_form'))) {
@@ -483,6 +491,9 @@ sub save_add {
     my %save_errors = ( $self->do_save_media($m) );
     return $self->_add(%save_errors) if (%save_errors);
 
+    # Publish to preview
+    $m->preview();
+
     # Checkout to Workspace
     $m->checkout();
 
@@ -562,6 +573,9 @@ sub save_stay_add {
     # Save object to database
     my %save_errors = ( $self->do_save_media($m) );
     return $self->_add(%save_errors) if (%save_errors);
+
+    # Publish to preview
+    $m->preview();
 
     # Checkout to Workspace
     $m->checkout();
@@ -705,6 +719,9 @@ sub save_edit {
     my %save_errors = ( $self->do_save_media($m) );
     return $self->edit(%save_errors) if (%save_errors);
 
+    # Publish to preview
+    $m->preview();
+
     # Checkout to Workspace
     $m->checkout();
 
@@ -787,6 +804,9 @@ sub save_stay_edit {
     # Save object to database
     my %save_errors = ( $self->do_save_media($m) );
     return $self->edit(%save_errors) if (%save_errors);
+
+    # Publish to preview
+    $m->preview();
 
     # Checkout to Workspace
     $m->checkout();
@@ -1335,6 +1355,9 @@ sub update_media {
             next;
         }
         if ($mf eq 'text_content') {
+            # Upload takes precedence over inline edit
+            next if $q->param('media_file');
+
             # Handle direct text-file editing
             next unless ($q->param('text_content') && !$q->param('media_file'));
             my $text = $q->param('text_content');
@@ -1388,7 +1411,7 @@ sub make_media_tmpl_data {
         my $curr_version = $tmpl_data{version};
         my $media_version_chooser = $q->popup_menu(
                                                    -name => 'selected_version',
-                                                   -values => [1..$curr_version],
+                                                   -values => $m->all_versions,
                                                    -default => $curr_version,
                                                    -override => 1,
                                                   );
@@ -1641,6 +1664,10 @@ sub make_pager {
     my $self = shift;
     my ($persist_vars, $find_params, $show_thumbnails) = @_;
 
+    # read-only users don't see checkbox column....
+    my %user_permissions = (pkg('Group')->user_asset_permissions);
+    my $read_only = ( $user_permissions{media} eq 'read-only' );
+
     my @columns = qw(
                      pub_status 
                      media_id 
@@ -1649,9 +1676,8 @@ sub make_pager {
                      url
                      creation_date
                      commands_column
-                     status
-                     checkbox_column
-                    );
+                     status);
+    push @columns, 'checkbox_column' unless $read_only;
 
     my %column_labels = ( 
                           pub_status      => '',

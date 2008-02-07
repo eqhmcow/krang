@@ -164,6 +164,14 @@ following modules
   Krang::Handler
   Krang::CGI (in CGI_MODE only)
 
+=item * C<PreloadHandler> I<Module>
+
+This configuration directive names a module which will be called
+during the preloading stage of Apache's startup. It must define a
+method called C<preload_handler()>.  A common use for this handler is
+to preload selective modules into memory to reduce unshared memory of
+mod_perl/Apache.
+
 =item * C<Priority> N
 
 The C<Priority> directive allows you to control the order in which

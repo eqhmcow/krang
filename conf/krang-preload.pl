@@ -13,7 +13,7 @@ BEGIN {
     pkg('AddOn')->call_handler('InitHandler');
 }
 use Krang::ClassLoader 'lib';
-use Krang::ClassLoader Conf => qw(KrangRoot AvailableLanguages);
+use Krang::ClassLoader Conf => qw(KrangRoot AvailableLanguages EnableTemplateCache);
 use File::Find qw(find);
 use File::Spec::Functions qw(catdir splitdir);
 use Krang::ClassLoader 'HTMLTemplate';
@@ -40,6 +40,7 @@ find({
 my %languages = ();
 @languages{ AvailableLanguages, 'en' } = ();
 
+if( EnableTemplateCache ) {
 print STDERR "Pre-loading HTML Templates...\n";
 
 find(
@@ -58,7 +59,11 @@ find(
 				  );
      },
      KrangRoot . '/templates');
+}
 
+# pre-load any addons that want it
+print STDERR "Pre-loading Addons...\n";
+pkg('AddOn')->call_handler('PreloadHandler');
 
 print STDERR "Krang Pre-load complete.\n";
 

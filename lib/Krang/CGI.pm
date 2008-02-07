@@ -446,6 +446,8 @@ sub access_forbidden {
     return $self->redirect_to_login($msg);
 }
 
+
+
 =item * redirect_to_login($msg)
 
 This runmode deletes the user's session and redirects to the login
@@ -699,12 +701,21 @@ sub cgiapp_postrun {
   if ($self->header_type eq 'redirect' && $ENV{KRANG_WINDOW_ID}) {
     my %props = $self->header_props();
     my $cookies = $props{'-cookie'} || [];
-    push @$cookies, $self->query->cookie(-name => 'krang_redirect_wid', 
-					 -value => $ENV{KRANG_WINDOW_ID});
+    push @$cookies, $self->query->cookie(-name => 'krang_window_id', 
+					 -value => $ENV{KRANG_WINDOW_ID},
+					 -path => '/');
     $props{'-cookie'} = $cookies;
     $self->header_props(%props);
   }
   $self->SUPER::cgiapp_postrun;
 }
+
+
+=pod
+
+=back
+
+=cut
+
 
 1;

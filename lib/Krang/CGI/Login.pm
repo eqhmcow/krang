@@ -212,10 +212,11 @@ sub _do_login {
     # build the session cookie (using next available window ID)
     my $session_cookie = $q->cookie(
         -name  => "krang_window_$window_id",
-        -value => \%filling
+        -value => \%filling,
+        -path  => '/'
     );
 
-    # pass ID of new window to handler
+    # pass ID of new window to handler and JS
     my $login_id_cookie = $q->cookie(
         -name  => 'krang_login_id',
         -value => $window_id,
@@ -238,6 +239,7 @@ sub _do_login {
       my $pref_cookie = $q->cookie(
           -name  => 'KRANG_PREFS',
           -value => objToJson(\%prefs),
+          -path  => '/'
       );
 
       # and store meta information about this installation/instance of Krang
@@ -247,6 +249,7 @@ sub _do_login {
       my $conf_cookie = $q->cookie(
           -name  => 'KRANG_CONFIG',
           -value => objToJson(\%conf_info),
+	  -path  => '/'
       );
     
       # and set all four cookies
@@ -261,7 +264,7 @@ sub _do_login {
     return "Redirect: <a href=\"$target\">$target</a>";
 }
 
-# build new session for new window (keep same user)
+# build new session for new window (keeping same user)
 sub new_window {
     my $self = shift;
     return $self->_do_login($ENV{REMOTE_USER}, 'copy_existing');

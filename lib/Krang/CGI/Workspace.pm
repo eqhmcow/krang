@@ -165,7 +165,7 @@ sub _row_handler {
         $row->{is_media}  = 1;
         $row->{url}       = format_url(
             url    => $obj->url,
-            linkto => "javascript:preview_media(" . $obj->media_id . ")",
+            linkto => "javascript:Krang.preview('media', " . $obj->media_id . ")",
             length => 50
         );
         $date = $obj->creation_date();

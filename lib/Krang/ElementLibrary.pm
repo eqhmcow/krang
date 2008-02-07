@@ -121,6 +121,12 @@ use Krang::ClassLoader 'ElementClass::XinhaEditor';
 Loads the element set with a given name.  Will die on error.  Returns
 true on success.
 
+If the environment variable C<KRANG_NO_ELEMENTLIBS> then nothing will
+actually be loaded. This is useful to use in scripts that won't actually
+use element libraries but through some chain of C<use> statements ends up
+requiring that in it's chain of dependencies uses L<Krang::Element>, but we
+know we aren't actually going to use any elements.
+
 =cut
 
 sub load_set {
@@ -336,14 +342,17 @@ Implement KrangVersion checking.
 
 =cut
 
-# load all configured element sets
+# load all configured element sets unless KRANG_NO_ELEMENTLIBS
+# is set
 BEGIN {
-    my $cur_instance = pkg('Conf')->instance();
-    foreach my $instance (pkg('Conf')->instances()) {
-        pkg('Conf')->instance($instance);
-        pkg('ElementLibrary')->load_set(set => InstanceElementSet());
+    unless( $ENV{KRANG_NO_ELEMENTLIBS} ) {
+        my $cur_instance = pkg('Conf')->instance();
+        foreach my $instance (pkg('Conf')->instances()) {
+            pkg('Conf')->instance($instance);
+            pkg('ElementLibrary')->load_set(set => InstanceElementSet());
+        }
+        pkg('Conf')->instance($cur_instance);
     }
-    pkg('Conf')->instance($cur_instance);
 }
 
 1;

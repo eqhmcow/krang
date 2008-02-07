@@ -87,6 +87,15 @@ is($tmpl->content(), $content, 'Revert Test');
 $tmpl->save();
 is($tmpl->version(), 3, 'Version Check 3');
 
+# check pruning of old versions 
+my @all_versions = @{$tmpl->all_versions};
+is (@all_versions, 3);
+$tmpl->prune_versions(number_to_keep => 2);
+@all_versions = @{$tmpl->all_versions};
+is (@all_versions, 2);
+is ($all_versions[0], 2);
+is ($all_versions[1], 3);
+
 # verify checkin works
 $tmpl->checkin();
 is($tmpl->checked_out, 0, 'Checkin Test');

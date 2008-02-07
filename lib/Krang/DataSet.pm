@@ -164,6 +164,12 @@ Specify a subroutine to be call objects are imported from the data
 set.  The callback will recieve a single named parameter called object
 which contains the object imported.
 
+=item skip_dependencies
+
+If set to 1, this will override the normal behavior of adding
+related/linked objects to the dataset. Use this with caution! In 
+many situations it will omit objects that are essential to have.
+
 =back
 
 =cut
@@ -182,6 +188,9 @@ sub new {
     # have an import_callback?  else, use an empty sub
     $self->{import_callback} = $args{import_callback} ? 
       $args{import_callback} : sub {};
+
+    # turn off dependencies?
+    $self->{skip_dependencies} = $args{skip_dependencies};
 
     if (my $path = $args{path}) {
         croak("Path '$path' does not in .kds or .kds.gz")
@@ -296,6 +305,10 @@ sub add {
     my $from   = $args{from};
     my $file   = $args{file};
     my $path   = $args{path};
+    
+    # in skip_dependencies mode, we only add primary 
+    # objects and - for media objects - their files
+    return if ($self->{skip_dependencies} && $from && !$file);
 
     if ($object) {
         my ($class, $id) = $self->_obj2id($object);
@@ -644,8 +657,9 @@ sub import_all {
 
             # get the ID and store it in 'done'
             eval {
-                my $import_id = $self->map_id(class => $class,
-                                              id    => $id);
+                my $import_id = $self->map_id(class   => $class,
+                                              id      => $id,
+					      primary => 1); # a primary object: not a dependency
                 $self->{done}{$class}{$id} = $import_id;
             };
 
@@ -694,6 +708,9 @@ sub map_id {
 
     # already got it?
     return $self->{done}{$class}{$id} if $self->{done}{$class}{$id};
+
+    # a dependency we're not going to update?
+    return $id if ($self->{skip_dependencies} and (not $arg{primary}));
     
     # deserialize
     my $object = $self->_deserialize($class, $id);
@@ -720,7 +737,7 @@ sub _deserialize {
     close(XML) or croak("Unable to close '$file': $!");
     croak("Unable to load XML from $file") unless $xml;
 
-    # are we skipping this clas?
+    # are we skipping this class?
     my $skip = $self->{skip_classes}{$class};
 
     my $obj = $class->deserialize_xml(xml          => $xml,

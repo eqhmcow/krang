@@ -22,6 +22,10 @@ Object.extend(PopupTreeSelect.prototype, {
         this.offsetY         = null;
         this.locked_titlebar = null;
         this.locked_botbar   = null;
+        this.titleobj        = null;
+        this.innerobj        = null;
+        this.bbarobj         = null;
+        this.botbarobj       = null;
 
         // now save this object so it can be referenced by name
         PopupTreeSelect.save(name, this);
@@ -54,6 +58,10 @@ Object.extend(PopupTreeSelect.prototype, {
     },
     lock : function(evt) {
         evt = (evt) ? evt : event;
+        this.titleobj  = document.getElementById(this.name + "-title");
+        this.innerobj  = document.getElementById(this.name + "-inner");
+        this.bbarobj   = document.getElementById(this.name + "-bbar");
+        this.botbarobj = document.getElementById(this.name + "-botbar");
         this.set_locked(evt);
         this.update_mouse(evt);
 
@@ -119,10 +127,6 @@ Object.extend(PopupTreeSelect.prototype, {
     drag : function(evt) {
         evt = (evt) ? evt : event;
         this.update_mouse(evt);
-        var titleobj  = document.getElementById(this.name + "-title");
-        var innerobj  = document.getElementById(this.name + "-inner");
-        var bbarobj   = document.getElementById(this.name + "-bbar");
-        var botbarobj = document.getElementById(this.name + "-botbar");
 
         if (this.locked_titlebar) {
             this.locked_titlebar.style.left = (this.mouseX - this.offsetX) + "px";
@@ -130,11 +134,11 @@ Object.extend(PopupTreeSelect.prototype, {
             evt.cancelBubble = true;
             return false;
         } else if (this.locked_botbar) {           
-            titleobj.style.width  = (this.width + this.mouseX - this.offsetX) + "px";
-            innerobj.style.width  = (this.width + this.mouseX - this.offsetX) + "px";
-            bbarobj.style.width   = (this.width + this.mouseX - this.offsetX) + "px";
-            //botbarobj.style.width = (this.width + this.mouseX - this.offsetX) + "px";
-            innerobj.style.height = (this.height + this.mouseY - this.offsetY) + "px";
+            this.titleobj.style.width  = (this.width + this.mouseX - this.offsetX) + "px";
+            this.innerobj.style.width  = (this.width + this.mouseX - this.offsetX) + "px";
+            this.bbarobj.style.width   = (this.width + this.mouseX - this.offsetX) + "px";
+            //this.botbarobj.style.width = (this.width + this.mouseX - this.offsetX) + "px";
+            this.innerobj.style.height = (this.height + this.mouseY - this.offsetY) + "px";
             evt.cancelBubble = true;
             return false;
         }

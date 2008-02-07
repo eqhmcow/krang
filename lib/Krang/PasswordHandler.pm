@@ -16,6 +16,8 @@ sub check_pw {
     my $valid = 0;
     if( length $pw < 6 ) {
         add_alert('password_too_short');
+    } elsif( !($pw =~ /\d/ && $pw =~ /[^\d]/)) {
+        add_alert('password_too_simple');
     } elsif( _pw_is_used($pw, $info[0]) ) {
         add_alert('password_currently_used');
     } elsif( _pw_was_used($pw, $info[0]) ) {

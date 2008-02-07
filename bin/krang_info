@@ -44,6 +44,7 @@ BEGIN {
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
+    $ENV{KRANG_NO_ELEMENTLIBS} = 1;
     eval { require Krang::Conf };
     warn << "END" and exit(1) if $@;
 ######################################################################

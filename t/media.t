@@ -229,8 +229,14 @@ $m2->checkin();
 is($m2->checked_out, 0, 'Krang::Media->checked_out');
 is($m2->checked_out_by, undef, 'Krang::Media->checked_out_by');
 
-
-
+# test pruning of old versions
+my @all_versions = @{$m2->all_versions};
+is (@all_versions, 3);
+$m2->prune_versions(number_to_keep => 2);
+@all_versions = @{$m2->all_versions};
+is (@all_versions, 2);
+is ($all_versions[0], 2);
+is ($all_versions[1], 3);
 
 # test mark_as_published
 $m2->mark_as_published();

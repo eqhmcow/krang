@@ -104,10 +104,80 @@ a single template per top-level story type. [Noam Weinstein]
 
 =back
 
-
-=head2 3.01 - IN DEVELOPMENT
+=head2 3.01 - February 1, 2008
 
 =over
+
+=item *
+
+Fixed a bug in both JavaScript and PERL where some cookies were being written
+to root path and others to active path. [Noam Weinstein]
+
+=item *
+
+Added an optimization for Krang admin scripts that know they won't use any
+elements. This dramatically speeds up those admin scripts on systems with multiple
+element libraries. [Michael Peters]
+
+=item *
+
+Added interactive C<krang_to_utf8> script to ease conversions. [Noam Weinstein]
+
+=item * 
+
+Added C<PreloadHandler> available to addons to run code during Apache's
+preload stage. [Michael Peters]
+
+=item *
+
+Added C<EnableTemplateCache> configuration parameter to be able to turn Krang
+UI template caching on. [Michael Peters]
+
+=item *
+
+Added the ability to limit the number of versions saved in the database
+for each Story, Media, and/or Template object, automatically pruning
+the oldest ones. [Noam Weinstein]
+
+=item *
+
+In Krang::ElementClass::XinhaEditor fixed caching of
+htmlarea.js. [Bodo Schulze]
+
+=item *
+
+When a user has read-only access to stories, media, and/or templates, made
+buttons like Publish, Add, Checkin, etc. hidden from view. [Noam Weinstein]
+
+=item *
+
+When editing media, made Save and Save_and_Stay buttons automatically
+publish to preview. [Noam Weinstein]
+
+=item *
+
+Added a new script F<bin/krang_exec> to make it really simple to run
+commands against multiple Krang instances using Krang libraries, addons,
+etc. [Michael Peters]
+
+=item *
+
+In Schedule's C<list_all> runmode show the Delete button if there
+are any table rows. [Bodo Schulze]
+
+=item *
+
+Fixed JS function name in Krang::ElementClass::MediaLink. [Bodo
+Schulze]
+
+=item *
+
+Fixed a bug when trying to import/export UTF-8 data. [Michael Peters]
+
+=item *
+
+Added inheritable/overridable methods to Krang::Handler, login_uri()
+and unprotected_uri().  [Jesse Erlbaum]
 
 =item *
 

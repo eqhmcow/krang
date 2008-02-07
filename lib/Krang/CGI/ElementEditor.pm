@@ -1017,7 +1017,7 @@ sub element_save {
 
     # notify user of the save
     add_message('saved_element', name => $element->display_name())
-      if $element->parent();    
+      if ($element->parent() && !$args{previewing_story});
 
     # success
     return 1;

@@ -27,6 +27,7 @@ DBPass
 DBUser
 DBHost
 DBSock
+EnableTemplateCache
 EnableBugzilla
 EnableFTP
 EnableSiteServer
@@ -58,6 +59,9 @@ PasswordChangeTime
 PasswordChangeCount
 PreviewSSL
 RewriteLogLevel
+SavedVersionsPerMedia
+SavedVersionsPerStory
+SavedVersionsPerTemplate
 SchedulerMaxChildren
 Secret
 SiteServerAddr

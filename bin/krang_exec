@@ -1,0 +1,196 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+=pod
+
+=head1 NAME
+
+krang_exec - run some piece of code under the Krang install
+
+=head1 SYNOPSIS
+
+Run an external script
+
+  $ krang_exec < script.pl
+
+Run a simple command
+
+  $ krang_exec -e "print $ENV{KRANG_INSTANCE}"
+
+Run an SQL query and print the results
+
+  $ krang_exec -qpe "SELECT COUNT(*) FROM story"
+
+=head1 DESCRIPTION
+
+Sometimes it's extremely useful to be able to run a script or command
+for each installed instance of Krang. This makes it really easy to do so.
+It takes care of making sure all the paths to libraries are setup correctly,
+addons are loaded and other niceties.
+
+By default it executes what's coming from STDIN.
+
+=head1 OPTIONS
+
+=over 4
+
+=item -e or --execute
+
+If you don't want to use STDIN to send the code, just use this. Similar to C<perl>'s
+C<-e>, it's really only useful for short quick things.
+
+=item -M or --module 
+
+Similar to C<perl>'s C<-M> option, loads a module after setting up the paths
+and environment. 
+
+=item -K or --krang_module
+
+Similar to C<perl>'s C<-M> option, loads an Krang module after setting up the paths
+and environment. You don't need to specify the 'Krang::' prefix of the module either.
+Although it won't hurt anything.
+
+=item -i or --instance
+
+By default it will execute the same command for all instances. Specify the single instance if
+you don't want to do that.
+
+=item -p or --print
+
+Print the results of the command. If it is a reference, L<Data::Dumper> will be used.
+
+=item -s or --system
+
+By default the command you are given is treated as Perl code. This flag indicates that
+it should instead be treated as a system command to be sent to the shell.
+
+=item -q or --query
+
+By default the command you are given is treated as Perl code. This flag indicates that
+it should instead be treated as an SQL query to be run. Combine it with the C<-p> option
+if you want to actually see the results of the query.
+
+=item -h or --help
+
+=item -m or --man
+
+=back
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
+
+    eval { require Krang };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'AddOn';
+use Krang::ClassLoader 'Conf';
+use Krang::ClassLoader DB => qw(dbh);
+BEGIN {
+    pkg('AddOn')->call_handler('InitHandler');
+};
+use Getopt::Long;
+use Data::Dumper;
+use Pod::Usage;
+
+my ($help, $man, $system, $print, $servers, $query);
+my $code = '';
+my @modules;
+my @krang_modules;
+my @instances;
+Getopt::Long::Configure('bundling', 'ignorecase');
+GetOptions(
+    'h|help'           => \$help,
+    'm|man'            => \$man,
+    'e|execute=s'      => \$code,
+    'M|module=s'       => \@modules,
+    'K|krang_module=s' => \@krang_modules,
+    'i|instance=s'     => \@instances,
+    's|system'         => \$system,
+    'p|print'          => \$print,
+    'q|query'          => \$query,
+) or pod2usage(2);
+pod2usage(1) if $help;
+pod2usage(-verbose => 2) if $man;
+
+$code ||= <STDIN>;
+unless( $code ) {
+    print "No code to run!\n";
+    exit(1);
+}
+
+foreach my $mod (@modules) {
+    eval "require $mod";
+    if( $@ ) {
+        print "Could not load module $mod: $@";
+        exit(1);
+    }
+}
+foreach my $mod (@krang_modules) {
+    $mod = pkg($mod);
+    eval "require $mod";
+    if( $@ ) {
+        print "Could not load module $mod: $@";
+        exit(1);
+    }
+}
+
+@instances = pkg('Conf')->instances() unless @instances;
+foreach my $instance (@instances) {
+    print "===== $instance =====\n";
+    $ENV{KRANG_INSTANCE} = $instance;
+    pkg('Conf')->instance($instance);
+    run_code($code);
+}
+
+sub run_code {
+    my $code = shift;
+    my $result;
+    if( $system ) {
+        $result = `$code 2>&1`;
+    } elsif( $query ) {
+        my $sth = dbh()->prepare_cached($code);
+        eval { $sth->execute() };
+        eval { $result = $sth->fetchall_arrayref({}) unless $@ };
+        print "Error: $@\n" if $@ and $@ !~ /fetch\(\) without execute\(\)/i
+    } else {
+        $result = eval $code;
+        print "Error: $@\n" if $@;
+    }
+
+    if( $print && defined $result ) {
+        print ref $result ? Dumper($result) : $result;
+    }
+}
+print "\n";
+
+

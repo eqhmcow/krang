@@ -20,7 +20,12 @@ please, B<please> back up before using this.
 
 This script will convert your data in the Krang database from one
 character set to another. This is useful if you've been running
-Krang for while and your site needs to change it's character set.
+Krang for a while and your site needs to change its character set.
+
+NOTE: If your tables aren't already in the C<--to> format, 
+<bin/krang_charset_convert_tables> must be run AFTER this script.
+Either way, the charset directive in krang.conf should not be changed
+to the C<--to> format until both your data and tables are updated.
 
 =head1 OPTIONS
 
@@ -33,10 +38,14 @@ The script takes the following options:
 Specify the character set your data is already in. If you never set
 Krang to use a particular character set, chances are you are using
 either an C<ISO-8859> version or C<windows-1252>. You can also look
-to see if the site being served declares it's character set.
+to see if the site being served declares its character set.
 
 When in doubt, you'll probably have to guess and try one. Make sure to
 backup so you can roll it back if your guess was wrong.
+
+NOTE: If you pass this argument the special value 'manual-1252', the
+script will fix (and only fix) six-character strings like "&#147;" 
+In this special case the tables must already be in the --to encoding.
 
 =item --to
 
@@ -54,6 +63,16 @@ By default this will run for all of the sites in the give instance
 instance (as set in C<$ENV{KRANG_INSTANCE}>). But you can optionally
 tell it to run for just a specific site. This option can be specified
 multiple times.
+
+=item --only-story-id
+
+By default this will run for all tables and all stories, but you can optionally tell it to 
+run only for a specific story (and no non-story data). This can be specified multiple times.
+
+=item --skip-story-id
+
+This parameter (which is mutually exclusive with --only-story-id) will convert all
+tables and all stories except the given one. This can be specified multiple times.
 
 =item --verbose
 
@@ -115,23 +134,24 @@ use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Story';
-use Krang::ClassLoader 'Conf';
 use Krang::ClassLoader 'Charset';
-use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader DB => qw(dbh forget_dbh);
 use Encode qw(from_to);
 use Storable qw(nfreeze thaw);
 use MIME::Base64 qw(encode_base64 decode_base64);
 
 # options
-my ($from, $to, $help, $man, $all_instances, @site_ids, @instances, $v);
+my ($from, $to, $help, $man, $all_instances, @only_site_ids, @only_story_ids, @skip_story_ids, $v);
 GetOptions(
-    'from=s'        => \$from,
-    'to=s'          => \$to,
-    'help'          => \$help,
-    'man'           => \$man,
-    'all-instances' => \$all_instances,
-    'site-id=s'     => \@site_ids,
-    'verbose'       => \$v,
+    'from=s'          => \$from,
+    'to=s'            => \$to,
+    'help'            => \$help,
+    'man'             => \$man,
+    'all-instances'   => \$all_instances,
+    'site-id=s'       => \@only_site_ids,
+    'only-story-id=s' => \@only_story_ids,
+    'skip-story-id=s' => \@skip_story_ids,
+    'verbose'         => \$v,
 ) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
@@ -139,63 +159,78 @@ pod2usage(-verbose => 2) if $man;
 die "You must supply a --from encoding!\n" unless $from;
 die "You must supply a --to encoding!\n"   unless $to;
 die "You can't use both --all-instances and --site-id at the same time!\n"
-  if $all_instances and @site_ids;
+  if $all_instances and @only_site_ids;
+die "You can't use both --all-instances and a specific story ID!\n"
+  if $all_instances and (@only_story_ids or @skip_story_ids);
+die "You can't use both --only-story-id and --skip-story-id at the same time!\n"
+  if @only_story_ids and @skip_story_ids;
 
-# which instances are we going to use
-@instances = $all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE});
-
-# figure out which sites (and hence, which stories) we're going to use
-my @story_ids;
-if(!@site_ids) {
-    foreach my $instance (@instances) {
-        my @instance_site_ids = pkg('Site')->find(ids_only => 1);
-        push(@site_ids, @instance_site_ids);
-        push(@story_ids, pkg('Story')->find(ids_only => 1, site_id => \@instance_site_ids));
-    }
-}
-
-# placeholders when using site_ids in queries
-my $site_ph  = join(', ', ('?') x scalar @site_ids);
-my $story_ph = join(', ', ('?') x scalar @story_ids);
-
-my %tables = (
-    category => {
-        fields    => [qw(dir)],
-        extra_sql => " WHERE category.site_id IN ($site_ph)",
-        binds     => \@site_ids,
-    },
-    contrib      => {fields => [qw(prefix first middle last suffix bio)],},
-    contrib_type => {fields => [qw(type)],},
-    desk         => {fields => [qw(name)],},
-    list         => {fields => [qw(name)],},
-    list_group   => {fields => [qw(name description)],},
-    list_item    => {fields => [qw(data)],},
-    media => {
-        fields    => [qw(title filename caption copyright notes alt_tag)],
-        extra_sql => " JOIN category c USING (category_id) WHERE c.site_id IN ($site_ph)",
-        binds     => \@site_ids,
-    },
-    media_type => {fields => [qw(name)],},
-    story      => {
-        fields    => [qw(title slug notes)],
-        extra_sql => " WHERE story_id IN ($story_ph) ",
-        binds     => \@story_ids,
-    },
-    template => {
-        fields    => [qw(content)],
-        extra_sql => " JOIN category c USING (category_id) WHERE c.site_id IN ($site_ph)",
-        binds     => \@site_ids,
-    },
-    template_version => {fields => [qw(data)], id_fields => [qw(template_id version)]},
-    user => {fields => [qw(first_name last_name login password)],},
-);
-
-foreach my $instance (@instances) {
-    print "Converting instance '$instance'\n" if $v;
-    print "  For site(s) " . join(', ', map { "#$_" } @site_ids) . "\n" if $v;
+# figure out which instances we're going to use, and loop through them
+foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE})) {
     pkg('Conf')->instance($instance);
+
+    # get a clean (un-cached) DB handle
+    forget_dbh();
     my $dbh = dbh();
 
+    # make sure MySQL interprets incoming & outgoing data in the original charset since
+    # the tables haven't yet been converted (except when running special manual-1252 mode)
+    $dbh->do('SET names ' . pkg('Charset')->mysql_charset($from eq 'manual-1252' ? $to : $from));
+
+    # figure out which sites (and hence, which stories) we're going to use for this instance
+    my @site_ids = @only_site_ids ? @only_site_ids : pkg('Site')->find(ids_only => 1);
+    next unless @site_ids;
+    
+    my @story_ids = @only_story_ids ? @only_story_ids : pkg('Story')->find(ids_only => 1, site_id => \@site_ids);
+    if (@skip_story_ids) {
+        my %skip_id = map { $_ => 1 } @skip_story_ids;
+        @story_ids = grep { not $skip_id{$_} } @story_ids;
+    }
+    
+    # placeholders when using site_ids in queries
+    my $site_ph  = join(', ', ('?') x scalar @site_ids);
+    my $story_ph = join(', ', ('?') x scalar @story_ids);
+    
+    my %tables = (
+
+                  (@story_ids == 0 ? () :
+
+                  (story      => {
+                      fields    => [qw(title slug notes)],
+                      extra_sql => " WHERE story_id IN ($story_ph) ",
+                      binds     => \@story_ids})),
+                  
+                  (@only_story_ids ? () : 
+                   
+                   (category => {
+                       fields    => [qw(dir)],
+                       extra_sql => " WHERE category.site_id IN ($site_ph)",
+                       binds     => \@site_ids,
+                   },
+                    contrib      => {fields => [qw(prefix first middle last suffix bio)],},
+                    contrib_type => {fields => [qw(type)],},
+                    desk         => {fields => [qw(name)],},
+                    list         => {fields => [qw(name)],},
+                    list_group   => {fields => [qw(name description)],},
+                    list_item    => {fields => [qw(data)],},
+                    media => {
+                        fields    => [qw(title filename caption copyright notes alt_tag)],
+                        extra_sql => " JOIN category c USING (category_id) WHERE c.site_id IN ($site_ph)",
+                        binds     => \@site_ids,
+                    },
+                    media_type => {fields => [qw(name)],},
+                    template => {
+                        fields    => [qw(content)],
+                        extra_sql => " JOIN category c USING (category_id) WHERE c.site_id IN ($site_ph)",
+                        binds     => \@site_ids,
+                    },
+                    template_version => {fields => [qw(data)], id_fields => [qw(template_id version)]},
+                    user => {fields => [qw(first_name last_name login password)],}))
+                  );
+    
+    print "Converting instance '$instance'\n" if $v;
+    print "  For site(s) " . join(', ', map { "#$_" } @site_ids) . "\n" if $v;
+    
     # convert all the fields in the tables listed above
     foreach my $name (keys %tables) {
         my $table     = $tables{$name};
@@ -227,7 +262,7 @@ foreach my $instance (@instances) {
             my @ids  = map { $row->{$_} } @id_fields;
 
             # convert each data field
-            from_to($_, $from, $to) foreach @data;
+            @data = map { convert_scalar($_, $from, $to) || '' } @data;
 
             # now put the data back
             $update_sth->execute(@data, @ids);
@@ -236,80 +271,127 @@ foreach my $instance (@instances) {
         print "    Updated $count rows in $name\n" if $v;
     }
 
-    # dig into the elements' data to decode/unthaw it, convert it and then
+    # now that template contents have changed, redeploy all deployed templates
+    unless (@only_story_ids) {  
+        foreach my $template_id (pkg('Template')->find(ids_only => 1)) {
+            my ($template) = pkg('Template')->find(template_id => $template_id);
+            if ($template->deployed) {
+                $template->deploy;
+                print "  Re-deployed template $template_id\n" if $v;
+            }
+        } 
+    }
+
+    # if there are no stories, no need to convert element table
+    next unless @story_ids;
+    
+    # otherwise, dig into the elements' data to decode/unthaw it, convert it and then
     # thaw/decode it and store it.
     print "  Converting element data\n" if $v;
+    
+    # we need to select all the elements for the sites in question. this means all 
+    # elements and sub-elements attached to the sites' stories, and - unless we're
+    # only converting stories - all elements attached to categories 
+    my $fetch_sth = 
 
-    # we need to select all the elements for the sites in question.
-    # this means all elements attached to categories in these sites
-    # as well as all elements and sub-elements attached to the stories
-    # in these categories
-    my $fetch_sth = $dbh->prepare_cached(
-        qq/
-        SELECT e.element_id AS id, e.data AS data FROM element e 
-        JOIN category c USING (element_id)
-        WHERE c.site_id IN ($site_ph)
-      UNION DISTINCT
-        SELECT e.element_id AS id, e.data AS data FROM element e 
-        JOIN story s ON (s.element_id = e.element_id OR s.element_id = e.root_id)
-        WHERE s.story_id IN ($story_ph)
-    /
-    );
+         $dbh->prepare_cached
+         (
+          (@story_ids == 0 ? '' :
+          
+          qq/
+          SELECT e.element_id AS id, e.data AS data FROM element e 
+          JOIN story s ON (s.element_id = e.root_id)
+          WHERE s.story_id IN ($story_ph)
+          /
+          ) .
 
-    my $to_dbh = dbh();
-    $to_dbh->do("SET names " . pkg('Charset')->mysql_charset($to));
-    my $update_sth = $to_dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?');
-    $fetch_sth->execute(@site_ids, @story_ids);
+          (@only_story_ids ? '' :
 
-    # tell the DB what the data is coming as
+          qq/
+          UNION DISTINCT
+          SELECT e.element_id AS id, e.data AS data FROM element e
+          JOIN category c ON (c.element_id = e.root_id)
+          WHERE c.site_id IN ($site_ph)
+          /
+          ));
+
+    my $update_sth = $dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?');
+    $fetch_sth->execute(@story_ids, @only_story_ids ? () : @site_ids);
+
     my $count = 0;
     while(my $row = $fetch_sth->fetchrow_hashref) {
-        next unless defined $row->{data};
-        my $data;
+        my $data = $row->{data};
         my $id = $row->{id};
 
-        # try an unthaw it to tell if it was frozen with Storable
+        next unless defined $data;
+
+        # try and thaw it to tell if it was frozen with Storable
         my $frozen;
         eval {
             no warnings;
-            $data   = thaw(decode_base64($row->{data}));
-            $frozen = 1;
+            if (ref (my $thawed = thaw(decode_base64($data)))) {
+                $data = $thawed;
+                $frozen = 1;
+            }
         };
-        $data = $row->{data} if $@;
-
+        
         $data = convert_element_data($data);
         if(defined $data) {
-            if($frozen) {
+            if ($frozen) {
                 $data = encode_base64(nfreeze($data));
             }
             $update_sth->execute($data, $id);
+            $count++;
         } else {
             warn "  !Could not convert element #$id which is a "
               . (ref $data ? ref $data : 'scalar') . "!\n";
         }
-        $count++;
     }
-    print "    Converted #$count elements\n" if $v;
-
-    # now deploy any deployed templates after their data has been changed
+    print "    Converted $count elements\n" if $v;
 }
+
+# restore original instance (in case we were called by another Krang script)
+pkg('Conf')->instance($ENV{KRANG_INSTANCE}) if $ENV{KRANG_INSTANCE};
 
 sub convert_element_data {
     my $data = shift;
     my $ref  = ref $data;
     if(!$ref) {
-        from_to($data, $from, $to);
-        return $data;
+        return convert_scalar($data, $from, $to);
     } elsif($ref eq 'SCALAR') {
-        from_to($$data, $from, $to);
+        $$data = convert_element_data($$data, $from, $to);
         return $data;
     } elsif($ref eq 'ARRAY') {
         return [map { convert_element_data($_) } @$data];
     } elsif($ref eq 'HASH') {
         return {map { $_ => convert_element_data($data->{$_}) } %$data};
+    } else {
+        # we don't know how to convert it, so leave it unchanged
+        return $data;
     }
-
-    # else we don't know how to convert it
-    return;
 }
 
+my %cp1252_string_to_char;
+sub build_special_cp1252_conversions {
+     for (my $val = 0; $val < 256; $val++) {
+        my $char = chr($val);
+        from_to($char, 'windows-1252', $to);
+        my $string = '&#' . sprintf("%03d", $val) . ';';
+        $cp1252_string_to_char{$string} = $char;
+    }
+}
+
+sub convert_scalar {
+    my $data = shift;
+    return unless defined $data;
+
+    if ($from eq 'manual-1252') {
+        # handle special manual-1252 mode (see POD)
+        build_special_cp1252_conversions if !%cp1252_string_to_char;
+        $data =~ s/(\&\#\d\d\d\;)/$cp1252_string_to_char{$1}/sg;
+    } else {  
+        # handle all other modes
+        from_to($data, $from, $to);
+    }
+    return $data;
+}     
