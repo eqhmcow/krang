@@ -152,6 +152,7 @@ add_template = function() {
 <tmpl_lang Search Results>
 </h3>
 
+<tmpl_unless read_only>
 <div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <input value="<tmpl_lang Add Template>" onclick="add_template()" type="button" class="west">
   <tmpl_if row_count>
@@ -159,11 +160,13 @@ add_template = function() {
     <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
   </tmpl_if>
 </form></div>
+</tmpl_unless>
 
 <!--Krang::HTMLPager:-->
 <tmpl_var pager_html>
 <!--:Krang::HTMLPager-->
 
+<tmpl_unless read_only>
 <div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <input value="<tmpl_lang Add Template>" onclick="add_template()" type="button" class="west">
   <tmpl_if row_count>
@@ -171,6 +174,7 @@ add_template = function() {
     <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
   </tmpl_if>
 </form></div>
+</tmpl_unless>
 
 <tmpl_if do_advanced_search>
   <form name="clear_advanced_search_form" method="post" action="template.pl">
