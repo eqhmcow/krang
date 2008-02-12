@@ -7,7 +7,7 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
-=teim * 
+=item * 
 
 Added 'force-checkin' option to krang_upload_templates and krang_upload_media.
 (In the past objects checked out to other users were skipped). [Noam Weinstein]
