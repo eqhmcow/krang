@@ -711,11 +711,6 @@ sub cgiapp_postrun {
 }
 
 
-=pod
-
-=back
-
-=cut
 
 
 1;
