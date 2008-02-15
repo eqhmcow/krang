@@ -8,6 +8,7 @@ use Krang::ClassLoader Conf => qw(EnableFTP FTPHostName FTPPort EnableBugzilla);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'NavigationNode';
 use Krang::ClassLoader Log => qw(debug info critical);
+use Krang::ClassLoader Localization => qw(localize);
 use Carp qw(croak);
 use CGI;
 use CGI::Cookie;
@@ -121,8 +122,9 @@ sub render {
     my $name =
       ($link ?
        qq{<a href="javascript:Krang.Nav.goto_url('} . $link . qq{')">} : "") .
-      $node->name .
+      localize($node->name) .
       ($link ? qq{</a>} : '');
+
     my $class = lc($node->name);
     $class =~ s/\s+/_/g;
 
