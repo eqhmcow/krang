@@ -7,6 +7,18 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Caring for singular/plural in string "Result(s)" on find
+screens. [Bodo Schulze]
+
+=item *
+
+Make and remove symlinks (for now only calendar and help files) when
+(un-)installing language distributions. Remove localized templates
+when uninstalling a language dist. Also passed Krang::Localization
+through perltidy. [Bodo Schulze]
+
 =item * 
 
 Added 'force-checkin' option to krang_upload_templates and krang_upload_media.
