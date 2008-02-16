@@ -1107,6 +1107,7 @@ sub get_pager_view {
                       prev_page_number   => $prev_page_number,
                       next_page_number   => $next_page_number,
                       krang_pager_rows   => \@krang_pager_rows,
+                      plural             => ($found_count > 1 ? 1 : 0),
                      );
 
     return \%pager_view;
