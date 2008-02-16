@@ -98,18 +98,18 @@ sub localize {
     my $language = $session{language} || DefaultLanguage;
 
     # return as-is
-    return $key if not $language       # krang startup
-                or $language eq 'en'   # English default
-                or not length($key);   # empty string
+    return $key if not $language    # krang startup
+          or $language eq 'en'      # English default
+          or not length($key);      # empty string
 
-    debug("localize($key) called from " . (caller)[0]. ", line " . (caller)[2] . ".");
+    debug("localize($key) called from " . (caller)[0] . ", line " . (caller)[2] . ".");
 
     # localize it
     my @localized = $L10N{$language}->get($key);
 
     unless (defined($localized[0])) {
-	debug("Unable to find key '$key' in lang/$language/perl.dict.");
-	return $key;
+        debug("Unable to find key '$key' in lang/$language/perl.dict.");
+        return $key;
     }
 
     return wantarray ? @localized : $localized[0];
@@ -130,17 +130,17 @@ sub localize_template {
 
     if ($language eq 'en') {
 
-	$$textref =~ s|<tmpl_lang\s+([^>]+)>|$1|gx;
+        $$textref =~ s|<tmpl_lang\s+([^>]+)>|$1|gx;
 
     } else {
 
-	my $lexicon = pkg('Localization')->get_lexicon($language);
+        my $lexicon = pkg('Localization')->get_lexicon($language);
 
-	if ($ENV{KRANG_RECORD_MISSING_LOCALIZATIONS}) {
-	    debug_template_localization->($textref, $language);
-	} else {
-	    $$textref =~ s{<tmpl_lang\s+([^>]+)>}{$lexicon->get($1) || $1}egx;
-	}
+        if ($ENV{KRANG_RECORD_MISSING_LOCALIZATIONS}) {
+            debug_template_localization->($textref, $language);
+        } else {
+            $$textref =~ s{<tmpl_lang\s+([^>]+)>}{$lexicon->get($1) || $1}egx;
+        }
     }
 }
 
@@ -162,18 +162,19 @@ sub debug_template_localization {
     my $lexicon = pkg('Localization')->get_lexicon($language);
 
     while ($$textref =~ m|<tmpl_lang ([^>]+)>|g) {
-	my $key = $1;
-	my $pos = $-[0];
-	my $translation = $lexicon->get($key);
+        my $key         = $1;
+        my $pos         = $-[0];
+        my $translation = $lexicon->get($key);
 
-	if (defined($translation)) {
-	    pos($pos);
-	    $$textref =~ s|<tmpl_lang\s+([^>]+)>|$translation|;
-	} else {
-	    # remember missing localizations in templates
-	    $$textref =~ s|<tmpl_lang\s+([^>]+)>|$1|;
-	    $missing{$language}{$key}++;
-	}
+        if (defined($translation)) {
+            pos($pos);
+            $$textref =~ s|<tmpl_lang\s+([^>]+)>|$translation|;
+        } else {
+
+            # remember missing localizations in templates
+            $$textref =~ s|<tmpl_lang\s+([^>]+)>|$1|;
+            $missing{$language}{$key}++;
+        }
     }
 }
 
@@ -201,26 +202,26 @@ sub get_lexicon {
 
 # called at compile time to load the available lexicons in %L10N
 sub _load_localization {
-    for my $lang (grep { $_ ne 'en'} AvailableLanguages) {
+    for my $lang (grep { $_ ne 'en' } AvailableLanguages) {
 
-	next unless defined($lang) and length($lang);
+        next unless defined($lang) and length($lang);
 
-	croak("$lang is not a RFC3066-style language tag")
-	  unless is_language_tag($lang);
+        croak("$lang is not a RFC3066-style language tag")
+          unless is_language_tag($lang);
 
-	# read also addon lexicons
-	my @files = reverse pkg('File')->find_all(catfile('lang', $lang, 'perl.dict'));
+        # read also addon lexicons
+        my @files = reverse pkg('File')->find_all(catfile('lang', $lang, 'perl.dict'));
 
-	# read the main lexicons in memory
-	my $l10n = Krang::ConfigApacheFormat->new(case_sensitive => 1);
+        # read the main lexicons in memory
+        my $l10n = Krang::ConfigApacheFormat->new(case_sensitive => 1);
 
-	$l10n->read($_) for @files;
+        $l10n->read($_) for @files;
 
-	# store the lexicon in package %L10N hash
-	$L10N{$lang} = $l10n;
+        # store the lexicon in package %L10N hash
+        $L10N{$lang} = $l10n;
 
-	# fill the exported %LANG hash
-	$LANG{$lang} = I18N::LangTags::List::name($lang);
+        # fill the exported %LANG hash
+        $LANG{$lang} = I18N::LangTags::List::name($lang);
     }
 
     # don't forget the default language
@@ -228,7 +229,6 @@ sub _load_localization {
 }
 
 BEGIN { _load_localization() }
-
 
 =item C<< pkg('Localization')->install(src => $path, verbose => 1, downgrade => 1, version => $version) >>
 
@@ -245,7 +245,7 @@ C<version> option for this to work.
 
 sub install {
     my ($pkg, %args) = @_;
-    my ($source, $verbose, $downgrade, $version) = @args{ qw(src verbose downgrade version) };
+    my ($source, $verbose, $downgrade, $version) = @args{qw(src verbose downgrade version)};
 
     croak("Missing src param!") unless $source;
 
@@ -259,15 +259,17 @@ sub install {
 
     # install a lower version than Krang's version?
     if ($version && $version < $Krang::VERSION) {
-	die "You want to install version v$version which is lower than Krang's version v$Krang::VERSION.\n"
-	  . "This may result in missing lexicon entries.\n"
-	  . "Specify '--downgrade' if you really want to proceed.\n" unless $downgrade;
+        die
+          "You want to install version v$version which is lower than Krang's version v$Krang::VERSION.\n"
+          . "This may result in missing lexicon entries.\n"
+          . "Specify '--downgrade' if you really want to proceed.\n"
+          unless $downgrade;
     }
 
     # cleanup before installing
     if (-e $lang_root and -d _) {
-	rmtree($lang_root)
-	  or die "Can't remove directory 'lang/$lang/' before installing: $!";
+        rmtree($lang_root)
+          or die "Can't remove directory 'lang/$lang/' before installing: $!";
     }
 
     # get files
@@ -275,6 +277,9 @@ sub install {
 
     # copy them in place
     $pkg->_copy_files($lang_root, $files, $verbose);
+
+    # make symlinks for files in htdocs/help/*, htdocs/js/*
+    $pkg->_make_symlinks(lang => $lang, verbose => $verbose);
 }
 
 =item C<< pkg('Localization')->uninstall(lang => LANGUAGE_TAG, verbose => 1) >>
@@ -284,25 +289,31 @@ RFC3066-style language tag representing a localization's root
 directory below F<lang/>. The C<verbose> option will
 cause uninstall steps to be logged to STDERR.
 
-=cut
-
 =back
+
+=cut
 
 sub uninstall {
     my ($pkg, %args) = @_;
 
-    my ($lang, $verbose) = @args{ qw(lang verbose) };
+    my ($lang, $verbose) = @args{qw(lang verbose)};
 
     croak "Missing 'lang' argument" unless $lang;
 
     my $lang_root = catdir(KrangRoot, 'lang', $lang);
 
     die "No localization distribution installed for language '$lang'"
-      unless -e $lang_root && -d _;
+      unless -e $lang_root && -d $lang_root;
 
     print STDERR "Removing $lang_root...\n" if $verbose;
     rmtree($lang_root)
-      or "Couldn't delete directory '$lang_root': $!";
+      or croak "Couldn't delete directory '$lang_root': $!";
+
+    # Remove symlinks for files in htdocs/help/, htdocs/js/
+    $pkg->_remove_symlinks(lang => $lang, verbose => $verbose);
+
+    # Remove localized templates in templates/*/$lang/
+    $pkg->_remove_localized_templates(lang => $lang, verbose => $verbose);
 }
 
 =for Credit:
@@ -318,27 +329,28 @@ sub _copy_files {
     my ($pkg, $lang_root, $files, $verbose) = @_;
 
     for my $file (@$files) {
-	# maybe make directory for $file
-	my @parts = splitdir($file);
-	my $dir   = @parts > 1 ? catdir(@parts[0 .. $#parts - 1]) : '';
-	my $target_dir = catdir($lang_root, $dir);
-	my $target = catfile($target_dir, $parts[-1]);
 
-	unless (-d $target_dir) {
-	    print STDERR "Making directory $target_dir...\n"
-	      if $verbose;
-	    mkpath([$target_dir]) 
-	      or die "Unable to create directory '$target_dir': $!\n";
-	}
+        # maybe make directory for $file
+        my @parts      = splitdir($file);
+        my $dir        = @parts > 1 ? catdir(@parts[0 .. $#parts - 1]) : '';
+        my $target_dir = catdir($lang_root, $dir);
+        my $target     = catfile($target_dir, $parts[-1]);
 
-	# copy the file
-	print STDERR "Copying $file to $target...\n"
-	  if $verbose;
-	my $target_file = catfile($target_dir, $parts[-1]);
-	copy($file, $target_file)
-	  or die "Unable to copy '$file' to '$target_file': $!\n";
-	chmod((stat($file))[2], $target_file)
-	  or die "Unable to chmod '$target_file' to match '$file': $!\n";
+        unless (-d $target_dir) {
+            print STDERR "Making directory $target_dir...\n"
+              if $verbose;
+            mkpath([$target_dir])
+              or die "Unable to create directory '$target_dir': $!\n";
+        }
+
+        # copy the file
+        print STDERR "Copying $file to $target...\n"
+          if $verbose;
+        my $target_file = catfile($target_dir, $parts[-1]);
+        copy($file, $target_file)
+          or die "Unable to copy '$file' to '$target_file': $!\n";
+        chmod((stat($file))[2], $target_file)
+          or die "Unable to chmod '$target_file' to match '$file': $!\n";
     }
 }
 
@@ -348,11 +360,13 @@ sub _list_files {
     # accumulator
     my @files = ();
 
-    File::Find::find({
-	  wanted => sub { push(@files, canonpath($_)) if -f $_ },
-	  no_chdir => 1
-	 },
-	 '.');
+    File::Find::find(
+        {
+            wanted => sub { push(@files, canonpath($_)) if -f $_ },
+            no_chdir => 1
+        },
+        '.'
+    );
 
     return \@files;
 }
@@ -370,17 +384,19 @@ sub _open_localization_dist {
     my $ok = eval { $tar->read($source); 1 };
     croak("Unable to read localization archive '$source' : $@\n")
       if $@;
-    croak("Unable to read localization archive '$source' : ". Archive::Tar->error)
+    croak("Unable to read localization archive '$source' : " . Archive::Tar->error)
       if not $ok;
 
     # extract in temp dir
-    my $dir = tempdir( DIR     => catdir(KrangRoot, 'tmp'),
-                       CLEANUP => 1 );
+    my $dir = tempdir(
+        DIR     => catdir(KrangRoot, 'tmp'),
+        CLEANUP => 1
+    );
 
     chdir($dir) or die "Unable to chdir to $dir: $!";
 
-    $tar->extract($tar->list_files) or
-      die("Unable to unpack archive '$source' : ". Archive::Tar->error);
+    $tar->extract($tar->list_files)
+      or die("Unable to unpack archive '$source' : " . Archive::Tar->error);
 
     # if there's just a single directory here then enter it
     opendir(DIR, $dir) or die $!;
@@ -392,6 +408,81 @@ sub _open_localization_dist {
     }
 
     return $entries[0];
+}
+
+sub _make_symlinks {
+    my ($pkg, %args) = @_;
+    for my $slink ($pkg->_get_symlink_spec(%args)) {
+
+        # Unlink first
+        if (-l $slink->{dst}) {
+            unlink $slink->{dst}
+              or croak "Couldn't remove symlink '$slink->{dst}'";
+        }
+
+        # Then recreate
+        if (-e $slink->{src}) {
+            print STDERR "Symlinking '$slink->{src}' to '$slink->{dst}'\n" if $args{verbose};
+            symlink($slink->{src}, $slink->{dst})
+              or croak "Couldn't symlink $slink->{src} to $slink->{dst}";
+        }
+    }
+}
+
+sub _remove_symlinks {
+    my ($pkg, %args) = @_;
+    for my $slink ($pkg->_get_symlink_spec(%args)) {
+        if (-l $slink->{dst}) {
+            print STDERR "Removing symlink '$slink->{dst}'\n" if $args{verbose};
+            unlink $slink->{dst}
+              or croak "Couldn't remove symlink '$slink->{dst}'";
+        }
+    }
+}
+
+sub _get_symlink_spec {
+    my ($pkg, %args) = @_;
+    my $lang = $args{lang};
+    return (
+        {
+            src => catdir(KrangRoot, 'lang',   $lang,  'help'),
+            dst => catdir(KrangRoot, 'htdocs', 'help', $lang)
+        },
+        {
+            src => catfile(KrangRoot, 'lang', $lang, 'htdocs', 'js', "calendar-$lang.js"),
+            dst => catfile(KrangRoot, 'htdocs', 'js', "calendar-$lang.js")
+        }
+    );
+}
+
+sub _remove_localized_templates {
+    my ($pkg, %args) = @_;
+
+    my @dirs = ();
+
+    # collect dirs to delete...
+    File::Find::find(
+        {
+            wanted => sub {
+                return unless -d;
+
+                # only subdirs containing localized templates
+                return unless (splitdir($_))[-1] eq $args{lang};
+
+                push @dirs, $_;
+
+            },
+            no_chdir => 1,
+        },
+        catdir(KrangRoot, 'templates')
+    );
+
+    # ... now delete them recursively
+    for my $dir (@dirs) {
+        print STDERR "Removing localized templates subdir $dir\n" if $args{verbose};
+        rmtree($dir)
+          or die "Couldn't remove '$_': $!";
+    }
 }
 
 1;
