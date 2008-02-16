@@ -310,12 +310,6 @@ sub make_links {
 		},
 	       );
 
-    # link for localized help
-    for my $lang (grep {$_ ne 'en'} AvailableLanguages) {
-	push @links, {src => catdir(KrangRoot, 'lang', $lang, 'help'),
-		      dst => catfile(KrangRoot, 'htdocs', 'help', $lang)};
-    }
-
     do_make_links(@links);
 }
 
