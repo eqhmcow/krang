@@ -262,7 +262,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
             my @ids  = map { $row->{$_} } @id_fields;
 
             # convert each data field
-            @data = map { convert_scalar($_, $from, $to) || '' } @data;
+            @data = map { convert_scalar($_) || '' } @data;
 
             # now put the data back
             $update_sth->execute(@data, @ids);
@@ -357,9 +357,9 @@ sub convert_element_data {
     my $data = shift;
     my $ref  = ref $data;
     if(!$ref) {
-        return convert_scalar($data, $from, $to);
+        return convert_scalar($data);
     } elsif($ref eq 'SCALAR') {
-        $$data = convert_element_data($$data, $from, $to);
+        $$data = convert_element_data($$data);
         return $data;
     } elsif($ref eq 'ARRAY') {
         return [map { convert_element_data($_) } @$data];
