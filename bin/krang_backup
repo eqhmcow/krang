@@ -38,8 +38,8 @@ For more details, see L<docs/ops_backup.pod>.
 =item --instance <instance_name>
 
 If this option is specified, the backup will be limited to the data/ paths
-and SQL dump for a particular instance. The default filename will then be 
-C<krang-`hostname`-INSTANCE-YYYYMMDD.kba.gz>.
+and SQL dump for a particular instance (and cannot be fed at a later time to C<krang_install>).
+In this case the default filename will be C<krang-`hostname`-INSTANCE-YYYYMMDD.kba.gz>.
 
 =item --compress
 
