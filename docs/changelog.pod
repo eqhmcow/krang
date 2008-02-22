@@ -9,6 +9,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added option to krang_backup to backup a single instance. [Noam Weinstein]
+
+=item *
+
 Caring for singular/plural in string "Result(s)" on find
 screens. [Bodo Schulze]
 

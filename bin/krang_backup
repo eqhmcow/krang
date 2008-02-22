@@ -35,6 +35,12 @@ For more details, see L<docs/ops_backup.pod>.
 
 =over 4
 
+=item --instance <instance_name>
+
+If this option is specified, the backup will be limited to the data/ paths
+and SQL dump for a particular instance. The default filename will then be 
+C<krang-`hostname`-INSTANCE-YYYYMMDD.kba.gz>.
+
 =item --compress
 
 If this option is specified then the resulting file will be compressed
@@ -85,8 +91,7 @@ END
 
 use Krang::ClassFactory qw(pkg);
 
-# use first instance if one isn't set.  Backups are installation wide
-# anyway.
+# use first instance if one isn't set. 
 use Krang::ClassLoader Conf => qw(KrangRoot InstanceDBName DBUser DBPass DBHost);
 BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 
@@ -97,14 +102,15 @@ use Sys::Hostname;
 use File::Path;
 use Cwd qw(cwd);
 
-my ($help, $man, $compress);
+my ($single_instance, $help, $man, $compress);
 my $verbose = 0;
 
 pod2usage(2) unless
-  GetOptions(help       => \$help,
-             man        => \$man,
-             'verbose+' => \$verbose,
-             'compress' => \$compress,
+  GetOptions('instance=s'   => \$single_instance,
+	     'help'         => \$help,
+             'man'          => \$man,
+             'verbose+'     => \$verbose,
+             'compress'     => \$compress,
             );
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
@@ -119,18 +125,20 @@ if (@ARGV == 1) {
     pod2usage("Too many arguments to $0.");
 } else {
     my ($y, $m, $d) = (localtime)[5,4,3];
-    $file = sprintf('krang-%s-%04d%02d%02d.%s', 
-                    hostname, ($y+1900), ($m+1), $d, ($compress ?'kba.gz':'kba'));
-}
+    $file = sprintf('krang-%s%s%04d%02d%02d.%s', 
+                    hostname, ($single_instance ? "-$single_instance-" : '-'), 
+		    ($y+1900), ($m+1), $d, ($compress ?'kba.gz':'kba'));
+} 
 die "File '$file' already exists.\n" if -e $file;
 print STDERR "Creating backup in '$file'...\n\n" if $verbose;
 
 # make backup directory if needed
 my $dir = catdir(KrangRoot, 'data', 'backup');
-mkpath([$dir]) unless -d $dir;
+my $dir_already_there = -d $dir;
+mkpath([$dir]) unless $dir_already_there;
 
 # dump all databases into data/backup
-foreach my $instance (pkg('Conf')->instances) {
+foreach my $instance ($single_instance ? ($single_instance) : pkg('Conf')->instances) {
     pkg('Conf')->instance($instance);
 
     my $dump_file = catfile($dir, InstanceDBName . '.sql');
@@ -151,7 +159,8 @@ foreach my $instance (pkg('Conf')->instances) {
 my $full_file = rel2abs($file);
 my $cmd = "tar cp" . ($verbose > 1 ? "v" : "") . 
   "f $full_file --exclude $full_file --exclude $file " . 
-  ($compress ? " --gzip " : "") .  " .";
+  ($compress ? "--gzip " : "") .  
+  ($single_instance ? "data/media/$single_instance data/templates/$single_instance data/backup/".InstanceDBName.".sql" : ".");
 
 print STDERR "Creating backup archive with command:\n\t$cmd\n\n"
   if $verbose;
@@ -160,8 +169,8 @@ print STDERR "Creating backup archive with command:\n\t$cmd\n\n"
 chdir(KrangRoot) or die $!;
 system($cmd) && die "taring of data failed... Please try again\n";
 
-# clean up backup dir
-rmtree([$dir]);
+# remove backup dir unless it was there before we ran
+rmtree([$dir]) unless $dir_already_there;
 
 print "Backup complete in $file.\n";
 exit 0;
