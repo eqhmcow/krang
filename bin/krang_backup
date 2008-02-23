@@ -152,15 +152,31 @@ foreach my $instance ($single_instance ? ($single_instance) : pkg('Conf')->insta
     print STDERR "Dumping " . InstanceDBName . " database with command:" .
       "\n\t$cmd\n\n"
         if $verbose;
-    system($cmd) && die "Dump of the MySQL databae failed.  Please correct the error and try your backup again.\n";
+    system($cmd) && die "Dump of the MySQL database failed.  Please correct the error and try your backup again.\n";
 }
+
+# if backing up a single instance, store its krang.conf block as data/backup/<INSTANCE_DB>.conf
+if ($single_instance) {
+    print STDERR "Copying $single_instance block from krang.conf to $dir/".InstanceDBName.".conf\n\n"
+	if $verbose;
+    open KRANG_CONF, "< ".catfile(KrangRoot,'conf','krang.conf');
+    open INSTANCE_CONF, "> $dir/".InstanceDBName.".conf";
+    my $found_instance;
+    while (<KRANG_CONF>) {
+	$found_instance = 1 if ($_ =~ /^\s*<Instance $single_instance>/i);
+	print INSTANCE_CONF "$_" if $found_instance;
+	last if ($found_instance && ($_ =~ /\s*<\/Instance>/i));
+    }
+}
+close (KRANG_CONF);
+close (INSTANCE_CONF);
 
 # create .kba tar file
 my $full_file = rel2abs($file);
 my $cmd = "tar cp" . ($verbose > 1 ? "v" : "") . 
   "f $full_file --exclude $full_file --exclude $file " . 
   ($compress ? "--gzip " : "") .  
-  ($single_instance ? "data/media/$single_instance data/templates/$single_instance data/backup/".InstanceDBName.".sql" : ".");
+  ($single_instance ? "data/media/$single_instance data/templates/$single_instance data/backup/".InstanceDBName.".* " : ".");
 
 print STDERR "Creating backup archive with command:\n\t$cmd\n\n"
   if $verbose;
