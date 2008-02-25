@@ -9,6 +9,10 @@ use Krang::ClassLoader Conf => qw(KrangRoot);
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader 'ElementLibrary';
 
+use Krang::Story;
+use Krang::Category;
+use Krang::ElementClass::Cover;
+
 use File::Spec::Functions qw(catfile);
 
 
