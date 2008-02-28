@@ -10,7 +10,7 @@ krang_deploy_templates - simple command-line utility to deploy krang templates
 
 =head1 SYNOPSIS
 
-   krang_deploy_templates --redeploy-only --force-checkin
+   krang_deploy_templates --redeploy-only
 
 =head1 DESCRIPTION
 
@@ -38,10 +38,6 @@ This parameter causes templates that have never been deployed to be skipped.
 =item --newly-deploy-only
 
 This parameter causes templates that have previously been deployed to be skipped.
-
-=item --force-checkin
-
-This parameter causes templates which are checked out to be checked in rather than skipped.
 
 =item --verbose
 
@@ -102,7 +98,6 @@ my $user = "admin";
 my $password = "";
 my $makecats = 0;
 my $verbose = 0;
-my $force_checkin = 0;
 
 pod2usage(2) unless
   GetOptions(
@@ -110,7 +105,6 @@ pod2usage(2) unless
 	     'everything' => \$everything,
 	     'redeploy-only' => \$skip_undeployed,
 	     'newly-deploy-only' => \$only_undeployed,
-             'force-checkin' => \$force_checkin,
              'verbose+' => \$verbose,
              'help' => \$help,
              'man' => \$man,
@@ -146,20 +140,6 @@ foreach my $template_id (@template_ids) {
 	next;
     }
 
-    if ($template->checked_out) {
-	if ($template->checked_out_by eq $ENV{REMOTE_USER}) {
-	    $template->checkin;
-	} else {
-	    if ($force_checkin) {
-		print "Checking in template $template_id (checked out to user " . $template->checked_out_by . ")\n" if $verbose;
-		$template->checkin;
-	    } else {
-		print "Skipping checked-out template $template_id (checked out to user " . $template->checked_out_by . ")\n" if $verbose;
-		next;
-	    }
-	}
-    }
-    
     if ($template->deployed) {
 	++$redeployed_count;
 	print "Re-deploying template $template_id\n" if $verbose;
