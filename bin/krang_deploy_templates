@@ -10,7 +10,7 @@ krang_deploy_templates - simple command-line utility to deploy krang templates
 
 =head1 SYNOPSIS
 
-   krang_deploy_templates --everything --force-checkin
+   krang_deploy_templates --redeploy-only --force-checkin
 
 =head1 DESCRIPTION
 
@@ -29,13 +29,13 @@ given template to be deployed.
 
 =item --everything
 
-This parameter causes every template to be deployed.
+This parameter causes every template in the system to be deployed.
 
-=item --skip-undeployed
+=item --redeploy-only
 
 This parameter causes templates that have never been deployed to be skipped.
 
-=item --only-undeployed
+=item --newly-deploy-only
 
 This parameter causes templates that have previously been deployed to be skipped.
 
@@ -108,8 +108,8 @@ pod2usage(2) unless
   GetOptions(
              'template-id=s' => \@template_ids,
 	     'everything' => \$everything,
-	     'skip-undeployed' => \$skip_undeployed,
-	     'only-undeployed' => \$only_undeployed,
+	     'redeploy-only' => \$skip_undeployed,
+	     'newly-deploy-only' => \$only_undeployed,
              'force-checkin' => \$force_checkin,
              'verbose+' => \$verbose,
              'help' => \$help,
@@ -119,21 +119,15 @@ pod2usage(2) unless
 pod2usage(1)             if $help || !(@template_ids || $everything || $skip_undeployed || $only_undeployed);
 pod2usage(-verbose => 2) if $man;
 
-unless (@template_ids || $everything) {
-    die "Must specify either --template-id or --everything\n";
+if ($everything && (@template_ids || $skip_undeployed || $only_undeployed)) {
+    die "Can't specify --everything and a more-specific option at the same time!\n";
 }
-
-if ($everything) {
-    if (@template_ids) {
-	die "Can't specify --everything and --template-id at the same time!\n";
-    } else {
-	@template_ids = pkg('Template')->find(ids_only => 1);
-    }
-} 
 
 if ($skip_undeployed && $only_undeployed) {
-    die ("Can't specify --skip-undeployed and only-undeployed at the same time!\n");
+    die ("Can't specify --redeploy-only and --newly-deploy-only the same time!\n");
 }
+
+@template_ids = pkg('Template')->find(ids_only => 1) unless @template_ids;
 
 my ($newly_deployed_count, $redeployed_count);
 foreach my $template_id (@template_ids) {
@@ -176,9 +170,11 @@ foreach my $template_id (@template_ids) {
     $template->deploy;
 }
 
-print "\n";
-print "Total newly deployed templates: $newly_deployed_count\n" if $newly_deployed_count;
-print "Total re-deployed templates: $redeployed_count\n" if $redeployed_count;
-print "Nothing to deploy!\n" unless ($newly_deployed_count || $redeployed_count);
-
+if ($newly_deployed_count || $redeployed_count) {
+    print "Total newly deployed templates: $newly_deployed_count\n" if $newly_deployed_count;
+    print "Total re-deployed templates: $redeployed_count\n" if $redeployed_count;
+} else { 
+    print "Nothing to deploy.\n";
+}
+ 
 exit 0;
