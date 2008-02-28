@@ -8,10 +8,8 @@ use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Conf => qw(KrangRoot);
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader 'ElementLibrary';
-
-use Krang::Story;
-use Krang::Category;
-use Krang::ElementClass::Cover;
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Category';
 
 use File::Spec::Functions qw(catfile);
 
@@ -110,7 +108,7 @@ sub _fix_slugs_that_duplicate_categories {
             my $story_id = $_->[0];
 
             # grab story object and - if necessary - check it in
-            my ($story) = Krang::Story->find(story_id => $story_id);
+            my ($story) = pkg('Story')->find(story_id => $story_id);
 
             print "  Converting Story $story_id (".$story->url.") into a Category Cover...\n";
 
@@ -133,10 +131,10 @@ sub _fix_slugs_that_duplicate_categories {
             my @old_cats = $story->categories;
             my @new_cats;
             foreach my $old_cat (@old_cats) {
-                my ($new_cat) = Krang::Category->find(url => $old_cat->url . $slug . '/');
+                my ($new_cat) = pkg('Category')->find(url => $old_cat->url . $slug . '/');
                 unless ($new_cat) {
                     print "    Creating new category: ". $old_cat->url . $slug ."/\n";
-                    $new_cat = Krang::Category->new(dir       => $slug,
+                    $new_cat = pkg('Category')->new(dir       => $slug,
                                                     parent_id => $old_cat->category_id,
                                                     site_id   => $old_cat->site_id);
                     $new_cat->save;
