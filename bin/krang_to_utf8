@@ -107,15 +107,6 @@ if ($backup_data) {
     print "\nOK - We will back it up before performing the conversions.\n";
 }
 
-my $convert_manual_1252;
-if ($old_charset eq 'latin1') {
-    print "\nDo any of your stories or templates include Windows specific hexadecimal strings like '&#147;' which insert special characters like curly quotes and emdashes?\n"; 
-    my $convert_manual_1252 = confirm();
-    if ($convert_manual_1252) {
-	print "\nOK - We will convert them to their Unicode equivalents.\n";
-    } 
-}
-
 print "\nWould you like to automatically delete all but the latest (converted) versions of Stories, Templates, and Media objects?\n";
 my $remove_old_versions = confirm();
 if ($remove_old_versions) {
@@ -152,14 +143,6 @@ print "\nCONVERING SQL TABLES TO UTF8\n\n";  # skip history - it's huge and only
 if (system($bin.'/krang_charset_convert_tables --to utf8 --all-instances --skip-table history --verbose')) {
     print "\nTABLE-CONVERSION FAILED: UTF8 UPGRADE INCOMPLETE (YOU MAY NEED TO RESTORE BACKUP!)\n\n";
     exit;
-}
-
-if ($convert_manual_1252) {
-    print "\nREPLACING WINDOWS-1252 HEXADECIMAL STRINGS WITH UNICODE SYMBOLS\n\n";
-    if (system($bin.'/krang_charset_convert_data --from manual-1252 --to utf8 --all-instances --verbose')) {
-	print "\nHEX-STRING CONVERSION FAILED: UTF8 UPGRADE INCOMPLETE (YOU MAY NEED TO RESTORE BACKUP!)\n\n";
-	exit;
-    }
 }
 
 my $krang_conf_file = catfile($ENV{KRANG_ROOT}, "conf", "krang.conf");

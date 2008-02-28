@@ -43,10 +43,6 @@ to see if the site being served declares its character set.
 When in doubt, you'll probably have to guess and try one. Make sure to
 backup so you can roll it back if your guess was wrong.
 
-NOTE: If you pass this argument the special value 'manual-1252', the
-script will fix (and only fix) six-character strings like "&#147;" 
-In this special case the tables must already be in the --to encoding.
-
 =item --to
 
 Specify the character set that you are converting your data to.
@@ -128,8 +124,6 @@ END
 use Pod::Usage;
 use Getopt::Long;
 
-# use first instance if one isn't set.  Addons are installation wide
-# anyway.
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Site';
@@ -175,7 +169,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
 
     # make sure MySQL interprets incoming & outgoing data in the original charset since
     # the tables haven't yet been converted (except when running special manual-1252 mode)
-    $dbh->do('SET names ' . pkg('Charset')->mysql_charset($from eq 'manual-1252' ? $to : $from));
+    $dbh->do('SET names ' . pkg('Charset')->mysql_charset($from));
 
     # figure out which sites (and hence, which stories) we're going to use for this instance
     my @site_ids = @only_site_ids ? @only_site_ids : pkg('Site')->find(ids_only => 1);
@@ -381,17 +375,58 @@ sub build_special_cp1252_conversions {
     }
 }
 
+my %cp1252_string_to_html_entity =
+(
+    '128' => '&euro;',
+    '130' => '&sbquo;',
+    '131' => '&#x192;',
+    '132' => '&bdquo;',
+    '133' => '&hellip;',
+    '134' => '&dagger;',
+    '135' => '&Dagger;',
+    '136' => '&circ;',
+    '137' => '&permil;',
+    '138' => '&Scaron;',
+    '139' => '&lsaquo;',
+    '140' => '&OElig;',
+    '142' => '&#x17D;',
+    '145' => '&lsquo;',
+    '146' => '&rsquo;',
+    '147' => '&ldquo;',
+    '148' => '&rdquo;',
+    '149' => '&bull;',
+    '150' => '&ndash;', 
+    '151' => '&mdash;',
+    '152' => '&tilde;',
+    '153' => '&trade;',
+    '154' => '&scaron;',
+    '155' => '&rsaquo;',
+    '156' => '&oelig;',
+    '158' => '&#x17E;',
+    '159' => '&Yuml;',
+ );
+
+sub cp1252_string_to_html_entity {
+    my $orig_string = shift;
+    my ($prefix, $value) = ($orig_string =~ /^\&(\#|x|X)(.*);$/);
+    return $orig_string unless ($prefix && $value);
+
+    $value = hex($value) if ($prefix eq 'x' || $prefix eq 'X');
+    my $html_entity = $cp1252_string_to_html_entity{$value};
+    return $html_entity ? $html_entity : $orig_string;
+}
+
+
 sub convert_scalar {
     my $data = shift;
     return unless defined $data;
+    
+    # convert manually-entered Windows-CP1252 strings (e.g. &#151;) to HTML-entity equivalents (e.g. &mdash;)
+    $data =~ s/((\&\#\d\d\d\;)|(\&[xX][0-9a-fA-F][0-9a-fA-F];))/@{[cp1252_string_to_html_entity($1)]}/sg
+	unless (pkg('Charset')->mysql_charset($from) ne 'latin1');
 
-    if ($from eq 'manual-1252') {
-        # handle special manual-1252 mode (see POD)
-        build_special_cp1252_conversions if !%cp1252_string_to_char;
-        $data =~ s/(\&\#\d\d\d\;)/$cp1252_string_to_char{$1}/sg;
-    } else {  
-        # handle all other modes
-        from_to($data, $from, $to);
-    }
+    # now perform actual charset conversion
+    from_to($data, $from, $to);
+
     return $data;
 }     
