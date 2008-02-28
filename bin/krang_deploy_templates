@@ -1,0 +1,184 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_deploy_templates - simple command-line utility to deploy krang templates
+
+=head1 SYNOPSIS
+
+   krang_deploy_templates --everything --force-checkin
+
+=head1 DESCRIPTION
+
+Deploy Krang templates from the command line.
+
+=head1 OPTIONS
+
+The script takes the following options:
+
+=over
+
+=item --template-id
+
+This parameter, which can be specified multiple times, causes the
+given template to be deployed. 
+
+=item --everything
+
+This parameter causes every template to be deployed.
+
+=item --skip-undeployed
+
+This parameter causes templates that have never been deployed to be skipped.
+
+=item --only-undeployed
+
+This parameter causes templates that have previously been deployed to be skipped.
+
+=item --force-checkin
+
+This parameter causes templates which are checked out to be checked in rather than skipped.
+
+=item --verbose
+
+=item --help
+
+=item --man
+
+=back
+
+=cut
+
+
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    $ENV{KRANG_NO_ELEMENTLIBS} = 1;
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw(InstanceElementSet KrangRoot);
+use Krang::ClassLoader 'Template';
+
+use Getopt::Long;
+use Pod::Usage;
+
+my ($help, $man, @template_ids, $everything, $skip_undeployed, $only_undeployed);
+my $user = "admin";
+my $password = "";
+my $makecats = 0;
+my $verbose = 0;
+my $force_checkin = 0;
+
+pod2usage(2) unless
+  GetOptions(
+             'template-id=s' => \@template_ids,
+	     'everything' => \$everything,
+	     'skip-undeployed' => \$skip_undeployed,
+	     'only-undeployed' => \$only_undeployed,
+             'force-checkin' => \$force_checkin,
+             'verbose+' => \$verbose,
+             'help' => \$help,
+             'man' => \$man,
+            );
+
+pod2usage(1)             if $help || !(@template_ids || $everything || $skip_undeployed || $only_undeployed);
+pod2usage(-verbose => 2) if $man;
+
+unless (@template_ids || $everything) {
+    die "Must specify either --template-id or --everything\n";
+}
+
+if ($everything) {
+    if (@template_ids) {
+	die "Can't specify --everything and --template-id at the same time!\n";
+    } else {
+	@template_ids = pkg('Template')->find(ids_only => 1);
+    }
+} 
+
+if ($skip_undeployed && $only_undeployed) {
+    die ("Can't specify --skip-undeployed and only-undeployed at the same time!\n");
+}
+
+my ($newly_deployed_count, $redeployed_count);
+foreach my $template_id (@template_ids) {
+
+    my ($template) = pkg('Template')->find(template_id => $template_id);
+    unless ($template) {
+	print STDERR "Couldn't find template $template_id!\n";
+	next;
+    }
+
+    if ($skip_undeployed && !$template->deployed) {
+	print "Skipping undeployed template $template_id\n" if $verbose > 1;
+	next;
+    } elsif ($only_undeployed && $template->deployed) {
+	print "Skipping deployed template $template_id\n" if $verbose > 1;
+	next;
+    }
+
+    if ($template->checked_out) {
+	if ($template->checked_out_by eq $ENV{REMOTE_USER}) {
+	    $template->checkin;
+	} else {
+	    if ($force_checkin) {
+		print "Checking in template $template_id (checked out to user " . $template->checked_out_by . ")\n" if $verbose;
+		$template->checkin;
+	    } else {
+		print "Skipping checked-out template $template_id (checked out to user " . $template->checked_out_by . ")\n" if $verbose;
+		next;
+	    }
+	}
+    }
+    
+    if ($template->deployed) {
+	++$redeployed_count;
+	print "Re-deploying template $template_id\n" if $verbose;
+    } else {
+	++$newly_deployed_count;
+	print "Deploying template $template_id\n" if $verbose;
+    }
+    $template->deploy;
+}
+
+print "\n";
+print "Total newly deployed templates: $newly_deployed_count\n" if $newly_deployed_count;
+print "Total re-deployed templates: $redeployed_count\n" if $redeployed_count;
+print "Nothing to deploy!\n" unless ($newly_deployed_count || $redeployed_count);
+
+exit 0;

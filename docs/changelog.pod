@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added krang_deploy_templates script to deploy some or all templates
+from the command-line. [Noam Weinstein]
+
+=item *
+
 Added option to krang_backup to backup a single instance. [Noam Weinstein]
 
 =item *
