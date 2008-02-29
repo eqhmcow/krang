@@ -1,0 +1,159 @@
+#!/usr/bin/perl -w
+use warnings;
+use strict;
+
+=head1 NAME
+
+krang_restore_instance - restore an instance backed up via krang_backup --instance
+
+=head1 SYNOPSIS
+
+  $ krang_restore_instance instance.kba.gz
+
+=head1 DESCRIPTION
+
+This script will restore a Krang instance backed up via
+running krang_backup --instance
+
+=head1 OPTIONS
+
+The script takes the following options:
+
+=over
+
+=item --no-prompt
+
+Do not prompt user for confirmation.
+
+=back
+
+=cut
+
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+# Set up KRANG_ROOT and PERL5LIB
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+}
+
+use Pod::Usage;
+use File::Temp qw(tempdir);
+use Term::Prompt qw(prompt);
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader Conf => qw(KrangRoot KrangUser KrangGroup InstanceDBName DBUser DBPass);
+use Krang::Platform;
+
+print "\nkrang_restore_instance\n".
+        "----------------------\n";
+
+exit_error ("Must be run as root") unless ($> eq "0");
+
+my ($no_prompt);
+if (($ARGV[0] || '') eq '--no-prompt') {
+    shift @ARGV;
+    $no_prompt = 1;
+} elsif (($ARGV[1] || '') eq '--no-prompt') {
+    pop @ARGV;
+    $no_prompt = 1;
+}
+
+pod2usage(2) unless $#ARGV == 0;
+pod2usage(1) if ($ARGV[0] eq 'help' || $ARGV[0] eq 'man');
+
+my $kba = $ARGV[0];
+exit_error ("Can't find $kba") unless (-e $kba);
+exit_error ("Backup file should end in .kba or .kba.gz") unless ($kba =~ /\.kba(\.gz)?/);
+
+unless ($no_prompt) {
+    exit 1      
+        unless prompt("y", "\nThis program will drop & recreate the Krang database, /templates path, and /media path for the instance in $kba.\n\nAre you sure you want to proceed?", "y/n", "n");
+}
+
+$kba = rel2abs($kba);
+
+my $BACKUP_DIR = tempdir(CLEANUP => 0, DIR     => catdir($ENV{KRANG_ROOT}, 'tmp'));
+
+print "\nUnpacking $kba\n";
+my $cmd = "tar -x" . ($kba =~ /gz$/ ? 'z' : '') . "f $kba -C $BACKUP_DIR";
+system($cmd) && exit_error("Couldn't un-tar $kba to $BACKUP_DIR");
+
+my @conf_files = glob(catfile($BACKUP_DIR, 'data', 'backup', '*.conf'));
+exit_error ("$kba is not a valid Krang backup: it's missing data/backup/<InstanceDBName>.conf")
+    unless @conf_files;
+exit_error ("$kba is not a valid Krang backup: it should have a single .conf file in data/backup/")
+    unless @conf_files == 1;
+my $conf_file = shift @conf_files;
+
+my @sql_files = glob(catfile($BACKUP_DIR, 'data', 'backup', '*.sql'));
+exit_error ("$kba is not a valid Krang backup - it's missing data/backup/<InstanceDBName>.sql")
+    unless @sql_files;
+exit_error ("$kba is not a valid Krang backup - it should have a single .sql file in data/backup/")
+    unless @sql_files == 1;
+my $sql_file = shift @sql_files;
+
+open CONF_FILE, "< $conf_file";
+my $conf_text = join('',<CONF_FILE>);
+$conf_text =~ s/\s*$//igs;
+my ($instance_name) = ($conf_text =~ /\s*\<Instance ([^\>]+)\>\s*/is);
+exit_error ("Couldn't find instance block in $conf_file!") unless $instance_name;
+
+my @instances = pkg('Conf')->instances;
+my %instances = map { $_ => 1 } @instances;
+exit_error ("Your krang.conf has no block for the instance $instance_name. Please find below the contents of the backed-up block: after making any necessary changes, just add it to krang.conf, create the database by running \"krang_createdb $instance_name\", and re-run this script!\n\n$conf_text") unless ($instances{$instance_name});
+
+pkg('Conf')->instance($instance_name);
+
+my $template_dir = catdir(KrangRoot, 'data', 'templates', $instance_name);
+my $media_dir = catdir(KrangRoot, 'data', 'media', $instance_name);
+foreach ($template_dir, $media_dir) {
+    if (-d $_) {
+	print "Removing current contents of $_\n";
+	system ("rm -rf $_") && exit_error ("Unable to remove $_!");
+    } else {
+	print "Creating $_\n";
+    }
+    mkdir ($_);
+    system ("chown -R  --no-dereference ".KrangUser.":".KrangGroup." $_") &&
+	exit_error ("Couldn't change ownership of $_ to ".KrangUser.":".KrangGroup."!");
+}
+
+print "Copying $BACKUP_DIR/data/templates to $template_dir\n";
+system ("cp -f -R $BACKUP_DIR/data/templates/* $template_dir") &&
+    exit_error ("Couldn't copy templates to $template_dir!");
+    
+print "Copying $BACKUP_DIR/data/media to $media_dir\n";
+system ("cp -f -R $BACKUP_DIR/data/media/* $template_dir") &&
+    exit_error ("Couldn't copy media files to $template_dir!");
+
+foreach ($template_dir, $media_dir) {
+    print "Setting ownership of $_ to ".KrangUser.":".KrangGroup."\n";
+    system ("chown -R  --no-dereference ".KrangUser.":".KrangGroup." $_") &&
+	exit_error ("Couldn't change ownership of $_!");
+}
+
+my $sql_cmd = "cat $sql_file | mysql -u".DBUser." -p".DBPass." ".InstanceDBName;
+print "Loading $sql_file into ".InstanceDBName." database\n";
+system ($sql_cmd) && exit_error ("Couldn't load $sql_file into database!");
+
+print "\nDone!\n\n";
+
+sub exit_error {
+    my $cmd = $0;
+    $cmd =~ s/.*\/(.+)$/$1/;
+
+    my $message = shift;
+    print STDERR "\nError: $message\n\nScript aborted.\n\n";
+    exit(1);
+}
