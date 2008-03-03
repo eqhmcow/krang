@@ -89,6 +89,7 @@ $@
 END
 }
 
+use Krang;
 use Krang::ClassFactory qw(pkg);
 
 # use first instance if one isn't set. 
@@ -145,7 +146,7 @@ foreach my $instance ($single_instance ? ($single_instance) : pkg('Conf')->insta
     my $cmd = MYSQL_DUMP . ' -u' . DBUser .
       (DBPass ? (' -p' . DBPass) : '') . 
       (DBHost ? (' -h' . DBHost) : '') .
-      ' -e -l --databases ' . 
+      ' -e -l ' . ($single_instance ? '' : '--databases ') .
       InstanceDBName . ">>$dump_file";
     # in case any addons are using InnoDB tables
     $cmd = "echo 'SET foreign_key_checks=0;' > $dump_file; $cmd";
@@ -161,6 +162,7 @@ if ($single_instance) {
 	if $verbose;
     open KRANG_CONF, "< ".catfile(KrangRoot,'conf','krang.conf');
     open INSTANCE_CONF, "> $dir/".InstanceDBName.".conf";
+    print INSTANCE_CONF "BACKUP CREATED IN KRANG V" . $Krang::VERSION . "\n\n";
     my $found_instance;
     while (<KRANG_CONF>) {
 	$found_instance = 1 if ($_ =~ /^\s*<Instance $single_instance>/i);
