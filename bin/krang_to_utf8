@@ -66,7 +66,7 @@ my $bin = catdir($ENV{KRANG_ROOT}, "bin");
 
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Charset';
-#use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Script';
 
 sub confirm {
     while (1) {
