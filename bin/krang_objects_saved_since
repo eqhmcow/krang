@@ -1,0 +1,100 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_objects_saved_since - returns a list of all stories, media objects, and templates saved since a given date/time
+
+=head1 SYNOPSIS
+
+List IDs of all objects saved since January 1st, 2008 at 6:30pm:
+
+   krang_objects_saved_since 2008-01-00-18:30:00
+
+=head1 DESCRIPTION
+
+Returns the IDs of objects saved since a given date/time.
+
+=head1 OPTIONS
+
+The script takes a single argument, which should be in the format YYYY-MM-DD-HH:MM:SS
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Story';
+use Krang::Conf qw(SavedVersionsPerStory SavedVersionsPerMedia SavedVersionsPerTemplate);
+use Krang::ClassLoader DB => qw(dbh);
+use Pod::Usage;
+
+# check the command-line
+pod2usage(1) unless (($#ARGV == 0) && ($ARGV[0] !~ /\-*help/i) && ($ARGV[0] !~ /\-*man/i));
+my $date_and_time = $ARGV[0];
+unless ($date_and_time =~ /^\d\d\d\d\-\d\d\-\d\d\-\d\d\:\d\d:\d\d$/) {
+    print "\nArgument must be in the format YYYY-MM-DD-HH:MM:SS\n\n";
+    exit (1);
+}
+
+# format datetime like MySQL's timestamp 
+$date_and_time =~ s/\-(\d\d)\:/ $1\:/; 
+
+# perform the search
+print "\nSearching history table...\n";
+my $dbh = dbh();
+my $sql = "SELECT object_id, object_type from history where action='SAVE' and timestamp >= '$date_and_time'";
+my $sth = $dbh->prepare($sql);
+$sth->execute();
+
+# sort the results
+my %results;
+while(my $row = $sth->fetchrow_hashref) {
+    $results{$row->{object_type}}{$row->{object_id}} = 1;
+}
+
+# display the results
+print "\n";
+if (%results) {
+    foreach my $key (keys %results) {
+	print "$key " . join(', ', sort keys %{$results{$key}}) . "\n\n";
+    } 
+} else {
+    print "NONE FOUND!\n\n";
+}
+
+# leave
+exit 0;
