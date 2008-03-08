@@ -12,7 +12,7 @@ krang_objects_saved_since - returns a list of all stories, media objects, and te
 
 List IDs of all objects saved since January 1st, 2008 at 6:30pm:
 
-   krang_objects_saved_since 2008-01-00-18:30:00
+   krang_objects_saved_since 2008-01-01-18:30:00
 
 =head1 DESCRIPTION
 
