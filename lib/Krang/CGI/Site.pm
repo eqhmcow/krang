@@ -456,18 +456,20 @@ sub search {
                                       find_params =>
                                       {simple_search => $search_filter},
                                       columns => [
+						  'site_id',
                                                   'url',
                                                   'preview_url',
                                                   'command_column',
                                                   'checkbox_column',
                                                  ],
                                       column_labels => {
+					                site_id => 'ID',
                                                         url => 'URL',
                                                         preview_url =>
                                                         'Preview URL',
                                                        },
                                       columns_sortable =>
-                                      [qw(url preview_url)],
+                                      [qw(site_id url preview_url)],
                                       columns_sort_map => {},
                                       command_column_commands =>
                                       [qw(view_site edit_site)],
@@ -567,6 +569,7 @@ sub make_history_return_params {
 # Handles rows for search run mode
 sub search_row_handler {
     my ($row, $site) = @_;
+    $row->{site_id} = $site->site_id();
     $row->{url} = $site->url();
     $row->{preview_url} = $site->preview_url();
 }

@@ -104,11 +104,12 @@ sub find {
                                                       may_see => 1,
                                                       simple_search => $search_filter
                                                      },
-                                      columns => [qw(url command_column checkbox_column)],
+                                      columns => [qw(category_id url command_column checkbox_column)],
                                       column_labels => {
+					                category_id => 'ID',
                                                         url => 'URL',
                                                        },
-                                      columns_sortable => [qw( url )],
+                                      columns_sortable => [qw( category_id url )],
                                       command_column_commands => [qw( edit_category )],
                                       command_column_labels => {edit_category => 'Edit'},
                                       row_handler => sub { $self->find_row_handler(@_) },
@@ -127,6 +128,7 @@ sub find {
 
 sub find_row_handler {
     my ($self, $row, $category) = @_;
+    $row->{category_id} = $category->category_id();
     $row->{url} = format_url( url => $category->url(), length => 60 );
     unless ($category->may_edit) {
         $row->{command_column} = "&nbsp;";
