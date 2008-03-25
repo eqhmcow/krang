@@ -2030,16 +2030,13 @@ sub find_story_row_handler {
         . qq|<input value="|
         . localize('View Log')
         . qq|" onclick="view_story_log('| . $story->story_id 
-        . qq|')" type="button" class="button">|
-        . ' '
-        . qq|<input value="|
-        . localize('Copy')
-        . qq|" onclick="copy_story('| . $story->story_id 
         . qq|')" type="button" class="button">|;
 
     unless ($read_only) {
         $row->{commands_column} .= ' '
-          . qq|<input value="Copy" onclick="copy_story('| . $story->story_id 
+          . qq|<input value="|
+          . localize('Copy')
+          . qq|" onclick="copy_story('| . $story->story_id 
           . qq|')" type="button" class="button">|;
     }
 
