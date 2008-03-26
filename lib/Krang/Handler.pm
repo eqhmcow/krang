@@ -346,7 +346,10 @@ sub authen_handler ($$) {
     } elsif ($r->uri !~ /((\.pl)|(\/))$/ || $r->uri =~ /\/bug\.cgi$/ || $r->uri =~ /\/help\.pl$/) {
       # 4. A non-PERL request (e.g. image), bug, or help file: inherit ID from previous request
       $window_id = $cookies{krang_previous_wid} && $cookies{krang_previous_wid}->value;
+    } else {
+	debug("Can't find window ID in cookies");
     }
+
 
     # Clean/update window cookies (so next dynamic request requires a new ID, and next static request uses this ID)
     Apache::Cookie->new($r, -name => 'krang_window_id', -value => '0', -path => '/')->bake;  
