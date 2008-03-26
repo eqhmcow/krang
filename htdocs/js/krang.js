@@ -716,8 +716,12 @@ Krang.Help = {
         Krang.Help.current_topic    = topic;
         Krang.Help.current_subtopic = subtopic;
     },
-    go               : function(topic, subtopic) {
+    go               : function(topic, subtopic, options) {
         var url = 'help.pl';
+        if( ! options ) options = {};
+        var height = options.height || 600;
+        var width  = options.width  || 500;
+
         // use the defaults for this page unless otherwise given
         if(! topic )    topic       = Krang.Help.current_topic;
         if(! subtopic ) subtopic = Krang.Help.current_subtopic;
@@ -725,7 +729,7 @@ Krang.Help = {
         // if we have something go to it
         if( topic )    url = url + '?topic=' + topic;
         if( subtopic ) url = url + '#' + subtopic;
-        Krang.popup(url, { width: 500, height: 600});
+        Krang.popup(url, { width: width, height: height});
     }
 };
 
