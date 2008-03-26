@@ -188,6 +188,12 @@ sub collect_templates_in_root {
 
     opendir(my $dh, $template_root) or die "Couldn't opendir($template_root): $!";
 
+    my @subdirs =
+	 sort { $a cmp $b                  }
+	 grep { -d $_                      }
+	 map  { catdir($template_root, $_) }
+         grep { $_ !~ m{^\.(\.?|svn)}      } readdir($dh);
+
     find({
 	  wanted => sub {
 	      # only for one package
@@ -204,11 +210,8 @@ sub collect_templates_in_root {
 	  },
 	  no_chdir => 0,
 	 },
-	 sort { $a cmp $b                  }
-	 grep { -d $_                      }
-	 map  { catdir($template_root, $_) }
-         grep { $_ !~ m{^\.(\.?|svn)}      } readdir($dh)
-    );
+         @subdirs
+    ) if @subdirs;
 
     closedir($dh) or warn "Couldn't closedir($template_root): $!";
 
