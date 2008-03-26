@@ -8,6 +8,7 @@ use Carp qw(croak);
 use Krang::ClassLoader 'Desk';
 use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Log => qw(debug);
+use Krang::ClassLoader Localization => qw(localize);
 
 =head1 NAME
 
@@ -91,7 +92,7 @@ sub get_existing_desks {
         }
 
         push (@existing_desk_loop, {    'desk_id' => $desk->desk_id,
-                                        'name' => $desk->name,
+                                        'name' => localize($desk->name),
                                         'desk_count_loop' => \@desk_count_loop
                                     } );
     }
@@ -175,7 +176,7 @@ sub delete {
     }
                                                                                  
     foreach my $desk_id (@delete_list) {
-        my $desk_name = (pkg('Desk')->find( desk_id => $desk_id ))[0]->name;
+        my $desk_name = localize((pkg('Desk')->find( desk_id => $desk_id ))[0]->name);
         
         debug(__PACKAGE__."->delete: calling delete desk $desk_id");
         

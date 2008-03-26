@@ -80,7 +80,7 @@ sub show {
 
     # set up the desk selector
     my ($desk) = pkg('Desk')->find(desk_id => $desk_id);
-    $template->param( desk_name => $desk->name );
+    $template->param( desk_name => localize($desk->name) );
     $template->param( desk_id   => $desk_id    );
 
     my @found_desks = pkg('Desk')->find();
@@ -95,7 +95,7 @@ sub show {
 
 	    my $is_selected = ($found_desk->order eq ($desk->order + 1)) ? 1 : 0;
 	    push @desk_loop, { choice_desk_id => $found_desk_id,
-			       choice_desk_name => $found_desk->name,
+			       choice_desk_name => localize($found_desk->name),
 			       is_selected => $is_selected
 			     };
 	}
@@ -326,7 +326,7 @@ sub _do_move {
     my $story_id  = $obj->story_id;
     my $desk_id   = $self->query->param('move_'.$story_id);
     my ($desk)    = pkg('Desk')->find(desk_id => $desk_id);
-    my $desk_name = $desk ? $desk->name : '';
+    my $desk_name = $desk ? localize($desk->name) : '';
 
     eval { $obj->move_to_desk($desk_id); };
 

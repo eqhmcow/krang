@@ -888,7 +888,7 @@ sub get_group_tmpl {
             foreach my $desk (@desks) {
                 my $param_name = "desk_".$desk->desk_id();
                 my %desk_row = (
-                                desk_name => $desk->name(),
+                                desk_name => localize($desk->name),
                                 permission_radio => $self->make_permissions_radio($param_name),
                                );
                 push(@desks_tmpl, \%desk_row);

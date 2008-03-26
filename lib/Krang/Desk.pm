@@ -77,18 +77,10 @@ available slot in desk order.
 use Krang::ClassLoader MethodMaker => 
     new_with_init => 'new',
     new_hash_init => 'hash_init',
-    get_set       => [ qw( ord ) ],
+    get_set       => [ qw( name ord ) ],
     get => [ qw( desk_id ) ];
 
 sub id_meth { 'desk_id' }
-
-sub name {
-    my $self = shift;
-
-    $self->{name} = $_[0] if @_;
-
-    return localize($self->{name});
-}
 
 sub init {
     my $self = shift;

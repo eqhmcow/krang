@@ -356,7 +356,7 @@ sub check_in_and_save {
             add_alert(
                 'story_cant_move_checked_out',
                 id   => $story->story_id,
-                desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name
+                desk => localize((pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name)
             );
         } elsif($@->isa('Krang::Story::NoDesk')) {
             add_alert(
@@ -376,7 +376,7 @@ sub check_in_and_save {
     add_message(
         "moved_story",
         id   => $story->story_id, 
-        desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name
+        desk => localize((pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name)
     );
  
     # redirect to that desk 
@@ -572,7 +572,7 @@ sub edit {
 	}
 
         push (@desk_loop, { choice_desk_id   => $found_desk->desk_id,
-                            choice_desk_name => $found_desk->name,
+                            choice_desk_name => localize($found_desk->name),
                             is_selected      => $is_selected });
     }
 
@@ -2061,7 +2061,7 @@ sub find_story_row_handler {
     } elsif ($story->desk_id) {
         $row->{status} = localize('On')
             . ' <b>'
-            . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name
+            . localize((pkg('Desk')->find(desk_id => $story->desk_id))[0]->name)
             . '</b> '
             . localize('Desk');
     } else {

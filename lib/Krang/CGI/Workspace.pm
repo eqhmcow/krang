@@ -151,7 +151,7 @@ sub _row_handler {
             push @desk_loop,
               {
                 choice_desk_id   => $found_desk->desk_id,
-                choice_desk_name => $found_desk->name,
+                choice_desk_name => localize($found_desk->name),
                 is_selected      => $is_selected
               };
         }
@@ -449,7 +449,7 @@ sub _do_checkin {
         my $story_id = $obj->story_id;
         my $desk_id  = $self->query->param('checkin_to_story_' . $story_id);
         my ($desk) = pkg('Desk')->find(desk_id => $desk_id);
-        my $desk_name = $desk ? $desk->name : '';
+        my $desk_name = $desk ? localize($desk->name) : '';
 
         $obj->checkin();
 

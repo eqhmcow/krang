@@ -78,12 +78,12 @@ sub edit {
 
     my @alert_loop;
     foreach my $alert (@current_alerts) {
-        my $desk = $alert->desk_id ? (pkg('Desk')->find( desk_id => $alert->desk_id))[0]->name : '';
+        my $desk_name = $alert->desk_id ? localize((pkg('Desk')->find( desk_id => $alert->desk_id))[0]->name) : '';
         my $category = $alert->category_id ? (pkg('Category')->find( category_id => $alert->category_id))[0]->url : '';
 
         push (@alert_loop, {        action => $alert_types{$alert->action},
                                     alert_id => $alert->alert_id,
-                                    desk => $desk,
+                                    desk => $desk_name,
                                     category => $category } );
     }
 
@@ -93,7 +93,7 @@ sub edit {
 
     my %desk_labels;
     foreach my $d (@desks) {
-        $desk_labels{$d->desk_id} = $d->name;
+        $desk_labels{$d->desk_id} = localize($d->name);
     }
 
     $template->param(desk_selector => scalar
