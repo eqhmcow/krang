@@ -113,7 +113,7 @@ sub import {
     my $instance = $ENV{KRANG_INSTANCE};
     if (not defined $instance) {
         my @instances = pkg('Conf')->instances();
-        if (@instances > 1) {
+        if (@instances > 1 && !(join('',@ARGV) =~ /all.instances/i)) {
             warn "\nYour Krang configuration contains multiple instances, please set the\nKRANG_INSTANCE environment variable.\n\nAvailable instances are: " . 
               join(', ', @instances[0 .. $#instances - 1]) . 
                 " and $instances[-1].\n\n";
