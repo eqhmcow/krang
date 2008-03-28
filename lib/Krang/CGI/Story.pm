@@ -699,9 +699,9 @@ sub revert {
     croak("Unable to load story from session!")
 	unless $story;
 
-    # clean query (since data is getting replaced)
-    $query->delete_all;
-    $query->param(reverted_to_version => $selected_version);    
+    # clean query
+    $query->delete_all();
+    $query->param(reverted_to_version => $selected_version);
 
     # perform the revert & display result
     my $pre_revert_slug = $story->slug;
@@ -709,15 +709,13 @@ sub revert {
     if ($result->isa('Krang::Story')) {
 	add_message('reverted_story', new_version => $story->version, old_version => $selected_version);
     } else {
-	# there was an error
-	$self->add_save_alert($story, $result);
-	# if slug has changed, leave change in query but undo it in actual object (this way, 
-	# future calls to process_slug_input() will see that slug has changed and do dupe-URL check)
+	# there was an error. if slug has changed, leave change in query but undo it in actual object 
+	# (this way, calls to process_slug_input() will see that slug has changed and do dupe-URL check)
+	add_alert('reverted_story_no_save', old_version => $selected_version);
 	if ($story->slug ne $pre_revert_slug) {
 	    $query->param(reverted_to_slug => $story->slug);
 	    $story->slug($pre_revert_slug);
 	}
-	add_alert('reverted_story_no_save', old_version => $selected_version);
     }
 
     return $self->edit();
