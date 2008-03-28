@@ -88,11 +88,8 @@ use Exception::Class (
     # get current version number, in this example 2
     $version = $media->version();
 
-    # revert to version 1 
+    # revert to version 1 (creating version 3, identical to 1)
     $media->revert(1);
-
-    # save this in order to keep changes from revert
-    $media->save();
 
     # preview media object
     $media->preview
@@ -138,26 +135,18 @@ After save(), the in-memory object $media will be saved into the
 later use.
 
 To begin the explaination of 'revert', the most important thing to
-understand is that revert() simply just takes a copy of an older
-version and places it into the current in-memory object.
+understand is that revert() simply takes a copy of an older
+version and uses it to make a new version.
 
 To revert to the contents of version 1, we call the revert() method:
 
   $media->revert(1)
 
-So now what do we have?  We now have version 1 and 2 in the versioning
-table.  We also have version 2 still in the 'media' table from the
-last save().  In memory ($media), we now have a copy of version 1 but
-with version = 2.
+So now what do we have?  We now have version 1, 2 and 3 in the versioning
+table, and 3 is a copy of 1.
 
-So if we again
-
-  $media->save()
-
-now version = 3 and this is saved in both media and media_version.
 Thus, revert() does not give you access to the actual original
-version, but instead gives you a copy of it which will create a new
-version when saved.
+version, but instead gives you a copy of it.
 
 The reason for doing things this way is so you can always get back to
 a previous version no matter how many times you've saved and reverted.
@@ -703,7 +692,7 @@ sub save {
     Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media", media_id => $self->media_id )
         unless ($self->may_edit);
 
-    # Check permissions: Is user allowed to edit the catent category?
+    # Check permissions: Is user allowed to edit the category?
     my $category_id = $self->{category_id};
     my $category = $self->category;
     Krang::Media::NoCategoryEditAccess->throw( message => "Not allowed to edit media in category $category_id",
@@ -720,7 +709,6 @@ sub save {
 
     # croak if media_type_id not defined
     croak('media_type_id must be set before saving media object!') unless $self->{media_type_id};
-
 
     # if this is not a new media object
     if (defined $self->{media_id}) {
@@ -1263,7 +1251,9 @@ sub find {
 
 =item $media->revert($version)
 
-Changes media object to copy of the version specified. Does not actually edit the original version, but overwrites in-memory object with version specified.  Thus will not permantly revert until save() after revert().
+Changes media object to a copy of the version specified. Does not actually edit the original version, but creates a new version identical to the original.
+
+If the new version is successfully written to disk (no duplicate URL errors, etc.), the object itself is returned; if not, an error is returned.
 
 =cut
 
@@ -1290,11 +1280,6 @@ sub revert {
     };
     croak ("Unable to deserialize object: $@") if $@;
 
-    # add history now to show which version was reverted to
-    add_history(    object => $self,
-                    action => 'revert',
-                );
-    
     my $old_filepath = $self->file_path();
     $self->{version} = $version;
     $self->{checked_out_by} = $checked_out_by;
@@ -1305,6 +1290,15 @@ sub revert {
     copy($old_filepath,$filepath); 
     $self->{tempfile} = $filepath;
     $self->{tempdir} = $path; 
+    
+    # attempt disk-write
+    eval { $self->save };
+    return $@ if $@;
+
+    add_history(    object => $self,
+                    action => 'revert',
+                );
+
     return $self; 
 }
 

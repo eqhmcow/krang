@@ -82,9 +82,6 @@ is($tmpl->version(), 2, 'Version Check 2');
 # revert check
 $tmpl->revert(1);
 is($tmpl->content(), $content, 'Revert Test');
-
-# increment version
-$tmpl->save();
 is($tmpl->version(), 3, 'Version Check 3');
 
 # check pruning of old versions 
@@ -202,6 +199,7 @@ is($tmplXYZ->version(), 2, 'Template version test');
 
 # full-text find
 my ($tmpl7) = pkg('Template')->find(full_text_string => 'html');
+ok($tmpl7);
 is($tmpl7->filename, 't_w_c.tmpl', "Find - search by full text that exists");
 my ($tmpl8) = pkg('Template')->find(full_text_string => 'ascii');
 is($tmpl8, undef, "Find - search by full text that doesn't exist");

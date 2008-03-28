@@ -750,18 +750,24 @@ sub revert_version {
     croak("Invalid selected version '$selected_version'")
       unless ($selected_version and $selected_version =~ /^\d+$/);
 
-    # Perform revert
-    my $template = $session{template};
-    $template->revert($selected_version);
-    $session{template} = $template;
-
-    # Inform user
-    add_message("message_revert_version",
-                version => $selected_version);
-
-    # Redirect to edit
+    # clean query
     $q->delete_all();
-    return $self->edit;
+    $q->param(reverted_to_version => $selected_version);
+
+    # Perform revert & display result
+    my $template = $session{template};
+    my $pre_revert_version = $template->version;
+    my $result = $template->revert($selected_version);
+    if ($result->isa('Krang::Template')) {
+	add_message("message_revert_version", new_version => $template->version, old_version => $selected_version);
+    } else {
+	my %errors = $self->_save($template);
+	add_alert("message_revert_version_no_save", old_version => $selected_version);
+	return $self->edit(%errors);
+    }
+	
+    # Redirect to edit
+    return $self->edit();
 }
 
 
@@ -1022,7 +1028,7 @@ sub get_tmpl_params {
         $tmpl_params{version_chooser} =
           $q->popup_menu(-name => 'selected_version',
                          -values => $template->all_versions,
-                         -default => $version,
+			 -default  => ($q->param('reverted_to_version') || $version),
                          -override => 1);
         $tmpl_params{history_return_params} =
           $self->make_history_return_params('rm');

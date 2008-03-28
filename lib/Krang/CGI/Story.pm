@@ -466,12 +466,12 @@ sub edit {
         # if we got here from a top-level edit...
         if ($query->param('returning_from_root')) {
 	  # maintain query's title & slug, even if empty
-	  $template->param(title   => $query->param('title')   || '',
-			   slug    => $query->param('slug')    || '');
+	  $template->param(title   => $query->param('title') || '',
+			   slug    => $query->param('slug')  || '');
 	} else {
  	  # otherwise grab them from the session
 	  $template->param(title   => $story->title || '',
-			   slug    => $story->slug  || '');
+			   slug    => $query->param('reverted_to_slug') || $story->slug  || '');
         }
 
 	# set other basic vars
@@ -547,7 +547,7 @@ sub edit {
         $template->param(version_selector => scalar
                          $query->popup_menu(-name    => 'version',
                                             -values  => $story->all_versions,
-                                            -default => $story->version,
+                                            -default => ($query->param('reverted_to_version') || $story->version),
                                             -override => 1));
 
         # permissions
@@ -694,15 +694,32 @@ sub revert {
     $self->make_sure_story_is_still_ours() || return '';
 
     my $query = $self->query;
-    my $version = $query->param('version');
+    my $selected_version = $query->param('version');
     my $story = $session{story};
     croak("Unable to load story from session!")
-      unless $story;
+	unless $story;
 
-    $story->revert($version);
-    add_message('reverted_story', version => $version);
+    # clean query (since data is getting replaced)
+    $query->delete_all;
+    $query->param(reverted_to_version => $selected_version);    
 
-    $query->delete_all();
+    # perform the revert & display result
+    my $pre_revert_slug = $story->slug;
+    my $result = $story->revert($selected_version);
+    if ($result->isa('Krang::Story')) {
+	add_message('reverted_story', new_version => $story->version, old_version => $selected_version);
+    } else {
+	# there was an error
+	$self->add_save_alert($story, $result);
+	# if slug has changed, leave change in query but undo it in actual object (this way, 
+	# future calls to process_slug_input() will see that slug has changed and do dupe-URL check)
+	if ($story->slug ne $pre_revert_slug) {
+	    $query->param(reverted_to_slug => $story->slug);
+	    $story->slug($pre_revert_slug);
+	}
+	add_alert('reverted_story_no_save', old_version => $selected_version);
+    }
+
     return $self->edit();
 }
 
@@ -875,17 +892,9 @@ sub db_save {
     # save story to the database
     my $story = $session{story};
     eval { $story->save() };
-
-    # is it a dup?
-    if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        $self->alert_duplicate_url(error => $@, class => $story->class);
-        return $self->edit;
-    } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
-        add_alert('missing_category_on_save');
-        return $self->edit;
-    } elsif ($@) {
-        # rethrow
-        die($@);
+    if ($@) {
+	$self->add_save_alert($story, $@);
+	return $self->edit;
     }
     
     add_message('story_save', story_id => $story->story_id,
@@ -918,19 +927,11 @@ sub db_save_and_stay {
     # save story to the database
     my $story  = $session{story};
     eval { $story->save() };
-
-    # is it a dup?
-    if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        $self->alert_duplicate_url(error => $@, class => $story->class);
-        return $self->edit;
-    } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
-        add_alert('missing_category_on_save');
-        return $self->edit;
-    } elsif ($@) {
-        # rethrow
-        die($@);
+    if ($@) {
+	$self->add_save_alert($story, $@);
+	return $self->edit;
     }
-    
+
     add_message('story_save', story_id => $story->story_id,
                 url      => $story->url,
                 version  => $story->version);
@@ -939,6 +940,9 @@ sub db_save_and_stay {
     # redirect to our Workspace since we created a new version
     $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER})
       if $self->_cancel_edit_changes_owner;
+
+    # if previous version was a copy, no longer mention that
+    $self->query->delete('reverted_to_version'); 
     
     # return to edit
     return $self->edit();
@@ -1993,6 +1997,19 @@ sub steal_selected {
 ####  PRIVATE METHODS  ####
 ###########################
 
+# handle edit save errors (used by db_save, db_save_and_stay, and revert)
+sub add_save_alert  {
+    my ($self, $story, $error) = @_;
+    if (ref($error) and $error->isa('Krang::Story::DuplicateURL')) {
+        $self->alert_duplicate_url(error => $error, class => $story->class);
+    } elsif (ref($error) and $error->isa('Krang::Story::MissingCategory')) {
+        add_alert('missing_category_on_save');
+    } else {
+        # rethrow
+        die($error);
+    }
+}
+    
 
 # Pager row handler for story find run-mode
 sub find_story_row_handler {
@@ -2286,6 +2303,7 @@ sub alert_duplicate_url {
       # and we throw (using $s for plural messages, $q for quotes, $f for form)...
       my $s = @{$error->stories} > 1 ? 's' : '';
       my $f = $self->query->param('returning_from_root') ? 'edit' : 'new_story';
+      clear_messages(); clear_alerts();
       add_alert('duplicate_url_table', dupe_rows => $dupes, q => '"', form => $f);
     
       # message differs slightly when dupe is caused by adding a new category 

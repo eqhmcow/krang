@@ -1111,13 +1111,15 @@ sub prune_versions {
 
 Reverts template object data to that of a previous version.
 
-Reverting to a previous version effectively means deserializing a previous
-version from the database and loading it into memory, thus overwriting the
-values previously in the object.  A save after reversion results in a new
-version number, the current version number never decreases.
+Reverting to a previous version effectively means deserializing the previous
+version from the database and using it to create a new, identical version, 
+overwriting the values currently in the object. 
 
 The method croaks if the template is not checked out, checked out by another
 user, or it can't deserialize the retrieved version.
+
+Otherwise, if the new version is successfully written to disk (no duplicate
+URL errors, etc.), the object itself is returned; if not, an error is returned.
 
 =cut
 
@@ -1152,6 +1154,10 @@ SQL
     # copy old data into current object, perserving what is meant to
     # be preserved.
     %{$self} = (%$obj, %preserve);
+
+    # attempt disk-write
+    eval { $self->save };
+    return $@ if $@;
 
     add_history(object => $self, action => 'revert',);
 

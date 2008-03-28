@@ -394,16 +394,12 @@ SKIP: {
     is($v->element->child('deck')->data, 'Version 3 Deck');
 
     $v->revert(1);
-    is($v->version, 2);
-    is($v->element->child('deck')->data, 'Version 1 Deck');
-
-    is($v->title(), "Foo");
-    $v->save();
     is($v->version, 3);
+    is($v->element->child('deck')->data, 'Version 1 Deck');
+    is($v->title(), "Foo");
 
     $v->revert(2);
     is($v->title(), "Bar");
-    $v->save();
     is($v->version, 4);
 
     # try loading old versions
@@ -475,8 +471,6 @@ SKIP: {
     $old->revert(2);
     @para = $old->element->match('//paragraph');
     is(scalar(@para), 2);
-    
-    $old->save();
 
     my ($reverted) = pkg('Story')->find(story_id => $v->story_id);
 

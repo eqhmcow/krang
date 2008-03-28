@@ -489,7 +489,10 @@ sub save_add {
 
     # Save object to database
     my %save_errors = ( $self->do_save_media($m) );
-    return $self->_add(%save_errors) if (%save_errors);
+    if (%save_errors) {
+	undef $m->{filename} if $save_errors{duplicate_url};
+	return $self->_add(%save_errors);
+    }
 
     # Publish to preview
     $m->preview();
@@ -635,8 +638,7 @@ sub edit {
     my $q = $self->query();
 
     # Retrieve object from session or create it if it doesn't exist
-    my $media_id = $q->param('media_id');
-    $media_id = '' unless (defined($media_id));
+    my $media_id = $q->param('media_id') || '';
 
     # Case 1:  We've been directed here via associate-return, with a new Media object
     #           - Have object in session.
@@ -667,11 +669,9 @@ sub edit {
         ($m) = pkg('Media')->find(media_id=>$media_id);
         $session{media} = $m;
     }
-
     die ("Can't find media object with media_id '$media_id'") unless (ref($m));
 
     my $t = $self->load_tmpl('edit_media.tmpl', associate=>$q, loop_context_vars=>1);
-
     my $media_tmpl_data = $self->make_media_tmpl_data($m);
     $t->param($media_tmpl_data);
 
@@ -1104,20 +1104,24 @@ sub revert_version {
     die ("Invalid selected version '$selected_version'") 
       unless ($selected_version and $selected_version =~ /^\d+$/);
 
-    # Perform revert
-    my $m = $session{media};
-    $m->revert($selected_version);
+    # clean query
+    $q->delete_all();
+    $q->param(reverted_to_version => $selected_version);
 
-    # Inform user
-    add_message("message_revert_version", version => $selected_version);
+    # Perform revert & display result
+    my $m = $session{media};
+    my $pre_revert_version = $m->version;
+    my $result = $m->revert($selected_version);
+    if ($result->isa('Krang::Media')) {
+	add_message("message_revert_version", new_version => $m->version, old_version => $selected_version);
+    } else {
+	my %save_errors = ( $self->do_save_media($m) );
+	add_alert("message_revert_version_no_save", old_version => $selected_version);
+	return $self->edit(%save_errors);
+    }
 
     # Redirect to edit mode
-    my $url = $q->url(-relative=>1);
-    $url .= "?rm=edit";
-    $self->header_props(-uri => $url);
-    $self->header_type('redirect');
-
-    return "Redirect: <a href=\"$url\">$url</a>";
+    return $self->edit();
 }
 
 
@@ -1412,7 +1416,7 @@ sub make_media_tmpl_data {
         my $media_version_chooser = $q->popup_menu(
                                                    -name => 'selected_version',
                                                    -values => $m->all_versions,
-                                                   -default => $curr_version,
+						   -default  => ($q->param('reverted_to_version') || $curr_version),
                                                    -override => 1,
                                                   );
         $tmpl_data{media_version_chooser} = $media_version_chooser;
@@ -1793,7 +1797,6 @@ sub do_save_media {
         if (ref($@) and $@->isa('Krang::Media::DuplicateURL')) {
             add_alert('duplicate_url');
             clear_messages();
-            undef $m->{filename};
             return (duplicate_url=>1);
         } elsif (ref($@) and $@->isa('Krang::Media::NoCategoryEditAccess')) {
             # User tried to save to a category to which he doesn't have access

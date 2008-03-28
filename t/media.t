@@ -212,9 +212,6 @@ is ($m2->title(), 'test media object 2');
 is ($m2->filename(), 'krang.jpg');
 like ($m2->file_path(), qr/krang\.jpg$/);
 
-# and save
-$m2->save();
-
 # check version number
 is ($m2->version(), 3);
 

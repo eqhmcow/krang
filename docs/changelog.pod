@@ -3,9 +3,15 @@
 This document contains a list of changes for each release of Krang.
 
 
-=head2 3.02 - IN DEVELOPMENT
+=head2 3.03 - IN DEVELOPMENT
 
 =over
+
+=item *
+
+Made 'Revert' button for the edit screens of Stories, Media, and Templates 
+write to disk (after error-checking), added text clarifying what the new
+version number means, updated related tests and docs. [Noam Weinstein]
 
 =item *
 

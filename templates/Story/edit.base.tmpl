@@ -76,12 +76,23 @@ preview_and_stay = function() {
     var f = document.forms['edit'];
     var v = f.version.options[f.version.selectedIndex].value;
 
-    if ( confirm( Krang.L10N.loc('Are you SURE you want to discard changes and revert to version') + ' ' + v + '?') ) {
+    if ( v == <tmpl_var version> ) {
+	alert(Krang.L10N.loc('You cannot revert to the current version!'));
+    } else if ( confirm( Krang.L10N.loc('Are you SURE you want to discard any unsaved changes and revert to version') + ' ' + v + '?') ) {
         Krang.Form.submit('edit', { rm: 'revert' });
     }
   }
 
   save_and_view = function() {
+    var f = document.forms['edit'];
+    var v = f.version.options[f.version.selectedIndex].value;
+
+    if (v == <tmpl_var version>) {
+	if (!confirm(Krang.L10N.loc('You are currently editing that version. View its saved content?'))) {
+	    return;
+        }
+    }	
+
     Krang.ElementEditor.run_save_hooks();
     Krang.Form.submit('edit', { rm: 'save_and_view' });
   }
@@ -145,6 +156,7 @@ preview_and_stay = function() {
 <form name="edit" action="story.pl" method="post" enctype="multipart/form-data">
 
 <input name="rm" value="edit" type="hidden">
+<input name="reverted_to_version" value="<tmpl_var reverted_to_version>" type="hidden">
 
 <tmpl_if is_root><tmpl_if story_id><p class="cram east">
   <input value="<tmpl_lang View Log>" onclick="save_and_view_log()" type="button" class="button">
@@ -217,7 +229,7 @@ preview_and_stay = function() {
 
   <tr>
   <td class="f"><tmpl_lang Current Version></td>
-  <td class="l"><tmpl_var escape=html version></td>
+  <td class="l"><tmpl_var escape=html version> <tmpl_if reverted_to_version> (<tmpl_lang Copied from Version> <tmpl_var reverted_to_version>)</tmpl_if></td>
   </tr>
 
   <tr>

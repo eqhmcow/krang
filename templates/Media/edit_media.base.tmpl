@@ -75,12 +75,27 @@ save_and_view_log = function()
 
   revert_version = function()
   {
-    if ( confirm( Krang.L10N.loc('Are you SURE you want to discard your work and revert to this old version? (Note that doing so will not revert the actual media content unless your earlier version included a different file.)') ) )
+    var f = document.forms['edit_media_form'];
+    var v = f.selected_version.options[f.selected_version.selectedIndex].value;
+
+    if ( v == <tmpl_var version> ) {
+      alert(Krang.L10N.loc('You cannot revert to the current version!'));
+    } else if ( confirm( Krang.L10N.loc('Are you SURE you want to discard any unsaved changes and revert to this old version?') ) ) {
       Krang.Form.submit('edit_media_form', { rm: 'revert_version' });
+    }
   }
 
   view_version = function()
   {
+    var f = document.forms['edit_media_form'];
+    var v = f.selected_version.options[f.selected_version.selectedIndex].value;
+
+    if (v == <tmpl_var version>) {
+	if (!confirm(Krang.L10N.loc('You are currently editing that version. View its saved content?'))) {
+	    return;
+        }
+    }	
+
     Krang.Form.submit('edit_media_form', { rm: 'view_version' });
   }
 </tmpl_if>
@@ -96,6 +111,7 @@ Krang.onload( function() {
 
 <input name="rm" value="save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>" type="hidden">
 <input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
+<input name="reverted_to_version" value="<tmpl_var reverted_to_version>" type="hidden">
 <tmpl_unless add_mode>
   <input name="return_script" value="media.pl" type="hidden">
   <tmpl_var return_params>
@@ -135,7 +151,7 @@ Krang.onload( function() {
 
   <tr>
   <th><tmpl_lang Current Version></th>
-  <td><tmpl_var escape=html version></td>
+  <td class="l"><tmpl_var escape=html version> <tmpl_if reverted_to_version> (<tmpl_lang Copied from Version> <tmpl_var reverted_to_version>)</tmpl_if></td>
   </tr>
 
   <tr>

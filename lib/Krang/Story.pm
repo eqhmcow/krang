@@ -1942,10 +1942,8 @@ sub _verify_checkout {
 
 =item C<< $story->revert($version) >>
 
-Loads an old version of this story into the current story object.
-This does not change the value returned by C<< $story->version >>.
-Saving this object will create a new version, but with the contents of
-the old version, thus reverting the contents of the story.  
+Creates a new version of this story with identical content to the version passed. (Version numbers always increase, never decrease.)
+If the new version is successfully written to disk (no duplicate URL errors, etc.), the object itself is returned; if not, an error is returned.
 
 If you want to load an old version directly, see C<find()>.
 
@@ -1969,6 +1967,10 @@ sub revert {
 
     # copy in data, preserving contents of %persist
     %$self = (%$obj, %persist);
+
+    # attempt disk-write
+    eval { $self->save };
+    return $@ if $@;
 
     add_history(    object => $self, 
                     action => 'revert',
