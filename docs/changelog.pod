@@ -9,6 +9,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added infrastructure to enable/disable list buttons on Find screens
+according to checked status of row checkboxes.  Also implemented it
+for Find Story and Active Stories, and for the choosers' OK
+button. [Bodo Schulze]
+
+=item *
+
 Made 'Revert' button for the edit screens of Stories, Media, and Templates 
 write to disk (after error-checking), added text clarifying what the new
 version number means, updated related tests and docs. [Noam Weinstein]

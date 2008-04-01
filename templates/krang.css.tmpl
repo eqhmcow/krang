@@ -292,7 +292,10 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
 #C .panel  { padding: 20px 0 0; text-align: right; }
 
 #C .panel input       { background: <tmpl_var LinkColor> url("/static/<tmpl_var krang_install_id>/images/bkg-button-full.gif") 0 50% repeat-x; color: #FFF; width: auto; overflow: visible; margin: 0 0 0 5px; border: 1px solid <tmpl_var DarkLinkColor>; border-color: <tmpl_var LinkColor> <tmpl_var DarkLinkColor> <tmpl_var DarkLinkColor> <tmpl_var LinkColor>; padding: .1em .5em; font-size: 1.27em; line-height: 1; }
-#C .panel input:hover { background-color: <tmpl_var DarkLinkColor>; background-image: none; }
+#C .panel input.west:hover { background-color: <tmpl_var DarkLinkColor>; background-image: none; }
+#C .panel input.list-btn { filter: alpha(opacity=40); opacity: .4; }
+#C .panel input.list-btn-enabled { filter: alpha(opacity=100); opacity: 1.0; }
+#C .panel input.list-btn-enabled:hover { background-color: <tmpl_var DarkLinkColor>; background-image: none; }
 
 /*(db2)testing - TOO effective:*/
 #C div .panel input       { background-color: #EEE; background-image: url("/static/<tmpl_var krang_install_id>/images/bkg-button-mini.gif"); color: <tmpl_var LinkColor>; border-color: #EEE #BBB #BBB #EEE; font-size: 1em; }
@@ -380,8 +383,10 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
 .hpts-bbar   { background: #999 url("/static/<tmpl_var krang_install_id>/images/bottom-right-corner-resize.gif") right no-repeat; color: <tmpl_var TextColor>; margin-top: 10px; padding: 3px 0 0 6px; text-align: left; white-space: nowrap; position: relative; }
 .hpts-botbar { display: inline; width: 20px; position: absolute; right: 0px; bottom: 0px; cursor: se-resize; }
 .hpts-button       { background: #EEE url("/static/<tmpl_var krang_install_id>/images/bkg-button-mini.gif") 0 50% repeat-x !important; color: <tmpl_var LinkColor> !important; width: auto !important; overflow: visible; margin: 0 5px 0 0; border: 1px solid #BBB; border-color: #EEE #BBB #BBB #EEE; padding: .1em .5em; font-size: 1em; line-height: 1; }
-.hpts-button:hover { background-color: <tmpl_var HilightColor> !important; background-image: none !important; }
-
+input#hpts-cancel-btn:hover { background-color: <tmpl_var HilightColor> !important; background-image: none !important; }
+input#hpts-ok-btn { filter: alpha(opacity=40); opacity: .4; }
+input.hpts-ok-btn-enabled { filter: alpha(opacity=100) !important; opacity: 1 !important; }
+input.hpts-ok-btn-enabled:hover { background-color: <tmpl_var HilightColor> !important; background-image: none !important; }
 
 /*******************************
  * Krang::Widget::date_chooser *

@@ -939,7 +939,7 @@ sub _fill_template {
 
         # Create col header for checkbox_column
         if ( $col eq 'checkbox_column' ) {
-            my $checkall = '<input type="checkbox" name="checkallbox" value="1" onclick="Krang.check_all(this,\'krang_pager_rows_checked\')">';
+            my $checkall = '<input type="checkbox" id="checkallbox" name="checkallbox" value="1" onclick="Krang.check_all(this,\'krang_pager_rows_checked\')">';
             $col_label = ( defined($col_label) ? $col_label : $checkall );
         }
 

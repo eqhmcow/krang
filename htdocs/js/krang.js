@@ -586,6 +586,18 @@ Krang.Form = {
                 form.submit();
             }
         }
+    },
+    toggle_list_btn : function() {
+        $('C').getElementsByClassName('list-btn').each(function(btn) {
+            if (Krang.pager_row_checked()) {
+                btn.addClassName('list-btn-enabled');
+                btn.enable();
+            } else {
+                btn.removeClassName('list-btn-enabled');
+                btn.disable();
+                $('checkallbox').checked = false;
+            }
+        });
     }
 };
 
@@ -966,35 +978,18 @@ Krang.Pager = {
 /*
     Krang.check_all(checkbox, inputPrefix)
 */
-Krang.check_all = function( checkbox, prefix ) {
-    var form = checkbox.form;
+Krang.check_all = function( list_checkbox, prefix ) {
+    var form = list_checkbox.form;
 
-    // recursive local function used to find the first TR
-    // that is one of our ancestors
-    var find_parent_row = function(el) {
-        var p = el.parentNode;
-        if( p.tagName.toUpperCase() == 'TR' ) {
-            return p;
-        } else {
-            return find_parent_row(p);
-        }
-    };
+    $(form).getInputs('checkbox', prefix).each(function(row_ckbx) {
+        row_ckbx.checked = list_checkbox.checked
+        list_checkbox.checked
+            ? row_ckbx.up('tr').addClassName('hilite')
+            : row_ckbx.up('tr').removeClassName('hilite');
+    })
 
-    for ( var i = 0; i < form.elements.length; i++ ) {
-        var el = form.elements[ i ];
-        if ( el.type == 'checkbox' && el.name && el.name.indexOf( prefix ) == 0 ) {
-            el.checked = checkbox.checked;
-            var row = find_parent_row(el);
-            if( row ) {
-                row = $(row);
-                if( checkbox.checked )
-                    row.addClassName('hilite');
-                else
-                    row.removeClassName('hilite');
-            }
-        }
-    }
-};
+    Krang.Form.toggle_list_btn();
+}
 
 /*
     Krang.update_order(select, prefix)
@@ -1720,6 +1715,8 @@ var rules = {
         el.observe('click', function(event) {
             var clicked = Event.element(event);
             clicked.up('tr').toggleClassName('hilite');
+            // enable list buttons only if at least one checkbox is checked
+            Krang.Form.toggle_list_btn();
         }.bindAsEventListener(el));
     },
     '#error_msg_trigger' : function(el) {

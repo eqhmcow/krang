@@ -54,7 +54,6 @@ Object.extend(PopupTreeSelect.prototype, {
             img.src = this.image_path + file;
             preload_imgs.push(img);
         }.bind(this));
-
     },
     lock : function(evt) {
         evt = (evt) ? evt : event;
@@ -193,12 +192,14 @@ Object.extend(PopupTreeSelect.prototype, {
         if (id == selected_id) {
             /* clicked twice, turn it off and go back to nothing selected */
             this.selected_id = null;
+            $('hpts-ok-btn').disable().removeClassName('hpts-ok-btn-enabled');
         } else {
             /* turn on selected item */
             var new_obj = document.getElementById(this.name + "-line-" + id);
             new_obj.className = "hpts-label-selected";
             this.selected_id = id;
             this.selected_val = val;
+            $('hpts-ok-btn').enable().addClassName('hpts-ok-btn-enabled');
         }
     },
     /* it's showtime! */
@@ -220,6 +221,9 @@ Object.extend(PopupTreeSelect.prototype, {
         obj.style.left = x + "px";
         obj.style.top  = y + "px";
         obj.style.display = 'block';
+
+        // don't activate OK button until an item has been selected
+        $('hpts-ok-btn').disable().removeClassName('hpts-ok-btn-enabled');
 
         if( this.hide_selects ) {
             for(var f = 0; f < document.forms.length; f++) {
@@ -245,11 +249,6 @@ Object.extend(PopupTreeSelect.prototype, {
     },
     /* user clicks the ok button */
     ok : function(fieldName, formName, onselect) {
-        if (this.selected_id == null) {
-            alert(Krang.L10N.loc("Please select an item or click Cancel to cancel selection."));
-            return;
-        }
-
         /* fill in a form field if they spec'd one */
         if( fieldName ) {
             var form;

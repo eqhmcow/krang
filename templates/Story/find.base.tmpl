@@ -207,9 +207,9 @@ do_search = function() {
 <div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <input value="<tmpl_lang Add Story>" onclick="add_story()" type="button" class="west">
   <tmpl_if row_count>
-    <input value="<tmpl_lang Check Out>" onclick="checkout_selected()" type="button">
-    <input value="<tmpl_lang Publish>" onclick="publish_selected()" type="button">
-    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+    <input value="<tmpl_lang Check Out>" onclick="checkout_selected()" type="button" class="list-btn">
+    <input value="<tmpl_lang Publish>" onclick="publish_selected()" type="button" class="list-btn">
+    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
   </tmpl_if>
 </form></div>
 </tmpl_unless>
@@ -222,9 +222,9 @@ do_search = function() {
 <div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <input value="<tmpl_lang Add Story>" onclick="add_story()" type="button" class="west">
   <tmpl_if row_count>
-    <input value="<tmpl_lang Check Out>" onclick="checkout_selected()" type="button">
-    <input value="<tmpl_lang Publish>" onclick="publish_selected()" type="button">
-    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+    <input value="<tmpl_lang Check Out>" onclick="checkout_selected()" type="button" class="list-btn">
+    <input value="<tmpl_lang Publish>" onclick="publish_selected()" type="button" class="list-btn">
+    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
   </tmpl_if>
 </form></div>
 </tmpl_unless>
