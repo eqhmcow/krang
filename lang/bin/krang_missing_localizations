@@ -109,6 +109,17 @@ my %skip_localize = ();
     q{pkg('Desk')->find( desk_id => $history->desk_id))[0]->name},
     q{ucfirst($schedule->object_type},
     q{some string},
+    q{$d->name},
+    q{$desk->name},
+    q{$found_desk->name},
+    q{$node->name},
+    q{Delete '   .$element->display_name},
+    q{Done Bulk Editing '.$element->class->child($name)->display_name},
+    q{Done With '.$element->display_name},
+    q{pkg('Desk')->find( desk_id => $alert->desk_id))[0]->name},
+    q{pkg('Desk')->find( desk_id => $desk_id ))[0]->name},
+    q{pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name},
+    q{pkg('Desk')->find(desk_id => $story->desk_id))[0]->name},
 } = (); #' keep Emacs cperl-mode happy
 
 # skip some message keys only known at runtime

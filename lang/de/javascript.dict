@@ -57,9 +57,12 @@
 "Nothing selected to publish!"   "Sie haben nichts zum Veröffentlichen markiert!"
 "Nothing selected to steal!"     "Sie haben nichts zum Übernehmen markiert!"
 "Nothing selected to unassociate!" "Kein Mitarbeiter zum Entfernen markiert!"
-"Please select an item or click Cancel to cancel selection."  "Wählen Sie ein Element aus oder klicken Sie auf 'Abbrechen'."
 "Save changes and return to your Workspace?"  "Speichern und zum Arbeitsplatz zurückkehren?"
 "is already an item in this list. Not added."   "ist in der Liste bereits vorhanden und wird daher nicht hinzugefügt."
+"Are you SURE you want to discard any unsaved changes and revert to this old version?"   "Sie sind sicher, dass Sie alle noch nicht gespeicherten Veränderungen verwerfen und zu dieser alten Version zurückkehren wollen?"
+"Are you SURE you want to discard any unsaved changes and revert to version"   "Sie Sie sicher, dass Sie alle noch nicht gespeicherten Veränderungen verwerfen und zurückkehren wollen zu Version"
+"You are currently editing that version. View its saved content?"   "Sie bearbeiten diese Version gerade. Wollen Sie sich den gespeicherten Inhalt dieser Version anzeigen lassen?"
+"You cannot revert to the current version!"   "Zur aktuellen Version kann man nicht zurückkehren!"
 
 # In krang.js
 "Are you sure? This will discard any unsaved changes in any window."  "Sind Sie sicher, dass Sie sich in allen Fenstern/Tabs, in denen Sie Krang geöffnet haben, abmelden wollen? Dadurch gehen alle noch nicht gespeicherten Veränderungen verloren."
