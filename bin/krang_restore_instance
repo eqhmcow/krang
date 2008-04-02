@@ -233,12 +233,12 @@ foreach ($template_dir, $media_dir) {
 
 # restore old template & media paths
 
-print "Copying $BACKUP_DIR/data/templates to $template_dir\n" if $verbose;
-system ("cp -f -R $BACKUP_DIR/data/templates/* $template_dir") &&
+print "Copying $BACKUP_DIR/data/templates/$instance_name to $template_dir\n" if $verbose;
+system ("cp -f -R $BACKUP_DIR/data/templates/$instance_name/* $template_dir") &&
     exit_error ("Couldn't copy templates to $template_dir!");
     
-print "Copying $BACKUP_DIR/data/media to $media_dir\n" if $verbose;
-system ("cp -f -R $BACKUP_DIR/data/media/* $media_dir") &&
+print "Copying $BACKUP_DIR/data/media/$instance_name to $media_dir\n" if $verbose;
+system ("cp -f -R $BACKUP_DIR/data/media/$instance_name/* $media_dir") &&
     exit_error ("Couldn't copy media files to $media_dir!");
 
 foreach ($template_dir, $media_dir) {
