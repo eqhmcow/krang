@@ -329,18 +329,12 @@ sub check_in_and_save {
 
     eval { $story->save() };
 
-    # is it a dup?
-    if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        $self->alert_duplicate_url(error => $@, class => $story->class);
-        return $self->edit;
-    } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
-        add_alert('missing_category_on_save');
-        return $self->edit;
-    } elsif ($@) {
-        # rethrow
-        die($@);
+    # handle exception
+    if ($@) {
+	$self->add_save_alert($story, $@);
+	return $self->edit;
     }
-                                                                                                       
+
     add_message('story_save', story_id => $story->story_id,
                 url      => $story->url,
                 version  => $story->version);
@@ -1027,18 +1021,12 @@ sub save_and_publish {
     my $story = $session{story};
     eval { $story->save() };
 
-    # is it a dup?
-    if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        $self->alert_duplicate_url(error => $@, class => $story->class);
-        return $self->edit;
-    } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
-        add_alert('missing_category_on_save');
-        return $self->edit;
-    } elsif ($@) {
-        # rethrow
-        die($@);
+    # handle exception
+    if ($@) {
+	$self->add_save_alert($story, $@);
+	return $self->edit;
     }
-    
+
     add_message('story_save', story_id => $story->story_id,
                 url      => $story->url,
                 version  => $story->version);
@@ -2172,7 +2160,7 @@ sub update_categories {
 	eval { $story->categories(@old_cats) };
 	
 	# if slug has changed, even the old categories may fail...
-	if (@$ && ($new_slug ne $old_slug)) {
+	if ($@ && ($new_slug ne $old_slug)) {
 	  $story->slug($old_slug);           # revert slug just long
 	  $story->categories(@old_cats);     # enough to load old URLs
 	  $story->slug($new_slug);           # and return user to Edit
