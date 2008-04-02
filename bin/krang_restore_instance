@@ -238,8 +238,8 @@ system ("cp -f -R $BACKUP_DIR/data/templates/* $template_dir") &&
     exit_error ("Couldn't copy templates to $template_dir!");
     
 print "Copying $BACKUP_DIR/data/media to $media_dir\n" if $verbose;
-system ("cp -f -R $BACKUP_DIR/data/media/* $template_dir") &&
-    exit_error ("Couldn't copy media files to $template_dir!");
+system ("cp -f -R $BACKUP_DIR/data/media/* $media_dir") &&
+    exit_error ("Couldn't copy media files to $media_dir!");
 
 foreach ($template_dir, $media_dir) {
     print "Setting ownership of $_ to ".KrangUser.":".KrangGroup."\n" if $verbose;
