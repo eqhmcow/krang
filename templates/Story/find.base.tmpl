@@ -79,7 +79,7 @@ do_search = function() {
 <tmpl_lang Find Stories>
 </h2>
 
-<form name="search_form" method="post" action="story.pl">
+<form name="search_form" id="search_form" method="post" action="story.pl">
 
 <input name="rm" value="find" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
@@ -231,7 +231,7 @@ do_search = function() {
 </tmpl_unless>
 
 <tmpl_if do_advanced_search>
-  <form name="clear_advanced_search_form" method="post" action="story.pl">
+  <form name="clear_advanced_search_form" id="clear_advanced_search_form" method="post" action="story.pl">
   <input name="rm" value="find" type="hidden">
   <input name="do_advanced_search" value="1" type="hidden">
   <input name="clear_search_form" value="1" type="hidden">
@@ -239,7 +239,7 @@ do_search = function() {
 </tmpl_if>
 
 <tmpl_if row_count>
-  <form name="view_story_log_form" action="history.pl" method="post">
+  <form name="view_story_log_form" id="view_story_log_form" action="history.pl" method="post">
   <input name="story_id" type="hidden">
   <input name="history_return_script" value="story.pl" type="hidden">
   <input name="history_return_params" value="rm" type="hidden">
@@ -303,7 +303,7 @@ do_search = function() {
   <input name="history_return_params" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
   </form>
 
-  <form name="find_story" method="post" action="story.pl">
+  <form name="find_story" id="find_story" method="post" action="story.pl">
   <input name="rm" value="find" type="hidden">
   <input name="story_id" type="hidden">
   <input name="return_script" value="story.pl" type="hidden">

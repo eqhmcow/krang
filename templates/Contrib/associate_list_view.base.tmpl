@@ -4,6 +4,8 @@
 Krang.onload( function() {
   Krang.Nav.edit_mode();
   Krang.Help.set('contrib_associate');
+  Krang.Form.toggle_list_btn('current_contributors_form', 'contrib_unassociate_list');
+  Krang.Form.toggle_list_btn();
 } );
 
 add_contrib = function()
@@ -54,7 +56,7 @@ add_contrib = function()
 
 <tmpl_else>
 
-  <form name="current_contributors_form" action="contributor.pl" method="post">
+  <form name="current_contributors_form" id="current_contributors_form" action="contributor.pl" method="post">
 
   <input name="rm" value="reorder_contribs" type="hidden">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
@@ -83,7 +85,7 @@ add_contrib = function()
   <th><tmpl_lang Last Name></th>
   <th><tmpl_lang First, Middle Name></th>
   <th><tmpl_lang Type></th>
-  <th class="tick l"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'contrib_unassociate_list')"></th>
+  <th class="tick l"><input name="checkallbox" id="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'contrib_unassociate_list')"></th>
   </tr>
   </thead>
 
@@ -93,13 +95,13 @@ add_contrib = function()
     <td><tmpl_var escape=html last></td>
     <td><tmpl_var escape=html first><tmpl_if middle>, <tmpl_var escape=html middle></tmpl_if></td>
     <td><tmpl_var escape=html type></td>
-    <td class="tick l"><input name="contrib_unassociate_list" value="<tmpl_var escape=html contrib_id>:<tmpl_var escape=html contrib_type_id>" type="checkbox"></td>
+    <td class="tick l"><input name="contrib_unassociate_list" value="<tmpl_var escape=html contrib_id>:<tmpl_var escape=html contrib_type_id>" type="checkbox" class="hilite-row"></td>
     </tr>
   </tmpl_loop>
 
   <tr class="command-row">
   <td class="f" colspan="4"><input value="<tmpl_lang Reorder>" onclick="reorder_contributors()" type="button" class="button"></td>
-  <td class="l"><input value="<tmpl_lang Unassociate>" onclick="unassociate_selected()" type="button" class="button"></td>
+  <td class="l"><input value="<tmpl_lang Unassociate>" onclick="unassociate_selected()" type="button" class="mini-list-btn"></td>
   </tr>
 
   </tbody>
@@ -110,7 +112,7 @@ add_contrib = function()
 
 </tmpl_unless>
 
-<form name="search_form" action="contributor.pl" method="post">
+<form name="search_form" id="search_form" action="contributor.pl" method="post">
 
 <input name="rm" value="search" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
@@ -152,7 +154,7 @@ add_contrib = function()
 
 <tmpl_else>
 
-  <form name="krang_pager_form" action="contributor.pl" method="post">
+  <form name="krang_pager_form" id="krang_pager_form" action="contributor.pl" method="post">
 
   <tmpl_include HTMLPager/<tmpl_lang en>/pager-internals.tmpl>
 
@@ -187,7 +189,7 @@ add_contrib = function()
     <tmpl_loop contrib_types>
       <tmpl_unless __first__><tr></tmpl_unless>
       <td><tmpl_var escape=html type></td>
-      <td class="series l"><input name="krang_pager_rows_checked" value="<tmpl_var escape=html contrib_id>:<tmpl_var escape=html contrib_type_id>" type="checkbox"></td>
+      <td class="series l"><input name="krang_pager_rows_checked" value="<tmpl_var escape=html contrib_id>:<tmpl_var escape=html contrib_type_id>" type="checkbox" class="hilite-row"></td>
       </tr>
     </tmpl_loop>
   </tmpl_loop>
@@ -195,7 +197,7 @@ add_contrib = function()
   <tr class="command-row">
   <td class="f" colspan="3">&nbsp;</td>
   <td class="l">
-    <tmpl_if row_count><input value="<tmpl_lang Associate>" onclick="associate_selected()" type="button" class="button">
+    <tmpl_if row_count><input value="<tmpl_lang Associate>" onclick="associate_selected()" type="button" class="mini-list-btn">
     <tmpl_else>&nbsp;</tmpl_if>
   </td>
   </tr>

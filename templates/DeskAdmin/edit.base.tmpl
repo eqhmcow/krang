@@ -3,6 +3,7 @@
 <script type="text/javascript">
 Krang.onload( function() {
   Krang.Help.set( 'deskadmin_edit' );
+  Krang.Form.toggle_list_btn('current_desk_form', 'desk_delete_list');
 } );
 
 <tmpl_if existing_desk_loop>
@@ -37,7 +38,7 @@ Krang.onload( function() {
 
 <tmpl_else>
 
-  <form name="current_desk_form" action="desk_admin.pl" method="post">
+  <form name="current_desk_form" id="current_desk_form" action="desk_admin.pl" method="post">
 
   <input name="rm" value="delete" type="hidden">
   <input name="total_desks" value="<tmpl_var escape=html total_desks>" type="hidden">
@@ -57,7 +58,7 @@ Krang.onload( function() {
   <tr>
   <th class="series f"><tmpl_lang Order></th>
   <th><tmpl_lang Name></th>
-  <th class="series l"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'desk_delete_list')"></th>
+  <th class="series l"><input name="checkallbox" id="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'desk_delete_list')"></th>
   </tr>
   </thead>
 
@@ -67,13 +68,13 @@ Krang.onload( function() {
       <option value="<tmpl_var escape=html count>"<tmpl_if selected> selected</tmpl_if>><tmpl_var escape=html count></option>
     </tmpl_loop></select></td>
     <td><tmpl_var escape=html name></td>
-    <td class="series l"><input name="desk_delete_list" value="<tmpl_var escape=html desk_id>" type="checkbox"></td>
+    <td class="series l"><input name="desk_delete_list" value="<tmpl_var escape=html desk_id>" type="checkbox" class="hilite-row"></td>
     </tr>
   </tmpl_loop>
 
   <tr class="command-row">
   <td class="f" colspan="2"><input value="<tmpl_lang Reorder>" onclick="reorder()" type="button" class="button"></td>
-  <td class="series l"><input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="button"></td>
+  <td class="series l"><input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="mini-list-btn"></td>
   </tr>
 
   </tbody>
@@ -84,7 +85,7 @@ Krang.onload( function() {
 
 </tmpl_unless>
 
-<form name="add_desk_form" action="desk_admin.pl" method="post">
+<form name="add_desk_form" id="current_desk_form" action="desk_admin.pl" method="post">
 
 <input name="rm" value="add" type="hidden">
 

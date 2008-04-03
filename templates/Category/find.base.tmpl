@@ -3,6 +3,7 @@
 <script type="text/javascript">
 Krang.onload( function() {
   Krang.Help.set( 'category_find' );
+  Krang.Form.toggle_list_btn();
 } );
 
 add_category = function()
@@ -30,7 +31,7 @@ add_category = function()
 <tmpl_lang Categories>
 </h2>
 
-<form name="search_form" action="category.pl" method="post">
+<form name="search_form" id="search_form" action="category.pl" method="post">
 
 <input name="rm" value="find" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
@@ -66,7 +67,7 @@ add_category = function()
 <div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
 <input value="<tmpl_lang Add Category>" onclick="add_category()" type="button" class="west">
 <tmpl_if row_count>
-  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
 </tmpl_if>
 </form></div>
 
@@ -77,16 +78,16 @@ add_category = function()
 <div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
 <input value="<tmpl_lang Add Category>" onclick="add_category()" type="button" class="west">
 <tmpl_if row_count>
-  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
 </tmpl_if>
 </form></div>
 
-<form name="add_category_form" action="category.pl" method="post">
+<form name="add_category_form" id="add_category_form" action="category.pl" method="post">
 <input name="rm" value="new_category" type="hidden">
 </form>
 
 <tmpl_if row_count>
-  <form name="edit_category_form" action="category.pl" method="post">
+  <form name="edit_category_form" id="edit_category_form" action="category.pl" method="post">
   <input name="rm" value="edit" type="hidden">
   <input name="category_id" value="" type="hidden">
   </form>

@@ -3,6 +3,7 @@
 <script type="text/javascript">
 Krang.onload( function() {
   Krang.Help.set( 'template_find' );
+  Krang.Form.toggle_list_btn();
 } );
 
 add_template = function() {
@@ -59,7 +60,7 @@ add_template = function() {
 <tmpl_lang Find Templates>
 </h2>
 
-<form name="template_search_form" method="post" action="template.pl">
+<form name="template_search_form" id="template_search_form" method="post" action="template.pl">
 
 <input name="rm" value="<tmpl_if do_advanced_search>advanced_</tmpl_if>search" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
@@ -156,8 +157,8 @@ add_template = function() {
 <div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <input value="<tmpl_lang Add Template>" onclick="add_template()" type="button" class="west">
   <tmpl_if row_count>
-    <input value="<tmpl_lang Deploy>" onclick="do_deploy()" type="button">
-    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+    <input value="<tmpl_lang Deploy>" onclick="do_deploy()" type="button" class="list-btn">
+    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
   </tmpl_if>
 </form></div>
 </tmpl_unless>
@@ -170,14 +171,14 @@ add_template = function() {
 <div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <input value="<tmpl_lang Add Template>" onclick="add_template()" type="button" class="west">
   <tmpl_if row_count>
-    <input value="<tmpl_lang Deploy>" onclick="do_deploy()" type="button">
-    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+    <input value="<tmpl_lang Deploy>" onclick="do_deploy()" type="button" class="list-btn">
+    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
   </tmpl_if>
 </form></div>
 </tmpl_unless>
 
 <tmpl_if do_advanced_search>
-  <form name="clear_advanced_search_form" method="post" action="template.pl">
+  <form name="clear_advanced_search_form" id="clear_advanced_search_form" method="post" action="template.pl">
   <input name="rm" value="advanced_search" type="hidden">
   <input name="search_filter" value="" type="hidden">
   <input name="clear_search_form" value="1" type="hidden">
@@ -185,7 +186,7 @@ add_template = function() {
 </tmpl_if>
 
 <tmpl_if row_count>
-  <form name="find_template" method="post" action="template.pl">
+  <form name="find_template" id="find_template" method="post" action="template.pl">
   <input name="rm" value="view" type="hidden">
   <input name="template_id" type="hidden">
   <tmpl_var history_return_params>

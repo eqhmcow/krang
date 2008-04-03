@@ -3,6 +3,7 @@
 <script type="text/javascript">
 Krang.onload( function() {
   Krang.Help.set( 'workspace_edit' );
+  Krang.Form.toggle_list_btn();
 } );
 
 <tmpl_if krang_pager_rows>
@@ -112,7 +113,7 @@ Krang.onload( function() {
   <tmpl_lang Checked Out Content>
   </h3>
 
-  <form name="krang_pager_form" method="post" action="workspace.pl">
+  <form name="krang_pager_form" id="krang_pager_form" method="post" action="workspace.pl">
 
   <input name="rm" type="hidden">
   <input name="id" type="hidden">
@@ -125,10 +126,10 @@ Krang.onload( function() {
   </div>
 
   <tmpl_if may_publish>
-    <input value="<tmpl_lang Publish>" onclick="publish_checked()" type="button">
+    <input value="<tmpl_lang Publish>" onclick="publish_checked()" type="button" class="list-btn">
   </tmpl_if>
-  <input value="<tmpl_lang Check In>" onclick="checkin_checked()" type="button">
-  <input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button">
+  <input value="<tmpl_lang Check In>" onclick="checkin_checked()" type="button" class="list-btn">
+  <input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button" class="list-btn">
   </div>
 
   <tmpl_include HTMLPager/<tmpl_lang en>/pager-pagination.tmpl>
@@ -250,20 +251,20 @@ Krang.onload( function() {
   </div>
 
   <tmpl_if may_publish>
-    <input value="<tmpl_lang Publish>" onclick="publish_checked()" type="button">
+    <input value="<tmpl_lang Publish>" onclick="publish_checked()" type="button" class="list-btn">
   </tmpl_if>
-  <input value="<tmpl_lang Check In>" onclick="checkin_checked()" type="button">
-  <input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button">
+  <input value="<tmpl_lang Check In>" onclick="checkin_checked()" type="button" class="list-btn">
+  <input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button" class="list-btn">
   </div>
 
   </form>
 
-  <form name="publish_story_form" action="publisher.pl">
+  <form name="publish_story_form" id="publish_story_form" action="publisher.pl">
   <input name="rm" value="publish_story" type="hidden">
   <input name="story_id" value="" type="hidden">
   </form>
 
-  <form name="publish_media_form" action="publisher.pl">
+  <form name="publish_media_form" id="publish_media_form" action="publisher.pl">
   <input name="rm" value="publish_media" type="hidden">
   <input name="media_id" value="" type="hidden">
   </form>

@@ -304,7 +304,7 @@ sub make_internal_template {
     $pager_tmpl .= <<"END";
 <tmpl_if krang_pager_rows>
 
-<form name="krang_pager_form" action="$script_name" method="post">
+<form name="krang_pager_form" id="krang_pager_form" action="$script_name" method="post">
 
 <tmpl_include pager-internals.tmpl>
 

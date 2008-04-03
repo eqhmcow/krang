@@ -3,6 +3,7 @@
 <script type="text/javascript">
 Krang.onload( function() {
   Krang.Help.set( 'schedule_list_all' );
+  Krang.Form.toggle_list_btn();
 } );
 
 delete_selected = function()
@@ -20,7 +21,7 @@ delete_selected = function()
 
 <tmpl_if row_count>
   <div class="panel"><form>
-  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
   </form></div>
 </tmpl_if>
 
@@ -30,7 +31,7 @@ delete_selected = function()
 
 <tmpl_if row_count>
   <div class="panel capped"><form>
-  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
   </form></div>
 </tmpl_if>
 

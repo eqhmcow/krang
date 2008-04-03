@@ -3,6 +3,7 @@
 <script type="text/javascript">
 Krang.onload( function() {
   Krang.Help.set( 'media_find' );
+  Krang.Form.toggle_list_btn();
 } );
 
 add_media = function() {
@@ -61,7 +62,7 @@ do_search = function() {
   {
     if ( !Krang.pager_row_checked() )
       alert( Krang.L10N.loc('Nothing selected to publish!') );
-    else if ( confirm( Krang.L10N.loc('Are you SURE you wish to publish all these items?') ) )
+    else if ( confirm( Krang.L10N.loc('Are you SURE you wish to publish the checked Media?') ) )
     {
       document.forms[ 'krang_pager_form' ].action = 'publisher.pl';
       Krang.Form.submit( 'krang_pager_form', { rm: 'publish_story_list' } );
@@ -74,7 +75,7 @@ do_search = function() {
 <tmpl_lang Find Media>
 </h2>
 
-<form name="search_form" action="media.pl" method="post">
+<form name="search_form" id="search_form" action="media.pl" method="post">
 
 <input name="rm" value="<tmpl_if do_advanced_search>advanced_</tmpl_if>find" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
@@ -189,9 +190,9 @@ do_search = function() {
 <div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <input value="<tmpl_lang Add Media>" onclick="add_media()" type="button" class="west">
   <tmpl_if row_count>
-    <input value="<tmpl_lang Publish>" onclick="publish_selected()" type="button">
-    <input value="<tmpl_lang Check Out>" onclick="checkout_selected()" type="button">
-    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+    <input value="<tmpl_lang Publish>" onclick="publish_selected()" type="button" class="list-btn">
+    <input value="<tmpl_lang Check Out>" onclick="checkout_selected()" type="button" class="list-btn">
+    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
   </tmpl_if>
 </form></div>
 </tmpl_unless>
@@ -204,15 +205,15 @@ do_search = function() {
 <div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <input value="<tmpl_lang Add Media>" onclick="add_media()" type="button" class="west">
   <tmpl_if row_count>
-    <input value="<tmpl_lang Publish>" onclick="publish_selected()" type="button">
-    <input value="<tmpl_lang Check Out>" onclick="checkout_selected()" type="button">
-    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+    <input value="<tmpl_lang Publish>" onclick="publish_selected()" type="button" class="list-btn">
+    <input value="<tmpl_lang Check Out>" onclick="checkout_selected()" type="button" class="list-btn">
+    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
   </tmpl_if>
 </form></div>
 </tmpl_unless>
 
 <tmpl_if do_advanced_search>
-  <form name="clear_advanced_search_form" action="media.pl" method="post">
+  <form name="clear_advanced_search_form" id="clear_advanced_search_form" action="media.pl" method="post">
   <input name="rm" value="advanced_find" type="hidden">
   <input name="clear_search_form" value="1" type="hidden">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
@@ -221,7 +222,7 @@ do_search = function() {
 </tmpl_if>
 
 <tmpl_if row_count>
-  <form name="find_media" action="media.pl" method="post">
+  <form name="find_media" id="find_media" action="media.pl" method="post">
   <input name="rm" value="view" type="hidden">
   <input name="media_id" type="hidden">
   <input name="return_script" value="media.pl" type="hidden">

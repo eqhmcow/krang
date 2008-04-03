@@ -587,17 +587,22 @@ Krang.Form = {
             }
         }
     },
-    toggle_list_btn : function() {
-        $('C').getElementsByClassName('list-btn').each(function(btn) {
-            if (Krang.pager_row_checked()) {
-                btn.addClassName('list-btn-enabled');
-                btn.enable();
-            } else {
-                btn.removeClassName('list-btn-enabled');
-                btn.disable();
-                $('checkallbox').checked = false;
-            }
-        });
+    toggle_list_btn : function(form, ckbx) {
+        if (!form) { form = 'krang_pager_form' }
+        form = $(form);
+        if (!form) { return false }
+        if (!ckbx) { ckbx = 'krang_pager_rows_checked' }
+        [ [$('C'), 'list-btn'], [form, 'mini-list-btn'] ].each(function(spec) {
+            spec[0].getElementsByClassName(spec[1]).each(function(btn) {
+                if (Krang.row_checked(form, ckbx)) {
+                    btn.addClassName(spec[1]+'-enabled');
+                    btn.enable();
+                } else {
+                    btn.removeClassName(spec[1]+'-enabled');
+                    btn.disable();
+                    $('checkallbox').checked = false;
+                }
+            })});
     }
 };
 
@@ -988,7 +993,7 @@ Krang.check_all = function( list_checkbox, prefix ) {
             : row_ckbx.up('tr').removeClassName('hilite');
     })
 
-    Krang.Form.toggle_list_btn();
+    Krang.Form.toggle_list_btn(form, prefix);
 }
 
 /*
@@ -1716,7 +1721,7 @@ var rules = {
             var clicked = Event.element(event);
             clicked.up('tr').toggleClassName('hilite');
             // enable list buttons only if at least one checkbox is checked
-            Krang.Form.toggle_list_btn();
+            Krang.Form.toggle_list_btn(el.form, el.name);
         }.bindAsEventListener(el));
     },
     '#error_msg_trigger' : function(el) {

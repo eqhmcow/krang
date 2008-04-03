@@ -3,6 +3,7 @@
 <script type="text/javascript">
 Krang.onload( function() {
   Krang.Help.set('schedule_edit');
+  Krang.Form.toggle_list_btn('current_schedule_form', 'schedule_delete_list');
 } );
 
 save_and_view = function()
@@ -101,7 +102,7 @@ do_return = function()
 
 <tmpl_else>
 
-  <form name="current_schedule_form" method="post" action="schedule.pl">
+  <form name="current_schedule_form" id="current_schedule_form" method="post" action="schedule.pl">
 
   <input name="rm" value="delete" type="hidden">
   <input name="object_type" value="<tmpl_var escape=html object_type>" type="hidden">
@@ -128,7 +129,7 @@ do_return = function()
   <th><tmpl_lang Version></th>
   <th><tmpl_lang Trigger></th>
   <th><tmpl_lang Next Event></th>
-  <th class="l series"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'schedule_delete_list')"></th>
+  <th class="l series"><input name="checkallbox" id="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'schedule_delete_list')"></th>
   </tr>
   </thead>
 
@@ -142,13 +143,13 @@ do_return = function()
     </tmpl_if></td>
     <td><tmpl_var escape=html schedule></td>
     <td><tmpl_var escape=html next_run></td>
-    <td class="series l"><input name="schedule_delete_list" value="<tmpl_var escape=html schedule_id>" type="checkbox"></td>
+    <td class="series l"><input name="schedule_delete_list" value="<tmpl_var escape=html schedule_id>" type="checkbox" class="hilite-row"></td>
     </tr>
   </tmpl_loop></tbody>
 
   <tr class="command-row">
   <td class="f" colspan="4">&nbsp;</td>
-  <td class="series l"><input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="button"></td>
+  <td class="series l"><input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="mini-list-btn"></td>
   </tr>
 
   </table></div>
@@ -157,7 +158,7 @@ do_return = function()
 
 </tmpl_unless>
 
-<form name="add_schedule_form" method="post" action="schedule.pl">
+<form name="add_schedule_form" id="add_schedule_form" method="post" action="schedule.pl">
 
 <input name="rm" value="add<tmpl_if simple>_simple</tmpl_if>" type="hidden">
 <input name="object_type" value="<tmpl_var escape=html object_type>" type="hidden">
@@ -263,7 +264,7 @@ do_return = function()
 
 </form>
 
-<form name="return_form" action="<tmpl_if is_story>story<tmpl_else>media</tmpl_if>.pl" method="post">
+<form name="return_form" id="return_form" action="<tmpl_if is_story>story<tmpl_else>media</tmpl_if>.pl" method="post">
 <input name="rm" value="edit" type="hidden">
 
 <div class="panel">

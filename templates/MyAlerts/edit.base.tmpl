@@ -3,6 +3,7 @@
 <script type="text/javascript">
 Krang.onload( function() {
   Krang.Help.set( 'myalerts_edit' );
+  Krang.Form.toggle_list_btn('current_alert_form', 'alert_delete_list');
 } );
 
 <tmpl_if alert_loop>
@@ -28,7 +29,7 @@ Krang.onload( function() {
 
 <tmpl_else>
 
-  <form name="current_alert_form" method="post" action="my_alerts.pl">
+  <form name="current_alert_form" id="current_alert_form" method="post" action="my_alerts.pl">
 
   <input name="rm" value="delete_alerts" type="hidden">
 
@@ -49,7 +50,7 @@ Krang.onload( function() {
   <th class="f"><tmpl_lang Action></th>
   <th><tmpl_lang Site/Category></th>
   <th><tmpl_lang Desk></th>
-  <th class="series l"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'alert_delete_list')"></th>
+  <th class="series l"><input name="checkallbox" id="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'alert_delete_list')"></th>
   </tr>
   </thead>
 
@@ -58,13 +59,13 @@ Krang.onload( function() {
     <td class="f"><tmpl_var escape=html action></td>
     <td><tmpl_if category><tmpl_var escape=html category><tmpl_else><tmpl_lang Any></tmpl_if></td>
     <td><tmpl_if desk><tmpl_var escape=html desk><tmpl_else><tmpl_lang Any></tmpl_if></td>
-    <td class="series l"><input name="alert_delete_list" value="<tmpl_var escape=html alert_id>" type="checkbox"></td>
+    <td class="series l"><input name="alert_delete_list" value="<tmpl_var escape=html alert_id>" type="checkbox" class="hilite-row"></td>
     </tr>
   </tmpl_loop></tbody>
 
   <tr class="command-row">
   <td class="f" colspan="3">&nbsp;</td>
-  <td class="series l"><input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button" class="button"></td
+  <td class="series l"><input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button" class="mini-list-btn"></td
   </tr>
 
   </table></div>
@@ -73,7 +74,7 @@ Krang.onload( function() {
 
 </tmpl_unless>
 
-<form name="add_alert_form" method="post" action="my_alerts.pl">
+<form name="add_alert_form" id="add_alert_form" method="post" action="my_alerts.pl">
 
 <input name="rm" value="add" type="hidden">
 

@@ -3,6 +3,7 @@
 <script type="text/javascript">
 Krang.onload( function() {
   Krang.Help.set( 'site_list' );
+  Krang.Form.toggle_list_btn();
 } );
 
 add_site = function()
@@ -35,7 +36,7 @@ add_site = function()
 <tmpl_lang Sites>
 </h2>
 
-<form name="search_form" method="post" action="site.pl">
+<form name="search_form" id="search_form" method="post" action="site.pl">
 
 <input name="rm" value="search" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
@@ -71,7 +72,7 @@ add_site = function()
 <div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
 <input value="<tmpl_lang Add Site>" onclick="add_site()" type="button" class="west">
 <tmpl_if row_count>
-  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
 </tmpl_if>
 </form></div>
 
@@ -82,11 +83,11 @@ add_site = function()
 <div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
 <input value="<tmpl_lang Add Site>" onclick="add_site()" type="button" class="west">
 <tmpl_if row_count>
-  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
 </tmpl_if>
 </form></div>
 
-<form name="add_site_form" method="post" action="site.pl">
+<form name="add_site_form" id="add_site_form" method="post" action="site.pl">
 <input name="rm" value="add" type="hidden">
 <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
 <input name="krang_pager_curr_page_num" value="<tmpl_var escape=html krang_pager_curr_page_num>" type="hidden">
@@ -96,7 +97,7 @@ add_site = function()
 </form>
 
 <tmpl_if row_count>
-  <form name="edit_site_form" method="post" action="site.pl">
+  <form name="edit_site_form" id="edit_site_form" method="post" action="site.pl">
   <input name="rm" value="edit" type="hidden">
   <input name="site_id" value="" type="hidden">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
@@ -106,7 +107,7 @@ add_site = function()
   <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
   </form>
 
-  <form name="find_site" method="post" action="site.pl">
+  <form name="find_site" id="find_site" method="post" action="site.pl">
   <input name="rm" value="view" type="hidden">
   <input name="site_id" type="hidden">
   <tmpl_var history_return_params>

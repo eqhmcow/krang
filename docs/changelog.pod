@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+On all Find screens, enable/disable the (green) list buttons according
+to the checked status of the list's row checkboxes. [Bodo Schulze]
+
+=item *
+
 Added infrastructure to enable/disable list buttons on Find screens
 according to checked status of row checkboxes.  Also implemented it
 for Find Story and Active Stories, and for the choosers' OK

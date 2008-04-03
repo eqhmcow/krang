@@ -3,6 +3,7 @@
 <script type="text/javascript">
 Krang.onload( function() {
   Krang.Help.set( 'group_list' );
+  Krang.Form.toggle_list_btn();
 } );
 
 add_group = function()
@@ -30,7 +31,7 @@ add_group = function()
 <tmpl_lang Groups>
 </h2>
 
-<form name="search_form" action="group.pl" method="post">
+<form name="search_form" id="search_form" action="group.pl" method="post">
 
 <input name="rm" value="search" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
@@ -66,7 +67,7 @@ add_group = function()
 <div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
 <input value="<tmpl_lang Add Group>" onclick="add_group()" type="button" class="west">
 <tmpl_if row_count>
-  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
 </tmpl_if>
 </form></div>
 
@@ -77,11 +78,11 @@ add_group = function()
 <div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
 <input value="<tmpl_lang Add Group>" onclick="add_group()" type="button" class="west">
 <tmpl_if row_count>
-  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
 </tmpl_if>
 </form></div>
 
-<form name="add_group_form" action="group.pl" method="post">
+<form name="add_group_form" id="add_group_form" action="group.pl" method="post">
 <input name="rm" value="add" type="hidden">
 <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
 <input name="krang_pager_curr_page_num" value="<tmpl_var escape=html krang_pager_curr_page_num>" type="hidden">
@@ -91,7 +92,7 @@ add_group = function()
 </form>
 
 <tmpl_if row_count>
-  <form name="edit_group_form" action="group.pl" method="post">
+  <form name="edit_group_form" id="edit_group_form" action="group.pl" method="post">
   <input name="rm" value="edit" type="hidden">
   <input name="group_id" value="" type="hidden">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
