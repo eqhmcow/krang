@@ -54,7 +54,7 @@ Calendar._MN = new Array
 (
  "Januar",
  "Februar",
- "März",
+ "MÃ¤rz",
  "April",
  "Mai",
  "Juni",
@@ -71,7 +71,7 @@ Calendar._SMN = new Array
 (
  "Jan",
  "Feb",
- "Mär",
+ "MÃ¤r",
  "Apr",
  "Mai",
  "Jun",
@@ -85,7 +85,7 @@ Calendar._SMN = new Array
 
 // tooltips
 Calendar._TT = {};
-Calendar._TT["INFO"] = "Über den Kalendar";
+Calendar._TT["INFO"] = "Ãœber den Kalendar";
 
 Calendar._TT["ABOUT"] =
 "Date selection:\n" +
