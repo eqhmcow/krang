@@ -576,6 +576,9 @@
 ### Semantic pieces in Krang::CGI::Scheduler
 "DATETIME_SEMANTIC"              "Einmalig|Stündlich|zur vollen Stunde|Minuten nach der vollen Stunde|Täglich|Wöchentlich|um"
 
+### For Krang::ElementClass::Date
+"MONTH_LABELS"                   Jan Feb März Apr Mai Juni Juli Aug Sep Okt Nov Dez
+
 ### Datetime format in History, Story, Media, Schedule and ElementClass
 ### From the strftime() manpage:
 ### %b     The abbreviated month name according to the current locale.
@@ -615,7 +618,7 @@ AMPM 0
 "Published"                      "veröffentlicht"
 "Deployed"                       "aktiviert"
 "Moved"                          "verschoben"
-"Reverted"                       "zurück zu älterer Version"
+"Reverted"                       "zu älterer Version zurück"
 
 # Krang::Widget
 "Ok"                           "OK"
