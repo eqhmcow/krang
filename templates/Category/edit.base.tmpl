@@ -4,6 +4,7 @@
 Krang.onload( function() {
     Krang.Nav.edit_mode();
     Krang.Help.set( 'category_edit' );
+    Krang.Form.toggle_list_btn('edit', 'remove_');
 } );
 
 cancel_category_change = function() {
@@ -50,7 +51,7 @@ db_save_and_stay = function() {
 <tmpl_lang Edit Category>
 </h2>
 
-<form name="edit" action="category.pl" method="post" enctype="multipart/form-data">
+<form name="edit" id="edit" action="category.pl" method="post" enctype="multipart/form-data">
 
 <input name="rm" value="edit" type="hidden">
 

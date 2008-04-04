@@ -211,7 +211,7 @@
   <th class="series f"><tmpl_lang Order></th>
   <th><tmpl_lang Element></th>
   <th><tmpl_lang Data Entry></th>
-  <th class="series l"><tmpl_unless no_reorder><input type="checkbox" onclick="Krang.check_all(this,'remove_')"></tmpl_unless></th><!--:unnamed control(db2)-->
+  <th class="series l"><tmpl_unless no_reorder><input name="checkallbox" id="checkallbox" type="checkbox" onclick="Krang.check_all(this,'remove_')"></tmpl_unless></th>
   </tr>
   </thead>
 
@@ -254,7 +254,7 @@
   </table>
   </td>
 
-  <td class="series l"><tmpl_unless no_delete><input value="<tmpl_lang Delete>" onclick="remove_children()" type="button" class="button"></tmpl_unless></td>
+  <td class="series l"><tmpl_unless no_delete><input value="<tmpl_lang Delete>" onclick="remove_children()" type="button" class="mini-list-btn"></tmpl_unless></td>
   </tr>
 
   </tbody>

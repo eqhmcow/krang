@@ -900,13 +900,9 @@ Krang.to_top = function() {
 Krang.row_checked = function( form, inputName ) {
     form = typeof form == 'object' ? form : document.forms[form];
 
-    for ( var i = 0; i < form.elements.length; i++ ) {
-        var el = form.elements[ i ];
-        if ( el.type == 'checkbox' && el.checked && el.name == inputName ) 
-            return true;  // db2: this should be a substring match, cf. ElementEditor/edit.tmpl
-    }
-
-    return false;
+    return $(form).getInputs('checkbox').any(function(ckbx) {
+        return ckbx.checked && ckbx.name.indexOf(inputName) == 0;
+    });
 };
 
 Krang.pager_row_checked = function() {
@@ -985,8 +981,9 @@ Krang.Pager = {
 */
 Krang.check_all = function( list_checkbox, prefix ) {
     var form = list_checkbox.form;
-
-    $(form).getInputs('checkbox', prefix).each(function(row_ckbx) {
+    $(form).getInputs('checkbox').select(function(chbx) {
+        return chbx.name && chbx.name.indexOf(prefix) == 0;
+    }).each(function(row_ckbx) {
         row_ckbx.checked = list_checkbox.checked
         list_checkbox.checked
             ? row_ckbx.up('tr').addClassName('hilite')
@@ -1721,7 +1718,7 @@ var rules = {
             var clicked = Event.element(event);
             clicked.up('tr').toggleClassName('hilite');
             // enable list buttons only if at least one checkbox is checked
-            Krang.Form.toggle_list_btn(el.form, el.name);
+            Krang.Form.toggle_list_btn(el.form, el.name.replace(/(.*_).*/, "$1"));
         }.bindAsEventListener(el));
     },
     '#error_msg_trigger' : function(el) {
