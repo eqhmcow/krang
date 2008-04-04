@@ -192,14 +192,14 @@ Object.extend(PopupTreeSelect.prototype, {
         if (id == selected_id) {
             /* clicked twice, turn it off and go back to nothing selected */
             this.selected_id = null;
-            $('hpts-ok-btn').disable().removeClassName('hpts-ok-btn-enabled');
+            $('hpts-ok-btn-'+this.name).disable().removeClassName('hpts-ok-btn-enabled');
         } else {
             /* turn on selected item */
             var new_obj = document.getElementById(this.name + "-line-" + id);
             new_obj.className = "hpts-label-selected";
             this.selected_id = id;
             this.selected_val = val;
-            $('hpts-ok-btn').enable().addClassName('hpts-ok-btn-enabled');
+            $('hpts-ok-btn-'+this.name).enable().addClassName('hpts-ok-btn-enabled');
         }
     },
     /* it's showtime! */
@@ -223,7 +223,7 @@ Object.extend(PopupTreeSelect.prototype, {
         obj.style.display = 'block';
 
         // don't activate OK button until an item has been selected
-        $('hpts-ok-btn').disable().removeClassName('hpts-ok-btn-enabled');
+        $('hpts-ok-btn-'+this.name).disable().removeClassName('hpts-ok-btn-enabled');
 
         if( this.hide_selects ) {
             for(var f = 0; f < document.forms.length; f++) {

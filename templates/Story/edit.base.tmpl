@@ -4,6 +4,8 @@
 Krang.onload( function() {
   Krang.Nav.edit_mode();
   Krang.Help.set( 'story_edit' );
+  Krang.Form.toggle_list_btn('edit', 'remove_');
+  Krang.Form.toggle_list_btn('categories', 'cat_remove_');
 } );
 
 cancel_edit = function() {
@@ -48,22 +50,22 @@ preview_and_stay = function() {
   //:only from within category_chooser = function(db2)
   add_category = function() {
     Krang.ElementEditor.run_save_hooks();
-    Krang.Form.submit('edit', { rm: 'add_category' }, { to_top: false });
+    Krang.Form.submit('categories', { rm: 'add_category' }, { to_top: false });
   }
   replace_category = function() {
     Krang.ElementEditor.run_save_hooks();
-    Krang.Form.submit('edit', { rm: 'replace_category' }, { to_top: false });
+    Krang.Form.submit('categories', { rm: 'replace_category' }, { to_top: false });
   }
 
   set_primary_category = function() {
     Krang.ElementEditor.run_save_hooks();
-    Krang.Form.submit('edit', { rm: 'set_primary_category' }, { to_top: false });
+    Krang.Form.submit('categories', { rm: 'set_primary_category' }, { to_top: false });
   }
 
   remove_categories = function() {
     if( confirm( Krang.L10N.loc('Are you SURE you want to remove the Story from these Categories?') ) ) {
         Krang.ElementEditor.run_save_hooks();
-        Krang.Form.submit('edit', { rm: 'delete_categories' }, { to_top: false });
+        Krang.Form.submit('categories', { rm: 'delete_categories' }, { to_top: false });
     }
   }
 
@@ -277,7 +279,19 @@ preview_and_stay = function() {
 <tmpl_include ElementEditor/<tmpl_lang en>/edit.tmpl>
 <!--:ElementEditor/edit.tmpl-->
 
+</form>
+
 <tmpl_if is_root>
+
+<form name="categories" id="categories" action="story.pl" method="post" enctype="multipart/form-data">
+  <input name="rm" value="" type="hidden">
+  <input name="reverted_to_version" value="<tmpl_var reverted_to_version>" type="hidden">
+  <input name="returning_from_root" value="1" type="hidden">
+  <input name="path" value="<tmpl_var escape=html path>" type="hidden">
+  <input name="jump_to" type="hidden">
+  <input name="bulk_edit" value="<tmpl_var escape=html bulk_edit>" type="hidden">
+  <input name="title" value="<tmpl_var escape=html title>" type="hidden">
+  <input id="slug" name="slug" value="<tmpl_var escape=html slug>" type="hidden">
 
   <h3>
   <tmpl_lang Sites/Categories>
@@ -315,7 +329,7 @@ preview_and_stay = function() {
     <th></th>
     <th class="l series">
       <tmpl_unless auto_category>
-        <tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input type="checkbox" onclick="Krang.check_all(this,'cat_remove_')"></tmpl_unless></tmpl_if></tmpl_loop>  <!--:ick, but should work(db2)-->
+        <tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input type="checkbox" name="checkallbox" id="checkallbox" onclick="Krang.check_all(this,'cat_remove_')"></tmpl_unless></tmpl_if></tmpl_loop>  <!--:ick, but should work(db2)-->
       </tmpl_unless>
     </th>
     </tr>
@@ -341,7 +355,7 @@ preview_and_stay = function() {
       <td class="series l">
         <tmpl_unless auto_category>
           <tmpl_unless __first__>
-            <input name="cat_remove_<tmpl_var escape=html category_id>" type="checkbox">
+            <input name="cat_remove_<tmpl_var escape=html category_id>" type="checkbox" class="hilite-row">
           <tmpl_else>
             &nbsp;
           </tmpl_unless>
@@ -355,7 +369,7 @@ preview_and_stay = function() {
       <td class="series f"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="<tmpl_lang Set>" onclick="set_primary_category()" type="button" class="button"><tmpl_else>&nbsp;</tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
       <td colspan="3"><tmpl_var add_category_button></td>
       <td><tmpl_var replace_category_button></td>
-      <td class="series l"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="<tmpl_lang Delete>" onclick="remove_categories()" type="button" class="button"><tmpl_else>&nbsp;</tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
+      <td class="series l"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="<tmpl_lang Delete>" onclick="remove_categories()" type="button" class="mini-list-btn"><tmpl_else>&nbsp;</tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
       </tr>
     </tmpl_unless>
 

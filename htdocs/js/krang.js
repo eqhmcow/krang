@@ -600,7 +600,7 @@ Krang.Form = {
                 } else {
                     btn.removeClassName(spec[1]+'-enabled');
                     btn.disable();
-                    $('checkallbox').checked = false;
+                    spec[0].getElementsBySelector('input#checkallbox').first().checked = false;
                 }
             })});
     }
@@ -1718,7 +1718,7 @@ var rules = {
             var clicked = Event.element(event);
             clicked.up('tr').toggleClassName('hilite');
             // enable list buttons only if at least one checkbox is checked
-            Krang.Form.toggle_list_btn(el.form, el.name.replace(/(.*_).*/, "$1"));
+            Krang.Form.toggle_list_btn(el.form, el.name.replace(/(.*_)[^_]+/, "$1"));
         }.bindAsEventListener(el));
     },
     '#error_msg_trigger' : function(el) {
