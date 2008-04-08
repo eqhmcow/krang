@@ -80,7 +80,7 @@ sub validate {
     my ($param) = $self->param_names(element => $element);
     return 1 unless $self->{required};
     return 1 if $element->data or $query->param($param);
-    return (0, $self->display_name . ' ' . localize('requires a value.'));
+    return (0, localize($self->display_name) . ' ' . localize('requires a value.'));
 }
 
 # show a thumbnail in view mode

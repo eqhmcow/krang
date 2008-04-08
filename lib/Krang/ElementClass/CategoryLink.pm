@@ -50,7 +50,7 @@ sub validate {
     my $object = $element->object;
     if ($object->isa('Krang::Category') and 
         $value and $value == $object->category_id) {
-        return (0, $self->display_name . ' ' . localize('cannot link to this category!'));
+        return (0, localize($self->display_name) . ' ' . localize('cannot link to this category!'));
     }
 
     return $self->SUPER::validate(%arg);

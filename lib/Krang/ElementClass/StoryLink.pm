@@ -66,7 +66,7 @@ sub validate {
     my ($self, %arg) = @_;
     my ($query, $element) = @arg{qw(query element)};
     if ($self->{required} and not defined $element->data) {
-        return (0, $self->display_name . ' ' . localize('requires a value.'));
+        return (0, localize($self->display_name) . ' ' . localize('requires a value.'));
     }
     return 1;
 }

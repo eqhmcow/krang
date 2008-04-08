@@ -54,14 +54,14 @@ sub validate {
 
     if (not $m and not $d and not $y) {
         if ($self->{required}) {
-            return (0, $self->display_name . ' ' . localize('requires a value.'));
+            return (0, localize($self->display_name) . ' ' . localize('requires a value.'));
         } else {
             return (1, undef);
         }
     } elsif ($m and $d and $y) {
         return (1, undef);
     } elsif ($m or $d or $y) {
-        return (0, $self->display_name . ' ' . localize('selection incomplete.'));
+        return (0, localize($self->display_name) . ' ' . localize('selection incomplete.'));
     }
 
     return (1, undef);

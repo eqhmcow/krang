@@ -83,7 +83,7 @@ sub validate {
     if ($self->{required} and 
         (not defined $value or not length $value or
          $value =~ m!^<br\s*/>\s*$!)) {
-        return (0, $self->display_name . ' ' . localize('requires a value.'));
+        return (0, localize($self->display_name) . ' ' . localize('requires a value.'));
     }
     return 1;
 }

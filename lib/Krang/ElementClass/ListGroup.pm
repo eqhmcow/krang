@@ -265,7 +265,7 @@ sub validate {
     my @values = $query->param($nth_list_param);
 
     if ($self->{required} and (not scalar(@values))) {
-        return (0, localize('List') . ' ' .  $self->display_name . ' ' . localize('requires a value.'));
+        return (0, localize('List') . ' ' .  localize($self->display_name) . ' ' . localize('requires a value.'));
     }
     return 1;
 }

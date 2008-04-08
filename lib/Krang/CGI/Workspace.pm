@@ -125,7 +125,7 @@ sub _row_handler {
         $row->{story_id}   = $obj->story_id;
         $row->{id}         = $self->_obj2id($obj);
         $row->{title}      = $obj->title;
-        $row->{story_type} = $obj->class->display_name;
+        $row->{story_type} = localize($obj->class->display_name);
         $row->{is_story}   = 1;
         $row->{url}        = format_url(
             url    => $obj->url,

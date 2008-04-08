@@ -156,7 +156,7 @@ sub _row_handler {
     $row->{desk_loop}  = $desk_loop;
     $row->{story_id}   = $obj->story_id;
     $row->{title}      = $obj->title;
-    $row->{story_type} = $obj->class->display_name;
+    $row->{story_type} = localize($obj->class->display_name);
     $row->{url} = format_url(url    => $obj->url,
                              linkto => 
                              "javascript:Krang.preview('story',$row->{story_id})",

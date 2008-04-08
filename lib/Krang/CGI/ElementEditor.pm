@@ -212,15 +212,9 @@ sub element_edit {
     # store current element's name
     $template->param(done_with_this_element => localize('Done With '.$element->display_name));
     $template->param(delete_this_element    => localize('Delete '   .$element->display_name));
-    
+
     # crumbs let the user jump up the tree
-    my $pointer = $element;
-    my @crumbs;
-    do {
-        unshift(@crumbs, { name => $pointer->display_name,
-                           path => $pointer->xpath });
-        $pointer = $pointer->parent;
-    } while ($pointer);
+    my @crumbs = $self->_make_crumbs(element => $element);
     $template->param(crumbs => \@crumbs) unless @crumbs == 1;
 
     # decide whether to show the delete element button
@@ -268,7 +262,7 @@ sub element_edit {
 
         push(@child_loop, {
                            form         => $form,
-                           name         => $child->display_name(),
+                           name         => localize($child->display_name),
                            path         => $child->xpath(),
                            (order_select =>
                              $child->reorderable && $multiple_reorders ? 
@@ -303,7 +297,7 @@ sub element_edit {
     my @available =  $element->available_child_classes();
     if (@available) {
         my @values = sort { $a cmp $b } map { $_->name } @available;
-        my %labels = map { ($_->name, $_->display_name) } @available;
+        my %labels = map { ($_->name, localize($_->display_name)) } @available;
         $template->param(child_select => 
                          $query->popup_menu(-name   => "child",
                                             -values => \@values,
@@ -314,7 +308,7 @@ sub element_edit {
     my @bulk_edit = grep { $_->bulk_edit } $element->class->children;
     if (@bulk_edit) {
         my @values = map { $_->name } @bulk_edit;
-        my %labels = map { ($_->name, $_->display_name) } @bulk_edit;
+        my %labels = map { ($_->name, localize($_->display_name)) } @bulk_edit;
         $template->param(bulk_edit_select => 
                          $query->popup_menu(-name   => "bulk_edit_child",
                                             -values => \@values,
@@ -368,13 +362,8 @@ sub element_bulk_edit {
                                        map { $_->bulk_edit_data } @children));
 
     # crumbs let the user jump up the tree
-    my $pointer = $element;
-    my @crumbs = ({ name => $element->class->child($name)->display_name });
-    do {
-        unshift(@crumbs, { name => $pointer->display_name,
-                           path => $pointer->xpath });
-        $pointer = $pointer->parent;
-    } while ($pointer);
+    my @crumbs = $self->_make_crumbs(element => $element);
+    push @crumbs, { name => localize($element->class->child($name)->display_name) };
     $template->param(crumbs => \@crumbs) unless @crumbs == 1;
     $template->param(bulk_done_with_this_element => localize('Done Bulk Editing '.$element->class->child($name)->display_name));
 }
@@ -491,7 +480,7 @@ sub find_story_link {
         my @classes = grep { $_ ne 'category' } 
           pkg('ElementLibrary')->top_levels;
         my %class_labels = map {
-            $_ => pkg('ElementLibrary')->top_level(name => $_)->display_name()
+            $_ => localize(pkg('ElementLibrary')->top_level(name => $_)->display_name)
         } @classes;
         $tmpl_data{search_class_chooser} =
           scalar($query->popup_menu(-name      => 'search_class',
@@ -844,14 +833,7 @@ sub element_view {
     my $element = $self->_find_element($root, $path);
 
     # crumbs let the user jump up the tree
-    my $pointer = $element;
-    my @crumbs;
-    do {
-        unshift(@crumbs, { name => $pointer->display_name,
-                           path => $pointer->xpath,
-                         });
-        $pointer = $pointer->parent;
-    } while ($pointer);
+    my @crumbs = $self->_make_crumbs(element => $element);
     $template->param(crumbs => \@crumbs) unless @crumbs == 1;
 
     my @child_loop;
@@ -862,7 +844,7 @@ sub element_view {
         next if $child->hidden;
         push(@child_loop, {
                            data         => $child->view_data(),
-                           name         => $child->display_name(),
+                           name         => localize($child->display_name),
                            path         => $child->xpath(),
                            is_container => $child->is_container,
                           });
@@ -894,8 +876,8 @@ sub add {
     if( $kid->is_container ) {
         # start editing the new element
         $query->param(path => $kid->xpath());
-        add_message('added_element', child  => $kid->display_name(),
-                                     parent => $element->display_name());
+        add_message('added_element', child  => localize($kid->display_name),
+                                     parent => localize($element->display_name));
     }
 
     # toss to edit
@@ -951,7 +933,7 @@ sub element_bulk_save {
     }
 
     add_message('saved_bulk', 
-                name => $element->class->child($name)->display_name);
+                name => localize($element->class->child($name)->display_name));
 }
 
 
@@ -1016,7 +998,7 @@ sub element_save {
     }
 
     # notify user of the save
-    add_message('saved_element', name => $element->display_name())
+    add_message('saved_element', name => localize($element->display_name))
       if ($element->parent() && !$args{previewing_story});
 
     # success
@@ -1049,7 +1031,7 @@ sub revise {
     } elsif ($op eq 'delete') {
         for (0 .. $#old) {
             if ($query->param("remove_$_")) {
-                add_message("deleted_element", name => $old[$_]->display_name);
+                add_message("deleted_element", name => localize($old[$_]->display_name));
 
                 # do the removal
                 $element->remove_children($old[$_]);
@@ -1106,7 +1088,7 @@ sub delete_element {
 
     my $root = $self->_get_element;
     my $element = $self->_find_element($root, $path);
-    my $name    = $element->display_name;
+    my $name    = localize($element->display_name);
 
     my $parent = $element->parent();
     if (not $parent) {
@@ -1155,5 +1137,20 @@ sub _numeric_date_format {
         : localize('[n/a]');
 }
 
+sub _make_crumbs {
+    my ($self, %args) = @_;
+
+    my $element = $args{element};
+
+    my @crumbs = ();
+    do {
+        unshift(@crumbs, { name => localize($element->display_name),
+                           path => $element->xpath,
+                         });
+        $element = $element->parent;
+    } while ($element);
+
+    return @crumbs;
+}
 
 1;

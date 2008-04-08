@@ -120,14 +120,15 @@ sub new_story {
     my @types = grep { $_ ne 'category' } pkg('ElementLibrary')->top_levels;
     # sort the type by their display name, not their real name
     @types = sort {
-        lc pkg('ElementLibrary')->top_level( name => $a )->display_name
+        lc localize(pkg('ElementLibrary')->top_level( name => $a )->display_name)
         cmp 
-        lc pkg('ElementLibrary')->top_level( name => $b )->display_name
+        lc localize(pkg('ElementLibrary')->top_level( name => $b )->display_name)
     } @types;
 
     my %type_labels = 
-      map { ($_, pkg('ElementLibrary')->top_level(name => $_)->display_name) }
+      map { ($_, localize(pkg('ElementLibrary')->top_level(name => $_)->display_name)) }
         @types;
+
     $template->param(type_selector => scalar
                      $query->popup_menu(-name      => 'type',
                                         -default   => '',
@@ -445,7 +446,7 @@ sub edit {
     
     # set fields shown everywhere
     $template->param(story_id          => $story->story_id || localize("n/a"),
-                     type              => $story->element->display_name,
+                     type              => localize($story->element->display_name),
                      url               => $story->url ? 
                                             format_url(
                                                        url => $story->url,
@@ -628,7 +629,7 @@ sub view {
 
     # static data
     $template->param(story_id => $story->story_id,
-                     type     => $story->element->display_name,
+                     type     => localize($story->element->display_name),
                      url      => format_url(
 					    url => $story->url,
 					    linkto => "javascript:Krang.preview('story','" . $story->story_id() . "')",
@@ -1689,10 +1690,10 @@ sub find {
         $tmpl_data{date_chooser_publish_to}   = datetime_chooser(query=>$q, name=>'publish_to', nochoice=>1);
 
         # Story class
-        my @classes = sort { lc $a->display_name cmp lc $b->display_name }
+        my @classes = sort { lc localize($a->display_name) cmp lc localize($b->display_name) }
             map { pkg('ElementLibrary')->top_level(name => $_ ) } 
             grep { $_ ne 'category' } pkg('ElementLibrary')->top_levels;
-        my %class_labels = map { $_->name => $_->display_name } @classes;
+        my %class_labels = map { $_->name => localize($_->display_name) } @classes;
         $tmpl_data{search_class_chooser} = scalar($q->popup_menu(-name      => 'search_class',
                                                                  -default   => ($persist_vars{"search_class"} || ''),
                                                                  -values    => [ ('', map {$_->name} @classes) ],
@@ -2073,7 +2074,7 @@ sub find_story_row_handler {
 
     if( $show_type_and_version ) {
         # story type
-        $row->{story_type}    = $story->class->display_name;
+        $row->{story_type}    = localize($story->class->display_name);
         $row->{story_version} = $story->version;
     }
 }

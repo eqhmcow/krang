@@ -149,7 +149,7 @@ sub edit {
     
     # populate read-only story/media metadata fields
     $template->param( 'id' => $object_id );
-    $template->param( 'story_type' => $object->element->display_name ) if ($object_type eq 'story');
+    $template->param( 'story_type' => localize($object->element->display_name) ) if ($object_type eq 'story');
     $template->param( 'current_version' => $object->version );
     $template->param( 'published_version' => $object->published_version );
     $template->param( 'url' => $object->url );

@@ -77,6 +77,7 @@ use Krang::ClassLoader MethodMaker =>
   new_hash_init => 'hash_init',
   get_set       => [ qw( name
                          min
+                         display_name
                          max
                          bulk_edit
                          required
@@ -198,15 +199,6 @@ fully constructed objects will be returned from the accessor.
 =back
 
 =cut
-
-# always return the localized version
-sub display_name {
-    my ($self, $new_val) = @_;
-
-    $self->{display_name} = $new_val if $new_val;
-
-    return localize($self->{display_name});
-}
 
 # the children attribute decodes its input, instantiating element
 # classes where needed
@@ -376,7 +368,7 @@ sub validate {
     my ($param) = $self->param_names(element => $element);
     my $value = $query->param($param);
     if ($self->{required} and (not defined $value or not length $value)) {
-        return (0, $self->display_name . ' ' . localize('requires a value.'));
+        return (0, localize($self->display_name) . ' ' . localize('requires a value.'));
     }
     return 1;
 }
@@ -616,7 +608,7 @@ sub find_template {
             Krang::ElementClass::TemplateNotFound->throw
                 (
                  message       => "Missing required output template: '$err'",
-                 element_name  => ($element ? $element->display_name() : $filename),
+                 element_name  => ($element ? localize($element->display_name) : $filename),
                  template_name => $filename,
 		 included_file => (($included_file || '') ne $filename) && $included_file,
                  category_url  => $publisher->category->url(),
@@ -632,7 +624,7 @@ sub find_template {
             Krang::ElementClass::TemplateParseError->throw
                 (
                  message       => "Coding error found in template: '$msg'",
-                 element_name  =>  ($element ? $element->display_name() : $filename),
+                 element_name  =>  ($element ? localize($element->display_name) : $filename),
                  template_name => $filename,
                  category_url  => $publisher->category->url(),
                  error_msg     => $err
@@ -1037,7 +1029,7 @@ sub publish {
             Krang::ElementClass::TemplateParseError->throw
                 (
                  message       => "Error publishing with template: '$msg'",
-                 element_name  => $args{element}->display_name,
+                 element_name  => localize($args{element}->display_name),
                  template_name => $args{element}->name . '.tmpl',
                  category_url  => $publisher->category->url(),
                  error_msg     => $err
@@ -1049,7 +1041,7 @@ sub publish {
             # something completely unexpected.
             Krang::ElementClass::PublishProblem->throw
                 (
-                 element_name => $args{element}->display_name,
+                 element_name => localize($args{element}->display_name),
                  error_msg    => $err
                 );
         }
