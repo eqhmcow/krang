@@ -107,7 +107,7 @@ use Krang::ClassLoader Conf => qw(InstanceElementSet KrangRoot);
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Template';
-
+use Krang::ClassLoader 'IO';
 
 use Getopt::Long;
 use Pod::Usage;
@@ -224,9 +224,9 @@ sub upload_templates {
         # Read template file from disk
         my $fq_filename = catfile($fs_path, $f);
         print "    Opening '$fq_filename' for read\n" if $verbose > 1;
-        open(TMPL, "<$fq_filename") || die("Can't open '$fq_filename': $!");
-        my @content = (<TMPL>);
-        close(TMPL);
+        my $TMPL = pkg('IO')->io_file($fq_filename);
+        my @content = (<$TMPL>);
+        close($TMPL);
 
         # Upload new content
         $t->content(join("", @content));
