@@ -34,9 +34,9 @@ Don't pull a new update from SVN. Just run the code that's there.
 
 Don't rebuild Krang, just run with what's there.
 
-=item --smolder-category
+=item --smolder-tags
 
-This sets the category for this uploaded test run in Smolder
+This sets the tags (comma separated list of tags) for this uploaded test run in Smolder
 
 =back
 
@@ -95,7 +95,7 @@ use Pod::Usage;
 use Getopt::Long;
 use WWW::Mechanize;
 
-my ($help, $man, $category, $no_update, $no_rebuild);
+my ($help, $man, $tags, $no_update, $no_rebuild);
 
 # we might make these configurable in the future
 my $project_id = 3;
@@ -103,7 +103,7 @@ my $server     = 'http://smolder.plusthree.com';
 GetOptions(
     help                                            => \$help,
     man                                             => \$man,
-    'smolder_category|smolder-category|category=s'  => \$category,
+    'smolder_tags|smolder-tags|tags=s'              => \$tags,
     'no_update|no-update|no_updates|no-updates'     => \$no_update,
     'no_rebuild|no-rebuild|no_rebuilds|no-rebuilds' => \$no_rebuild,
 ) or pod2usage(2);
@@ -127,8 +127,8 @@ if($no_update or `svn update` =~ /Updated to/i) {
       or die "Could not build DB for test2";
 
     # run the test
-    system('make restart') == 0            or die "Could not restart Krang";
-    system('make test_archive') == 0       or die "Could not run test suite";
+    system('make restart') == 0       or die "Could not restart Krang";
+    system('make test_archive') == 0  or die "Could not run test suite";
     system('bin/krang_ctl stop') == 0 or die "Could not stop Krang";
 
     # now send the results off to smolder
@@ -166,7 +166,7 @@ sub send_results_to_smolder {
         platform     => `cat /etc/redhat-release`,
         architecture => `uname -m`,
     );
-    $fields{category} = $category if $category;
+    $fields{tags} = $tags if $tags;
 
     # get the comments from svn
     my @lines = `svn info`;
