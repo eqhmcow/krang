@@ -143,7 +143,7 @@ sub add_history {
 
     my $history = pkg('History')->new(%args);
 
-    $history->{version} = $object->version() if (($args{action} eq 'save') || ($args{action} eq 'revert'));
+    $history->{version} = $object->version() if (($args{action} eq 'save') || ($args{action} eq 'revert') || ($args{action} eq 'rename'));
     $history->{user_id} = $ENV{REMOTE_USER};
    
     my $object_type = ref $object;
@@ -320,7 +320,7 @@ Override this method to extend the list.
 =cut
 
 sub actions {
-    return qw( new save checkin checkout publish deploy undeploy move revert delete);
+    return qw( new save checkin checkout publish deploy undeploy move revert delete rename );
 }
 
 1;

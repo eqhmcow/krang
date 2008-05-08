@@ -738,14 +738,29 @@ sub save {
 	   move($old_path,$new_path) || croak("Cannot move to $new_path");
            rmtree(delete $self->{tempdir});	
 	} elsif (not $args{keep_version}) {
-	    # symbolically link to version dir, since it isnt changing 
+            # there's no new file, so create hard link to old version
+
+            # first find old path by reverting version number & filename and calling file_path()
+            my ($last_saved_object) = pkg('Media')->find(media_id => $self->media_id, version => $self->version - 1);
+            my $last_saved_filename = $last_saved_object->filename;
+            my $new_filename        = $self->filename; 
             $self->{version}--;
+            $self->{filename} = $last_saved_filename;
 	    my $old_path = $self->file_path;
+
+            # next determine new file path 
             $self->{version}++;
+            $self->{filename} = $new_filename;
 	    my $new_path = $self->file_path;
+
+            # then create the new path, and link it to the old one
             mkpath((splitpath($new_path))[1]);     
 	    link $old_path, $new_path or
               croak("Unable to create link $old_path to $new_path");	
+
+            # if name changed, record that in history table
+            add_history( object => $self, action => 'rename' )
+              if ($new_filename ne $last_saved_filename);
 	}
     } else {
         croak('You must upload a file using upload_file() before saving media object!')

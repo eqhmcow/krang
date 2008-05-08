@@ -1,3 +1,4 @@
+
 package Krang::CGI::Media;
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader base => qw(CGI);

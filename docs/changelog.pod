@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added ability to rename media files (through code, not GUI) without re-uploading 
+object. [Noam Weinstein]
+
+=item *
+
 On all Find screens, enable/disable the (green) list buttons according
 to the checked status of the list's row checkboxes.  Also
 enable/disable the element editor's Delete button according to
