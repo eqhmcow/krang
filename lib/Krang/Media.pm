@@ -741,7 +741,7 @@ sub save {
             # there's no new file, so create hard link to old version
 
             # first find old path by reverting version number & filename and calling file_path()
-            my ($last_saved_object) = pkg('Media')->find(media_id => $self->media_id, version => $self->version - 1);
+            my ($last_saved_object) = pkg('Media')->find(media_id => $self->media_id);
             my $last_saved_filename = $last_saved_object->filename;
             my $new_filename        = $self->filename; 
             $self->{version}--;
