@@ -759,6 +759,9 @@ sub save {
               croak("Unable to create link $old_path to $new_path");	
 
             # if name changed, record that in history table
+	    # (note that the 'rename' action corresponds to renaming an 
+	    # existing file via a link; uploading (or editing to create) 
+	    # a new file with a new name does not log a 'rename')
             add_history( object => $self, action => 'rename' )
               if ($new_filename ne $last_saved_filename);
 	}
