@@ -2087,6 +2087,8 @@ sub clone {
         $copy->{url_cache} = [];
     }
 
+    # new story should be editable even if old one wasn't
+    $copy->{may_edit} = 1;
     return $copy;
 }
 

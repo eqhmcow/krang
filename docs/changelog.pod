@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where cloning a read-only story doesn't reset may_edit flag.  
+[Noam Weinstein]
+
+=item *
+
 Added ability to rename media files (through code, not GUI) without re-uploading 
 object. [Noam Weinstein]
 
