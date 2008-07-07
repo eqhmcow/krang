@@ -1359,14 +1359,14 @@ sub update_media {
 
             next;
         }
+
+	# Handle direct text-file editing
         if ($mf eq 'text_content') {
+            my $text = $q->param('text_content') || next;
+            
             # Upload takes precedence over inline edit
             next if $q->param('media_file');
 
-            # Handle direct text-file editing
-            next unless ($q->param('text_content') && !$q->param('media_file'));
-            my $text = $q->param('text_content');
-            
             # Put the file in the Media object
             $m->store_temp_file(
                 content   => $text,
