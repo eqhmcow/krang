@@ -189,7 +189,7 @@ Krang.onload( function() {
 
 <tmpl_unless is_old_version><tmpl_if can_edit>
   <form name="edit_media_form" method="post" action="media.pl">
-  <input name="rm" value="edit" type="hidden">
+  <input name="rm" value="checkout_and_edit" type="hidden">
   <input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
   </form>
 </tmpl_if></tmpl_unless>
