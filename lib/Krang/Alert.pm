@@ -32,7 +32,7 @@ use constant ACTIONS => qw( new save checkin checkout publish move );
 
     use Krang::ClassLoader 'Alert';
     
-    # add new alert scenario - user 1 will be notified when any new stary is 
+    # add new alert scenario - user 1 will be notified when any new story is 
     # created in category 3 (or its descendants)
     my $alert = pkg('Alert')->new(  user_id => '1',
                                     action => 'new',
