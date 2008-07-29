@@ -736,7 +736,7 @@ sub validate_user {
     my $q = $self->query();
     my %errors;
 
-    # login, first, and last cannot be '' or just whitespace
+    # login, first, and last cannot be empty; email must be empty or valid
     for (qw/login first_name last_name email/) {
         my $val = $q->param($_);
 
