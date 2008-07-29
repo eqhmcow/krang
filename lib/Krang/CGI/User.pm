@@ -743,7 +743,7 @@ sub validate_user {
         unless ($_ eq 'email') {
             $errors{"error_invalid_$_"} = 1 if ($val eq '' || $val =~ /^\s+$/);
 
-            # check login and pass length
+            # check login length
             if ($_ eq 'login') {
                 $errors{"error_login\_length"} = 1
                   unless (length($val) >= 6 ||
