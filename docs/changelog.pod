@@ -11,7 +11,7 @@ This document contains a list of changes for each release of Krang.
 
 Made it possible to associate contributors with a story or media
 object even if the user doesn't have the manage_contribs permission,
-which should presumably be required for the ability to add or delete
+which should presumably be required only for the ability to add or delete
 contributors from the system. [Noam Weinstein]
 
 =item *
