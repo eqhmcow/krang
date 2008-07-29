@@ -740,21 +740,19 @@ sub validate_user {
     for (qw/login first_name last_name email/) {
         my $val = $q->param($_);
 
-        unless ($_ eq 'email') {
+        if ($_ eq 'email') {
+            $errors{error_invalid_email} = 1
+              if ($val ne '' && $val !~ /[\w.-]+\@[\w.-]+\.\w+/);
+        } else {
             $errors{"error_invalid_$_"} = 1 if ($val eq '' || $val =~ /^\s+$/);
 
             # check login length
             if ($_ eq 'login') {
-                $errors{"error_login\_length"} = 1
+                $errors{"error_login_length"} = 1
                   unless (length($val) >= 6 ||
                           grep $val eq $_, pkg('User')->SHORT_NAMES);
             }
-        } else {
-            $errors{error_invalid_email} = 1
-              if ($_ eq 'email' && $val ne ''
-                  && $val !~ /[\w.-]+\@[\w.-]+\.\w+/);
         }
-
     }
 
     my ($mode, $pass, $cpass) = map {$q->param($_)}
