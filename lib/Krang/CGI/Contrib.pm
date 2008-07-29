@@ -52,6 +52,7 @@ for Krang::CGI::Contrib is 'search'.
 
 use Krang::ClassLoader 'Contrib';
 use Krang::ClassLoader 'Conf';
+use Krang::ClassLoader 'Group';
 use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
@@ -377,6 +378,10 @@ sub associate_search {
                                       },
                                       id_handler => sub { return 0; },
                                      );
+
+    # Determine if user should see 'Add Contributor' button
+    my %admin_perms = pkg('Group')->user_admin_permissions();
+    $t->param('user_can_add_contributors' => $admin_perms{admin_contribs});
 
     # Put pager in template
     $pager->fill_template($t);

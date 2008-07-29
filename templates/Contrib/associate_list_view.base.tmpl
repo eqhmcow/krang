@@ -219,7 +219,9 @@ add_contrib = function()
 
 <div class="panel capped">
 <input value="<tmpl_lang Back>" type="submit" class="west">
-<input value="<tmpl_lang Add Contributor>" onclick="add_contrib()" type="button">
+<tmpl_if user_can_add_contributors>
+  <input value="<tmpl_lang Add Contributor>" onclick="add_contrib()" type="button">
+</tmpl_if>
 </div>
 
 </form>
