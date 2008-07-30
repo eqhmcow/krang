@@ -636,7 +636,7 @@ sub delete_selected {
     my @category_delete_list = ( $q->param('krang_pager_rows_checked') );
     $q->delete('krang_pager_rows_checked');
 
-    # No selected stories?  Just return to find without any message
+    # No selected categories?  Just return to find without any message
     return $self->find() unless (@category_delete_list);
 
     # load all objects and sort by URL length, sorts children before

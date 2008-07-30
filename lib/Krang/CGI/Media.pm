@@ -887,7 +887,7 @@ sub delete_selected {
     my @media_delete_list = ( $q->param('krang_pager_rows_checked') );
     $q->delete('krang_pager_rows_checked');
 
-    # No selected contribs?  Just return to list view without any message
+    # No selected media?  Just return to list view without any message
     return $self->find() unless (@media_delete_list);
 
     foreach my $mid (@media_delete_list) {
