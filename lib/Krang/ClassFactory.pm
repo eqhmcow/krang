@@ -29,7 +29,7 @@ Krang::ClassFactory - a registry for class names allowing runtime overrides
 =head1 DESCRIPTION
 
 This module mainatins a table of class names which allows addons to
-selectively override core Krang classes.  Addons declare their
+selectively override core Krang classes.  AddOns declare their
 overrides via a F<conf/class.conf> file.  For example, if the
 Turbo-1.00.tar.gz addon contains a F<conf/class.conf> file with:
 

@@ -267,7 +267,7 @@ $element->object->isa('Krang::Story') and croaks otherwise.
 sub story { 
     my $self = shift;
     my $object = $self->object;
-    croak("Expected a pkg('Story') in element->object for $self->{element_id}, but didn't find on!")
+    croak("Expected a pkg('Story') in element->object for $self->{element_id}, but didn't find one!")
       unless $object and $object->isa('Krang::Story');
     return $object;
 }
@@ -449,7 +449,7 @@ sub reorder_children {
       if grep { ++$seen{$_} != 1 } @_;
 
     # check size
-    croak("reorder_children called with wrong sized list, or list containing ")
+    croak("reorder_children called with wrong sized list")
       unless @$children == @_;
 
     # normalize to a list of objects, in requested order

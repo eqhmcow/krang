@@ -54,7 +54,6 @@ KrangGroup
 KrangRoot
 KrangUser
 LogLevel
-MaxConcurrentKrangSessions
 PasswordChangeTime
 PasswordChangeCount
 PreviewSSL
@@ -78,6 +77,7 @@ SSLCipherSuite
 SSLVerifyClient
 SSLVerifyDepth
 SSLLogLevel
+TrashMaxItems
 );
 
 our @REQUIRED_DIRECTIVES = qw(

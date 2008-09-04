@@ -45,8 +45,8 @@ Default search page size.
 
 our %CONFIG = (
     search_page_size => {
-        type  => 'scalar',
-        row   => 'search_page_size',
+        type => 'scalar',
+        row  => 'search_page_size',
     },
     use_autocomplete => {
         type  => 'scalar',
@@ -55,6 +55,10 @@ our %CONFIG = (
     message_timeout => {
         type  => 'scalar',
         row   => 'message_timeout',
+    },
+    syntax_highlighting => {
+        type => 'scalar',
+        row => 'syntax_highlighting',
     },
     language => {
         type => 'scalar',

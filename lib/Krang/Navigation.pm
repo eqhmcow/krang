@@ -121,7 +121,7 @@ sub render {
     # format name with link
     my $name =
       ($link ?
-       qq{<a href="javascript:Krang.Nav.goto_url('} . $link . qq{')">} : "") .
+       qq{<a href="} . $link . qq{" class="nav_link">} : "") .
       localize($node->name) .
       ($link ? qq{</a>} : '');
 
@@ -188,6 +188,10 @@ sub default_tree {
     $sub->name('Active Stories');
     $sub->link('story.pl?rm=list_active');
 
+    $sub  = $node->new_daughter();
+    $sub->name('Retired Stories');
+    $sub->link('story.pl?rm=list_retired');
+
     my @desks = pkg('Desk')->find(order_by => 'order');
     my $user_desk_permissions = $perms->{desk};
     my $show_desk_section = grep { $user_desk_permissions->{$_->desk_id} ne 'hide' } @desks;
@@ -223,6 +227,10 @@ sub default_tree {
     $sub->link('media.pl?rm=list_active');    
 
     $sub  = $node->new_daughter();
+    $sub->name('Retired Media');
+    $sub->link('media.pl?rm=list_retired');
+
+    $sub  = $node->new_daughter();
     $sub->name('Bulk Upload');
     $sub->link('media_bulk_upload.pl');
     $sub->condition(sub { shift->{asset}{media} ne 'read-only' });
@@ -244,6 +252,10 @@ sub default_tree {
     $sub  = $node->new_daughter();
     $sub->name('Active Templates');
     $sub->link('template.pl?rm=list_active');
+
+    $sub  = $node->new_daughter();
+    $sub->name('Retired Templates');
+    $sub->link('template.pl?rm=list_retired');
 
     # setup template FTP link (which is dynamic) unless it's disabled
     if( EnableFTP ) {
@@ -314,14 +326,13 @@ sub default_tree {
 
     $sub = $node->new_daughter();
     $sub->name('Scheduler');
-    $sub->link('schedule.pl?advanced_schedule=1&rm=edit_admin');
+    $sub->link('schedule.pl?advanced_schedule=1&amp;rm=edit_admin');
     $sub->condition(
         sub { 
             shift->{admin}{admin_scheduler} 
                 && pkg('AddOn')->find(condition => 'EnableAdminSchedulerActions')
         }
     );
-    
 
     return $root;
 }

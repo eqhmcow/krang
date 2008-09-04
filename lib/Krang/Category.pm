@@ -83,7 +83,6 @@ constructor arg or a 'parent_id' must be passed.
 
 =cut
 
-
 #
 # Pragmas/Module Dependencies
 ##############################
@@ -96,20 +95,21 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(verbose croak);
-use Exception::Class
-  (
-   'Krang::Category::Dependent' => {fields => 'dependents'},
-   'Krang::Category::DuplicateURL' => {fields => [ 'category_id', 'story_id', 'url' ]},
-   'Krang::Category::NoEditAccess' => {fields => 'category_id'},
-   'Krang::Category::RootDeletion',
-  );
+use Exception::Class (
+    'Krang::Category::Dependent'    => {fields => 'dependents'},
+    'Krang::Category::DuplicateURL' => {fields => [qw(category_id story_id url)]},
+    'Krang::Category::NoEditAccess' => {fields => [qw(category_id category_url)]},
+    'Krang::Category::RootDeletion',
+    'Krang::Category::CopyAssetConflict',
+    'Krang::Category::CantCopyParentToChild',
+);
 
 use File::Spec;
 use Storable qw(nfreeze thaw);
 
 # Internal Modules
 ###################
-use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader DB      => qw(dbh);
 use Krang::ClassLoader Element => qw(foreach_element);
 
 use Krang::ClassLoader 'Media';
@@ -126,32 +126,31 @@ use Krang::ClassLoader Log => qw(debug assert ASSERT);
 ############
 # Read-only fields
 use constant CATEGORY_RO => qw( category_id
-                                category_uuid
-			        element_id
-			        url );
+  category_uuid
+  element_id
+  url );
 
 # Read-write fields
 use constant CATEGORY_RW => qw( dir
-			        site_id
-			        parent_id );
+  site_id
+  parent_id );
 
 # Globals
 ##########
 
 # Lexicals
 ###########
-my %category_args = map {$_ => 1} qw(dir parent_id site_id);
-my %category_cols = map {$_ => 1} CATEGORY_RO, CATEGORY_RW;
+my %category_args = map { $_ => 1 } qw(dir parent_id site_id);
+my %category_cols = map { $_ => 1 } CATEGORY_RO, CATEGORY_RW;
 
 # Constructor/Accessor/Mutator setup
 use Krang::ClassLoader MethodMaker => new_with_init => 'new',
-			new_hash_init => 'hash_init',
-			get => [CATEGORY_RO],
-			get_set => [grep { $_ ne 'parent_id' } CATEGORY_RW];
+  new_hash_init                    => 'hash_init',
+  get                              => [CATEGORY_RO],
+  get_set => [grep { $_ ne 'parent_id' } CATEGORY_RW];
 
-sub id_meth { 'category_id' }
+sub id_meth   { 'category_id' }
 sub uuid_meth { 'category_uuid' }
-
 
 =head1 INTERFACE
 
@@ -238,9 +237,9 @@ sub preview_url {
     my $self = shift;
     croak "illegal attempt to set readonly attribute 'preview_url'.\n"
       if @_;
-    my $url = $self->url;
-    my $site = $self->site;
-    my $site_url = $site->url;
+    my $url              = $self->url;
+    my $site             = $self->site;
+    my $site_url         = $site->url;
     my $site_preview_url = $site->preview_url;
     $url =~ s/^\Q$site_url\E/$site_preview_url/;
 
@@ -285,14 +284,14 @@ sub may_edit {
 sub _load_permissions {
     my ($self, $user_id) = @_;
     my $dbh = dbh;
-        
-    ($self->{may_see}{$user_id}, $self->{may_edit}{$user_id}) 
-      = $dbh->selectrow_array(
+
+    ($self->{may_see}{$user_id}, $self->{may_edit}{$user_id}) = $dbh->selectrow_array(
         'SELECT may_see, may_edit
          FROM 
          user_category_permission_cache  
-         WHERE user_id = ? AND category_id = ?', 
-         undef, $user_id, $self->{category_id});
+         WHERE user_id = ? AND category_id = ?',
+        undef, $user_id, $self->{category_id}
+    );
 }
 
 =back
@@ -341,8 +340,11 @@ sub init {
         push @bad_args, $_ unless exists $category_args{$_};
 
     }
-    croak(__PACKAGE__ . "->init(): The following constructor args are " .
-          "invalid: '" . join("', '", @bad_args) . "'") if @bad_args;
+    croak(  __PACKAGE__
+          . "->init(): The following constructor args are "
+          . "invalid: '"
+          . join("', '", @bad_args) . "'")
+      if @bad_args;
 
     # check required fields
     croak(__PACKAGE__ . "->init(): Required argument 'dir' not present.")
@@ -352,8 +354,7 @@ sub init {
       if $args{dir} =~ m|^/[^/]+/|;
 
     # site or parent id must be present
-    croak(__PACKAGE__ . "->init(): Either the 'parent_id' or 'site_id' arg " .
-          "must be present.")
+    croak(__PACKAGE__ . "->init(): Either the 'parent_id' or 'site_id' arg " . "must be present.")
       unless ($args{site_id} || $args{parent_id});
 
     # extract 'parent_id' if any
@@ -362,7 +363,7 @@ sub init {
     $self->hash_init(%args);
 
     # set '_old_dir' to 'dir' to make changes to 'dir' detectable
-    $self->{_old_dir} = $self->{dir};
+    $self->{_old_dir}       = $self->{dir};
     $self->{_old_parent_id} = $self->{parent_id};
 
     # construct 'url'
@@ -370,21 +371,27 @@ sub init {
     my ($url);
     if ($self->{parent_id}) {
         my ($cat) = pkg('Category')->find(category_id => $self->{parent_id});
-        croak(__PACKAGE__ . "->init(): No category object found corresponding".
-              " to id '$self->{parent_id}'") unless defined $cat;
+        croak(  __PACKAGE__
+              . "->init(): No category object found corresponding"
+              . " to id '$self->{parent_id}'")
+          unless defined $cat;
 
         # Check permissions of parent category.
         unless ($cat->may_edit) {
-            Krang::Category::NoEditAccess->throw( message => "User does not have access to add this category",
-                                                  category_id => $cat->category_id );
+            Krang::Category::NoEditAccess->throw(
+                message     => "User does not have access to add this category",
+                category_id => $cat->category_id
+            );
         }
 
         $url = $cat->url();
         $self->{site_id} = $cat->site_id;
     } else {
         my ($site) = pkg('Site')->find(site_id => $self->{site_id});
-        croak(__PACKAGE__ . "->init(): site_id '$self->{site_id}' does not " .
-              "correspond to any object in the database.") unless $site;
+        croak(  __PACKAGE__
+              . "->init(): site_id '$self->{site_id}' does not "
+              . "correspond to any object in the database.")
+          unless $site;
         $url = $site->url();
     }
 
@@ -395,19 +402,20 @@ sub init {
 
     # define element
     #################
-    $self->{element} = pkg('Element')->new(class => 'category',
-                                           object => $self);
+    $self->{element} = pkg('Element')->new(
+        class  => 'category',
+        object => $self
+    );
 
     # Set up permissions
     my $user_id = $ENV{REMOTE_USER} || croak("No user_id set");
-    $self->{may_see}{$user_id} = 1;
+    $self->{may_see}{$user_id}  = 1;
     $self->{may_edit}{$user_id} = 1;
 
     $self->{category_uuid} = pkg('UUID')->new();
 
     return $self;
 }
-
 
 =item * $success = $category->delete()
 
@@ -447,16 +455,18 @@ sub delete {
 
     # Throw exception if user is not allowed to edit this category
     unless ($self->may_edit) {
-        Krang::Category::NoEditAccess->throw( message => "User does not have access to delete this category", 
-                                              category_id => $id );
+        Krang::Category::NoEditAccess->throw(
+            message     => "User does not have access to delete this category",
+            category_id => $id
+        );
     }
 
     # Throw RootDeletion exception unless called by Krang::Site
     if ($self->{dir} eq '/') {
-        Krang::Category::RootDeletion->throw(message => 'Root categories ' .
-                                             'can only be removed by ' .
-                                             'deleting their Site object')
-            unless (caller)[0] eq 'Krang::Site';
+        Krang::Category::RootDeletion->throw(message => 'Root categories '
+              . 'can only be removed by '
+              . 'deleting their Site object')
+          unless (caller)[0] eq 'Krang::Site';
     }
 
     # throws dependent exception if one exists
@@ -470,12 +480,11 @@ sub delete {
 
     # delete category
     my $query = "DELETE FROM category WHERE category_id = ?";
-    my $dbh = dbh();
+    my $dbh   = dbh();
     $dbh->do($query, undef, $id);
 
     return 1;
 }
-
 
 =item * $category->dependent_check()
 
@@ -504,15 +513,15 @@ the given category object.  You might want to handle the exception thusly:
 =cut
 
 sub dependent_check {
-    my $self = shift;
-    my $id = shift || $self->{category_id};
+    my $self       = shift;
+    my $id         = shift || $self->{category_id};
     my $dependents = 0;
     my (%info, $oid);
 
     # get dependent categories
     my $query = "SELECT category_id FROM category WHERE parent_id = ?";
-    my $dbh = dbh();
-    my $sth = $dbh->prepare($query);
+    my $dbh   = dbh();
+    my $sth   = $dbh->prepare($query);
     $sth->execute($id);
     $sth->bind_col(1, \$oid);
     while ($sth->fetch()) {
@@ -521,12 +530,15 @@ sub dependent_check {
     }
 
     # get other dependencies
-    for my $type(qw/Media Story Template/) {
+    for my $type (qw/Media Story Template/) {
         no strict 'subs';
 
-        my %find_args = ($type eq 'Story') ?
-          (category_id => $id, show_hidden => 1) :
-            (category_id => $id);
+        my %find_args =
+            ($type eq 'Story')
+          ? (category_id => $id, show_hidden => 1)
+          : (category_id => $id);
+
+        @find_args{qw(include_retired include_trashed)} = (1, 1);
 
         for ("Krang::$type"->find(%find_args)) {
             my $field = lc $type . "_id";
@@ -535,14 +547,13 @@ sub dependent_check {
         }
     }
 
-    Krang::Category::Dependent->throw(message => "Category cannot be deleted.".
-                                      "  Objects depend on its existence.",
-                                      dependents => \%info)
-        if $dependents;
+    Krang::Category::Dependent->throw(
+        message    => "Category cannot be deleted." . "  Objects depend on its existence.",
+        dependents => \%info
+    ) if $dependents;
 
     return $dependents;
 }
-
 
 =item * $category->duplicate_check()
 
@@ -568,7 +579,7 @@ Krang::Category::DuplicateURL exceptions have a single nonempty field - either
 
 sub duplicate_check {
     my $self = shift;
-    my $id = $self->{category_id};
+    my $id   = $self->{category_id};
 
     # 1) check for category that has our URL
     my $query = <<SQL;
@@ -581,7 +592,7 @@ SQL
 
     # alter query if save() has already been called
     if ($id) {
-        $query .=  "AND category_id != ?\n";
+        $query .= "AND category_id != ?\n";
         push @params, $id;
     }
 
@@ -590,24 +601,30 @@ SQL
 
     # throw exception
     Krang::Category::DuplicateURL->throw(
-              message     =>  "Duplicate URL ($self->{url}) for category ID ".
-                              "$category_id.",
-              category_id => $category_id,
-	      url         => $self->{url})
-        if $category_id;
+        message     => "Duplicate URL ($self->{url}) for category ID " . "$category_id.",
+        category_id => $category_id,
+        url         => $self->{url}
+    ) if $category_id;
 
     # 2) check for story that has our URL
-    $query = 'SELECT story_id FROM story_category WHERE url = ?';
+    $query = <<SQL;
+SELECT s.story_id, retired, trashed
+FROM   story s
+LEFT   JOIN story_category as sc
+ON     s.story_id = sc.story_id
+WHERE  retired = 0 AND trashed = 0
+AND    url = ?
+SQL
+
     my ($url_without_trailing_slash) = ($self->{url} =~ /^(.+)\/$/);
     my ($story_id) = $dbh->selectrow_array($query, undef, $url_without_trailing_slash);
 
     # throw exception
     Krang::Category::DuplicateURL->throw(
-              message     =>  "Duplicate URL ($self->{url}) for story ID ".
-                              "$story_id.",
-              story_id => $story_id,
-              url      => $url_without_trailing_slash)
-        if $story_id;
+        message  => "Duplicate URL ($self->{url}) for story ID " . "$story_id.",
+        story_id => $story_id,
+        url      => $url_without_trailing_slash
+    ) if $story_id;
 
     # 3) return false if there were no duplicates
     return 0;
@@ -623,8 +640,8 @@ parents of parents etc
 =cut
 
 sub ancestors {
-    my $self = shift;
-    my %args = @_;
+    my $self     = shift;
+    my %args     = @_;
     my $ids_only = $args{ids_only} ? 1 : 0;
     my @ancestors;
     my $parent_found = $self->parent();
@@ -637,44 +654,47 @@ sub ancestors {
         $parent_found = $parent_found->parent();
 
         if ($parent_found) {
-            $id_or_obj = $ids_only ? $parent_found->category_id :
-              $parent_found;
+            $id_or_obj =
+                $ids_only
+              ? $parent_found->category_id
+              : $parent_found;
             push @ancestors, $id_or_obj;
         }
     }
     return @ancestors;
 }
 
+=item * @categories = $category->descendants()
 
-=item * @categories = Krang::Category->descendants()
+=item * @category_ids = $category->descendants( ids_only => 1 )
 
-=item * @category_ids = Krang::Category->descendants( ids_only => 1 )
-
-
+Returns a list of Krang::Category objects or category_ids of all
+descendants of $category;
 
 =cut
 
 sub descendants {
-    my $self = shift;
-    my %args = @_;
+    my $self     = shift;
+    my %args     = @_;
     my $ids_only = $args{ids_only} ? 1 : 0;
     my @descendants;
     my @children_found = $self->children;
 
     return if not $children_found[0];
 
-    $ids_only ? (push @descendants, (map { $_->category_id } @children_found)) :
-      (push @descendants, @children_found);
+    $ids_only
+      ? (push @descendants, (map { $_->category_id } @children_found))
+      : (push @descendants, @children_found);
 
     foreach my $child (@children_found) {
         my @c_cs = $child->children();
-        $ids_only ? (push @descendants, (map { $_->category_id } @c_cs) ) :
-          (push @descendants, @c_cs);
+        $ids_only
+          ? (push @descendants, (map { $_->category_id } @c_cs))
+          : (push @descendants, @c_cs);
         push @children_found, @c_cs;
     }
     return @descendants;
 }
-
 
 =item * @categories = Krang::Category->children()
 
@@ -691,7 +711,6 @@ sub children {
 
     return pkg('Category')->find(parent_id => $self->category_id, %args);
 }
-
 
 =item * @categories = Krang::Category->find( %params )
 
@@ -768,59 +787,66 @@ The method croaks if an invalid search criteria is provided or if both the
 =cut
 
 sub find {
-    my $pkg = shift;
+    my $pkg  = shift;
     my %args = @_;
 
     # grab ascend/descending, limit, and offset args
     my $ascend = delete $args{order_desc} ? 'DESC' : 'ASC';
-    my $limit = delete $args{limit} || '';
-    my $offset = delete $args{offset} || '';
-    my $order_by = delete $args{order_by} || 'cat.category_id';
+    my $limit       = delete $args{limit}       || '';
+    my $offset      = delete $args{offset}      || '';
+    my $order_by    = delete $args{order_by}    || 'cat.category_id';
     my $ignore_user = delete $args{ignore_user} || '';
 
     # set search fields
-    my $count = delete $args{count} || '';
+    my $count    = delete $args{count}    || '';
     my $ids_only = delete $args{ids_only} || '';
 
     # Can't get count and ids_only at the same time
-    croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
-          "Only one can be present.") if ($count && $ids_only);
+    croak(  __PACKAGE__
+          . "->find(): 'count' and 'ids_only' were supplied. "
+          . "Only one can be present.")
+      if ($count && $ids_only);
 
     # set up WHERE clause and @params, croak unless the args are in
     # CATEGORY_RO or CATEGORY_RW
     my @invalid_cols = ();
-    my @wheres = ();
-    my @where_data = ();
+    my @wheres       = ();
+    my @where_data   = ();
 
     for my $arg (keys %args) {
+
         # don't use element
         next if $arg eq 'element';
 
         my $like = 1 if $arg =~ /_like$/;
-        ( my $lookup_field = $arg ) =~ s/^(.+)_like$/$1/;
+        (my $lookup_field = $arg) =~ s/^(.+)_like$/$1/;
 
         my @addl_valid_cols = qw(simple_search may_edit may_see);
-        push (@invalid_cols, $arg) 
-          unless ( exists($category_cols{$lookup_field})
-                   or (grep { $lookup_field eq $_ } @addl_valid_cols ));
+        push(@invalid_cols, $arg)
+          unless (exists($category_cols{$lookup_field})
+            or (grep { $lookup_field eq $_ } @addl_valid_cols));
 
         if ($arg eq 'category_id' && ref $args{$arg} eq 'ARRAY') {
+
             # Handle search for multiple category_ids
-            my $cat_ids_where = join(" OR ", map {"cat.category_id = ?"} @{$args{$arg}});
+            my $cat_ids_where = join(" OR ", map { "cat.category_id = ?" } @{$args{$arg}});
             push(@wheres, $cat_ids_where);
             push @where_data, @{$args{$arg}};
         } elsif ($arg eq 'simple_search') {
+
             # Handle "simple_search" case
-            my @words = split(/\s+/, $args{'simple_search'});            
+            my @words = split(/\s+/, $args{'simple_search'});
             foreach my $word (@words) {
                 my $simple_search_where = "cat.url LIKE ? OR cat.category_id = ?";
                 push(@wheres, $simple_search_where);
+
                 # escape any literal SQL wildcard chars
                 $word =~ s/_/\\_/g;
                 $word =~ s/%/\\%/g;
-                push(@where_data, '%'.$word.'%', $word);
+                push(@where_data, '%' . $word . '%', $word);
             }
         } else {
+
             # Preface $lookup_field with table name
             if (grep { $lookup_field eq $_ } qw(may_see may_edit)) {
                 $lookup_field = "ucpc.$lookup_field";
@@ -829,20 +855,22 @@ sub find {
             }
 
             if (not defined $args{$arg}) {
+
                 # Handle NULL searches if data is undef
                 push(@wheres, "$lookup_field IS NULL");
             } else {
+
                 # Handle default where case
-                my $where = $like ? 
-                  "$lookup_field LIKE ?" : "$lookup_field = ?";
-                push(@wheres, $where);
+                my $where = $like ? "$lookup_field LIKE ?" : "$lookup_field = ?";
+                push(@wheres,     $where);
                 push(@where_data, $args{$arg});
             }
         }
     }
 
-    croak("The following passed search parameters are invalid: '" .
-          join("', '", @invalid_cols) . "'") if @invalid_cols;
+    croak(
+        "The following passed search parameters are invalid: '" . join("', '", @invalid_cols) . "'")
+      if @invalid_cols;
 
     # construct base query
     my @fields = ();
@@ -852,6 +880,7 @@ sub find {
         push(@fields, "cat.category_id");
     } else {
         push(@fields, (map { "cat.$_ as $_" } keys(%category_cols)));
+
         # Add fields for may_see and may_edit
         push(@fields, "ucpc.may_see as may_see");
         push(@fields, "ucpc.may_edit as may_edit");
@@ -873,7 +902,7 @@ sub find {
 
         # Just need user_id.  Don't need user.
         # Assumes that user_id is valid and authenticated
-        push(@wheres, "ucpc.user_id=?");
+        push(@wheres,     "ucpc.user_id=?");
         push(@where_data, $user_id);
     }
 
@@ -885,11 +914,11 @@ sub find {
 
     # Add order by, if specified
     $query .= " ORDER BY $order_by $ascend" if $order_by;
-    
+
     # add LIMIT clause, if any
     if ($limit) {
         $query .= $offset ? " LIMIT $offset, $limit" : " LIMIT $limit";
-   } elsif ($offset) {
+    } elsif ($offset) {
         $query .= " LIMIT $offset, -1";
     }
 
@@ -920,18 +949,20 @@ sub find {
     # construct category objects from results
     my @categories = ();
     while (my $row = $sth->fetchrow_hashref()) {
+
         # Make an object
         my $new_category = bless({%$row}, $pkg);
 
         # set '_old_dir' and '_old_url'
-        $new_category->{_old_dir} = $new_category->{dir};
+        $new_category->{_old_dir}       = $new_category->{dir};
         $new_category->{_old_parent_id} = $new_category->{parent_id};
-        $new_category->{_old_url} = $new_category->{url};
+        $new_category->{_old_url}       = $new_category->{url};
 
         unless ($ignore_user) {
+
             # setup permissions
-            $new_category->{may_see}  = { $user_id => $row->{may_see}  };
-            $new_category->{may_edit} = { $user_id => $row->{may_edit} };
+            $new_category->{may_see}  = {$user_id => $row->{may_see}};
+            $new_category->{may_edit} = {$user_id => $row->{may_edit}};
         }
 
         push(@categories, $new_category);
@@ -954,12 +985,12 @@ The element for this category.
 sub element {
     my $self = shift;
     return $self->{element} if $self->{element};
-    ($self->{element}) =
-      pkg('Element')->load(element_id => $self->{element_id}, 
-                           object     => $self);
+    ($self->{element}) = pkg('Element')->load(
+        element_id => $self->{element_id},
+        object     => $self
+    );
     return $self->{element};
 }
-
 
 =item * $category = $category->save()
 
@@ -983,22 +1014,27 @@ sub save {
 
     # Throw exception if user is not allowed to edit this category
     unless ($self->may_edit) {
-        Krang::Category::NoEditAccess->throw( message => "User does not have access to update this category",
-                                              category_id => $self->category_id() );
+        Krang::Category::NoEditAccess->throw(
+            message     => "User does not have access to update this category",
+            category_id => $self->category_id()
+        );
     }
 
     my $id = $self->{category_id} || '';
     my @lookup_fields = qw/dir url/;
     my @save_fields =
       grep { $_ ne 'category_id' }
-        keys %category_cols;
+      keys %category_cols;
 
     # set flag if url must change; only applies to objects after first save...
-    my $new_url = ($id && 
-                   (($self->{dir} ne $self->{_old_dir}) ||
-                    ($self->{parent_id} and 
-                     $self->{parent_id} ne $self->{_old_parent_id}))
-                  ) ? 1 : 0;
+    my $new_url = (
+        $id
+          && (
+            ($self->{dir} ne $self->{_old_dir})
+            || (    $self->{parent_id}
+                and $self->{parent_id} ne $self->{_old_parent_id})
+          )
+    ) ? 1 : 0;
 
     # check for duplicates: a DuplicateURL exception will be thrown if a
     # duplicate is found
@@ -1014,32 +1050,40 @@ sub save {
 
     # the object has already been saved once if $id
     if ($id) {
+
         # recalculate url if we have a new dir or a new parent
         if ($new_url) {
             my $parent = $self->parent;
             $self->{url} = _build_url($parent->url, $self->{dir});
             $self->{site_id} = $parent->site_id;
         }
-        $query = "UPDATE category SET " .
-          join(", ", map {"$_ = ?"} @save_fields) .
-            " WHERE category_id = ?";
+        $query =
+            "UPDATE category SET "
+          . join(", ", map { "$_ = ?" } @save_fields)
+          . " WHERE category_id = ?";
     } else {
-        $query = "INSERT INTO category (" . join(',', @save_fields) .
-          ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
+        $query =
+            "INSERT INTO category ("
+          . join(',', @save_fields)
+          . ") VALUES (?"
+          . ", ?" x (scalar @save_fields - 1) . ")";
     }
 
     # bind parameters
-    my @params = map {$self->{$_}} @save_fields;
+    my @params = map { $self->{$_} } @save_fields;
 
     # need category_id for updates
     push @params, $id if $id;
 
     # croak if no rows are affected
-    croak(__PACKAGE__ . "->save(): Unable to save category object " .
-          ($id ? "id '$id' " : '') . "to the DB.")
+    croak(  __PACKAGE__
+          . "->save(): Unable to save category object "
+          . ($id ? "id '$id' " : '')
+          . "to the DB.")
       unless $dbh->do($query, undef, @params);
 
     unless ($id) {
+
         # Set category_id directly in object
         $self->{category_id} = $dbh->{mysql_insertid};
 
@@ -1050,16 +1094,13 @@ sub save {
     # update child URLs if url has changed
     if ($new_url) {
         $self->update_child_urls();
-        $self->{_old_dir} = $self->{dir};
+        $self->{_old_dir}       = $self->{dir};
         $self->{_old_parent_id} = $self->{parent_id};
-        $self->{_old_url} = $self->{url};
+        $self->{_old_url}       = $self->{url};
     }
 
     return $self;
 }
-
-
-
 
 =item * $success = $category->update_child_urls()
 
@@ -1074,10 +1115,10 @@ new one.
 sub update_child_urls {
     my $self = shift;
     my $site = shift;
-    my $id = $self->{category_id};
+    my $id   = $self->{category_id};
     my ($category_id, %ids, @params, $query, $sth, $url);
     my $failures = 0;
-    my $dbh = dbh();
+    my $dbh      = dbh();
 
     # update 'url' if call was made by site
     if ($site && UNIVERSAL::isa($site, 'Krang::Site')) {
@@ -1086,8 +1127,7 @@ sub update_child_urls {
         $self->{url} = _build_url($site->url(), $url);
 
         # save new url
-        $dbh->do("UPDATE category SET url = ? WHERE category_id = ?",
-                 undef, $self->{url}, $id);
+        $dbh->do("UPDATE category SET url = ? WHERE category_id = ?", undef, $self->{url}, $id);
     }
 
     # build hash of category_id and old urls
@@ -1112,22 +1152,23 @@ SQL
 
     # update category 'url's
     for (sort keys %ids) {
-        (my $url = $ids{$_}) =~  s|^\Q$self->{_old_url}\E|$self->{url}|;
+        (my $url = $ids{$_}) =~ s|^\Q$self->{_old_url}\E|$self->{url}|;
         $sth->execute(($url, $_));
     }
 
-    # update the urls of media, stories, and templates    
+    # update the urls of media, stories, and templates
     my $url_offset = length($self->{_old_url}) + 1;
     foreach my $table (qw/story_category template media/) {
-        $dbh->do("UPDATE $table 
+        $dbh->do(
+            "UPDATE $table 
                   SET url=CONCAT(?, SUBSTRING(url, $url_offset)) 
                   WHERE url LIKE ?",
-                 undef, $self->{url}, $self->{_old_url} . '%');
+            undef, $self->{url}, $self->{_old_url} . '%'
+        );
     }
 
     return $failures ? 0 : 1;
 }
-
 
 # constructs a url by joining parts by '/'
 sub _build_url {
@@ -1135,7 +1176,6 @@ sub _build_url {
     $url .= '/' unless $url =~ m|/$|;
     return $url;
 }
-
 
 =item * C<< @linked_stories = $category->linked_stories >>
 
@@ -1147,18 +1187,20 @@ story is linked more than once.
 =cut
 
 sub linked_stories {
-    my $self = shift;
+    my $self    = shift;
     my $element = $self->element;
 
     # find StoryLinks and index by id
     my %story_links;
     my $story;
     foreach_element {
-        if ($_->class->isa('Krang::ElementClass::StoryLink') and 
-            $story = $_->data) {
+        if (    $_->class->isa('Krang::ElementClass::StoryLink')
+            and $story = $_->data)
+        {
             $story_links{$story->story_id} = $story;
         }
-    } $element;
+    }
+    $element;
 
     return values %story_links;
 }
@@ -1173,23 +1215,23 @@ is linked more than once.
 =cut
 
 sub linked_media {
-    my $self = shift;
+    my $self    = shift;
     my $element = $self->element;
 
     # find StoryLinks and index by id
     my %media_links;
     my $media;
-    foreach_element { 
-        if ($_->class->isa('Krang::ElementClass::MediaLink') and 
-            $media = $_->data) {
+    foreach_element {
+        if (    $_->class->isa('Krang::ElementClass::MediaLink')
+            and $media = $_->data)
+        {
             $media_links{$media->media_id} = $media;
         }
-    } $element;
+    }
+    $element;
 
     return values %media_links;
 }
-
-
 
 =item * C<< $category->serialize_xml(writer => $writer, set => $set) >>
 
@@ -1198,20 +1240,20 @@ Serialize as XML.  See Krang::DataSet for details.
 =cut
 
 sub serialize_xml {
-    my ($self, %args) = @_;
-    my ($writer, $set) = @args{qw(writer set)};
+    my ($self,   %args) = @_;
+    my ($writer, $set)  = @args{qw(writer set)};
     local $_;
 
     # open up <category> linked to schema/category.xsd
-    $writer->startTag('category',
-                      "xmlns:xsi" => 
-                        "http://www.w3.org/2001/XMLSchema-instance",
-                      "xsi:noNamespaceSchemaLocation" =>
-                        'category.xsd');
+    $writer->startTag(
+        'category',
+        "xmlns:xsi"                     => "http://www.w3.org/2001/XMLSchema-instance",
+        "xsi:noNamespaceSchemaLocation" => 'category.xsd'
+    );
 
     $writer->dataElement(category_id   => $self->category_id);
     $writer->dataElement(category_uuid => $self->category_uuid);
-    $writer->dataElement(site_id => $self->site_id);
+    $writer->dataElement(site_id       => $self->site_id);
     if ($self->parent_id) {
         $writer->dataElement(parent_id => $self->parent_id);
         $set->add(object => $self->parent, from => $self);
@@ -1223,8 +1265,10 @@ sub serialize_xml {
     $writer->dataElement(url => $self->url);
 
     # serialize elements
-    $self->element->serialize_xml(writer => $writer,
-                                  set    => $set);
+    $self->element->serialize_xml(
+        writer => $writer,
+        set    => $set
+    );
     $writer->endTag('category');
 }
 
@@ -1239,25 +1283,26 @@ an update will occur.
 
 sub deserialize_xml {
     my ($pkg, %args) = @_;
-    my ($xml, $set, $no_update, $skip_update) 
-      = @args{qw(xml set no_update skip_update)};
+    my ($xml, $set, $no_update, $skip_update) = @args{qw(xml set no_update skip_update)};
 
     # parse it up
-    my $data = pkg('XML')->simple(xml           => $xml, 
-                                  suppressempty => 1,
-                                  forcearray    => ['element', 'data']);
+    my $data = pkg('XML')->simple(
+        xml           => $xml,
+        suppressempty => 1,
+        forcearray    => ['element', 'data']
+    );
 
     # is there an existing object?
     my $category;
 
     # start with UUID lookup
     if (not $args{no_uuid} and $data->{category_uuid}) {
-        ($category) = $pkg->find(category_uuid  => $data->{category_uuid});
+        ($category) = $pkg->find(category_uuid => $data->{category_uuid});
 
         # if not updating this is fatal
-        Krang::DataSet::DeserializationFailed->throw(message =>
-                  "A category object with the UUID '$data->{category_uuid}' already"
-                  . " exists and no_update is set.")
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A category object with the UUID '$data->{category_uuid}' already"
+              . " exists and no_update is set.")
           if $category and $no_update;
     }
 
@@ -1267,9 +1312,9 @@ sub deserialize_xml {
 
         # if not updating this is fatal
         Krang::DataSet::DeserializationFailed->throw(
-            message => "A category object with the url '$data->{url}' already ".
-                       "exists and no_update is set.")
-            if $category and $no_update;
+            message => "A category object with the url '$data->{url}' already "
+              . "exists and no_update is set.")
+          if $category and $no_update;
     }
 
     if ($category) {
@@ -1282,32 +1327,44 @@ sub deserialize_xml {
     # get import site_id
     my ($site_id, $parent_id);
     if ($data->{parent_id}) {
+
         # get import parent_id
-        $parent_id = $set->map_id(class => pkg('Category'),
-                                  id    => $data->{parent_id});
+        $parent_id = $set->map_id(
+            class => pkg('Category'),
+            id    => $data->{parent_id}
+        );
 
         # this might have caused this category to get completed via a
         # circular link, end early if it did
         my ($dup) = pkg('Category')->find(url => $data->{url});
         return $dup if $dup;
     } else {
+
         # get site_id for root category
-        $site_id = $set->map_id(class => pkg('Site'),
-                                id    => $data->{site_id});
-        my ($new_c) = pkg('Category')->find( site_id => $site_id,
-                                             parent_id => undef );
+        $site_id = $set->map_id(
+            class => pkg('Site'),
+            id    => $data->{site_id}
+        );
+        my ($new_c) = pkg('Category')->find(
+            site_id   => $site_id,
+            parent_id => undef
+        );
+        if (!$new_c) {
+            $new_c = pkg('Category')->new(dir => '/', site_id => $site_id);
+            $new_c->save();
+        }
+
         $pkg->_update_category_data($set, $new_c, $data, $no_update, %args);
         return $new_c;
     }
 
     # create a new category
     my $cat = pkg('Category')->new(
-                                   ($parent_id ? 
-                                    (parent_id => $parent_id) : ()),
-                                   ($site_id   ? 
-                                    (site_id   => $site_id)   : ()),
-                                   dir => $data->{dir},
-                                  );
+        ($parent_id ? (parent_id => $parent_id) : ()),
+        ($site_id   ? (site_id   => $site_id)   : ()),
+        dir => $data->{dir},
+    );
+
     # save the new category.
     $cat->save();
     $pkg->_update_category_data($set, $cat, $data, $no_update, %args);
@@ -1322,23 +1379,27 @@ sub _update_category_data {
     $cat->dir($data->{dir});
 
     # preserve UUID if available
-    $cat->{category_uuid} = $data->{category_uuid} 
+    $cat->{category_uuid} = $data->{category_uuid}
       if $data->{category_uuid} and not $args{no_uuid};
 
-    
     # register id before deserializing elements, since they may
     # contain circular references
-    $set->register_id(class     => pkg('Category'),
-                      id        => $data->{category_id},
-                      import_id => $cat->category_id);
+    $set->register_id(
+        class     => pkg('Category'),
+        id        => $data->{category_id},
+        import_id => $cat->category_id
+    );
 
     # deserialize elements for update
-    my $element = pkg('Element')->deserialize_xml(data      => $data->{element}[0],
-                                                  set       => $set,
-                                                  no_update => $no_update,
-                                                  object    => $cat);
+    my $element = pkg('Element')->deserialize_xml(
+        data      => $data->{element}[0],
+        set       => $set,
+        no_update => $no_update,
+        object    => $cat
+    );
+
     # remove existing element tree
-    $cat->element->delete(skip_delete_hook => 1) if( $cat->element );
+    $cat->element->delete(skip_delete_hook => 1) if ($cat->element);
     $cat->{element}    = $element;
     $cat->{element_id} = undef;
     $cat->save();
@@ -1357,7 +1418,7 @@ sub STORABLE_freeze {
 
     # make sure element tree is loaded
     $self->element();
-    
+
     # serialize data in $self with Storable
     my $data;
     eval { $data = nfreeze({%$self}) };
@@ -1389,6 +1450,381 @@ sub STORABLE_thaw {
     return $self;
 }
 
+=item * C<< $category->can_copy_test(dst_category => $destination_category) >>
+
+Test if a recursive copy of the $category's children to the
+$destination_category would be possible.  The actual copy operation is
+done by copy().  can_copy_test() should always be called before
+copy(), and it should be called with the same argument and the same
+options to make sure the copy will succeed.
+
+The following exceptions can occur:
+
+=over
+
+=item * Krang::Story::CantCheckOut
+
+Throwns if the URL of a would-be-created category is occupied by some
+story and we cannot check out this story (if we can, we can turn the
+story into a category index, but this is done by copy()).
+
+=item * Krang::Category::NoEditAccess
+
+Can be thrown if an asset's destination category already exists and
+we don't have edit access to this category. This can only happen when
+copying to non-leaf-categories.
+
+=item * Krang::Category::CopyAssetConflict
+
+Thrown if one of the would-be-created assets already exists unless the
+option 'overwrite' is specified.
+
+=item * Krang::Category::CantCopyParentToChild
+
+Thrown if the copy will result in infinit recursion. This would happen
+if you tried to copy a parent directory into it's a child.
+
+=back
+
+B<Options>
+
+=over
+
+=item story
+
+Also test wether copying stories living below C<$category> and its children
+would succeed.
+
+=item media
+
+Also test wether copying media living below C<$category> and its children
+would succeed.
+
+=item template
+
+Also test wether copying templates living below C<$category> and its children
+would succeed.
+
+=item overwrite
+
+This option modifies the test behavior of this method.  No
+C<Krang::Category::CopyAssetConflict> will be thrown even if the URL of
+a would-be-created asset is already occupied by some other asset living
+below the destination category.
+
+=back
+
+=cut
+
+sub can_copy_test {
+    my ($self, %args) = @_;
+
+    my $src_cat_url = $self->url;
+    my $src_cat_dir = $self->dir;
+    my $dst_cat     = $args{dst_category};
+    my $dst_cat_url = $dst_cat->url;
+
+    my @src_cat_descendants = $self->descendants;
+    my %dst_cat_urls        = ();
+
+    # verify that we are not copying ourself to one of our children
+    if(grep { $dst_cat->category_id == $_->category_id } @src_cat_descendants) {
+        Krang::Category::CantCopyParentToChild->throw(message => "Can't copy category #"
+              . $self->category_id
+              . " to child category "
+              . $dst_cat->category_id,);
+    }
+
+    # verify that we can create the category subtree below destination category
+    # build URL collection of would-be-created categories below destination category
+    for my $descendant (@src_cat_descendants) {
+
+        # build URL of would-be-created categories
+        (my $rel_src_url = $descendant->url) =~ s!^$src_cat_url!!;
+
+        my $dst_child_cat_url = $dst_cat_url . $rel_src_url;
+
+        # if we want to copy assets, make sure we have EditAccess to existing destination categories
+        if ($args{story} or $args{media} or $args{template}) {
+            my ($cat) = pkg('Category')->find(url => $dst_child_cat_url);
+            if ($cat and not $cat->may_edit) {
+                Krang::Category::NoEditAccess->throw(
+                    message => "User does not have access to copy assets to category "
+                      . $cat->category_id,
+                    category_id  => $cat->category_id,
+                    category_url => $cat->url
+                );
+            }
+        }
+
+        # chop trailing slash for comparison with story URLs
+        $dst_child_cat_url =~ s!/$!!;
+
+        debug(__PACKAGE__ . "::can_copy_test() destination category URL: " . $dst_child_cat_url);
+
+        # remember it
+        $dst_cat_urls{$dst_child_cat_url} = 1;
+    }
+
+    # collect stories living below our destination category
+    my @stories_below_dst_cat = pkg('Story')->find(below_category_id => $dst_cat->category_id);
+
+    # collect conflicts between would-be-created categories and existing story URLs
+    my @conflicting_stories =
+      grep { $dst_cat_urls{$_->url} and $_ } @stories_below_dst_cat;
+
+    debug(__PACKAGE__ . "::can_copy_test() conflicting URLs: " . join("\n", @conflicting_stories));
+
+    # success if no conflicting story URLs and overwrite
+    return 1 if scalar(@conflicting_stories) == 0 && $args{overwrite};
+
+    #
+    # Now see if we can resolve URL conflicts between stories existing
+    # below the destination category and would-be-created categories
+    #
+    my $cant_checkout_stories   = 0;
+    my @not_checked_out_stories = ();
+    my @checked_out_stories     = ();
+
+    if (@conflicting_stories) {
+        for my $story (@conflicting_stories) {
+            eval { $story->checkout };
+            if ($@) {
+                $cant_checkout_stories = 1;
+                push @not_checked_out_stories, $story;
+            } else {
+                push @checked_out_stories, $story;
+            }
+        }
+
+        if ($cant_checkout_stories) {
+
+            # we won't be able to resolve URL conflicts by turning a
+            # slug-provided story into a category index (see Krang::CGI::Category->create()
+            $_->checkin for @checked_out_stories;
+            Krang::Story::CantCheckOut->throw(
+                message => "Can't check out Stories",
+                stories => [map { {id => $_->story_id, url => $_->url} } @not_checked_out_stories],
+            );
+        }
+    }
+
+    # so we can create our source category subtree below the destination category
+    return 1 if $args{overwrite};
+
+    #
+    # We may not overwrite: throw error (ask user) if at least one
+    # source asset' URL would conflict with the URL of an asset
+    # already existing below the destination category
+    #
+    for my $asset ($self->asset_names()) {
+
+        my $asset_type = $asset->{type};
+
+        # do nothing if $asset should not be copied
+        next unless $args{$asset_type};
+
+        my $pkg = pkg(ucfirst($asset_type));
+
+        # collect the URLs of all asset objects existing in destination category...
+        my %existing_asset_has =
+          map { ($_->url => 1) } $pkg->find(below_category_id => $dst_cat->category_id);
+
+        # ...and test this list against would be copied asset objects
+        for my $src_asset ($pkg->find(below_category_id => $self->category_id)) {
+            (my $rel_asset_url = $src_asset->url) =~ s!^$src_cat_url!!;
+
+            my $dst_asset_url = $dst_cat_url . $rel_asset_url;
+
+            debug(__PACKAGE__ . "::can_copy_test() destination $asset_type URL: " . $dst_asset_url);
+            if ($existing_asset_has{$dst_asset_url}) {
+
+                # ask user
+                Krang::Category::CopyAssetConflict->throw(message =>
+                      "At least one asset below source category would cause a DuplicateURL conflict with an asset existing below the destination category."
+                );
+            }
+        }
+    }
+}
+
+=item * C<< $category->copy(dst_category => $destination_category) >>
+
+Copies the children of $category to the specified destination
+category.  Make sure to call $category->can_copy_test() with the same
+argument and the same options before calling this method!
+
+B<Options:>
+
+Concerning the following three options note that
+stories/media/templates whose would-be-URL is occupied by some
+existing asset will not be copied, but silently skipped. But see the
+option 'overwrite'.
+
+=over
+
+=item story => 1
+
+Also recursively copy the stories living below $category to their
+corresponding destination category.
+
+=item media => 1
+
+Also recursively copy the media living below $category to their
+corresponding destination category.
+
+=item template => 1
+
+Also recursively copy the templates living below $category to their
+corresponding destination category.
+
+=item overwrite => 1
+
+Normally an asset whose copy destination URL is occupied by an
+existing asset will not be copied. Setting 'overwrite' to true
+modifies this behavior: The conflicting asset will be moved to the
+trashbin to make place for the copy.
+
+=back
+
+B<Note on calling can_copy_test() and copy() with overwrite set to false>
+
+In the case of an asset conflict, can_copy_test() throws a
+Krang::Category::CopyAssetConflict exception, while copy() simply
+skips the conflicting assets. Catching the exception, then, allows to
+prompt the user: Does he want to cancel the whole copy, or is it ok to
+just copy the non-conflicting assets.  This is how runmode
+Krang::CGI::Category->execute_copy() uses these two methods.
+
+=cut
+
+sub copy {
+    my ($self, %args) = @_;
+
+    my $dst_cat = $args{dst_category};
+
+    my $copied = {};
+
+    my @pair = ([$self, $dst_cat]);
+
+    # copy category subtree
+    while (@pair) {
+        my ($src, $dst) = @{shift(@pair)};
+
+        my $src_url => $src->url;
+
+        for my $src_child ($src->children) {
+
+            my $url = _build_url($dst->url, $src_child->{dir});
+
+            # would-be-created category already exists: don't copy
+            if (my ($existing) = pkg('Category')->find(url => $url)) {
+                push @pair, [$src_child, $existing];
+                next;
+            }
+
+            # do the copy
+            my $copy = bless({%$src_child}, ref($src_child));
+            $copy->{element} = $src_child->element->clone();
+
+            $copy->{category_id}         = undef;
+            $copy->{category_uuid}       = pkg('UUID')->new;
+            $copy->{element}{element_id} = undef;
+            $copy->{parent_id}           = $dst->category_id;
+            $copy->{site_id}             = $dst->site_id;
+            $copy->{url}                 = $url;
+
+            eval { $copy->save };
+
+            # turn slug-provided story in category index if necessary
+            if ($@ and ref($@)) {
+                if ($@->isa('Krang::Category::DuplicateURL')) {
+                    if (my $story_id = $@->story_id) {
+                        my ($story) = pkg('Story')->find(story_id => $@->story_id);
+
+                        unless ($story->turn_into_category_index(category => $copy, steal => 0)) {
+                            $@->rethrow;
+                        }
+                    } elsif ($@->category_id) {
+                        $@->rethrow();
+                    }
+                } else {
+                    croak("Unknown exception thrown in " . __PACKAGE__ . "->copy(): " . $@);
+                }
+            } elsif ($@) {
+                die $@;
+            }
+
+            push @{$copied->{category}}, $copy;
+
+            push @pair, [$src_child, $copy];
+        }
+
+        for my $asset ($self->asset_names) {
+
+            my $asset_type = $asset->{type};
+            my $asset_meth = $asset->{meth};
+
+            next unless $args{$asset_type};
+
+            my $pkg = pkg(ucfirst($asset_type));
+
+            for my $obj ($pkg->find(category_id => $src->category_id)) {
+
+                # is the URL of our would-be-copy already occupied?
+                my ($conflict) = $pkg->find(
+                    category_id => $dst->category_id,
+                    $asset_meth => $obj->$asset_meth,
+                );
+
+                # if so, maybe trash it, maybe skip the copy
+                if ($conflict) {
+                    if ($args{overwrite}) {
+                        $conflict->trash;
+                    } else {
+                        next;
+                    }
+                }
+
+                # make the copy
+                my $copy = $obj->clone(category_id => $dst->category_id);
+
+                $copy->save();
+                $copy->checkin;
+
+                push @{$copied->{$asset_type}}, $copy;
+            }
+        }
+    }
+
+    return $copied;
+}
+
+=item * C<< @assets = $category->asset_names() >>
+
+=item * C<< @assets = pkg('Category')->asset_names() >>
+
+Convenience method for operations on assets. It returns a list of
+hashrefs representing Krang asset specifications.
+
+The 'type' key of each of these hashrefs is just the lower-cased
+moniker of those assets, i.e. 'story', 'media' and 'template'.
+
+The 'meth' key maps to the asset's 'file name' method: It's 'slug' for
+Story, 'filename' for Media and Template.
+
+=cut
+
+sub asset_names {
+    my $self = shift;
+
+    return (
+        {type => 'story',    meth => 'slug'},
+        {type => 'media',    meth => 'filename'},
+        {type => 'template', meth => 'filename'},
+    );
+}
+
 =back
 
 =head1 SEE ALSO
@@ -1396,7 +1832,6 @@ sub STORABLE_thaw {
 L<Krang>, L<Krang::DB>, L<Krang::Element>
 
 =cut
-
 
 my $quip = <<END;
 Life's but a walking shadow, a poor player

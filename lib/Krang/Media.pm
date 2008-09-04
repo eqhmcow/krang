@@ -2,9 +2,9 @@ package Krang::Media;
 use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader DB   => qw(dbh);
 use Krang::ClassLoader Conf => qw(KrangRoot SavedVersionsPerMedia);
-use Krang::ClassLoader Log => qw(debug assert ASSERT);
+use Krang::ClassLoader Log  => qw(debug assert ASSERT);
 use Krang::ClassLoader 'Contrib';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Group';
@@ -16,25 +16,30 @@ use Storable qw(nfreeze thaw);
 use File::Spec::Functions qw(catdir catfile splitpath canonpath);
 use File::Path;
 use File::Copy;
+use File::Basename qw(fileparse);
 use LWP::MediaTypes qw(guess_media_type);
 use Imager;
 use File::stat;
 use Time::Piece;
 use Time::Piece::MySQL;
 use File::Temp qw/ tempdir /;
-use Image::Info qw( image_info dim );
+use Image::Size;
+use FileHandle;
 
 # constants
-use constant THUMBNAIL_SIZE => 35;
+use constant THUMBNAIL_SIZE     => 35;
 use constant MED_THUMBNAIL_SIZE => 200;
-use constant FIELDS => qw(media_id media_uuid title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published_version preview_version publish_date checked_out_by);
+use constant FIELDS =>
+  qw(media_id media_uuid title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published_version preview_version publish_date checked_out_by retired trashed);
 
 # setup exceptions
 use Exception::Class (
-                      'Krang::Media::DuplicateURL' => { fields => [ 'media_id' ], },
-                      'Krang::Media::NoCategoryEditAccess' => { fields => ['category_id'] },
-                      'Krang::Media::NoEditAccess' => { fields => 'media_id' },
-                     );
+    'Krang::Media::DuplicateURL'         => {fields => ['media_id']},
+    'Krang::Media::NoCategoryEditAccess' => {fields => ['category_id']},
+    'Krang::Media::NoEditAccess'         => {fields => ['media_id']},
+    'Krang::Media::NoDeleteAccess'       => {fields => ['media_id']},
+    'Krang::Media::NoRestoreAccess'      => {fields => ['media_id']},
+);
 
 =head1 NAME
 
@@ -206,37 +211,47 @@ Date the media object was created.  Defaults to current time unless set.
 
 =cut
 
-use Krang::ClassLoader MethodMaker => 
-    new_with_init => 'new',
-    new_hash_init => 'hash_init',
-    get_set       => [ qw(
-                          title
-                          alt_tag
-                          version
-                          checked_out_by
-                          published_version
-                          preview_version
-                          publish_date
-                          caption copyright
-                          notes
-                          mime_type
-                          media_type_id
-                         ) ],
-    get_set_with_notify => [ { method => '_notify',
-                                attr => [ qw(
-                                            filename
-                                            category_id 
-                                        ) ]
-                            } ],
-    get => [ qw( 
-                media_id 
-                media_uuid
-                creation_date 
-                may_see 
-                may_edit
-               ) ];
+use Krang::ClassLoader MethodMaker => new_with_init => 'new',
+  new_hash_init                    => 'hash_init',
+  get_set                          => [
+    qw(
+      title
+      alt_tag
+      version
+      checked_out_by
+      published_version
+      preview_version
+      publish_date
+      caption copyright
+      notes
+      mime_type
+      media_type_id
+      )
+  ],
+  get_set_with_notify => [
+    {
+        method => '_notify',
+        attr   => [
+            qw(
+              filename
+              category_id
+              )
+        ]
+    }
+  ],
+  get => [
+    qw(
+      media_id
+      media_uuid
+      creation_date
+      may_see
+      may_edit
+      retired
+      trashed
+      )
+  ];
 
-sub id_meth { 'media_id' }
+sub id_meth   { 'media_id' }
 sub uuid_meth { 'media_uuid' }
 
 sub _notify {
@@ -256,18 +271,19 @@ sub init {
     my $filehandle = delete $args{'filehandle'};
 
     $self->{contrib_ids}       = [];
-    $self->{version}           = 0;  # versions start at 0
+    $self->{version}           = 0;                   # versions start at 0
     $self->{published_version} = 0;
     $self->{preview_version}   = 0;
     $self->{checked_out_by}    = $ENV{REMOTE_USER};
-    $self->{creation_date}     = localtime unless defined $self->{creation_date};
-
+    $self->{creation_date} = localtime unless defined $self->{creation_date};
+    $self->{retired}       = 0;
+    $self->{trashed}       = 0;
 
     # Set up temporary permissions
-    $self->{may_see} = 1;
+    $self->{may_see}  = 1;
     $self->{may_edit} = 1;
 
-    $self->{media_uuid}        = pkg('UUID')->new;
+    $self->{media_uuid} = pkg('UUID')->new;
 
     # finish the object
     $self->hash_init(%args);
@@ -300,11 +316,11 @@ sub category {
     my $self = shift;
 
     return undef unless $self->{category_id};
-                                                                                                       
+
     return $self->{cat_cache} if $self->{cat_cache};
 
     $self->{cat_cache} = (pkg('Category')->find(category_id => $self->{category_id}))[0];
-   
+
 }
 
 =item $media->filename()
@@ -397,30 +413,38 @@ sub contribs {
 
     unless (@_) {
         my $contrib;
+
         # return contributor objects
         foreach my $id (@{$self->{contrib_ids}}) {
             ($contrib) = pkg('Contrib')->find(contrib_id => $id->{contrib_id});
-            croak("No contributor found with contrib_id ". $id->{contrib_id})
+            croak("No contributor found with contrib_id " . $id->{contrib_id})
               unless $contrib;
             $contrib->selected_contrib_type($id->{contrib_type_id});
             push @contribs, $contrib;
         }
-        return @contribs; 
+        return @contribs;
     }
 
     # store list of contributors, passed as either objects or hashes
     foreach my $rec (@_) {
         if (ref($rec) and ref($rec) eq 'Krang::Contrib') {
-            croak("invalid data passed to contrib: contributor objects must have contrib_id and selected_contrib_type set.")
-              unless $rec->contrib_id and $rec->selected_contrib_type;
+            croak(
+                "invalid data passed to contrib: contributor objects must have contrib_id and selected_contrib_type set."
+            ) unless $rec->contrib_id and $rec->selected_contrib_type;
 
-            push(@contribs, { contrib_id     => $rec->contrib_id,
-                              contrib_type_id=> $rec->selected_contrib_type });
+            push(
+                @contribs,
+                {
+                    contrib_id      => $rec->contrib_id,
+                    contrib_type_id => $rec->selected_contrib_type
+                }
+            );
 
         } elsif (ref($rec) and ref($rec) eq 'HASH') {
-            croak("invalid data passed to contribs: hashes must contain contrib_id and contrib_type_id.")
-              unless $rec->{contrib_id} and $rec->{contrib_type_id};
-            
+            croak(
+                "invalid data passed to contribs: hashes must contain contrib_id and contrib_type_id."
+            ) unless $rec->{contrib_id} and $rec->{contrib_type_id};
+
             push(@contribs, $rec);
 
         } else {
@@ -428,7 +452,7 @@ sub contribs {
         }
 
         $self->{contrib_ids} = \@contribs;
-    }    
+    }
 }
 
 =item $media->clear_contribs()
@@ -447,11 +471,10 @@ Returns an arrayref containing all the existing version numbers for this media o
 
 sub all_versions {
     my $self = shift;
-    my $dbh = dbh;
-    return $dbh->selectcol_arrayref('SELECT version FROM media_version WHERE media_id=?', 
-                                    undef, $self->media_id);
+    my $dbh  = dbh;
+    return $dbh->selectcol_arrayref('SELECT version FROM media_version WHERE media_id=?',
+        undef, $self->media_id);
 }
-
 
 =item C<< $media->prune_versions(number_to_keep => 10); >>
 
@@ -474,50 +497,66 @@ sub prune_versions {
     my @all_versions     = @{$self->all_versions};
     my $number_to_delete = @all_versions - $number_to_keep;
     return 0 unless $number_to_delete > 0;
-    
+
     # delete the oldest ones (which will be first since the list is ascending)
     my @versions_to_delete = splice(@all_versions, 0, $number_to_delete);
-    $dbh->do('DELETE FROM media_version WHERE media_id = ? AND version IN ('.
-             join(',', ("?") x @versions_to_delete) . ')',
-             undef, $self->media_id, @versions_to_delete);
+    $dbh->do(
+        'DELETE FROM media_version WHERE media_id = ? AND version IN ('
+          . join(',', ("?") x @versions_to_delete) . ')',
+        undef, $self->media_id, @versions_to_delete
+    ) unless $args{test_mode};
     return $number_to_delete;
 }
-
 
 =item $media->upload_file(filehandle => $filehandle, filename => $filename)
 
 Stores media file to temporary location on filesystem. Sets $media->filename() also. 
 
+Of if you already have the file in a temporary location in KrangRoot then you can
+simply pass the C<filepath> argument instead.
+
+    $media->upload_file(filepath => $path);
+
 =cut
 
 sub upload_file {
-    my $self = shift;
-    my %args = @_;
-    my $root = KrangRoot;
-    my $filename = $args{'filename'} || croak('You must pass in a filename in order to upload a file');
-    my $filehandle = $args{'filehandle'} || croak('You must pass in a filehandle in order to upload a file');
-    croak('You cannot use a / in a filename!') if $filename =~ /\//;
+    my $self     = shift;
+    my %args     = @_;
+    my $root     = KrangRoot;
+    my ($path, $name, $handle, $tmpdir) = @_;
+    if($path = $args{'filepath'}) {
+        ($name, $tmpdir) = fileparse($path);
+    } else {
+        $name = $args{'filename'}
+          || croak(
+            'You must pass in a filename in order to upload a file if you are not using filepath');
+        $handle = $args{'filehandle'}
+          || croak(
+            'You must pass in a filehandle in order to upload a file if you are not using filepath'
+          );
+        croak('You cannot use a / in a filename!') if $name =~ /\//;
 
-    my $path = tempdir( DIR => catdir(KrangRoot, 'tmp'));
-    my $filepath = catfile($path, $filename);
-    open (FILE, ">$filepath") || croak("Unable to open $path for writing media!"); 
-   
-    my $buffer;
-    while (read($filehandle, $buffer, 10240)) { print FILE $buffer }
-    close $filehandle;
-    close FILE;
+        $tmpdir = tempdir(DIR => catdir(KrangRoot, 'tmp'));
+        $path = catfile($tmpdir, $name);
+        open(FILE, ">$path") || croak("Unable to open $path for writing media!");
 
-    $self->{tempfile} = $filepath;
-    $self->{tempdir} = $path;
-    $self->{filename} = $filename;
+        my $buffer;
+        while (read($handle, $buffer, 10240)) { print FILE $buffer }
+        close $handle;
+        close FILE;
+    }
 
-    # blow the URL cache since filename has changed
-    undef $self->{url_cache};
+    $self->{tempfile} = $path;
+    $self->{tempdir}  = $tmpdir;
+
+    # blow the URL cache if the filename has changed
+    if($self->filename && $self->filename ne $name) {
+        undef $self->{url_cache};
+    }
+    $self->{filename} = $name;
 
     # guess the mime_type
-    return $self->{mime_type} = guess_media_type($filepath);
-
-    return $self; 
+    $self->{mime_type} = guess_media_type($path);
 }
 
 =item $media->store_temp_file(filename => $filename, content=> $text)
@@ -529,24 +568,24 @@ filename and its scalar text content are passed, instead of an actual file.
 =cut
 
 sub store_temp_file {
-    my $self = shift;
-    my %args = @_;
-    my $root = KrangRoot;
-    my $filename = $args{filename} 
+    my $self     = shift;
+    my %args     = @_;
+    my $root     = KrangRoot;
+    my $filename = $args{filename}
       || croak('You must pass in a filename in order to save the temp file');
     croak('You cannot use a / in a filename!') if $filename =~ /\//;
-    
+
     my $content = $args{content};
     $content = '' unless defined $content;
 
-    my $path = tempdir( DIR => catdir(KrangRoot, 'tmp'));
+    my $path = tempdir(DIR => catdir(KrangRoot, 'tmp'));
     my $filepath = catfile($path, $filename);
-    open (FILE, ">$filepath") || croak("Unable to open $path for writing media!"); 
+    open(FILE, ">$filepath") || croak("Unable to open $path for writing media!");
     print FILE $content;
     close FILE;
 
     $self->{tempfile} = $filepath;
-    $self->{tempdir} = $path;
+    $self->{tempdir}  = $path;
     $self->{filename} = $filename;
 
     # blow the URL cache since filename has changed
@@ -555,7 +594,7 @@ sub store_temp_file {
     # guess the mime_type
     return $self->{mime_type} = guess_media_type($filepath);
 
-    return $self; 
+    return $self;
 }
 
 =item $file_path = $media->file_path() 
@@ -569,9 +608,9 @@ undef before upload_file() on new objects.
 =cut
 
 sub file_path {
-    my $self = shift;
-    my %args = @_;
-    my $root = KrangRoot;
+    my $self     = shift;
+    my %args     = @_;
+    my $root     = KrangRoot;
     my $media_id = $self->{media_id};
     my $filename = $self->{filename};
     my $path;
@@ -580,10 +619,13 @@ sub file_path {
     if ($self->{tempfile}) {
         $path = $self->{tempfile};
     } elsif ($self->{media_id}) {
+
         # return path based on media_id if object has been committed to db
         my $instance = pkg('Conf')->instance;
 
-        $path = catfile($root,'data','media', $instance, $self->_media_id_path(),$self->{version},$self->{filename});
+        $path =
+          catfile($root, 'data', 'media', $instance, $self->_media_id_path(), $self->{version},
+            $self->{filename});
     }
 
     # no file_path found
@@ -599,16 +641,16 @@ sub file_path {
 }
 
 sub _media_id_path {
-    my $self = shift;
+    my $self     = shift;
     my $media_id = $self->{media_id};
     my @media_id_path;
-    
-    if ($media_id >= 1000) { 
-        push(@media_id_path,substr($media_id, 0, 3)); 
+
+    if ($media_id >= 1000) {
+        push(@media_id_path, substr($media_id, 0, 3));
     } else {
-        push(@media_id_path,$media_id);
+        push(@media_id_path, $media_id);
     }
-    push(@media_id_path,$media_id);
+    push(@media_id_path, $media_id);
     return catdir(@media_id_path);
 }
 
@@ -637,8 +679,8 @@ Return width of image in pixels.
 sub width {
     my $self = shift;
     if ($self->file_path()) {
-       my ($w,$h) = dim(image_info($self->file_path()));
-       return $w;
+        my ($w, $h) = imgsize($self->file_path());
+        return $w;
     } else {
         return;
     }
@@ -653,7 +695,7 @@ Return height of image in pixels.
 sub height {
     my $self = shift;
     if ($self->file_path()) {
-        my ($w,$h) = dim(image_info($self->file_path()));
+        my ($w, $h) = imgsize($self->file_path());
         return $h;
     } else {
         return;
@@ -684,42 +726,42 @@ user does not otherwise have access to edit the media.
 sub save {
     my $self = shift;
     my %args = @_;
-    my $dbh = dbh;
+    my $dbh  = dbh;
     my $root = KrangRoot;
     my $media_id;
 
     # Is user allowed to otherwise edit this object?
-    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media", media_id => $self->media_id )
-        unless ($self->may_edit);
+    Krang::Media::NoEditAccess->throw(
+        message  => "Not allowed to edit media",
+        media_id => $self->media_id
+    ) unless ($self->may_edit);
 
     # Check permissions: Is user allowed to edit the category?
     my $category_id = $self->{category_id};
-    my $category = $self->category;
-    Krang::Media::NoCategoryEditAccess->throw( message => "Not allowed to edit media in category $category_id",
-                                               category_id => $category_id )
-        unless ($category->may_edit);
+    my $category    = $self->category;
+    Krang::Media::NoCategoryEditAccess->throw(
+        message     => "Not allowed to edit media in category $category_id",
+        category_id => $category_id
+    ) unless ($category->may_edit);
 
     $self->{url} = $self->url();
 
     # check for duplicate url and throw an exception if one found
-    my $dup_media_id = $self->duplicate_check();
-    Krang::Media::DuplicateURL->throw(message => "duplicate URL",
-                                      media_id => $dup_media_id)
-        if $dup_media_id;
+    $self->duplicate_check();
 
     # croak if media_type_id not defined
     croak('media_type_id must be set before saving media object!') unless $self->{media_type_id};
 
     # if this is not a new media object
     if (defined $self->{media_id}) {
-        $media_id = $self->{media_id}; 
+        $media_id = $self->{media_id};
 	
 	# find last-saved filename (in case we're renaming)
 	my ($last_saved_object) = pkg('Media')->find(media_id => $self->media_id);
 	my $last_saved_filename = $last_saved_object->filename;
 
         # get rid of media_id
-        my @save_fields = grep {($_ ne 'media_id') && ($_ ne 'creation_date')} FIELDS;
+        my @save_fields = grep { ($_ ne 'media_id') && ($_ ne 'creation_date') } FIELDS;
 
         # update version
         $self->{version} = $self->{version} + 1 unless $args{keep_version};
@@ -728,10 +770,11 @@ sub save {
         my $old_pub_date = $self->{publish_date} || undef;
         $self->{publish_date} = $self->{publish_date}->mysql_datetime if $self->{publish_date};
 
-        my $sql = 'UPDATE media SET '.join(', ',map { "$_ = ?" } @save_fields).' WHERE media_id = ?';
-        $dbh->do($sql, undef, (map { $self->{$_} } @save_fields),$media_id);
+        my $sql =
+          'UPDATE media SET ' . join(', ', map { "$_ = ?" } @save_fields) . ' WHERE media_id = ?';
+        $dbh->do($sql, undef, (map { $self->{$_} } @save_fields), $media_id);
 
-        # reformat 
+        # reformat
         $self->{publish_date} = $old_pub_date if $old_pub_date;
 
 	# this file exists, new media was uploaded. copy to new position
@@ -771,53 +814,62 @@ sub save {
         croak('You must upload a file using upload_file() before saving media object!')
           unless $self->{tempfile};
 
-	$self->{version} = 1;
+        $self->{version} = 1;
         my $time = localtime();
         $self->{creation_date} = $time->mysql_datetime();
-     
-	$dbh->do('INSERT INTO media ('.join(',', FIELDS).') VALUES (?'.",?" x (scalar FIELDS - 1).")", undef, map { $self->{$_} } FIELDS);
+
+        $dbh->do(
+            'INSERT INTO media ('
+              . join(',', FIELDS)
+              . ') VALUES (?'
+              . ",?" x (scalar FIELDS - 1) . ")",
+            undef,
+            map { $self->{$_} } FIELDS
+        );
 
         # make date readable
         $self->{creation_date} = $time;
-        	
+
         $self->{media_id} = $dbh->{mysql_insertid};
 
         $media_id = $self->{media_id};
 
-	my $old_path = delete $self->{tempfile};
-	my $new_path = $self->file_path;
-	mkpath((splitpath($new_path))[1]);
-	move($old_path,$new_path) || croak("Cannot create $new_path");
+        my $old_path = delete $self->{tempfile};
+        my $new_path = $self->file_path;
+        mkpath((splitpath($new_path))[1]);
+        move($old_path, $new_path) || croak("Cannot create $new_path");
         rmtree(delete $self->{tempdir});
     }
 
     # remove any existing media_contrib relatinships and save any new relationships
     $dbh->do('delete from media_contrib where media_id = ?', undef, $media_id);
-    my $count; 
+    my $count;
     foreach my $contrib (@{$self->{contrib_ids}}) {
-        $dbh->do('insert into media_contrib (media_id, contrib_id, contrib_type_id, ord) values (?,?,?,?)', undef, $media_id, $contrib->{contrib_id}, $contrib->{contrib_type_id}, $count++);
+        $dbh->do(
+            'insert into media_contrib (media_id, contrib_id, contrib_type_id, ord) values (?,?,?,?)',
+            undef, $media_id, $contrib->{contrib_id}, $contrib->{contrib_type_id}, $count++
+        );
     }
 
+    # save a copy in the version table
+    my $serialized;
+    eval { $serialized = nfreeze($self); };
+    croak("Unable to serialize object: $@") if $@;
+    $dbh->do('REPLACE INTO media_version (media_id, version, data) values (?,?,?)',
+        undef, $media_id, $self->{version}, $serialized);
 
-    unless ($args{keep_version}) {
-        # save a copy in the version table
-        my $serialized; 
-        eval { $serialized = nfreeze($self); };
-        croak ("Unable to serialize object: $@") if $@;
-        $dbh->do('INSERT into media_version (media_id, version, data) values (?,?,?)', undef, $media_id, $self->{version}, $serialized);
+    # prune previous versions from the version table
+    $self->prune_versions();
 
-        # prune previous versions from the version table
-        $self->prune_versions();
-    }
+    add_history(
+        object => $self,
+        action => 'new',
+    ) if $self->{version} == 1;
 
-    add_history(    object => $self,
-                    action => 'new',
-                )
-      if $self->{version} == 1;
-
-    add_history(    object => $self,
-                    action => 'save',
-                );
+    add_history(
+        object => $self,
+        action => 'save',
+    );
 
 }
 
@@ -954,6 +1006,26 @@ creation_date - May be either a single date (a L<Time::Piece> object) or an
 array of 2 dates specifying a range.  In ranges either member may be
 C<undef>, specifying no limit in that direction.
 
+=item * include_live
+
+Include live media in the search result. Live media are media
+that are neither retired nor have been moved to the trashbin. Set
+this option to 0, if find() should not return live media.  The
+default is 1.
+
+=item * include_retired
+
+Set this option to 1 if you want to include retired media in the
+search result. The default is 0.
+
+=item  * include_trashed
+
+Set this option to 1 if you want to include trashed media in the
+search result. Trashed media live in the trashbin. The default is 0.
+
+B<NOTE:>When searching for media_id, these three include_* flags are
+not taken into account!
+
 =back
 
 =cut
@@ -961,64 +1033,73 @@ C<undef>, specifying no limit in that direction.
 sub find {
     my $self = shift;
     my %args = @_;
-    my $dbh = dbh;
+    my $dbh  = dbh;
     my @where;
     my @media_object;
 
-    my %valid_params = ( media_id          => 1,
-                         media_uuid        => 1,
-                         version           => 1,
-                         title             => 1,
-                         title_like        => 1,
-                         alt_tag           => 1,
-                         alt_tag_like      => 1,
-                         url               => 1,
-                         url_like          => 1,
-                         category_id       => 1,
-                         below_category_id => 1,
-                         site_id           => 1,
-                         media_type_id     => 1,
-                         contrib_id        => 1,
-                         filename          => 1,
-                         filename_like     => 1,
-                         simple_search     => 1,
-                         no_attributes     => 1,
-                         order_by          => 1,
-                         order_desc        => 1,
-                         published         => 1,
-                         checked_out       => 1,
-                         checked_out_by    => 1,
-                         limit             => 1,
-                         offset            => 1,
-                         count             => 1,
-                         creation_date     => 1,
-                         ids_only          => 1,
-                         may_see           => 1,
-                         may_edit          => 1,
-                         mime_type         => 1,
-                         mime_type_like    => 1,
-                       );
+    my %valid_params = (
+        media_id          => 1,
+        media_uuid        => 1,
+        version           => 1,
+        title             => 1,
+        title_like        => 1,
+        alt_tag           => 1,
+        alt_tag_like      => 1,
+        url               => 1,
+        url_like          => 1,
+        category_id       => 1,
+        below_category_id => 1,
+        site_id           => 1,
+        media_type_id     => 1,
+        contrib_id        => 1,
+        filename          => 1,
+        filename_like     => 1,
+        simple_search     => 1,
+        no_attributes     => 1,
+        order_by          => 1,
+        order_desc        => 1,
+        published         => 1,
+        checked_out       => 1,
+        checked_out_by    => 1,
+        limit             => 1,
+        offset            => 1,
+        count             => 1,
+        creation_date     => 1,
+        ids_only          => 1,
+        may_see           => 1,
+        may_edit          => 1,
+        mime_type         => 1,
+        mime_type_like    => 1,
+        include_live      => 1,
+        include_retired   => 1,
+        include_trashed   => 1,
+    );
 
     # check for invalid params and croak if one is found
     foreach my $param (keys %args) {
-        croak (__PACKAGE__."->find() - Invalid parameter '$param' called.")
+        croak(__PACKAGE__ . "->find() - Invalid parameter '$param' called.")
           unless ($valid_params{$param});
     }
 
     # set defaults if need be
-    my $order_by =  $args{'order_by'} ? $args{'order_by'} : 'media_id';
-    my $order_desc = $args{'order_desc'} ? 'desc' : 'asc';
+    my $order_by   = $args{'order_by'}   ? $args{'order_by'} : 'media_id';
+    my $order_desc = $args{'order_desc'} ? 'desc'            : 'asc';
+    my $include_retired = delete $args{include_retired} || 0;
+    my $include_trashed = delete $args{include_trashed} || 0;
+    my $include_live    = delete $args{include_live};
+    $include_live = 1 unless defined($include_live);
 
     # Put table name "media." in front of each orderby, and $order_desc after
     my @order_bys = split(/\s*\,\s*/, $order_by);
     $order_by = join(", ", (map { "media.$_ $order_desc" } @order_bys));
 
-    my $limit = $args{'limit'} ? $args{'limit'} : undef;
+    my $limit  = $args{'limit'}  ? $args{'limit'}  : undef;
     my $offset = $args{'offset'} ? $args{'offset'} : 0;
 
     # check for invalid argument sets
-    croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
-          "Only one can be present.")
+    croak(  __PACKAGE__
+          . "->find(): 'count' and 'ids_only' were supplied. "
+          . "Only one can be present.")
       if $args{count} and $args{ids_only};
 
     croak(__PACKAGE__ . "->find(): can't use 'version' without 'media_id'.")
@@ -1026,8 +1107,11 @@ sub find {
 
     if ($args{version}) {
         if (ref $args{media_id} eq 'ARRAY') {
-            croak(__PACKAGE__ . "->find(): can't use 'version' with an array of media_ids, must be a single media_id.");
+            croak(__PACKAGE__
+                  . "->find(): can't use 'version' with an array of media_ids, must be a single media_id."
+            );
         } else {
+
             # loading a past version is handled by _load_version()
             return $self->_load_version($args{media_id}, $args{version});
         }
@@ -1035,19 +1119,20 @@ sub find {
 
     # set simple keys
     my @simple_keys = qw( title alt_tag category_id media_type_id filename url
-                          contrib_id checked_out_by may_see may_edit media_uuid
-                          mime_type );
+      contrib_id checked_out_by may_see may_edit media_uuid
+      mime_type );
     foreach my $key (keys %args) {
-        if ( grep { $key eq $_ } @simple_keys ) {
+        if (grep { $key eq $_ } @simple_keys) {
             push @where, $key;
-        } 
+        }
     }
 
     my @where_fields = ();
     foreach my $field (@where) {
+
         # Pre-pend table name -- either "ucpc" or "media"
         my @ucpc_fields = qw( may_see may_edit );
-        my $fqfield = (grep {$field eq $_} @ucpc_fields) ? "ucpc." : "media." ;
+        my $fqfield = (grep { $field eq $_ } @ucpc_fields) ? "ucpc." : "media.";
         $fqfield .= $field;
         push(@where_fields, $fqfield);
     }
@@ -1055,25 +1140,25 @@ sub find {
     # Add user_id into the query
     my $user_id = $ENV{REMOTE_USER} || croak("No user_id in REMOTE_USER");
     push(@where_fields, "ucpc.user_id");
-    push(@where, "user_id");
+    push(@where,        "user_id");
     $args{user_id} = $user_id;
 
     # Build query
     my $where_string = "";
     $where_string .= join(' and ', map { "$_ = ?" } @where_fields);
 
-
     # add media_id(s) if needed
     if ($args{media_id}) {
         if (ref $args{media_id} eq 'ARRAY') {
-            $where_string .= " and " if $where_string;
-            $where_string .= "(" . 
-              join(" OR ",  map { " media.media_id = " . $dbh->quote($_) } 
-                   @{$args{media_id} }) .
-                     ')';
+            if( scalar(@{$args{media_id}}) > 0 ) {
+                $where_string .= " and " if $where_string;
+                $where_string .= "("
+                  . join(" OR ", map { " media.media_id = " . $dbh->quote($_) } @{$args{media_id}})
+                  . ')';
+            }
         } else {
             $where_string .= " and " if $where_string;
-            $where_string .= "media.media_id = ". $dbh->quote($args{media_id});
+            $where_string .= "media.media_id = " . $dbh->quote($args{media_id});
         }
     }
 
@@ -1091,17 +1176,16 @@ sub find {
         push @where, 'alt_tag_like';
     }
 
-
     # add ids of category and cats below if below_category_id is passed in
     if ($args{'below_category_id'}) {
         my $specd_cat = (pkg('Category')->find(category_id => $args{below_category_id}))[0];
         if ($specd_cat) {
-            my @descendants = $specd_cat->descendants( ids_only => 1 );
+            my @descendants = $specd_cat->descendants(ids_only => 1);
             unshift @descendants, $specd_cat->category_id;
-            
+
             $where_string .= " and " if $where_string;
-            $where_string .= "(".
-              join(" OR ", map { "media.category_id = $_" } @descendants) .")";
+            $where_string .=
+              "(" . join(" OR ", map { "media.category_id = $_" } @descendants) . ")";
         }
     }
 
@@ -1110,7 +1194,9 @@ sub find {
         $where_string .= ' and ' if $where_string;
         $where_string .= "(media.category_id = category.category_id) AND ";
         if (ref $args{site_id} eq 'ARRAY') {
-            $where_string .= 'category.site_id IN (' . join(',', @{$args{site_id}}) . ')';
+            if( scalar(@{$args{site_id}}) > 0 ) {
+                $where_string .= 'category.site_id IN (' . join(',', @{$args{site_id}}) . ')';
+            }
         } else {
             $where_string .= "(category.site_id=?)";
             push @where, 'site_id';
@@ -1147,49 +1233,67 @@ sub find {
     # checked out if checked_out_by is NULL
     if (defined $args{'checked_out'}) {
         $where_string .= " and " if $where_string;
-        $args{'checked_out'} ? ($where_string .= "media.checked_out_by is not NULL") : ($where_string .= "media.checked_out_by is NULL");
+        $args{'checked_out'}
+          ? ($where_string .= "media.checked_out_by is not NULL")
+          : ($where_string .= "media.checked_out_by is NULL");
     }
 
     if ($args{'no_attributes'}) {
         $where_string .= " and " if $where_string;
-        $where_string .= "((media.caption = '' or media.caption is NULL) AND (media.copyright = '' or media.copyright is NULL) AND (media.notes = '' or media.notes is NULL) AND (media.alt_tag = '' or media.alt_tag is NULL))";
+        $where_string .=
+          "((media.caption = '' or media.caption is NULL) AND (media.copyright = '' or media.copyright is NULL) AND (media.notes = '' or media.notes is NULL) AND (media.alt_tag = '' or media.alt_tag is NULL))";
     }
 
     if ($args{'creation_date'}) {
         if (ref($args{'creation_date'}) eq 'ARRAY') {
             $where_string .= " and " if $where_string;
             if ($args{'creation_date'}[0] and $args{'creation_date'}[1]) {
-                $where_string .= " media.creation_date BETWEEN '".$args{'creation_date'}[0]->mysql_datetime."' AND '".$args{'creation_date'}[1]->mysql_datetime."'";
+                $where_string .=
+                    " media.creation_date BETWEEN '"
+                  . $args{'creation_date'}[0]->mysql_datetime
+                  . "' AND '"
+                  . $args{'creation_date'}[1]->mysql_datetime . "'";
             } elsif ($args{'creation_date'}[0]) {
-               $where_string .= " media.creation_date >= '".$args{'creation_date'}[0]->mysql_datetime."'"; 
+                $where_string .=
+                  " media.creation_date >= '" . $args{'creation_date'}[0]->mysql_datetime . "'";
             } elsif ($args{'creation_date'}[1]) {
-                $where_string .= " media.creation_date <= '".$args{'creation_date'}[1]->mysql_datetime."'";
+                $where_string .=
+                  " media.creation_date <= '" . $args{'creation_date'}[1]->mysql_datetime . "'";
             } else {
-                 croak("Bad date arguement for creation_date, must be either an array of two Time::Piece objects or one Time::Piece object."); 
+                croak(
+                    "Bad date arguement for creation_date, must be either an array of two Time::Piece objects or one Time::Piece object."
+                );
             }
         } else {
             $where_string .= " and " if $where_string;
-            $where_string .= " media.creation_date = '".$args{'creation_date'}->mysql_datetime."'";
+            $where_string .=
+              " media.creation_date = '" . $args{'creation_date'}->mysql_datetime . "'";
         }
     }
 
     if ($args{'simple_search'}) {
-       my @words = split(/\s+/, $args{'simple_search'});
-        foreach my $word (@words){
-                my $numeric = ($word =~ /^\d+$/) ? 1 : 0;
-                my $joined = $numeric ? 'media.media_id = ?' : '('.join(' OR ', 'media.title LIKE ?', 'media.url LIKE ?', 'media.filename LIKE ?').')';
-                $where_string .= " and " if $where_string;
-                $where_string .= $joined;
-                if ($numeric) {
-                    push @where, 'simple_search';
-                } else {
-                    # escape any literal SQL wildcard chars
-                    $word =~ s/_/\\_/g;
-                    $word =~ s/%/\\%/g;
-                    $args{$word} = '%'.$word.'%';
-                    push @where, ($word, $word, $word);
-                } 
-        } 
+        my @words = split(/\s+/, $args{'simple_search'});
+        foreach my $word (@words) {
+            my $numeric = ($word =~ /^\d+$/) ? 1 : 0;
+            my $joined =
+              $numeric
+              ? 'media.media_id = ?'
+              : '('
+              . join(' OR ', 'media.title LIKE ?', 'media.url LIKE ?', 'media.filename LIKE ?')
+              . ')';
+            $where_string .= " and " if $where_string;
+            $where_string .= $joined;
+            if ($numeric) {
+                push @where, 'simple_search';
+            } else {
+
+                # escape any literal SQL wildcard chars
+                $word =~ s/_/\\_/g;
+                $word =~ s/%/\\%/g;
+                $args{$word} = '%' . $word . '%';
+                push @where, ($word, $word, $word);
+            }
+        }
     }
 
     # Get user asset permissions -- overrides may_edit if false
@@ -1202,41 +1306,72 @@ sub find {
     } elsif ($args{'ids_only'}) {
         $select_string = 'media.media_id';
     } else {
-        my @fields = map { "media.$_" } (grep {($_ ne 'media_id')} FIELDS);
+        my @fields = map { "media.$_" } (grep { ($_ ne 'media_id') } FIELDS);
         push(@fields, "ucpc.may_see as may_see");
 
         # Handle asset_media/may_edit
         if ($media_access eq "edit") {
             push(@fields, "ucpc.may_edit as may_edit");
         } else {
-            push(@fields, $dbh->quote("0") ." as may_edit");
+            push(@fields, $dbh->quote("0") . " as may_edit");
         }
 
-        $select_string = 'media.media_id, '.join(',', @fields);
+        $select_string = 'media.media_id, ' . join(',', @fields);
 
         # Set up group by
         $group_by++;
     }
-    
+
+    # include live/retired/trashed
+    unless ($args{media_id}) {
+        if ($include_live) {
+            unless ($include_retired) {
+                $where_string .= ' and ' if $where_string;
+                $where_string .= ' media.retired = 0';
+            }
+            unless ($include_trashed) {
+                $where_string .= ' and ' if $where_string;
+                $where_string .= ' media.trashed  = 0';
+            }
+        } else {
+            if ($include_retired) {
+                if ($include_trashed) {
+                    $where_string .= ' and ' if $where_string;
+                    $where_string .= ' media.retired = 1 AND media.trashed = 1';
+                } else {
+                    $where_string .= ' and ' if $where_string;
+                    $where_string .= ' media.retired = 1 AND media.trashed = 0';
+                }
+            } else {
+                if ($include_trashed) {
+                    $where_string .= ' and ' if $where_string;
+                    $where_string .= ' media.trashed = 1';
+                }
+            }
+        }
+    }
+
     my $sql = qq( select $select_string from media
                   left join user_category_permission_cache as ucpc
                   ON ucpc.category_id = media.category_id
                   );
-    $sql .= ", media_contrib" if $args{'contrib_id'};
-    $sql .= ', category' if $args{site_id};
-    $sql .= " where ".$where_string if $where_string;
+    $sql .= ", media_contrib"          if $args{'contrib_id'};
+    $sql .= ', category'               if $args{site_id};
+    $sql .= " where " . $where_string  if $where_string;
     $sql .= " group by media.media_id" if ($group_by);
     $sql .= " order by $order_by";
- 
-    # add limit and/or offset if defined 
+
+    # add limit and/or offset if defined
     if ($limit) {
-       $sql .= " limit $offset, $limit";
+        $sql .= " limit $offset, $limit";
     } elsif ($offset) {
         $sql .= " limit $offset, -1";
     }
 
     debug(__PACKAGE__ . "::find() SQL: " . $sql);
-    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', map { defined $args{$_} ? $args{$_} : 'undef' } @where));
+    debug(  __PACKAGE__
+          . "::find() SQL ARGS: "
+          . join(', ', map { defined $args{$_} ? $args{$_} : 'undef' } @where));
 
     my $sth = $dbh->prepare($sql);
     $sth->execute(map { $args{$_} } @where) || croak("Unable to execute statement $sql");
@@ -1246,27 +1381,32 @@ sub find {
             return $row->{count};
         } elsif ($args{'ids_only'}) {
             $obj = $row->{media_id};
-        } else {    
+        } else {
             $obj = bless {%$row}, $self;
 
             # make dates into Time::Piece objects
             foreach my $date_field (grep { /_date$/ } keys %$obj) {
-                next unless ((defined $obj->{$date_field}) and ( $obj->{$date_field} ne '0000-00-00 00:00:00'));
+                next
+                  unless ((defined $obj->{$date_field})
+                    and ($obj->{$date_field} ne '0000-00-00 00:00:00'));
                 $obj->{$date_field} = Time::Piece->from_mysql_datetime($obj->{$date_field});
             }
 
             # add contrib ids to object
-            my $sth2 = $dbh->prepare('select contrib_id, contrib_type_id from media_contrib where media_id = ? order by ord');
+            my $sth2 = $dbh->prepare(
+                'select contrib_id, contrib_type_id from media_contrib where media_id = ? order by ord'
+            );
             $sth2->execute($row->{media_id});
             $obj->{contrib_ids} = [];
             while (my ($contrib_id, $contrib_type_id) = $sth2->fetchrow_array()) {
-                push @{$obj->{contrib_ids}}, {contrib_id => $contrib_id, contrib_type_id => $contrib_type_id};
+                push @{$obj->{contrib_ids}},
+                  {contrib_id => $contrib_id, contrib_type_id => $contrib_type_id};
             }
         }
-	push (@media_object,$obj);
+        push(@media_object, $obj);
     }
     $sth->finish();
-    return @media_object; 
+    return @media_object;
 }
 
 =item $media->revert($version)
@@ -1278,36 +1418,34 @@ If the new version is successfully written to disk (no duplicate URL errors, etc
 =cut
 
 sub revert {
-    my $self = shift;
-    my $dbh = dbh;
+    my $self           = shift;
+    my $dbh            = dbh;
     my $version_number = shift;
-    my $root = KrangRoot;
+    my $root           = KrangRoot;
 
-    my $version = $self->{version}; # make sure to preserve this
+    my $version        = $self->{version};          # make sure to preserve this
     my $checked_out_by = $self->{checked_out_by};
-     
+
     croak('Must specify media version number to revert to') if (not $version_number);
 
     my $sql = 'SELECT data from media_version where media_id = ? AND version = ?';
     my $sth = $dbh->prepare($sql);
     $sth->execute($self->{media_id}, $version_number);
 
-    my $data = $sth->fetchrow_array(); 
+    my $data = $sth->fetchrow_array();
     $sth->finish();
 
-    eval {
-        %$self = %{thaw($data)};
-    };
-    croak ("Unable to deserialize object: $@") if $@;
+    eval { %$self = %{thaw($data)}; };
+    croak("Unable to deserialize object: $@") if $@;
 
     my $old_filepath = $self->file_path();
-    $self->{version} = $version;
+    $self->{version}        = $version;
     $self->{checked_out_by} = $checked_out_by;
 
     # copy old media file into tmp storage
-    my $path = tempdir( DIR => catdir(KrangRoot, "tmp") );
+    my $path = tempdir(DIR => catdir(KrangRoot, "tmp"));
     my $filepath = catfile($path, $self->{filename});
-    copy($old_filepath,$filepath); 
+    copy($old_filepath, $filepath);
     $self->{tempfile} = $filepath;
     $self->{tempdir} = $path; 
     
@@ -1325,7 +1463,7 @@ sub revert {
 sub _load_version {
     my ($self, $media_id, $version) = @_;
     my $dbh = dbh;
-    
+
     my $sql = 'SELECT data from media_version where media_id = ? AND version = ?';
     my $sth = $dbh->prepare($sql);
     $sth->execute($media_id, $version);
@@ -1333,19 +1471,17 @@ sub _load_version {
     my $data = $sth->fetchrow_array();
     $sth->finish();
 
-    eval {
-        $self = thaw($data);
-    };
-    croak ("Unable to deserialize object: $@") if $@;
+    eval { $self = thaw($data); };
+    croak("Unable to deserialize object: $@") if $@;
 
     my $old_filepath = $self->file_path();
 
     # copy old media file into tmp storage
-    my $path = tempdir( DIR => catdir(KrangRoot, "tmp") );
+    my $path = tempdir(DIR => catdir(KrangRoot, "tmp"));
     my $filepath = catfile($path, $self->{filename});
-    copy($old_filepath,$filepath);
+    copy($old_filepath, $filepath);
     $self->{tempfile} = $filepath;
-    $self->{tempdir} = $path; 
+    $self->{tempdir}  = $path;
     return $self;
 }
 
@@ -1368,16 +1504,17 @@ Returns undef if a thumbnail cannot be created.
 =cut
 
 sub thumbnail_path {
-    my $self = shift;
-    my %args = @_;
-    my $root = KrangRoot;
+    my $self     = shift;
+    my %args     = @_;
+    my $root     = KrangRoot;
     my $filename = $self->{filename};
     return undef unless $filename;
 
     # thumbnail path is the same as the file path with t__ or m__ in front of
     # the filename (depending on whether or not it's medium or not)
     my $prefix = $args{medium} ? 'm__' : 't__';
-    my $path = catfile((splitpath($self->file_path(relative => $args{relative})))[1], $prefix . $filename);
+    my $path =
+      catfile((splitpath($self->file_path(relative => $args{relative})))[1], $prefix . $filename);
 
     # all done if it exists
     return $path if (-s $path);
@@ -1388,26 +1525,32 @@ sub thumbnail_path {
     # problems creating thumbnails shouldn't be fatal
     eval {
         my $img = Imager->new();
-        $img->open(file=>$self->file_path()) or croak $img->errstr();
+        $img->open(file => $self->file_path()) or croak $img->errstr();
         my $size = $args{medium} ? MED_THUMBNAIL_SIZE : THUMBNAIL_SIZE;
 
         # only resize if one side is bigger than the size we're scaling to
         my $thumb;
-        if( $img->getwidth > $size || $img->getheight > $size ) {
-            $thumb = $img->scale(xpixels => $size,
-                                 ypixels => $size,
-                                 type    =>'min',
-                                 qtype   =>'preview' );
+        if ($img->getwidth > $size || $img->getheight > $size) {
+            $thumb = $img->scale(
+                xpixels => $size,
+                ypixels => $size,
+                type    => 'min',
+                qtype   => 'preview'
+            );
         } else {
             $thumb = $img;
         }
 
         # patch to fix a bug in Imager - zero-dimension images cause segfaults.
         if ($thumb->getwidth >= 1 && $thumb->getheight >= 1) {
-            $thumb->write(file=>$path) or croak $thumb->errstr;
+            $thumb->write(file => $path) or croak $thumb->errstr;
         } else {
-            debug(sprintf("%s: thumbnail not written for media_id=%i - dimensions too small",
-                          __PACKAGE__, $self->media_id));
+            debug(
+                sprintf(
+                    "%s: thumbnail not written for media_id=%i - dimensions too small",
+                    __PACKAGE__, $self->media_id
+                )
+            );
             return undef;
         }
     };
@@ -1415,7 +1558,7 @@ sub thumbnail_path {
     # if it didn't work, log the problem and move on. Thumbnails are
     # optional.
     if ($@) {
-        debug(__PACKAGE__." - problem creating thumbnail for $filename : $@");
+        debug(__PACKAGE__ . " - problem creating thumbnail for $filename : $@");
         return undef;
     }
 
@@ -1427,61 +1570,68 @@ sub thumbnail_path {
 
 Marks media object as checked out by user_id.
 
-Will throw "Krang::Media::NoEditAccess" exception if user ius not allowed to edit this media.
+Will throw "Krang::Media::NoEditAccess" exception if user is not allowed to edit this media.
 
 =cut
 
 sub checkout {
-    my $self = shift;
+    my $self     = shift;
     my $media_id = shift;
-    my $dbh = dbh;
-    my $user_id = $ENV{REMOTE_USER};
+    my $dbh      = dbh;
+    my $user_id  = $ENV{REMOTE_USER};
 
     # Load media if media is not already loaded
     unless (ref($self)) {
-        croak ("No media_id specified") unless ($media_id);
-        my ($media) = pkg('Media')->find(media_id=>$media_id);
-        croak ("Can't find media_id '$media_id'") unless ($media and ref($media));
+        croak("No media_id specified") unless ($media_id);
+        my ($media) = pkg('Media')->find(media_id => $media_id);
+        croak("Can't find media_id '$media_id'") unless ($media and ref($media));
 
         # We got it.  Save it.
         $self = $media;
     } else {
+
         # Set $media_id -- we need it later
         $media_id = $self->{media_id};
     }
 
     # Is user allowed to otherwise edit this object?
-    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media", media_id => $self->media_id )
-        unless ($self->may_edit);
+    Krang::Media::NoEditAccess->throw(
+        message  => "Not allowed to edit media",
+        media_id => $self->media_id
+    ) unless ($self->may_edit);
 
     # Short circuit if media is checked out by current user
-    return if ( $self->{checked_out_by} and 
-                $self->{checked_out_by} == $user_id );
+    return if ($self->{checked_out_by}
+        and $self->{checked_out_by} == $user_id);
 
     $dbh->do('LOCK tables media WRITE');
 
     eval {
-        my $sth= $dbh->prepare('SELECT checked_out_by FROM media WHERE media_id = ?');
+        my $sth = $dbh->prepare('SELECT checked_out_by FROM media WHERE media_id = ?');
         $sth->execute($media_id);
 
         my $checkout_id = $sth->fetchrow_array();
-        croak("Media asset $media_id already checked out by id $checkout_id!") if ($checkout_id && ($checkout_id ne $user_id));
+        croak("Media asset $media_id already checked out by id $checkout_id!")
+          if ($checkout_id && ($checkout_id ne $user_id));
 
         $sth->finish();
- 
-        $dbh->do('update media set checked_out_by = ? where media_id = ?', undef, $user_id, $media_id);
+
+        $dbh->do('update media set checked_out_by = ? where media_id = ?',
+            undef, $user_id, $media_id);
     };
 
     if ($@) {
         $dbh->do('UNLOCK tables');
         croak("Error in checkout: $@");
     }
-    
+
     $dbh->do('UNLOCK tables');
 
     $self->{checked_out_by} = $user_id;
-    add_history( object => $self,
-                 action => 'checkout' );
+    add_history(
+        object => $self,
+        action => 'checkout'
+    );
 }
 
 =item $media->checkin() || Krang::Media->checkin($media_id)
@@ -1491,36 +1641,40 @@ Marks media object as checked in.
 =cut
 
 sub checkin {
-    my $self = shift;
+    my $self     = shift;
     my $media_id = shift;
-    my $dbh = dbh;
-    my $user_id = $ENV{REMOTE_USER};
+    my $dbh      = dbh;
+    my $user_id  = $ENV{REMOTE_USER};
 
     # Load media if media is not already loaded
     unless (ref($self)) {
-        croak ("No media_id specified") unless ($media_id);
-        my ($media) = pkg('Media')->find(media_id=>$media_id);
-        croak ("Can't find media_id '$media_id'") unless ($media and ref($media));
+        croak("No media_id specified") unless ($media_id);
+        my ($media) = pkg('Media')->find(media_id => $media_id);
+        croak("Can't find media_id '$media_id'") unless ($media and ref($media));
 
         # We got it.  Save it.
         $self = $media;
     } else {
+
         # Set $media_id -- we need it later
         $media_id = $self->{media_id};
     }
 
     # Is user allowed to otherwise edit this object?
-    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media", media_id => $self->media_id )
-        unless ($self->may_edit);
+    Krang::Media::NoEditAccess->throw(
+        message  => "Not allowed to edit media",
+        media_id => $self->media_id
+    ) unless ($self->may_edit);
 
     $dbh->do('UPDATE media SET checked_out_by = NULL WHERE media_id = ?', undef, $media_id);
 
     $self->{checked_out_by} = undef;
 
-    add_history( object => $self,
-                 action => 'checkin' );
+    add_history(
+        object => $self,
+        action => 'checkin'
+    );
 }
-
 
 =item C<< $media->mark_as_published() >>
 
@@ -1538,26 +1692,25 @@ sub mark_as_published {
     croak __PACKAGE__ . ": Cannot publish unsaved media object" unless ($self->{media_id});
 
     $self->{published_version} = $self->{version};
-    $self->{publish_date} = localtime;
-    $self->{checked_out_by} = undef;
+    $self->{publish_date}      = localtime;
+    $self->{checked_out_by}    = undef;
 
     # update the DB.
     my $dbh = dbh();
-    $dbh->do('UPDATE media
+    $dbh->do(
+        'UPDATE media
               SET checked_out_by = ?,
                   published_version = ?,
                   publish_date = ?
               WHERE media_id = ?',
 
-             undef,
-             $self->{checked_out_by},
-             $self->{published_version},
-             $self->{publish_date}->mysql_datetime,
-             $self->{media_id}
-            );
+        undef,
+        $self->{checked_out_by},
+        $self->{published_version},
+        $self->{publish_date}->mysql_datetime,
+        $self->{media_id}
+    );
 }
-
-
 
 =item C<< $media->mark_as_previewed(unsaved => 1) >>
 
@@ -1582,15 +1735,13 @@ sub mark_as_previewed {
 
     # update the DB
     my $dbh = dbh();
-    $dbh->do('UPDATE media SET preview_version = ? WHERE media_id = ?',
-             undef,
-             $self->{preview_version},
-             $self->{media_id}
-            );
+    $dbh->do(
+        'UPDATE media SET preview_version = ? WHERE media_id = ?',
+        undef, $self->{preview_version},
+        $self->{media_id}
+    );
 
 }
-
-
 
 =item $media = $media->url();
 
@@ -1599,7 +1750,7 @@ Returns calculated url of media object based on category_id and filename
 =cut
 
 sub url {
-    my $self= shift;
+    my $self = shift;
 
     croak "illegal attempt to set readonly attribute 'url'.\n"
       if @_;
@@ -1628,9 +1779,9 @@ sub preview_url {
     my $self = shift;
     croak "illegal attempt to set readonly attribute 'preview_url'.\n"
       if @_;
-    my $url = $self->url;
-    my $site = $self->category->site;
-    my $site_url = $site->url;
+    my $url              = $self->url;
+    my $site             = $self->category->site;
+    my $site_url         = $site->url;
     my $site_preview_url = $site->preview_url;
     $url =~ s/^\Q$site_url\E/$site_preview_url/;
 
@@ -1649,14 +1800,13 @@ sub publish_path {
     my $self = shift;
     my $path = $self->category->site->publish_path;
     my $url  = $self->url;
-    
+
     # remove the site part
     $url =~ s![^/]+/!!;
 
     # paste them together
     return canonpath(catfile($path, $url));
 }
-
 
 =item $path = $media->preview_path()
 
@@ -1670,7 +1820,7 @@ sub preview_path {
     my $self = shift;
     my $path = $self->category->site->preview_path;
     my $url  = $self->preview_url;
-    
+
     # remove the site part
     $url =~ s![^/]+/!!;
 
@@ -1685,12 +1835,20 @@ This method checks whether the url of a media object is unique.
 =cut
 
 sub duplicate_check {
-    my $self = shift;
+    my ($self, %args) = @_;
     my $id = $self->{media_id} || 0;
     my $media_id = 0;
 
-    my $query = 'SELECT media_id FROM media WHERE url = ?';
-    $query .= "AND media_id != $id" if $id;
+    my $query = <<SQL;
+SELECT media_id
+FROM   media
+WHERE  url = ?
+AND    retired = 0
+AND    trashed  = 0
+SQL
+
+    $query .= " AND media_id != $id" if $id;
+
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
     $sth->execute($self->url);
@@ -1698,7 +1856,10 @@ sub duplicate_check {
     $sth->fetch();
     $sth->finish();
 
-    return $media_id;
+    Krang::Media::DuplicateURL->throw(
+        message  => "duplicate URL",
+        media_id => $media_id
+    ) if $media_id;
 }
 
 =item $media->preview
@@ -1708,13 +1869,11 @@ Convenience method to Krang::Publisher, previews media object.
 =cut 
 
 sub preview {
-    my $self = shift;
+    my $self      = shift;
     my $publisher = pkg('Publisher')->new();
 
-    $publisher->preview_media(
-                                   media    => $self
-                                  );
- 
+    $publisher->preview_media(media => $self);
+
 }
 
 =item $media->publish
@@ -1724,12 +1883,10 @@ Convenience method to Krang::Publisher, publishes media object.
 =cut
 
 sub publish {
-    my $self = shift;
+    my $self      = shift;
     my $publisher = pkg('Publisher')->new();
 
-    $publisher->publish_media(
-                                   media    => $self
-                                  );
+    $publisher->publish_media(media => $self);
 }
 
 =item $media->delete() || Krang::Media->delete($media_id)
@@ -1744,45 +1901,51 @@ this media.
 =cut
 
 sub delete {
-    my $self = shift;
+    my $self     = shift;
     my $media_id = shift;
 
     my $is_object = $media_id ? 0 : 1;
-   
-    $self = (pkg('Media')->find(media_id => $media_id))[0] if $media_id; 
-   
-    croak("No media_id specified for delete!") if not $self->{media_id};
- 
-    # Is user allowed to otherwise edit this object?
-    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media", media_id => $self->{media_id} )
-        unless ($self->may_edit);
 
-    my $dbh = dbh;
+    $self = (pkg('Media')->find(media_id => $media_id))[0] if $media_id;
+
+    croak("No media_id specified for delete!") if not $self->{media_id};
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Media::NoEditAccess->throw(
+        message  => "Not allowed to edit media",
+        media_id => $self->{media_id}
+    ) unless ($self->may_edit);
+
+    my $dbh  = dbh;
     my $root = KrangRoot;
 
     $self->checkout();
-     
+
     # unpublish
     pkg('Publisher')->new->unpublish_media(media => $self);
 
     # first delete history for this object
     pkg('History')->delete(object => $self);
 
-    my $file_dir = catdir($root,'data','media',pkg('Conf')->instance,$self->_media_id_path);
+    my $file_dir = catdir($root, 'data', 'media', pkg('Conf')->instance, $self->_media_id_path);
 
-    $dbh->do('DELETE from media where media_id = ?', undef, $self->{media_id}); 
-    $dbh->do('DELETE from media_version where media_id = ?', undef, $self->{media_id}); 
+    $dbh->do('DELETE from media where media_id = ?',         undef, $self->{media_id});
+    $dbh->do('DELETE from media_version where media_id = ?', undef, $self->{media_id});
     $dbh->do('delete from media_contrib where media_id = ?', undef, $self->{media_id});
 
     rmtree($file_dir) || croak("Cannot delete $file_dir and contents.");
 
-    # delete schedules for this story
+    # delete schedules for this media
     $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
-undef, 'media', $self->{media_id});
+        undef, 'media', $self->{media_id});
 
-    add_history(    object => $self,
-                    action => 'delete',
-               );
+    # remove from trash
+    pkg('Trash')->remove(object => $self);
+
+    add_history(
+        object => $self,
+        action => 'delete',
+    );
 }
 
 =item C<< $media->serialize_xml(writer => $writer, set => $set) >>
@@ -1792,22 +1955,22 @@ Serialize as XML.  See Krang::DataSet for details.
 =cut
 
 sub serialize_xml {
-    my ($self, %args) = @_;
-    my ($writer, $set) = @args{qw(writer set)};
+    my ($self,   %args) = @_;
+    my ($writer, $set)  = @args{qw(writer set)};
     local $_;
 
     # open up <media> linked to schema/media.xsd
-    $writer->startTag('media',
-                      "xmlns:xsi" => 
-                        "http://www.w3.org/2001/XMLSchema-instance",
-                      "xsi:noNamespaceSchemaLocation" =>
-                        'media.xsd');
+    $writer->startTag(
+        'media',
+        "xmlns:xsi"                     => "http://www.w3.org/2001/XMLSchema-instance",
+        "xsi:noNamespaceSchemaLocation" => 'media.xsd'
+    );
 
     # hash the media_id to a path
     my $media_id = $self->{media_id};
-    my $one = $media_id % 1024;
-    my $two = int($media_id / 1024);
-    my $path = "media_$one/$two/$self->{filename}";
+    my $one      = $media_id % 1024;
+    my $two      = int($media_id / 1024);
+    my $path     = "media_$one/$two/$self->{filename}";
 
     # write media file into data set
     $set->add(file => $self->file_path, path => $path, from => $self);
@@ -1815,25 +1978,27 @@ sub serialize_xml {
     my %media_type = pkg('Pref')->get('media_type');
 
     # basic fields
-    $writer->dataElement(media_id   => $self->{media_id});
-    $writer->dataElement(media_uuid => $self->{media_uuid});
-    $writer->dataElement(media_type => $media_type{$self->{media_type_id}});
-    $writer->dataElement(title      => $self->{title});
-    $writer->dataElement(filename   => $self->{filename});
-    $writer->dataElement(path       => $path);
-    $writer->dataElement(category_id => $self->{category_id});    
-    $writer->dataElement(url        => $self->{url});
-    $writer->dataElement(caption    => $self->{caption});    
-    $writer->dataElement(copyright  => $self->{copyright});    
-    $writer->dataElement(alt_tag    => $self->{alt_tag});
-    $writer->dataElement(notes      => $self->{notes});
+    $writer->dataElement(media_id          => $self->{media_id});
+    $writer->dataElement(media_uuid        => $self->{media_uuid});
+    $writer->dataElement(media_type        => $media_type{$self->{media_type_id}});
+    $writer->dataElement(title             => $self->{title});
+    $writer->dataElement(filename          => $self->{filename});
+    $writer->dataElement(path              => $path);
+    $writer->dataElement(category_id       => $self->{category_id});
+    $writer->dataElement(url               => $self->{url});
+    $writer->dataElement(caption           => $self->{caption});
+    $writer->dataElement(copyright         => $self->{copyright});
+    $writer->dataElement(alt_tag           => $self->{alt_tag});
+    $writer->dataElement(notes             => $self->{notes});
     $writer->dataElement(version           => $self->{version});
     $writer->dataElement(published_version => $self->{published_version})
       if $self->{published_version};
     $writer->dataElement(creation_date => $self->{creation_date}->datetime);
     $writer->dataElement(publish_date  => $self->{publish_date}->datetime)
       if $self->{publish_date};
-    
+    $writer->dataElement(retired => $self->retired);
+    $writer->dataElement(trashed => $self->trashed);
+
     # add category to set
     $set->add(object => $self->category, from => $self);
 
@@ -1841,23 +2006,23 @@ sub serialize_xml {
     my %contrib_type = pkg('Pref')->get('contrib_type');
     for my $contrib ($self->contribs) {
         $writer->startTag('contrib');
-        $writer->dataElement(contrib_id => $contrib->contrib_id);
-        $writer->dataElement(contrib_type => 
-                             $contrib_type{$contrib->selected_contrib_type()});
+        $writer->dataElement(contrib_id   => $contrib->contrib_id);
+        $writer->dataElement(contrib_type => $contrib_type{$contrib->selected_contrib_type()});
         $writer->endTag('contrib');
 
         $set->add(object => $contrib, from => $self);
     }
 
     # schedules
-    foreach my $schedule ( pkg('Schedule')->find( object_type => 'media', object_id => $self->media_id ) ) {
+    foreach
+      my $schedule (pkg('Schedule')->find(object_type => 'media', object_id => $self->media_id))
+    {
         $set->add(object => $schedule, from => $self);
     }
 
     # all done
     $writer->endTag('media');
 }
-
 
 =item C<< $media = Krang::Media->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
 
@@ -1877,26 +2042,31 @@ sub deserialize_xml {
 
     # divide FIELDS into simple and complex groups
     my (%complex, %simple);
-    @complex{qw(media_id filename publish_date creation_date checked_out_by
-                version url published_version category_id media_uuid)} = ();
-    %simple = map { ($_,1) } grep { not exists $complex{$_} } (FIELDS);
-    
+    @complex{
+        qw(media_id filename publish_date creation_date checked_out_by
+          version url published_version category_id media_uuid trashed retired)
+      }
+      = ();
+    %simple = map { ($_, 1) } grep { not exists $complex{$_} } (FIELDS);
+
     # parse it up
-    my $data = pkg('XML')->simple(  xml           => $xml, 
-                                    forcearray  => ['contrib'],
-                                    suppressempty => 1);
+    my $data = pkg('XML')->simple(
+        xml           => $xml,
+        forcearray    => ['contrib'],
+        suppressempty => 1
+    );
 
     # is there an existing object?
     my $media;
 
     # start with UUID lookup
     if (not $args{no_uuid} and $data->{media_uuid}) {
-        ($media) = $pkg->find(media_uuid  => $data->{media_uuid});
+        ($media) = $pkg->find(media_uuid => $data->{media_uuid});
 
         # if not updating this is fatal
-        Krang::DataSet::DeserializationFailed->throw(message =>
-                  "A media object with the UUID '$data->{media_uuid}' already"
-                  . " exists and no_update is set.")
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A media object with the UUID '$data->{media_uuid}' already"
+              . " exists and no_update is set.")
           if $media and $no_update;
     }
 
@@ -1906,83 +2076,100 @@ sub deserialize_xml {
 
         # if not updating this is fatal
         Krang::DataSet::DeserializationFailed->throw(
-            message => "A media object with the url '$data->{url}' already ".
-                       "exists and no_update is set.")
-            if $media and $no_update;
+            message => "A media object with the url '$data->{url}' already "
+              . "exists and no_update is set.")
+          if $media and $no_update;
     }
 
     my $update = 0;
     if ($media) {
+
         # update simple fields
         $media->{$_} = $data->{$_} for keys %simple;
 
         # update the category, which can change now with UUID matching
-        my $category_id = $set->map_id(class => pkg('Category'),
-                                       id    => $data->{category_id});
+        my $category_id = $set->map_id(
+            class => pkg('Category'),
+            id    => $data->{category_id}
+        );
         $media->category_id($category_id);
-        
+
         # set the update flag
         $update = 1;
 
     } else {
+
         # create a new media object with category and simple fields
-        my $category_id = $set->map_id(class => pkg('Category'),
-                                       id    => $data->{category_id});
+        my $category_id = $set->map_id(
+            class => pkg('Category'),
+            id    => $data->{category_id}
+        );
         assert(pkg('Category')->find(category_id => $category_id, count => 1))
           if ASSERT;
 
         # this might have caused this media to get completed via a
         # circular link, end early if it did
         my ($dup) = pkg('Media')->find(url => $data->{url});
-        return $dup if( $dup );
+        return $dup if ($dup);
 
-        $media = pkg('Media')->new(category_id => $category_id,
-                                   (map { ($_,$data->{$_}) } keys %simple));
+        $media = pkg('Media')->new(
+            category_id => $category_id,
+            (map { ($_, $data->{$_}) } keys %simple)
+        );
 
     }
 
     # preserve UUID if available
-    $media->{media_uuid} = $data->{media_uuid} 
+    $media->{media_uuid} = $data->{media_uuid}
       if $data->{media_uuid} and not $args{no_uuid};
-      
+
     # get hash of contrib type names to ids
     my %contrib_types = reverse pkg('Pref')->get('contrib_type');
 
     # handle contrib association
-    if ($data->{contrib}) { 
+    if ($data->{contrib}) {
         my @contribs = @{$data->{contrib}};
         my @altered_contribs;
         foreach my $c (@contribs) {
-            my $contrib_type_id = $contrib_types{$c->{contrib_type}} || 
-                            Krang::DataSet::DeserializationFailed->throw(
-                                 "Unknown contrib_type '".$c->{contrib_type}."'.");
+            my $contrib_type_id = $contrib_types{$c->{contrib_type}}
+              || Krang::DataSet::DeserializationFailed->throw(
+                "Unknown contrib_type '" . $c->{contrib_type} . "'.");
 
-            push (@altered_contribs, {contrib_id => $set->map_id(class => pkg('Contrib'), id => $c->{contrib_id}), contrib_type_id => $contrib_type_id });
+            push(
+                @altered_contribs,
+                {
+                    contrib_id => $set->map_id(class => pkg('Contrib'), id => $c->{contrib_id}),
+                    contrib_type_id => $contrib_type_id
+                }
+            );
         }
-    
+
         $media->contribs(@altered_contribs);
     }
- 
+
     # upload the file
-    my $full_path = $set->map_file(class => pkg('Media'),
-                                   id    => $data->{media_id});
+    my $full_path = $set->map_file(
+        class => pkg('Media'),
+        id    => $data->{media_id}
+    );
     croak("Unable to get file path from dataset!") unless $full_path;
-    my $fh = IO::File->new($full_path) or 
-      croak("Unable to open $full_path: $!");
-    $media->upload_file(filehandle => $fh,
-                        filename   => $data->{filename});
-    
+    my $fh = IO::File->new($full_path)
+      or croak("Unable to open $full_path: $!");
+    $media->upload_file(
+        filehandle => $fh,
+        filename   => $data->{filename}
+    );
+
     # get hash of media type names to ids
     my %media_types = reverse pkg('Pref')->get('media_type');
-    
+
     # get ids for media types
-    Krang::DataSet::DeserializationFailed->throw(
-             "Unknown media_type '$data->{media_type}'.")
-        unless $media_types{$data->{media_type}};
-    
+    Krang::DataSet::DeserializationFailed->throw("Unknown media_type '$data->{media_type}'.")
+      unless $media_types{$data->{media_type}};
+
     # add media type
     $media->media_type_id($media_types{$data->{media_type}});
-        
+
     # save changes
     $media->save();
     $media->checkin();
@@ -1991,16 +2178,16 @@ sub deserialize_xml {
     $set->register_id(
         class     => pkg('Media'),
         id        => $data->{media_id},
-        import_id => $media->media_id,);
+        import_id => $media->media_id,
+    );
 
     # make sure there's a file on the other end
-    assert($media->file_path and -e $media->file_path,
-           "Media saved successfully") if ASSERT;
+    assert($media->file_path and -e $media->file_path, "Media saved successfully") if ASSERT;
 
     return $media;
 }
 
-=item C<< $data = Storable::freeze($story) >>
+=item C<< $data = Storable::freeze($media) >>
 
 Serialize media.  Krang::Media implements STORABLE_freeze() to
 ensure this works correctly.
@@ -2012,13 +2199,13 @@ sub STORABLE_freeze {
     return if $cloning;
 
     # avoid serializing category cache since they contain objects not
-    # owned by the story
+    # owned by the media
     my $category_cache = delete $self->{cat_cache};
 
     # serialize data in $self with Storable
     my $data;
     eval { $data = nfreeze({%$self}) };
-    croak("Unable to freeze story: $@") if $@;
+    croak("Unable to freeze media: $@") if $@;
 
     # reconnect cache
     $self->{cat_cache} = $category_cache if defined $category_cache;
@@ -2037,9 +2224,296 @@ sub STORABLE_thaw {
 
     # retrieve object
     eval { %$self = %{thaw($data)} };
-    croak("Unable to thaw story: $@") if $@;
+    croak("Unable to thaw media: $@") if $@;
 
     return $self;
+}
+
+=item C<< $media->retire() >>
+
+=item C<< Krang::Media->retire(media_id => $media_id) >>
+
+Retire the media, i.e. remove it from its publish/preview location
+and don't show it on the Find Media screen.  Throws a
+Krang::Media::NoEditAccess exception if user may not retire this
+media. Croaks if the media is checked out by another user.
+
+=cut
+
+sub retire {
+    my ($self, %args) = @_;
+    unless (ref $self) {
+        my $media_id = $args{media_id};
+        ($self) = pkg('Media')->find(media_id => $media_id);
+        croak("Unable to load media '$media_id'.") unless $self;
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Media::NoEditAccess->throw(
+        message  => "Not allowed to edit media",
+        media_id => $self->media_id
+    ) unless ($self->may_edit);
+
+    # make sure we are the one
+    $self->checkout;
+
+    # unpublish
+    pkg('Publisher')->new->unpublish_media(media => $self);
+
+    # retire the media
+    my $dbh = dbh();
+    $dbh->do(
+        "UPDATE media
+              SET    retired = 1
+              WHERE  media_id = ?", undef,
+        $self->{media_id}
+    );
+
+    # delete schedules for this media
+    $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
+        undef, 'media', $self->{media_id});
+
+    # living in retire
+    $self->{retired} = 1;
+
+    $self->checkin();
+
+    add_history(
+        object => $self,
+        action => 'retire'
+    );
+}
+
+=item C<< $media->unretire() >>
+
+=item C<< Krang::Media->unretire(media_id => $media_id) >>
+
+Unretire the media, i.e. show it again on the Find Media screen, but
+don't republish it. Throws a Krang::Media::NoEditAccess exception if
+user may not unretire this media. Throws a Krang::Media::DuplicateURL
+exception if a media with the same URL has been created in Live.
+Croaks if the media is checked out by another user.
+
+=cut
+
+sub unretire {
+    my ($self, %args) = @_;
+    unless (ref $self) {
+        my $media_id = $args{media_id};
+        ($self) = pkg('Media')->find(media_id => $media_id);
+        croak("Unable to load media '$media_id'.") unless $self;
+    }
+
+    # Is user allowed to edit this object?
+    Krang::Media::NoEditAccess->throw(
+        message  => "Not allowed to edit media",
+        media_id => $self->media_id
+    ) unless ($self->may_edit);
+
+    # make sure no other media occupies our initial place (URL)
+    $self->duplicate_check();
+
+    # make sure we are the one
+    $self->checkout;
+
+    # alive again
+    $self->{retired} = 0;
+
+    # unretire the media
+    my $dbh = dbh();
+    $dbh->do(
+        'UPDATE media
+              SET    retired = 0
+              WHERE  media_id = ?', undef,
+        $self->{media_id}
+    );
+
+    add_history(
+        object => $self,
+        action => 'unretire',
+    );
+
+    # check it back in
+    $self->checkin();
+}
+
+=item C<< $media->trash() >>
+
+=item C<< Krang::Media->trash(media_id => $media_id) >>
+
+Move the media to the trashbin, i.e. remove it from its
+publish/preview location and don't show it on the Find Media screen.
+Throws a Krang::Media::NoEditAccess exception if user may not edit
+this media. Croaks if the media is checked out by another
+user.
+
+=cut
+
+sub trash {
+    my ($self, %args) = @_;
+    unless (ref $self) {
+        my $media_id = $args{media_id};
+        ($self) = pkg('Media')->find(media_id => $media_id);
+        croak("Unable to load media '$media_id'.") unless $self;
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Media::NoEditAccess->throw(
+        message  => "Not allowed to edit media",
+        media_id => $self->media_id
+    ) unless ($self->may_edit);
+
+    # make sure we are the one
+    $self->checkout;
+
+    # unpublish
+    pkg('Publisher')->new->unpublish_media(media => $self);
+
+    # store in trash
+    pkg('Trash')->store(object => $self);
+
+    # update object
+    $self->{trashed} = 1;
+
+    # release it
+    $self->checkin();
+
+    # and log it
+    add_history(object => $self, action => 'trash');
+}
+
+=item C<< $media->untrash() >>
+
+=item C<< Krang::Media->untrash(media_id => $media_id) >>
+
+Restore the media from the trashbin, i.e. show it again on the Find
+Media screen or Retired Media screens (depending on the location from
+where it was deleted).  Throws a Krang::Media::NoRestoreAccess
+exception if user may not edit this media. Croaks if the media is
+checked out by another user. This method is called by
+Krang::Trash->restore().
+
+=cut
+
+sub untrash {
+    my ($self, %args) = @_;
+    unless (ref $self) {
+        my $media_id = $args{media_id};
+        ($self) = pkg('Media')->find(media_id => $media_id);
+        croak("Unable to load media '$media_id'.") unless $self;
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Media::NoRestoreAccess->throw(
+        message  => "Not allowed to restore media",
+        media_id => $self->media_id
+    ) unless $self->may_edit;
+
+    # make sure no other media occupies our initial place (URL)
+    $self->duplicate_check() unless $self->retired;
+
+    # make sure we are the one
+    $self->checkout;
+
+    # unset trashed flag in media table
+    my $dbh = dbh();
+    $dbh->do(
+        'UPDATE media
+              SET trashed = ?
+              WHERE media_id = ?', undef,
+        0,                         $self->{media_id}
+    );
+
+    # remove from trash
+    pkg('Trash')->remove(object => $self);
+
+    # maybe in retire, maybe alive again
+    $self->{trashed} = 0;
+
+    # check back in
+    $self->checkin();
+
+    add_history(
+        object => $self,
+        action => 'untrash',
+    );
+}
+
+=item C<< $media->wont_publish() >>
+
+Convenience method returning true if media has been retired or
+trashed.
+
+=cut
+
+sub wont_publish { return $_[0]->retired || $_[0]->trashed }
+
+=item C<< $media->clone(category_id => $category_id) >>
+
+Copy $media to the category having the specified category_id.  Returns
+an unsaved and checked_out copy with the media file already uploaded.
+
+=cut
+
+sub clone {
+    my ($self, %args) = @_;
+
+    croak("No Category ID specified where to copy the media to")
+      unless $args{category_id};
+
+    my $copy = bless({%$self} => ref($self));
+
+    # redefine
+    $copy->{media_id}          = undef;
+    $copy->{media_uuid}        = pkg('UUID')->new;
+    $copy->{category_id}       = $args{category_id};
+    $copy->{version}           = 0;
+    $copy->{creation_date}     = undef;
+    $copy->{preview_version}   = 0;
+    $copy->{published_version} = 0;
+    $copy->{publish_date}      = undef;
+    $copy->{retired}           = 0;
+    $copy->{trashed}           = 0;
+    $copy->{url_cache}         = undef;
+    $copy->{cat_cache}         = undef;
+    $copy->{checked_out}       = 1;
+    $copy->{checked_out_by}    = $ENV{REMOTE_USER};
+
+    # upload file
+    my $filepath   = $self->file_path;
+    my $filehandle = new FileHandle $filepath;
+
+    croak("Cant get a filehandle on '$filepath' to copy Media " . $self->media_id)
+      unless $filehandle;
+
+    $copy->upload_file(filename => $self->filename, filehandle => $filehandle);
+
+    # set URL
+    $copy->{url} = $copy->url;
+
+    return $copy;
+}
+
+=item C<< $media->is_text() >>
+
+Returns true if this media object appears to be text (HTML, JS, CSS, etc);
+
+=cut
+
+sub is_text {
+    my $self = shift;
+    return $self->filename && $self->mime_type && $self->mime_type =~ /^text\//;
+}
+
+=item C<< $media->is_image() >>
+
+Returns true if this media object appears to be an image.
+
+=cut
+
+sub is_image {
+    my $self = shift;
+    return $self->filename && $self->mime_type && $self->mime_type =~ /^image\//
 }
 
 =back

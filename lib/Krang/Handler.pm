@@ -91,6 +91,7 @@ use Krang::ClassLoader Conf => qw(KrangRoot PasswordChangeTime ApacheMaxSize Sec
 use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader 'AddOn';
 use Krang;
+use Krang::ClassLoader 'Session';
 
 BEGIN { pkg('AddOn')->call_handler('InitHandler') }
 
@@ -329,46 +330,21 @@ sub authen_handler ($$) {
     # Only handle main requests, unless request is for bug.pl (which happens on ISE redirects)
     return DECLINED unless $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/;
 
+    # Get Krang instance name
+    my $instance  = pkg('Conf')->instance();
+
     # Get cookies
     my %cookies = Apache::Cookie->new($r)->parse;
 
-    # Determine window ID of request
-    my $window_id = '';
-    if ($cookies{krang_login_id} && $cookies{krang_login_id}->value) {
-      # 1. This is a new window: login.pm passed us the ID
-      $window_id = $cookies{krang_login_id}->value;
-    } elsif ($r->args && $r->args =~ /logout/i && $r->args =~ /window=(\d+)/i) {
-      # 2. A dying window: krang.js passed us the ID via Krang.Window.log_out/log_out_all()
-      $window_id = $1;   
-    } elsif ($cookies{krang_window_id} && $cookies{krang_window_id}->value) {
-      # 3. An existing window: krang.js passed us the ID via Krang.Window.pass_id()
-      $window_id = $cookies{krang_window_id}->value;
-    } elsif ($r->uri !~ /((\.pl)|(\/))$/ || $r->uri =~ /\/bug\.cgi$/ || $r->uri =~ /\/help\.pl$/) {
-      # 4. A non-PERL request (e.g. image), bug, or help file: inherit ID from previous request
-      $window_id = $cookies{krang_previous_wid} && $cookies{krang_previous_wid}->value;
-    } else {
-	debug("Can't find window ID in cookies");
-    }
-
-
-    # Clean/update window cookies (so next dynamic request requires a new ID, and next static request uses this ID)
-    Apache::Cookie->new($r, -name => 'krang_window_id', -value => '0', -path => '/')->bake;  
-    Apache::Cookie->new($r, -name => 'krang_previous_wid', -value => $window_id || '', -path => '/')->bake; 
-
     # If there's no ID or no session cookie, redirect to Login
-    unless ($window_id && $cookies{"krang_window_$window_id"}) {
-      if ($window_id) {
-	debug ("Invalid Window ID: No cookie exists for window $window_id. Redirecting to login.");
-      } else {
-	my $login = $self->login_uri;
-	debug ("No Window ID: Either this window is new or it failed to pass_id() before sending its request.")
-	  unless ($r->uri =~ /$login$/);
-      }
-      return OK;
+    unless ($cookies{$instance}) {
+        # no cookie, redirect to login
+        debug("No cookie found, passing Authen without user login");
+        return OK;
     }
 
-    # Validate session cookie
-    my %cookie = $cookies{"krang_window_$window_id"}->value;
+    # Validate authen cookie
+    my %cookie = $cookies{$instance}->value;
     my $session_id = $cookie{session_id};
     my $hash = md5_hex($cookie{user_id} . $cookie{instance} . $session_id . Secret());
     if ($cookie{hash} ne $hash or $cookie{instance} ne pkg('Conf')->instance()) {
@@ -379,10 +355,77 @@ sub authen_handler ($$) {
         return OK;
     }
 
+    # A non-PERL request (e.g. image), bug, or help file: let it through (we are already authenticated)
+    if ($r->uri !~ /(\.pl|\/|$instance)$/ || $r->uri =~ /\/bug\.cgi$/ || $r->uri =~ /\/help\.pl$/) {
+        # We are authenticated:  Setup REMOTE_USER
+        $r->connection->user($cookie{user_id});
+        return OK;
+    }
+
+    # This section needs some clarification. A Krang user can have multiple windows open at
+    # the same time. Each window has it's own session so that we don't stomp over what's going
+    # on in another window. So we store the window-id/session-id mapping in the instance cookie.
+    # But since a cookie can only hold 4096 bytes we need to make sure we never get bigger than
+    # that or strange things can happen. To do this we need to do a Least-Recently-Used (LRU) list.
+    # So we store the timestamp (in epoch seconds) for each window/session pair as well.
+    # Here's the math we're using:
+    # 4000 bytes total (minus 96 to deal with the original session_id, user_id and instance name)
+    # 42 bytes for each window/session mapping (32 bytes for the session_id and 10 for the label)
+    # 20 bytes for each window/timestamp mapping (10 bytes for the timestamp and 10 for the label)
+    # 62 bytes per window
+    # 64 active windows max
+    my $max_active_windows = 64;
+
+    # Get window_id from query
+    my %args = $r->args();
+    my $window_id = $args{window_id} || '';
+
+    # Get session_id for window_id
+    if ($window_id) {
+        # existing window
+        $session_id = $cookie{"wid_$window_id"};
+        
+        # if there's no $session_id for this window, logout happened in other window
+        undef $window_id unless $session_id;
+    }
+
+    # No window ID means no session for this window: create a new one
+    unless ($window_id) {
+
+        # new window ID
+        $window_id = $cookie{next_wid}++;
+        # new session
+        $session_id = pkg('Session')->create();
+        # store mapping between new window ID and new session ID in cookie
+        $cookie{"wid_$window_id"} = $session_id;
+
+        # if there are more than $max_active_windows windows then we need to get rid
+        # of the LRU
+        if(keys %cookie > $max_active_windows) {
+            info("Too many window/session combinations.");
+            my @ids = grep { $_ =~ /^wid_/ } keys %cookie;
+            @ids = map { $_ =~ /^wid_(\d+)/; $1; } @ids;
+            @ids = sort { ($cookie{"wts_$a"} || 0) <=> ($cookie{"wts_$b"} || 0) } @ids;
+            my $lru = $ids[0];
+
+            # remove the session and the data about it in the cookie
+            my $lru_session_id = delete $cookie{"wid_$lru"};
+            pkg('Session')->delete($lru_session_id);
+            delete $cookie{"wts_$lru"};
+            info("Deleted LRU window #$lru");
+        }
+    }
+
+    # update the timestamp on the window/session combo
+    $cookie{"wts_$window_id"} = time;
+
+    # the window/session mapping cookie has changed, so update the client
+    $cookies{$instance}->value([%cookie]);
+    Apache::Cookie->new($r, -name => $instance, -value => \%cookie, -path => '/')->bake;
+
     # Check for invalid session
     unless (pkg('Session')->validate($session_id)) {
-        debug("Invalid session '$session_id' passed by window $window_id. Wiping its cookie.");
-	Apache::Cookie->new($r, -name => "krang_window_$window_id", -value => '0', -path => '/')->bake; 
+        debug("Invalid session '$session_id' for window $window_id. Wiping its cookie.");
         return OK;
     }
 
@@ -390,8 +433,19 @@ sub authen_handler ($$) {
     $r->connection->user($cookie{user_id});
 
     # Propagate user & window to CGI-land via the environment
-    $r->cgi_env('KRANG_SESSION_ID' => $cookie{session_id});
+    $r->cgi_env('KRANG_SESSION_ID' => $session_id);
     $r->cgi_env('KRANG_WINDOW_ID'  => $window_id);
+
+    # We are authenticated, we've got a window_id and a valid session:
+    # Redirect to workspace if user typed a login URI in a new window
+    my $login_uri = $self->login_uri;
+    if ($r->uri =~ m!$login_uri!) {
+        if (!$args{rm} || ($args{rm} && $args{rm} ne 'logout')) {
+            return $self->_redirect_to_workspace($r, $instance, $window_id);
+        }
+    }
+
+    pkg('Session')->unload();
 
     return OK;
 }
@@ -481,7 +535,7 @@ sub instance_menu {
                 @loop, 
                 { 
                     InstanceName        => $instance,
-                    InstanceDisplayName => pkg('Conf')->InstanceDisplayName(),
+                    InstanceDisplayName => (pkg('Conf')->InstanceDisplayName || $instance),
                 }
             );
         }
@@ -575,7 +629,24 @@ sub _redirect_to_login {
     my ($r, $flavor, $instance) = @_;
 
     my $login_app = $self->login_uri();
+
+    # for ajaxy redirect
+    my %content = $r->content;
+    if ($content{ajax}) {
+        $login_app .= '?rm=redirect_to_login&ajax=1';
+    }
+
     my $new_uri = ($flavor eq 'instance' ? "/$login_app" : "/$instance/$login_app");
+
+    return $self->_do_redirect($r, $new_uri);
+}
+
+sub _redirect_to_workspace {
+    my $self = shift;
+    my ($r, $instance, $window_id) = @_;
+
+    my $app     = "workspace.pl?window_id=$window_id";
+    my $new_uri = $r->dir_config('flavor') eq 'instance' ? "/$app" : "/$instance/$app";
 
     return $self->_do_redirect($r, $new_uri);
 }

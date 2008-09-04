@@ -324,14 +324,16 @@ BEGIN {
             || delete $props{'-uri'} 
             || delete $props{'url'} 
             || delete $props{'-url'};
-        my $ajax  = $self->param('ajax');
-        if( $uri && $ajax ) {
-            if( $uri =~ /\?/ ) {
-                $uri .= '&';
-            } else {
-                $uri .= '?';
-            }
-            $uri .= 'ajax=' . $ajax;
+
+        if ($uri) {
+            # add ajax flag
+            my $ajax  = $self->param('ajax');
+            $self->add_to_query(\$uri, "ajax=$ajax")
+                if $ajax;
+
+            # add window_id
+            $self->add_to_query(\$uri, "window_id=$ENV{KRANG_WINDOW_ID}")
+                if $ENV{KRANG_WINDOW_ID};
 
             unless (pkg('Charset')->is_utf8()) {
                 $uri .= '&is_non_utf8_redirect=1';
@@ -467,13 +469,15 @@ sub redirect_to_login {
 	eval "require $module";
 	import $module qw(uri_escape);
 
-	$msg = uri_escape($msg);
+	$msg = '?alert=' . uri_escape($msg);
+    } else {
+        $msg = '';
     }
 
     if ($self->param('ajax')) {
-        return qq{<script type="text/javascript">location.replace("login.pl?alert=$msg")</script>};
+        return qq{<script type="text/javascript">location.replace("login.pl$msg")</script>};
     } else {
-        $self->header_add( -location => "login.pl?alert=$msg" );
+        $self->header_add( -location => "login.pl$msg" );
         $self->header_type('redirect');
         return '';
     }
@@ -625,7 +629,7 @@ sub run {
     # Load and unload session ONLY if we have a session ID set
     my $we_loaded_session = 0;
     if (my $session_id = $ENV{KRANG_SESSION_ID}) {
-        # Load session if we're in CGI_MODE and we have a KRANG_SESSION_ID
+        # Load session if we have a KRANG_SESSION_ID
         debug("Krang::CGI:  Loading Session '$session_id'");
         pkg('Session')->load($session_id);
         $we_loaded_session++;
@@ -692,22 +696,14 @@ sub update_nav {
     $self->add_json_header('krang_update_nav' => 1);
 }
 
-
-# We override the base class's cgiapp_postrun so that redirects include a cookie
-# with the current window ID. (This is necessary in the case of redirects because
-# the initial request's window ID will already have been wiped clean by the handler.)
-sub cgiapp_postrun {
-  my ($self) = @_;
-  if ($self->header_type eq 'redirect' && $ENV{KRANG_WINDOW_ID}) {
-    my %props = $self->header_props();
-    my $cookies = $props{'-cookie'} || [];
-    push @$cookies, $self->query->cookie(-name => 'krang_window_id', 
-					 -value => $ENV{KRANG_WINDOW_ID},
-					 -path => '/');
-    $props{'-cookie'} = $cookies;
-    $self->header_props(%props);
-  }
-  $self->SUPER::cgiapp_postrun;
+sub add_to_query {
+    my ($self, $uri, $param) = @_;
+    if( $$uri =~ /\?/ ) {
+        $$uri .= '&';
+    } else {
+        $$uri .= '?';
+    }
+    $$uri .= $param;
 }
 
 

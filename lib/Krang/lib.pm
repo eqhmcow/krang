@@ -1,5 +1,4 @@
 package Krang::lib;
-use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 

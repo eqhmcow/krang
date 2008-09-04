@@ -1,6 +1,5 @@
 package Krang::Publisher;
 
-
 =head1 NAME
 
 Krang::Publisher - Center of the Publishing Universe.
@@ -114,10 +113,9 @@ use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Template';
 use Krang::ClassLoader 'IO';
 use Krang::ClassLoader History => qw(add_history);
-use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader DB      => qw(dbh);
 
 use Krang::ClassLoader Log => qw(debug info critical);
-
 
 use constant PUBLISHER_RO       => qw(is_publish is_preview story category);
 use constant PAGE_BREAK         => "<<<<<<<<<<<<<<<<<< PAGE BREAK >>>>>>>>>>>>>>>>>>";
@@ -125,19 +123,15 @@ use constant CONTENT            => "<<<<<<<<<<<<<<<<<< CONTENT >>>>>>>>>>>>>>>>>
 use constant ADDITIONAL_CONTENT => "KRANG_ADDITIONAL_CONTENT";
 
 use Exception::Class
-  'Krang::Publisher::FileWriteError' => { fields => [ 'story_id', 'media_id', 'template_id',
-                                                      'source', 'destination', 'system_error' ] },
-  'Krang::Publisher::ZeroSizeOutput' => { fields => [ 'story_id', 'category_url', 'story_class' ] }
-  ;
+  'Krang::Publisher::FileWriteError' =>
+  {fields => ['story_id', 'media_id', 'template_id', 'source', 'destination', 'system_error']},
+  'Krang::Publisher::ZeroSizeOutput' => {fields => ['story_id', 'category_url', 'story_class']};
 
-
-use Krang::ClassLoader MethodMaker => (new_with_init => 'new',
-                        new_hash_init => 'hash_init',
-                        get           => [PUBLISHER_RO]
-                       );
-
-
-
+use Krang::ClassLoader MethodMaker => (
+    new_with_init => 'new',
+    new_hash_init => 'hash_init',
+    get           => [PUBLISHER_RO]
+);
 
 =head1 INTERFACE
 
@@ -293,7 +287,7 @@ sub preview_story {
     # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
 
-    my $story           = $args{story}   || croak __PACKAGE__ . ": missing required argument 'story'";
+    my $story           = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
     my $callback        = $args{callback};
     my $unsaved         = (exists($args{unsaved})) ? $args{unsaved} : 0;
     my $version_check   = (exists($args{version_check})) ? $args{version_check} : 1;
@@ -302,16 +296,18 @@ sub preview_story {
     # deploy any templates flagged as testing for this user
     $self->_deploy_testing_templates();
 
-    my $publish_list = $self->asset_list(story         => [$story],
-                                         version_check => $version_check);
+    my $publish_list = $self->asset_list(
+        story         => [$story],
+        version_check => $version_check
+    );
 
     $self->_process_preview_assets(
         publish_list => $publish_list,
-        callback => $callback,
-        unsaved => $unsaved,
-        story => $story
+        callback     => $callback,
+        unsaved      => $unsaved,
+        story        => $story
     );
-    
+
     # cleanup - remove any testing templates.
     $self->_undeploy_testing_templates();
 
@@ -370,6 +366,11 @@ see if the current version has been published previously, skipping
 those that have.  When false, it will publish all related assets,
 regardless of whether or not the current version has been published
 before.
+
+=item * C<maintain_versions>
+
+Defaults to 0. If true, will re-publish the last-published
+version of each asset rather than the latest version.
 
 =item * C<remember_asset_list>
 
@@ -447,17 +448,19 @@ sub publish_story {
     # set internal mode - publish, not preview.
     $self->_set_publish_mode();
 
-    my $story         = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
-    my $unsaved       = (exists($args{unsaved})) ? $args{unsaved} : 0;
-    my $version_check = (exists($args{version_check})) ? $args{version_check} : 1;
+    my $story = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
+    my $unsaved           = (exists($args{unsaved}))           ? $args{unsaved}           : 0;
+    my $version_check     = (exists($args{version_check}))     ? $args{version_check}     : 1;
+    my $maintain_versions = (exists($args{maintain_versions})) ? $args{maintain_versions} : 0;
 
     # callbacks
     my $callback      = $args{callback};
     my $skip_callback = $args{skip_callback};
 
-    my $no_related_check = (exists($args{disable_related_assets})) ? $args{disable_related_assets} : 0;
-    my $keep_asset_list  = $args{remember_asset_list} || 0;
-    my $user_id       = $ENV{REMOTE_USER};
+    my $no_related_check =
+      (exists($args{disable_related_assets})) ? $args{disable_related_assets} : 0;
+    my $keep_asset_list = $args{remember_asset_list} || 0;
+    my $user_id = $ENV{REMOTE_USER};
     my $publish_list;
 
     # this is needed so that element templates don't get Krang's templates
@@ -471,16 +474,44 @@ sub publish_story {
         } else {
             push @$publish_list, $story;
         }
+
+        # normally _build_asset_list() handles the 'maintain_version' option, so
+        # when running in 'disable_related_assets' mode we need to handle it here
+        if ($maintain_versions) {
+            my @stories;
+            foreach my $s (@$publish_list) {
+                if ($s->checked_out && ($s->checked_out_by != $user_id)) {
+
+                    # if story is checked out to another user, it shouldn't get published anyway
+                    # (doing so would clear the checked-out flag), so we don't get old version
+                    push @stories, $s;
+                } else {
+
+                    # story is not checked out, so we grab last-published version (if any)
+                    my $v = $s->published_version;
+                    next unless $v;
+                    if ($v == $s->version) {
+                        push @stories, $s;
+                    } else {
+                        push @stories, pkg('Story')->find(story_id => $s->story_id, version => $v);
+                    }
+                }
+            }
+            $publish_list = \@stories;
+        }
     } else {
-        $publish_list = $self->asset_list(story         => $story,
-                                          version_check => $version_check);
+        $publish_list = $self->asset_list(
+            story             => $story,
+            version_check     => $version_check,
+            maintain_versions => $maintain_versions
+        );
     }
 
     $self->_process_assets(
-        publish_list => $publish_list,
-        skip_callback => $skip_callback,
-        callback => $callback,
-        user_id => $user_id,
+        publish_list        => $publish_list,
+        skip_callback       => $skip_callback,
+        callback            => $callback,
+        user_id             => $user_id,
         remember_asset_list => $keep_asset_list
     );
 
@@ -502,70 +533,69 @@ sub unpublish_story {
     my $dbh = dbh;
     my $story = $arg{story} || croak __PACKAGE__ . ": missing required argument 'story'";
 
-    return unless $story->published_version;
-
     # get location list, preview and publish
-    my $paths = $dbh->selectcol_arrayref(
-               "SELECT path FROM publish_story_location WHERE story_id = ?",
-                                         undef, $story->story_id);
+    my $paths =
+      $dbh->selectcol_arrayref("SELECT path FROM publish_story_location WHERE story_id = ?",
+        undef, $story->story_id);
 
-    # delete
-    if( @$paths ) {
-        foreach my $path (@$paths) {
-            next unless -f $path;
+    # neither published nor previewed?
+    return unless @$paths;
 
-            # make sure this path isn't claimed by another story
-            my ($claimed) =
-              $dbh->selectrow_array("SELECT 1 FROM publish_story_location "
-                                    . "WHERE path = ? AND story_id != ?",
-                                    undef, $path, $story->story_id);
-            next if $claimed;
+    # delete story in publish and/or preview dir(s)
+    foreach my $path (@$paths) {
+        next unless -f $path;
 
-            unlink($path) or 
-              croak("Unable to delete file '$path' during unpublish : $!");
-        }
+        # make sure this path isn't claimed by another story
+        my ($claimed) = $dbh->selectrow_array(
+            "SELECT 1 FROM publish_story_location " . "WHERE path = ? AND story_id != ?",
+            undef, $path, $story->story_id);
 
-        # delete the dir if it's empty
-        my @cats = $story->categories();
-        foreach my $cat (@cats) {
-            # only if the story isn't a "Cover"
-            next if( $cat->url eq $story->url );
-            
-            my %path_args = ( category => $cat );
-            my $dir =
-                $self->is_preview
-              ? $story->preview_path(%path_args)
-              : $story->publish_path(%path_args);
+        next if $claimed;
+
+        unlink($path)
+          or croak("Unable to delete file '$path' during unpublish : $!");
+    }
+
+    # delete the dir itself - if it's empty
+    my @cats = $story->categories();
+    foreach my $cat (@cats) {
+
+        # only if the story isn't a "Cover"
+        next if ($cat->url eq $story->url);
+
+        my %path_args = (category => $cat);
+
+        for my $dir ($story->preview_path(%path_args), $story->publish_path(%path_args)) {
             next unless -d $dir;
-                        
+
             opendir(DIRH, $dir)
               or croak("Unable to open directory $dir during unpublish: $!");
             my @files = grep { not /^\./ } readdir(DIRH);
             closedir(DIRH);
             next if @files;
-            
-            rmdir($dir) 
+
+            rmdir($dir)
               or croak("Unable to delete dir '$dir' during unpublish : $!");
         }
-
-        # clean the table
-        $dbh->do('DELETE FROM publish_story_location WHERE story_id = ?',
-                 undef, $story->story_id)
     }
+
+    # clean the table
+    $dbh->do('DELETE FROM publish_story_location WHERE story_id = ?', undef, $story->story_id);
 
     # unset the publish flags
     $story->{published_version} = undef;
-    $story->{publish_date} = undef;
-    $dbh->do('UPDATE story
+    $story->{publish_date}      = undef;
+    $dbh->do(
+        'UPDATE story
               SET
                   published_version = ?,
                   publish_date = ?
               WHERE story_id = ?',
-             undef,
-             $story->{published_version},
-             $story->{publish_date},
-             $story->{story_id}
-            );
+        undef,
+        $story->{published_version},
+        $story->{publish_date},
+        $story->{story_id}
+    );
 }
 
 =item C<< $publisher->unpublish_media(media => $media) >>
@@ -584,38 +614,37 @@ sub unpublish_media {
     my $media = $arg{media} || croak __PACKAGE__ . ": missing required argument 'media'";
 
     # get location list, preview and publish
-    my $paths = $dbh->selectcol_arrayref(
-               "SELECT path FROM publish_media_location WHERE media_id = ?",
-                                         undef, $media->media_id);
+    my $paths =
+      $dbh->selectcol_arrayref("SELECT path FROM publish_media_location WHERE media_id = ?",
+        undef, $media->media_id);
 
     # delete
     foreach my $path (@$paths) {
         next unless -f $path;
-        unlink($path) or 
-          croak("Unable to delete file '$path' during unpublish : $!");
+        unlink($path)
+          or croak("Unable to delete file '$path' during unpublish : $!");
     }
 
     # clean the table
-    $dbh->do('DELETE FROM publish_media_location WHERE media_id = ?',
-             undef, $media->media_id)
+    $dbh->do('DELETE FROM publish_media_location WHERE media_id = ?', undef, $media->media_id)
       if @$paths;
 
     # unset the publish flags
     $media->{published_version} = undef;
-    $media->{publish_date} = undef;
+    $media->{publish_date}      = undef;
 
     # update the DB.
-    $dbh->do('UPDATE media
+    $dbh->do(
+        'UPDATE media
               SET published_version = ?,
                   publish_date = ?
               WHERE media_id = ?',
-             undef,
-             $media->{published_version},
-             $media->{publish_date},
-             $media->{media_id}
-            );
+        undef,
+        $media->{published_version},
+        $media->{publish_date},
+        $media->{media_id}
+    );
 }
-
 
 =item C<< $url = $publisher->preview_media(media => $media, unsaved => 1) >>
 
@@ -668,8 +697,8 @@ sub preview_media {
 
     my $keep_asset_list = $args{remember_asset_list} || 0;
 
-    my $media    = $args{media} || croak __PACKAGE__ . ": Missing argument 'media'!\n";
-    my $unsaved  = (exists($args{unsaved})) ? $args{unsaved} : 0;
+    my $media = $args{media} || croak __PACKAGE__ . ": Missing argument 'media'!\n";
+    my $unsaved = (exists($args{unsaved})) ? $args{unsaved} : 0;
 
     # add it to the asset list
     unless ($unsaved) {
@@ -683,7 +712,6 @@ sub preview_media {
     return $self->_write_media(media => $media);
 
 }
-
 
 =item C<< $url = $publisher->publish_media(media => $media) >>
 
@@ -709,6 +737,10 @@ This only affects successive publish calls to a single
 C<Krang::Publisher> object.  See C<bin/krang_publish> for an example
 of this functionality being used.
 
+=item * C<maintain_versions>
+
+Defaults to 0. If true, we will re-publish the last-published
+version of the media (if any) rather than the latest.
 
 =back
 
@@ -734,14 +766,15 @@ sub publish_media {
     my $callback      = $args{callback};
     my $skip_callback = $args{skip_callback};
 
-    my $keep_asset_list = $args{remember_asset_list} || 0;
+    my $maintain_versions = $args{maintain_versions}   || 0;
+    my $keep_asset_list   = $args{remember_asset_list} || 0;
 
     my $publish_list;
 
-    my $user_id  = $ENV{REMOTE_USER};
+    my $user_id = $ENV{REMOTE_USER};
     my @urls;
 
-    croak (__PACKAGE__ . ": Missing argument 'media'!\n") unless (exists($args{media}));
+    croak(__PACKAGE__ . ": Missing argument 'media'!\n") unless (exists($args{media}));
 
     if (ref $args{media} eq 'ARRAY') {
         $publish_list = $args{media};
@@ -749,19 +782,32 @@ sub publish_media {
         push @$publish_list, $args{media};
     }
 
-    my $total = @$publish_list;
+    my $total   = @$publish_list;
     my $counter = 0;
 
     foreach my $media_object (@$publish_list) {
+
         # make a note in the asset list.
         my $ok = $self->_mark_asset(object => $media_object);
 
         # cannot publish assets checked out by other users.
         if ($media_object->checked_out) {
             if ($user_id != $media_object->checked_out_by) {
-                debug(__PACKAGE__ . ": skipping publish on checked out media object id=" . $media_object->media_id);
+                debug(  __PACKAGE__
+                      . ": skipping publish on checked out media object id="
+                      . $media_object->media_id);
                 $skip_callback->(object => $media_object, error => 'checked_out') if $skip_callback;
                 next;
+            }
+        }
+
+        # if requested, re-publish last-published (instead of latest) version
+        if ($maintain_versions) {
+            my $v = $media_object->published_version;
+            next unless $v;
+            if ($v != $media_object->version) {
+                my ($media_object) =
+                  pkg('Media')->find(media_id => $media_object->media_id, version => $v);
             }
         }
 
@@ -773,30 +819,35 @@ sub publish_media {
 
             $media_object->mark_as_published();
 
-            $callback->(object => $media_object,
-                        total  => $total,
-                        counter => $counter++) if $callback;
+            $callback->(
+                object  => $media_object,
+                total   => $total,
+                counter => $counter++
+            ) if $callback;
         };
 
         if ($@) {
             if ($skip_callback) {
                 if (ref $@ && $@->isa('Krang::Publisher::FileWriteError')) {
-                    $skip_callback->(object => $media_object,
-                                     error  => 'output_error',
-                                     path   => $@->destination,
-                                     error_msg => $@->system_error);
+                    $skip_callback->(
+                        object    => $media_object,
+                        error     => 'output_error',
+                        path      => $@->destination,
+                        error_msg => $@->system_error
+                    );
                 } else {
+
                     # call generic skip_callback.
                     $skip_callback->(object => $media_object, error => ref $@ ? $@->isa : $@);
                 }
             }
+
             # the skip_callback is not used by the CGIs - re-propegate the error so the UI
             # can handle it.
             else {
-                die ($@);
+                die($@);
             }
         }
-
 
     }
 
@@ -860,6 +911,11 @@ This addition is a performance improvement - the purpose is to keep
 from publishing content that has not changed since the last
 publishing.
 
+=item * C<maintain_versions>
+
+Defaults to 0. If true (and in publish mode), we will build a list of the 
+last-published version of each asset (if any) rather than the latest version.
+
 =back
 
 =cut
@@ -869,33 +925,37 @@ sub asset_list {
     my $self = shift;
     my %args = @_;
 
-    my $story         = $args{story} || croak __PACKAGE__ . ": Missing parameter 'story'";
-    my $mode          = $args{mode};
-#    my $keep_list     = $args{keep_asset_list} || 0;
-#    my $keep_list = 0;
+    my $story = $args{story} || croak __PACKAGE__ . ": Missing parameter 'story'";
+    my $mode = $args{mode};
+
+    #    my $keep_list     = $args{keep_asset_list} || 0;
+    #    my $keep_list = 0;
     my $version_check = (exists($args{version_check})) ? $args{version_check} : 1;
 
     # check publish mode.
     if ($mode) {
-        if ($mode eq 'preview') { $self->_set_preview_mode(); }
+        if    ($mode eq 'preview') { $self->_set_preview_mode(); }
         elsif ($mode eq 'publish') { $self->_set_publish_mode(); }
-        else { croak __PACKAGE__ . ": unknown output mode '$mode'\n"; }
+        else                       { croak __PACKAGE__ . ": unknown output mode '$mode'\n"; }
     } else {
-        if ($self->is_preview()) { $mode = 'preview'; }
+        if    ($self->is_preview()) { $mode = 'preview'; }
         elsif ($self->is_publish()) { $mode = 'publish'; }
         else {
             croak "Publish mode unknown.  Set the 'mode' argument'";
         }
     }
+    my $maintain_versions = (($mode eq 'publish') && $args{maintain_versions}) ? 1 : 0;
 
-    my @publish_list = $self->_build_asset_list(object         => $story,
-                                                version_check  => $version_check,
-                                                initial_assets => 1,
-                                               );
+    my @publish_list = $self->_build_asset_list(
+        object            => $story,
+        version_check     => $version_check,
+        maintain_versions => $maintain_versions,
+        initial_assets    => 1
+    );
 
-#     unless ($keep_list) {
-#         $self->_clear_asset_lists();
-#     }
+    #     unless ($keep_list) {
+    #         $self->_clear_asset_lists();
+    #     }
 
     return \@publish_list;
 
@@ -941,7 +1001,7 @@ Needed to make sure the object to published isn't checked out by another user
 sub _process_assets {
     my ($self, %args) = @_;
 
-    my $total = @{$args{publish_list}};
+    my $total   = @{$args{publish_list}};
     my $counter = 0;
 
     foreach my $object (@{$args{publish_list}}) {
@@ -949,7 +1009,8 @@ sub _process_assets {
             if ($object->checked_out) {
                 if ($args{user_id} != $object->checked_out_by) {
                     debug(__PACKAGE__ . ": skipping checked out story id=" . $object->story_id);
-                    $args{skip_callback}->(object => $object, error => 'checked_out') if $args{skip_callback};
+                    $args{skip_callback}->(object => $object, error => 'checked_out')
+                      if $args{skip_callback};
                     next;
                 }
             }
@@ -958,9 +1019,12 @@ sub _process_assets {
                 my @paths = $self->_build_story_all_categories(story => $object);
 
                 # fix up publish locations
-                $self->_rectify_publish_locations(object => $object,
-                                                  paths  => \@paths,
-                                                  preview => 0);
+                $self->_rectify_publish_locations(
+                    object  => $object,
+                    paths   => \@paths,
+                    preview => 0
+                );
+
                 # mark as published.
                 $object->mark_as_published();
 
@@ -975,13 +1039,15 @@ sub _process_assets {
 
             if (my $err = $@) {
                 if ($args{skip_callback}) {
+
                     # call skip_callback, hopefully with a real error
                     # object
                     $args{skip_callback}->(object => $object, error => $err);
                 } else {
+
                     # the skip_callback is not used by the CGIs,
                     # re-propegate the error so the UI can handle it.
-                    die ($err);
+                    die($err);
                 }
             }
 
@@ -990,18 +1056,17 @@ sub _process_assets {
             $self->clear_publish_context();
 
         } elsif ($object->isa('Krang::Media')) {
+
             # publish_media() will mark the media object as published.
             $self->publish_media(
-                media => $object, 
-                callback => $args{callback}, 
-                skip_callback => $args{skip_callback}, 
+                media               => $object,
+                callback            => $args{callback},
+                skip_callback       => $args{skip_callback},
                 remember_asset_list => $args{remember_asset_list}
             );
         }
     }
 }
-
-
 
 =item C<< $publisher->_process_preview_assets(%args) >>
 
@@ -1043,11 +1108,10 @@ previewed previously, it will be skipped.
 
 =cut
 
-
 sub _process_preview_assets {
     my ($self, %args) = @_;
 
-    my $total = @{$args{publish_list}};
+    my $total   = @{$args{publish_list}};
     my $counter = 0;
 
     foreach my $object (@{$args{publish_list}}) {
@@ -1056,9 +1120,11 @@ sub _process_preview_assets {
             my @paths = $self->_build_story_all_categories(story => $object);
 
             # fix up publish locations
-            $self->_rectify_publish_locations(object  => $object,
-                                              paths   => \@paths,
-                                              preview => 1);
+            $self->_rectify_publish_locations(
+                object  => $object,
+                paths   => \@paths,
+                preview => 1
+            );
 
             # make a note on preview status.  Initial story may be in
             # edit mode, the rest are not.
@@ -1067,6 +1133,7 @@ sub _process_preview_assets {
             } else {
                 $object->mark_as_previewed(unsaved => 0);
             }
+
             # clear context to not sully the next story.
             $self->clear_publish_context;
 
@@ -1075,9 +1142,11 @@ sub _process_preview_assets {
             $self->preview_media(media => $object);
         }
 
-        $args{callback}->(object  => $object,
-                          total   => $total,
-                          counter => $counter++) if $args{callback};
+        $args{callback}->(
+            object  => $object,
+            total   => $total,
+            counter => $counter++
+        ) if $args{callback};
 
     }
 }
@@ -1133,7 +1202,7 @@ sub undeploy_template {
 
     my $template = $args{template} || croak __PACKAGE__ . ": Missing argument 'template'!\n";
 
-    my $category   = $template->category();
+    my $category = $template->category();
 
     my @tmpl_paths = $self->template_search_path(category => $category);
     my $path = $tmpl_paths[0];
@@ -1156,7 +1225,6 @@ sub undeploy_template {
     return;
 
 }
-
 
 =item C<< $dir = $publisher->template_search_path(category => $category) >>
 
@@ -1186,25 +1254,26 @@ the deployed-template dirs (in the order of TEST/PROD/TEST/PROD).
 
 sub template_search_path {
 
-    my $self         = shift;
-    my %args         = @_;
-    my @subdirs      = ();
-    my @paths        = ();
+    my $self    = shift;
+    my %args    = @_;
+    my @subdirs = ();
+    my @paths   = ();
     my $category;
     my $preview_root;
 
     my $user_id = $ENV{REMOTE_USER};
-
 
     # Root dir for this instance.
     my $root = catdir(KrangRoot, 'data', 'templates', pkg('Conf')->instance());
 
     if (exists($args{category})) {
         if (!defined($args{category})) {
+
             # if category arg is not defined, return root dir for instance.
             # (but check for template testing)
-            if ($self->{is_preview} &&
-                exists($self->{testing_template_path}{$user_id})) {
+            if ($self->{is_preview}
+                && exists($self->{testing_template_path}{$user_id}))
+            {
                 return ($self->{testing_template_path}{$user_id}, $root);
             }
             return $root;
@@ -1220,10 +1289,12 @@ sub template_search_path {
     @subdirs = split '/', $category->url();
 
     while (@subdirs > 0) {
+
         # if in preview mode, check to see if there's a template testing dir.
         # add it if there is.
-        if ($self->{is_preview} &&
-            exists($self->{testing_template_path}{$user_id})) {
+        if ($self->{is_preview}
+            && exists($self->{testing_template_path}{$user_id}))
+        {
             push @paths, catfile($self->{testing_template_path}{$user_id}, @subdirs);
         }
 
@@ -1232,8 +1303,9 @@ sub template_search_path {
     }
 
     # add root (possibly preview too) dir as well.
-    if ($self->{is_preview} &&
-        exists($self->{testing_template_path}{$user_id})) {
+    if ($self->{is_preview}
+        && exists($self->{testing_template_path}{$user_id}))
+    {
         push @paths, $self->{testing_template_path}{$user_id};
     }
 
@@ -1242,7 +1314,6 @@ sub template_search_path {
     return @paths;
 
 }
-
 
 =item C<< $txt = $publisher->page_break() >>
 
@@ -1262,7 +1333,6 @@ sub page_break {
 
 }
 
-
 =item C<< $txt = $publisher->content() >>
 
 Returns the tag used internally to mark the break between the top and
@@ -1279,7 +1349,6 @@ sub content {
     return CONTENT;
 
 }
-
 
 =item C<< $publisher->additional_content_block(filename => $filename, content => $html, use_category => 1); >>
 
@@ -1300,6 +1369,10 @@ of the file which is published.  The mode should be specified in
 octal (NOT a string).  If not specified, the mode of the published
 file will be based on the umask.
 
+An optional C<post_process> code ref may be supplied that will receive
+the created content as a scalarref after the optional category template
+has been applied.
+
 B<WARNING:> C<additional_content_block()> can be called as many times
 as desired, however it does not perform any sanity checks on
 C<filename> - if your output contains multiple blocks of additional
@@ -1307,7 +1380,6 @@ content with identical filenames, they will overwrite eachother, and
 only the last one will remain.
 
 =cut
-
 
 sub additional_content_block {
 
@@ -1318,15 +1390,17 @@ sub additional_content_block {
 
     $block{content}  = $args{content};
     $block{filename} = $args{filename};
-    croak __PACKAGE__ . ": missing required argument 'content'" unless defined $block{content};
+    croak __PACKAGE__ . ": missing required argument 'content'"  unless defined $block{content};
     croak __PACKAGE__ . ": missing required argument 'filename'" unless length $block{filename};
     $block{use_category} = exists($args{use_category}) ? $args{use_category} : 1;
-    $block{mode} = exists($args{mode}) ? $args{mode} : undef;
+    $block{mode}         = exists($args{mode})         ? $args{mode}         : undef;
+    croak __PACKAGE__ . ": post_process is not a code block"
+      if $args{post_process} && !ref $args{post_process} eq 'CODE';
+    $block{post_process} = $args{post_process};
 
     push @{$self->{additional_content}}, \%block;
 
 }
-
 
 =item C<< %vars = $publisher->publish_context(%set_params) >>
 
@@ -1376,7 +1450,6 @@ sub publish_context {
       : ();
 }
 
-
 =item C<< $publisher->clear_publish_context() >>
 
 Working in conjunction with C<publish_context()> above, clear the
@@ -1395,7 +1468,6 @@ sub clear_publish_context {
     $self->{publish_context} = {};
 
 }
-
 
 =item C<< $filename = $publisher->story_filename(page => $page_num); >>
 
@@ -1424,8 +1496,8 @@ sub story_filename {
     my $self = shift;
     my %args = @_;
 
-    my $page     = $args{page} || 0;
-    my $story    = $args{story} || $self->story;
+    my $page  = $args{page}  || 0;
+    my $story = $args{story} || $self->story;
 
     my $element = $story->element();
 
@@ -1434,8 +1506,6 @@ sub story_filename {
     return $element->class()->filename() . $page . $element->class()->extension();
 
 }
-
-
 
 =item C<< $bool = $publisher->test_publish_status(object => $story, mode => 'publish') >>
 
@@ -1473,16 +1543,16 @@ sub test_publish_status {
     my ($self, %args) = @_;
 
     my $object = $args{object} || croak "Missing required argument 'object'";
-    my $mode   = $args{mode};
+    my $mode = $args{mode};
 
     my $publish_yes = 0;
 
     if ($mode) {
-        if ($mode eq 'preview') { $self->_set_preview_mode(); }
+        if    ($mode eq 'preview') { $self->_set_preview_mode(); }
         elsif ($mode eq 'publish') { $self->_set_publish_mode(); }
-        else { croak __PACKAGE__ . ": unknown output mode '$mode'\n"; }
+        else                       { croak __PACKAGE__ . ": unknown output mode '$mode'\n"; }
     } else {
-        if ($self->is_preview()) { $mode = 'preview'; }
+        if    ($self->is_preview()) { $mode = 'preview'; }
         elsif ($self->is_publish()) { $mode = 'publish'; }
         else {
             croak "Publish mode unknown.  Set the 'mode' argument'";
@@ -1502,7 +1572,6 @@ sub test_publish_status {
     $publish_yes = $self->_check_object_missing(object => $object);
     return $publish_yes if $publish_yes;
 
-
     # for stories, can check force_republish.
     if ($object->isa('Krang::Story')) {
         $publish_yes = $object->element->class->force_republish();
@@ -1511,7 +1580,6 @@ sub test_publish_status {
     return $publish_yes;
 
 }
-
 
 =back
 
@@ -1531,22 +1599,23 @@ L<Krang::ElementClass>, L<Krang::Category>, L<Krang::Media>
 # update the publish location data in the DB
 
 sub _rectify_publish_locations {
-    my $self = shift;
-    my %arg = @_;
-    my $object = $arg{object};
-    my $paths  = $arg{paths} || [];
+    my $self    = shift;
+    my %arg     = @_;
+    my $object  = $arg{object};
+    my $paths   = $arg{paths} || [];
     my $preview = $arg{preview};
-    my $type = $object->isa('Krang::Story') ? 'story' : 'media';
-    my $id   = $type eq 'story' ? $object->story_id : $object->media_id;
-    my $dbh  = dbh;
+    my $type    = $object->isa('Krang::Story') ? 'story' : 'media';
+    my $id      = $type eq 'story' ? $object->story_id : $object->media_id;
+    my $dbh     = dbh;
 
     # get old location list
     my $old_paths = $dbh->selectcol_arrayref(
-       "SELECT path FROM publish_${type}_location 
-        WHERE ${type}_id = ? AND preview = ?", undef, $id, $preview);
+        "SELECT path FROM publish_${type}_location 
+        WHERE ${type}_id = ? AND preview = ?", undef, $id, $preview
+    );
 
     # build hash of current paths
-    my %cur = map { ($_,1) } @$paths;
+    my %cur = map { ($_, 1) } @$paths;
 
     # delete any files that aren't part of the current set
     foreach my $old (@$old_paths) {
@@ -1554,26 +1623,30 @@ sub _rectify_publish_locations {
         next unless -f $old;
 
         # make sure this path isn't claimed by another object
-        my ($claimed) =
-          $dbh->selectrow_array("SELECT 1 FROM publish_${type}_location "
-                                  . "WHERE path = ? AND preview = ? "
-                                  . "AND ${type}_id != ?",
-                                undef, $old, $preview, $id);
+        my ($claimed) = $dbh->selectrow_array(
+            "SELECT 1 FROM publish_${type}_location "
+              . "WHERE path = ? AND preview = ? "
+              . "AND ${type}_id != ?",
+            undef, $old, $preview, $id
+        );
         next if $claimed;
 
-        unlink($old) 
+        unlink($old)
           or croak("Unable to delete extinct publish result '$old'.");
     }
 
     # write new paths to publish location table if we have an id (it
     # was saved)
-    if( $id ) {
-        $dbh->do("DELETE FROM publish_${type}_location 
-                  WHERE ${type}_id = ? AND preview = ?", undef, $id, $preview);
-        $dbh->do("INSERT INTO publish_${type}_location 
-                  (${type}_id,preview,path) VALUES ".join(',',('(?,?,?)')x@$paths),
-                 undef, map { ($id, $preview, $_) } @$paths)
-          if @$paths;
+    if ($id) {
+        $dbh->do(
+            "DELETE FROM publish_${type}_location 
+                  WHERE ${type}_id = ? AND preview = ?", undef, $id, $preview
+        );
+        $dbh->do(
+            "INSERT INTO publish_${type}_location 
+                  (${type}_id,preview,path) VALUES " . join(',', ('(?,?,?)') x @$paths),
+            undef, map { ($id, $preview, $_) } @$paths
+        ) if @$paths;
     }
 }
 
@@ -1595,7 +1668,8 @@ sub _deploy_testing_templates {
     my $self = shift;
     my $path;
 
-    my $user_id = $ENV{REMOTE_USER} || croak __PACKAGE__ . ": 'REMOTE_USER' environment variable is not set!\n";
+    my $user_id = $ENV{REMOTE_USER}
+      || croak __PACKAGE__ . ": 'REMOTE_USER' environment variable is not set!\n";
 
     # find any templates checked out by this user that are marked for testing.
     my @templates = pkg('Template')->find(testing => 1, checked_out_by => $user_id);
@@ -1604,7 +1678,7 @@ sub _deploy_testing_templates {
     return unless (@templates);
 
     # there are templates - create a tempdir & deploy these bad boys.
-    $path = tempdir( DIR => catdir(KrangRoot, 'tmp'));
+    $path = tempdir(DIR => catdir(KrangRoot, 'tmp'));
     $self->{testing_template_path}{$user_id} = $path;
 
     foreach (@templates) {
@@ -1612,7 +1686,6 @@ sub _deploy_testing_templates {
     }
 
 }
-
 
 #
 # _undeploy_testing_templates()
@@ -1627,26 +1700,23 @@ sub _undeploy_testing_templates {
 
     my $self = shift;
 
-    my $user_id = $ENV{REMOTE_USER} || croak __PACKAGE__ . ": 'REMOTE_USER' environment variable is not set!\n";
+    my $user_id = $ENV{REMOTE_USER}
+      || croak __PACKAGE__ . ": 'REMOTE_USER' environment variable is not set!\n";
 
     # there's no work if there's no dir.
     return unless exists($self->{testing_template_path}{$user_id});
 
     eval { rmtree($self->{testing_template_path}{$user_id}); };
 
-    if ($@) { croak __PACKAGE__ . ": error removing temporary dir '$self->{testing_template_path}{$user_id}': $@"; }
+    if ($@) {
+        croak __PACKAGE__
+          . ": error removing temporary dir '$self->{testing_template_path}{$user_id}': $@";
+    }
 
     delete $self->{testing_template_path}{$user_id};
 
     return;
 }
-
-
-
-
-
-
-
 
 #
 # @paths = _build_story_all_categories(story => $story);
@@ -1667,9 +1737,12 @@ sub _build_story_all_categories {
 
     # Categories & Story URLs are in identical order.  Move in lockstep w/ both of them.
     my @paths;
-    foreach (my $i = 0; $i <= $#categories; $i++) {
-        push @paths, $self->_build_story_single_category(story    => $story,
-                                                         category => $categories[$i]);
+    foreach (my $i = 0 ; $i <= $#categories ; $i++) {
+        push @paths,
+          $self->_build_story_single_category(
+            story    => $story,
+            category => $categories[$i]
+          );
     }
 
     # log history
@@ -1679,7 +1752,6 @@ sub _build_story_all_categories {
 
     return @paths;
 }
-
 
 #
 # @paths = _build_story_single_category(story => $story, category => $category);
@@ -1718,7 +1790,7 @@ sub _build_story_single_category {
     my $category_element = $category->element();
 
     # get story output
-    my $article_output  = $story_element->publish(publisher => $self);
+    my $article_output = $story_element->publish(publisher => $self);
 
     # break the story into pages
     my @article_pages = split(/${\PAGE_BREAK}/, $article_output);
@@ -1727,13 +1799,12 @@ sub _build_story_single_category {
     if ($#article_pages < 0) {
         my $url = $self->is_preview() ? $category->preview_url : $category->url;
 
-        Krang::Publisher::ZeroSizeOutput->throw
-            (message      => sprintf("Story %i output for %s is zero-length",
-                                     $story->story_id, $url),
-             story_id     => $story->story_id,
-             category_url => $url,
-             story_class  => $story->class->name
-            );
+        Krang::Publisher::ZeroSizeOutput->throw(
+            message  => sprintf("Story %i output for %s is zero-length", $story->story_id, $url),
+            story_id => $story->story_id,
+            category_url => $url,
+            story_class  => $story->class->name
+        );
     }
 
     # chuck the last page if it's only whitespace.
@@ -1748,11 +1819,12 @@ sub _build_story_single_category {
         if ($story_element->class->publish_category_per_page()) {
             my $i = 0;
             foreach my $p (@article_pages) {
-                my %tmpl_args = (page_index      => $i,
-                                 last_page_index => $#article_pages);
-                my ($head, $foot) = $self->_cat_content($category_element,
-                                                        fill_template_args => 
-                                                        \%tmpl_args);
+                my %tmpl_args = (
+                    page_index      => $i,
+                    last_page_index => $#article_pages
+                );
+                my ($head, $foot) =
+                  $self->_cat_content($category_element, fill_template_args => \%tmpl_args);
                 my $output = $head . $p . $foot;
                 push @pages, $output;
 
@@ -1765,8 +1837,7 @@ sub _build_story_single_category {
                 $i++;
             }
         } else {
-            ($cat_header, $cat_footer) = 
-              $self->_cat_content($category_element);
+            ($cat_header, $cat_footer) = $self->_cat_content($category_element);
 
             # assemble the components.
             foreach (@article_pages) {
@@ -1775,6 +1846,7 @@ sub _build_story_single_category {
             }
         }
     } else {
+
         # no category templates being used.
         @pages = @article_pages;
     }
@@ -1784,24 +1856,28 @@ sub _build_story_single_category {
         my $content = $block->{content};
         if ($block->{use_category}) {
             my %tmpl_args = (additional_content => $block->{filename});
-            ($cat_header, $cat_footer) = 
-              $self->_cat_content($category_element, 
-                                  fill_template_args => \%tmpl_args)
-                unless (($cat_header or $cat_footer) and not
-                        $story_element->class->publish_category_per_page());
+            ($cat_header, $cat_footer) =
+              $self->_cat_content($category_element, fill_template_args => \%tmpl_args)
+              unless (($cat_header or $cat_footer)
+                and not $story_element->class->publish_category_per_page());
             $content = $cat_header . $content . $cat_footer;
         }
+
+        if ($block->{post_process}) {
+            $block->{post_process}->(\$content);
+        }
+
         my $output_filename = $self->_write_page(
-                                                 data     => $content,
-                                                 filename => $block->{filename},
-                                                 story_id => $story->story_id,
-                                                 path     => $output_path
-                                                );
-        push (@paths, $output_filename);
+            data     => $content,
+            filename => $block->{filename},
+            story_id => $story->story_id,
+            path     => $output_path
+        );
+        push(@paths, $output_filename);
 
         # set mode if available
         if (my $mode = $block->{mode}) {
-            chmod($mode, $output_filename) 
+            chmod($mode, $output_filename)
               or croak("Unable to chmod($mode, $output_filename): $!");
         }
 
@@ -1815,13 +1891,12 @@ sub _build_story_single_category {
 # gets header and footer from category publishing
 sub _cat_content {
     my ($self, $category_element, %args) = @_;
-    my $category_output = $category_element->publish(publisher => $self, 
-                                                     %args);
+    my $category_output = $category_element->publish(
+        publisher => $self,
+        %args
+    );
     return split(/${\CONTENT}/, $category_output, 2);
 }
-
-
-
 
 ##################################################
 ##
@@ -1843,58 +1918,65 @@ sub _cat_content {
 # initial_assets will skip that check when true - used for the first
 # call from asset_list().  Defaults false.
 #
+# maintain_versions defaults to 0. If true, we will build a list of the last-published
+# version of each asset (if any) rather than the latest version.
+#
 # Returns a list of Krang::Story and Krang::Media objects.
 #
 sub _build_asset_list {
-
     my ($self, %args) = @_;
 
-    my $object         = $args{object};
-    my $version_check  = (exists($args{version_check})) ? $args{version_check} : 1;
-    my $initial_assets = (exists($args{initial_assets})) ? $args{initial_assets} : 0;
+    my $object            = $args{object};
+    my $version_check     = (exists($args{version_check})) ? $args{version_check} : 1;
+    my $initial_assets    = (exists($args{initial_assets})) ? $args{initial_assets} : 0;
+    my $maintain_versions = (exists($args{maintain_versions})) ? $args{maintain_versions} : 0;
 
     my @asset_list;
     my @check_list;
 
-    if (ref $object eq 'ARRAY') {
-        foreach my $o (@$object) {
-            my ($publish_ok, $check_links) =
-              $self->_check_asset_status(
-                                         object => $o,
-                                         version_check  => $version_check,
-                                         initial_assets => $initial_assets
-                                        );
-            push @asset_list, $o if ($publish_ok);
-            if ($check_links) {
-                push @check_list, $o->linked_stories;
-                push @check_list, $o->linked_media;
+    my @objects = (ref $object eq 'ARRAY') ? @$object : ($object);
+    foreach my $o (@objects) {
+
+        # don't publish (linked) objects that are retired or trashed
+        next if $self->is_publish() && $o->can('wont_publish') && $o->wont_publish();
+
+        # handle 'maintain_versions' mode
+        if ($maintain_versions) {
+            unless ($o->checked_out && ($o->checked_out_by != $ENV{REMOTE_USER})) {
+                my $v = $o->published_version;
+                next unless $v;
+                if ($v != $o->version) {
+                    if ($o->isa('Krang::Story')) {
+                        ($o) = pkg('Story')->find(story_id => $o->story_id, version => $v);
+                    } else {
+                        ($o) = pkg('Media')->find(media_id => $o->media_id, version => $v);
+                    }
+                }
             }
         }
-
-    } else {
-        my ($publish_ok, $check_links) =
-          $self->_check_asset_status(
-                                     object => $object,
-                                     version_check  => $version_check,
-                                     initial_assets => $initial_assets
-                                    );
-        push @asset_list, $object if ($publish_ok);
+        my ($publish_ok, $check_links) = $self->_check_asset_status(
+            object         => $o,
+            version_check  => $version_check,
+            initial_assets => $initial_assets
+        );
+        push @asset_list, $o if ($publish_ok);
         if ($check_links) {
-            push @check_list, $object->linked_stories;
-            push @check_list, $object->linked_media;
+            push @check_list, $o->linked_stories;
+            push @check_list, $o->linked_media;
         }
     }
 
     # if there are objects to be checked, check 'em.
-    push @asset_list, $self->_build_asset_list(object         => \@check_list,
-                                               version_check  => $version_check,
-                                               initial_assets => 0,
-                                              ) if (@check_list);
+    push @asset_list,
+      $self->_build_asset_list(
+        object            => \@check_list,
+        version_check     => $version_check,
+        maintain_versions => $maintain_versions,
+        initial_assets    => 0,
+      ) if (@check_list);
 
     return @asset_list;
 }
-
-
 
 #
 # ($publish_ok, $check_links) = _check_object_status(object => $object,
@@ -1913,8 +1995,8 @@ sub _check_asset_status {
 
     my ($self, %args) = @_;
 
-    my $object         = $args{object} || croak __PACKAGE__ . ": missing argument 'object'";
-    my $version_check  = (exists($args{version_check})) ? $args{version_check} : 1;
+    my $object = $args{object} || croak __PACKAGE__ . ": missing argument 'object'";
+    my $version_check  = (exists($args{version_check}))  ? $args{version_check}  : 1;
     my $initial_assets = (exists($args{initial_assets})) ? $args{initial_assets} : 0;
 
     my $publish_ok  = 0;
@@ -1967,6 +2049,7 @@ sub _mark_asset {
         $set = 'media_publish_set';
         $id  = $object->media_id();
     } else {
+
         # should never get here.
         croak sprintf("%s->_mark_asset: unknown object type: %s\n", __PACKAGE__, $object->isa);
     }
@@ -1974,6 +2057,7 @@ sub _mark_asset {
     if ($self->{asset_list}{$instance}{$set}->contains($id)) {
         return 0;
     }
+
     # not seen before.
     $self->{asset_list}{$instance}{$set}->Bit_On($id);
     return 1;
@@ -2010,8 +2094,6 @@ sub _mark_asset_links {
 
 }
 
-
-
 #
 # $bool = _check_object_missing(object => $object);
 #
@@ -2031,25 +2113,26 @@ sub _check_object_missing {
     my $bool = 0;
 
     if ($object->isa('Krang::Story')) {
+
         # check all categories
         foreach my $cat ($object->categories) {
             my $path = $self->_determine_output_path(object => $object, category => $cat);
             my $filename = $self->story_filename(story => $object);
             my $output_filename = catfile($path, $filename);
             unless (-e $output_filename) {
+
                 # if any are missing, true.
                 $bool = 1;
                 last;
             }
         }
     } else {
-        my $path = $self->_determine_output_path(object=> $object);
+        my $path = $self->_determine_output_path(object => $object);
         $bool = 1 unless (-e $path);
     }
 
     return $bool;
 }
-
 
 #
 # _init_asset_lists()
@@ -2070,10 +2153,9 @@ sub _init_asset_lists {
 
     foreach (qw(story_publish_set media_publish_set checked_links_set)) {
         $self->{asset_list}{$instance}{$_} = Set::IntRange->new(0, 4194304)
-          unless (exists ($self->{asset_list}{$instance}{$_}));
+          unless (exists($self->{asset_list}{$instance}{$_}));
     }
 }
-
 
 #
 # _clear_asset_lists()
@@ -2095,12 +2177,10 @@ sub _clear_asset_lists {
     delete $self->{asset_list};
 }
 
-
 ############################################################
 #
 # ADDITIONAL CONTENT METHODS
 #
-
 
 ##################################################
 ##
@@ -2127,33 +2207,37 @@ sub _write_media {
     my $dir_path = $1;
 
     # make sure the output dir exists
-    eval {mkpath($dir_path, 0, 0755); };
+    eval { mkpath($dir_path, 0, 0755); };
     if ($@) {
-        Krang::Publisher::FileWriteError->throw(message => 'Could not create output directory',
-                                                destination => $dir_path,
-                                                system_error => $@);
+        Krang::Publisher::FileWriteError->throw(
+            message      => 'Could not create output directory',
+            destination  => $dir_path,
+            system_error => $@
+        );
     }
 
     # copy file out to the production path
     unless (copy($internal_path, $output_path)) {
-        Krang::Publisher::FileWriteError->throw(message  => 'Could not copy media file',
-                                                media_id => $media->media_id(),
-                                                source   => $internal_path,
-                                                destination => $output_path,
-                                                system_error => $!
-                                               );
+        Krang::Publisher::FileWriteError->throw(
+            message      => 'Could not copy media file',
+            media_id     => $media->media_id(),
+            source       => $internal_path,
+            destination  => $output_path,
+            system_error => $!
+        );
     }
 
     # fix up output location
-    $self->_rectify_publish_locations(object => $media,
-                                      paths  => [ $output_path ],
-                                      preview => $self->{is_preview});
+    $self->_rectify_publish_locations(
+        object  => $media,
+        paths   => [$output_path],
+        preview => $self->{is_preview}
+    );
 
     # return URL
     $self->{is_preview} ? return $media->preview_url : return $media->url;
 
 }
-
 
 #
 # @filenames = _write_story(story => $story_obj, path => $output_path, pages => \@story_pages);
@@ -2173,23 +2257,24 @@ sub _write_story {
     my $pages       = $args{pages} || croak __PACKAGE__ . ": missing argument 'pages'";
     my $output_path = $args{path}  || croak __PACKAGE__ . ": missing argument 'path'";
     my $class       = $story->element->class;
-    my $mode_fn     = $class->can('file_mode') || sub {};
+    my $mode_fn = $class->can('file_mode') || sub { };
 
     my @created_files;
 
-
-    for (my $page_num = 0; $page_num < @$pages; $page_num++) {
+    for (my $page_num = 0 ; $page_num < @$pages ; $page_num++) {
 
         my $filename = $self->story_filename(story => $story, page => $page_num);
 
-        my $output_filename = $self->_write_page(path     => $output_path,
-                                                 filename => $filename,
-                                                 story_id => $story->story_id,
-                                                 data     => $pages->[$page_num]);
+        my $output_filename = $self->_write_page(
+            path     => $output_path,
+            filename => $filename,
+            story_id => $story->story_id,
+            data     => $pages->[$page_num]
+        );
 
         # set mode if available
         if (my $mode = $mode_fn->($class, $output_filename)) {
-            chmod($mode, $output_filename) 
+            chmod($mode, $output_filename)
               or croak("Unable to chmod($mode, $output_filename): $!");
         }
 
@@ -2216,24 +2301,27 @@ sub _write_page {
     my %args = @_;
 
     foreach (qw(path filename)) {
-        croak __PACKAGE__ . ": missing parameter '$_'.\n" unless defined ($args{$_});
+        croak __PACKAGE__ . ": missing parameter '$_'.\n" unless defined($args{$_});
     }
 
     eval { mkpath($args{path}, 0, 0755); };
     if ($@) {
-        Krang::Publisher::FileWriteError->throw(message      => "Could not create directory '$args{path}'",
-                                                destination  => $args{path},
-                                                system_error => $@);
+        Krang::Publisher::FileWriteError->throw(
+            message      => "Could not create directory '$args{path}'",
+            destination  => $args{path},
+            system_error => $@
+        );
     }
-
 
     my $output_filename = catfile($args{path}, $args{filename});
 
-    my $fh = pkg('IO')->io_file(">$output_filename") or
-      Krang::Publisher::FileWriteError->throw(message      => "Cannot output story to $output_filename: $!",
-                                              story_id     => $args{story_id},
-                                              destination  => $output_filename,
-                                              system_error => $!);
+    my $fh = pkg('IO')->io_file(">$output_filename")
+      or Krang::Publisher::FileWriteError->throw(
+        message      => "Cannot output story to $output_filename: $!",
+        story_id     => $args{story_id},
+        destination  => $output_filename,
+        system_error => $!
+      );
     $fh->print($args{data});
     $fh->close();
 
@@ -2241,8 +2329,6 @@ sub _write_page {
 
     return $output_filename;
 }
-
-
 
 #
 # $filename = _write_template(template => $template);
@@ -2257,38 +2343,40 @@ sub _write_template {
     my $self = shift;
     my %args = @_;
 
-    my $template   = $args{template};
-    my $id         = $template->template_id();
+    my $template = $args{template};
+    my $id       = $template->template_id();
 
-    my $category   = $template->category();
+    my $category = $template->category();
 
     my @tmpl_dirs = $self->template_search_path(category => $category);
 
     my $path = $tmpl_dirs[0];
 
-    eval {mkpath($path, 0, 0755); };
+    eval { mkpath($path, 0, 0755); };
     if ($@) {
-        Krang::Publisher::FileWriteError->throw(message      => 'Could not create publish directory',
-                                                destination  => $path,
-                                                system_error => $@);
+        Krang::Publisher::FileWriteError->throw(
+            message      => 'Could not create publish directory',
+            destination  => $path,
+            system_error => $@
+        );
     }
-
 
     my $file = catfile($path, $template->filename());
 
     # write out file
-    my $fh = pkg('IO')->io_file(">$file") or
-      Krang::Publisher::FileWriteError->throw(message      => 'Cannot deploy template',
-                                              template_id  => $id,
-                                              destination  => $file,
-                                              system_error => $!);
+    my $fh = pkg('IO')->io_file(">$file")
+      or Krang::Publisher::FileWriteError->throw(
+        message      => 'Cannot deploy template',
+        template_id  => $id,
+        destination  => $file,
+        system_error => $!
+      );
     $fh->print($template->{content});
     $fh->close();
 
     return $file;
 
 }
-
 
 #
 # $path = $self->_determine_output_path(object => $object, category => $category);
@@ -2353,7 +2441,7 @@ sub _set_publish_mode {
 
 }
 
-my $EBN =<<EOEBN;
+my $EBN = <<EOEBN;
 
 This is a test of the emergency broadcast network.
 

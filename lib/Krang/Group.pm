@@ -33,9 +33,10 @@ Krang::Group - Interface to manage Krang permissions
                                  admin_categories    => 1,
                                  admin_categories_ftp    => 1,
                                  admin_jobs          => 1,
-                                 admin_scheduler          => 1,
+                                 admin_scheduler     => 1,
                                  admin_desks         => 1,
                                  admin_lists         => 1,
+                                 admin_delete        => 1,
                                  asset_story         => 'edit',
                                  asset_media         => 'read-only',
                                  asset_template      => 'hide' );
@@ -81,9 +82,10 @@ Krang::Group - Interface to manage Krang permissions
   my $admin_categories = $group->admin_categories();
   my $admin_categories_ftp = $group->admin_categories_ftp();
   my $admin_jobs       = $group->admin_jobs();
-  my $admin_scheduler       = $group->admin_scheduler();
+  my $admin_scheduler  = $group->admin_scheduler();
   my $admin_desks      = $group->admin_desks();
   my $admin_desks      = $group->admin_lists();
+  my $admin_delete     = $group->admin_delete();
   my $asset_story      = $group->asset_story();
   my $asset_media      = $group->asset_media();
   my $asset_template   = $group->asset_template();
@@ -153,6 +155,7 @@ use constant FIELDS => qw( name
                            admin_scheduler
                            admin_desks
                            admin_lists
+                           admin_delete
                            asset_story
                            asset_media
                            asset_template );
@@ -680,6 +683,7 @@ sub serialize_xml {
     $writer->dataElement( admin_scheduler => $self->{admin_scheduler} );
     $writer->dataElement( admin_desks=> $self->{admin_desks} );
     $writer->dataElement( admin_lists => $self->{admin_lists} );
+    $writer->dataElement( admin_delete => $self->{admin_delete} );
     $writer->dataElement( asset_story => $self->{asset_story} );
     $writer->dataElement( asset_media => $self->{asset_media} );
     $writer->dataElement( asset_template => $self->{asset_template} );
@@ -1320,6 +1324,7 @@ functions:
   admin_scheduler
   admin_desks
   admin_lists
+  admin_delete
 
 This method combines the permissions of all the groups with which
 the user is affiliated.  Group permissions are combined using
@@ -1339,6 +1344,7 @@ assigned to the following groups:
               admin_scheduler     => 1
               admin_desks         => 0
               admin_lists         => 0
+              admin_delete        => 0
 
    Group B => may_publish         => 0
               may_checkin_all     => 1
@@ -1353,6 +1359,7 @@ assigned to the following groups:
               admin_scheduler     => 1
               admin_desks         => 1
               admin_lists         => 0
+              admin_delete        => 1
 
 In this case, the resultant permissions for this user will be:
 
@@ -1369,6 +1376,7 @@ In this case, the resultant permissions for this user will be:
    admin_scheduler     => 1
    admin_desks         => 1
    admin_lists         => 0
+   admin_delete        => 1
 
 (N.B.:  The admin function "admin_users_limited" is deemed to be
 a high privilege when it is set to 0 -- not 1.)
@@ -1411,7 +1419,8 @@ sub user_admin_permissions {
                           admin_jobs
                           admin_scheduler
                           admin_desks
-                          admin_lists );
+                          admin_lists
+                          admin_delete );
 
     my %admin_perm_access = ();
 

@@ -62,6 +62,10 @@ sub _pw_was_used {
     return 0;
 }
 
+sub _password_spec {
+    return "Password must be at least 6 characters long and include at least one number and one letter.";
+}
+
 1;
 
 __END__

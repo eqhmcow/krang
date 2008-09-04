@@ -83,11 +83,13 @@ use warnings;
 ###############################
 use Carp qw(verbose croak);
 use Exception::Class (
-                      'Krang::Template::Checkout'             => {fields => [qw/template_id user_id/]},
-                      'Krang::Template::DuplicateURL'         => {fields => 'template_id'},
-                      'Krang::Template::NoCategoryEditAccess' => {fields => 'category_id'},
-                      'Krang::Template::NoEditAccess'         => {fields => 'template_id'},
-                     );
+    'Krang::Template::Checkout'             => {fields => [qw/template_id user_id/]},
+    'Krang::Template::DuplicateURL'         => {fields => 'template_id'},
+    'Krang::Template::NoCategoryEditAccess' => {fields => 'category_id'},
+    'Krang::Template::NoEditAccess'         => {fields => 'template_id'},
+    'Krang::Template::NoDeleteAccess'       => {fields => ['template_id']},
+    'Krang::Template::NoRestoreAccess'      => {fields => ['template_id']},
+);
 use Storable qw(nfreeze thaw);
 use Time::Piece;
 use Time::Piece::MySQL;
@@ -95,8 +97,8 @@ use Time::Piece::MySQL;
 # Internal Module Depenedencies
 ################################
 use Krang::ClassLoader 'Category';
-use Krang::ClassLoader DB => qw(dbh);
-use Krang::ClassLoader Conf => qw(SavedVersionsPerTemplate);
+use Krang::ClassLoader DB      => qw(dbh);
+use Krang::ClassLoader Conf    => qw(SavedVersionsPerTemplate);
 use Krang::ClassLoader History => qw(add_history);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Site';
@@ -111,46 +113,49 @@ use Krang::ClassLoader 'UUID';
 ############
 # Read-only fields for the object
 use constant TEMPLATE_RO => qw(template_id
-                               template_uuid
-                               checked_out
-                               checked_out_by
-                               creation_date
-                               deploy_date
-                               deployed
-                               deployed_version
-                               testing
-                               url
-                               version);
+  template_uuid
+  checked_out
+  checked_out_by
+  creation_date
+  deploy_date
+  deployed
+  deployed_version
+  testing
+  url
+  version
+  retired
+  trashed);
 
 # Read-write fields
 use constant TEMPLATE_RW => qw(category_id
-                               content
-                               filename);
+  content
+  filename);
 
 # Fieldnames for template_version
 use constant VERSION_COLS => qw(data
-                               template_id
-                               version);
+  template_id
+  version);
 
 # Globals
 ##########
 
-
 # Lexicals
 ###########
-my %template_args = map {$_ => 1} TEMPLATE_RW;
-my %template_cols = map {$_ => 1} TEMPLATE_RO, TEMPLATE_RW;
+my %template_args = map { $_ => 1 } TEMPLATE_RW;
+my %template_cols = map { $_ => 1 } TEMPLATE_RO, TEMPLATE_RW;
 
 # Interal Module Dependecies (con't)
 ####################################
 # had to define constants before we could use them
 use Krang::ClassLoader MethodMaker => new_with_init => 'new',
-            new_hash_init => 'hash_init',
-            get => [TEMPLATE_RO, qw( may_see
-                                     may_edit )],
-            get_set => [grep { $_ ne 'filename'} TEMPLATE_RW];
+  new_hash_init                    => 'hash_init',
+  get                              => [
+    TEMPLATE_RO, qw( may_see
+      may_edit )
+  ],
+  get_set => [grep { $_ ne 'filename' } TEMPLATE_RW];
 
-sub id_meth { 'template_id' }
+sub id_meth   { 'template_id' }
 sub uuid_meth { 'template_uuid' }
 
 =head1 INTERFACE
@@ -258,7 +263,7 @@ A reference to the Krang::Site object with which this object is associated.
 =cut
 
 sub site {
-    my $self = shift;
+    my $self   = shift;
     my $cat_id = $self->{category_id};
     my ($cat) = pkg('Category')->find(category_id => $cat_id);
     return $cat->site();
@@ -326,20 +331,22 @@ If the call to verify_checkout() fails, a Checkout exception is thrown.
 
 sub checkin {
     my $self = shift;
-    my $id = shift || $self->{template_id};
-    my $dbh = dbh();
+    my $id   = shift || $self->{template_id};
+    my $dbh  = dbh();
 
     # get object if we don't have it
     ($self) = pkg('Template')->find(template_id => $id) unless ref $self;
 
     # Throw exception unless we have edit access
-    Krang::Template::NoEditAccess->throw( message=>"Not allowed to check in this template", template_id=>$id )
-        unless ($self->may_edit);
+    Krang::Template::NoEditAccess->throw(
+        message     => "Not allowed to check in this template",
+        template_id => $id
+    ) unless ($self->may_edit);
 
     # get admin permissions
     my %admin_perms = pkg('Group')->user_admin_permissions();
 
-    # make sure we're checked out, unless we have may_checkin_all powers    
+    # make sure we're checked out, unless we have may_checkin_all powers
     $self->verify_checkout() unless $admin_perms{may_checkin_all};
 
     my $query = <<SQL;
@@ -351,14 +358,13 @@ SQL
     $dbh->do($query, undef, 0, 0, 0, $id);
 
     # update checkout fields
-    $self->{checked_out} = 0;
+    $self->{checked_out}    = 0;
     $self->{checked_out_by} = 0;
-    $self->{testing} = 0;
+    $self->{testing}        = 0;
     add_history(object => $self, action => 'checkin',);
 
     return $self;
 }
-
 
 =item $template = $template->checkout()
 
@@ -374,29 +380,32 @@ This method throws Krang::Template::Checkout if the object is already checked ou
 =cut
 
 sub checkout {
-    my $self = shift;
-    my $id = shift || $self->{template_id};
-    my $dbh = dbh();
+    my $self    = shift;
+    my $id      = shift || $self->{template_id};
+    my $dbh     = dbh();
     my $user_id = $ENV{REMOTE_USER};
 
     # make sure we actually have an object
     ($self) = pkg('Template')->find(template_id => $id) unless ref $self;
 
     # Throw exception unless we have edit access
-    Krang::Template::NoEditAccess->throw( message=>"Not allowed to check out this template", template_id=>$id )
-        unless ($self->may_edit);
+    Krang::Template::NoEditAccess->throw(
+        message     => "Not allowed to check out this template",
+        template_id => $id
+    ) unless ($self->may_edit);
 
     # short circuit checkout, if possible
     if ($self->{checked_out}) {
-        Krang::Template::Checkout->throw(message => "Template checked out " .
-                                         "by another user.",
-                                         template_id => $id,
-                                         user_id => $self->{checked_out_by})
-            if $self->{checked_out_by} != $user_id;
+        Krang::Template::Checkout->throw(
+            message     => "Template checked out " . "by another user.",
+            template_id => $id,
+            user_id     => $self->{checked_out_by}
+        ) if $self->{checked_out_by} != $user_id;
         return $self;
     }
 
     eval {
+
         # lock template table
         $dbh->do("LOCK TABLES template WRITE");
         my $query = <<SQL;
@@ -413,19 +422,19 @@ SQL
 
     if ($@) {
         my $eval_error = $@;
+
         # unlock the table, so it's not locked forever
         $dbh->do("UNLOCK TABLES");
         croak($eval_error);
     }
 
     # update checkout fields
-    $self->{checked_out} = 1;
+    $self->{checked_out}    = 1;
     $self->{checked_out_by} = $user_id;
     add_history(object => $self, action => 'checkout',);
 
     return $self;
 }
-
 
 =item $template->delete()
 
@@ -454,8 +463,10 @@ sub delete {
     ($self) = pkg('Template')->find(template_id => $id) unless ref $self;
 
     # Throw exception unless we have edit access
-    Krang::Template::NoEditAccess->throw( message=>"Not allowed to delete this template", template_id=>$id )
-        unless ($self->may_edit);
+    Krang::Template::NoEditAccess->throw(
+        message     => "Not allowed to delete this template",
+        template_id => $id
+    ) unless ($self->may_edit);
 
     # Check out first
     $self->checkout;
@@ -471,18 +482,20 @@ sub delete {
 
     my $t_query = "DELETE FROM template WHERE template_id = ?";
     my $v_query = "DELETE FROM template_version WHERE template_id = ?";
-    my $dbh = dbh();
+    my $dbh     = dbh();
     $dbh->do($t_query, undef, ($id));
     $dbh->do($v_query, undef, ($id));
 
-    add_history(    object => $self,
-                    action => 'delete',
-               );
+    # remove from trash
+    pkg('Trash')->remove(object => $self);
 
+    add_history(
+        object => $self,
+        action => 'delete',
+    );
 
     return 1;
 }
-
 
 =item $template->deploy()
 
@@ -491,12 +504,10 @@ Convenience method to Krang::Publisher, deploys template.
 =cut
 
 sub deploy {
-    my $self = shift;
+    my $self      = shift;
     my $publisher = pkg('Publisher')->new();
 
-    $publisher->deploy_template(
-                              template => $self
-                             );
+    $publisher->deploy_template(template => $self);
 }
 
 =item $template->duplicate_check()
@@ -508,14 +519,16 @@ exception is thrown if a duplicate is found, '0' is returned otherwise.
 =cut
 
 sub duplicate_check {
-    my $self = shift;
-    my $id = $self->{template_id} || 0;
+    my $self        = shift;
+    my $id          = $self->{template_id} || 0;
     my $template_id = 0;
 
     my $query = <<SQL;
 SELECT template_id
-FROM template
-WHERE url = '$self->{url}'
+FROM   template
+WHERE  url = '$self->{url}'
+AND    retired = 0
+AND    trashed  = 0
 SQL
     $query .= "AND template_id != $id" if $id;
     my $dbh = dbh();
@@ -525,13 +538,13 @@ SQL
     $sth->fetch();
     $sth->finish();
 
-    Krang::Template::DuplicateURL->throw(message => 'Duplicate URL',
-                                         template_id => $template_id)
-        if $template_id;
+    Krang::Template::DuplicateURL->throw(
+        message     => 'Duplicate URL',
+        template_id => $template_id
+    ) if $template_id;
 
     return $template_id;
 }
-
 
 =item $template = $template->mark_as_deployed()
 
@@ -547,10 +560,10 @@ sub mark_as_deployed {
     my ($self) = @_;
 
     my $dbh = dbh();
-    my $id = $self->{template_id};
+    my $id  = $self->{template_id};
 
     # get value of now() for DB.
-    my $time = localtime;
+    my $time        = localtime;
     my $deploy_date = $time->mysql_datetime;
 
     # update deploy fields
@@ -565,15 +578,13 @@ SQL
     add_history(object => $self, action => 'deploy',);
 
     # set internal flags as well.
-    $self->{deployed} = 1;
+    $self->{deployed}         = 1;
     $self->{deployed_version} = $self->{version};
-    $self->{testing} = 0;
-    $self->{deploy_date} = $time;
+    $self->{testing}          = 0;
+    $self->{deploy_date}      = $time;
 
     return $self;
 }
-
-
 
 =item $template = $template->mark_as_undeployed()
 
@@ -588,7 +599,7 @@ sub mark_as_undeployed {
     my ($self) = @_;
 
     my $dbh = dbh();
-    my $id = $self->{template_id};
+    my $id  = $self->{template_id};
 
     # update deploy fields
     my $query = <<SQL;
@@ -599,12 +610,12 @@ SQL
 
     $dbh->do($query, undef, ($id));
 
-#    add_history(object => $self, action => 'undeploy',);
+    #    add_history(object => $self, action => 'undeploy',);
 
     # set internal flags as well.
-    $self->{deployed} = 0;
+    $self->{deployed}         = 0;
     $self->{deployed_version} = undef;
-    $self->{deploy_date} = undef;
+    $self->{deploy_date}      = undef;
 
     return $self;
 }
@@ -698,6 +709,26 @@ results are sorted with the 'template_id' field.
 Set this flag to '1' to sort results relative to the 'order_by' field in
 descending order, by default results sort in ascending order
 
+=item * include_live
+
+Include live templates in the search result. Live templates are
+templates that are neither retired nor have been moved to the
+trashbin. Set this option to 0, if find() should not return live
+templates.  The default is 1.
+
+=item * include_retired
+
+Set this option to 1 if you want to include retired templates in the
+search result. The default is 0.
+
+=item  * include_trashed
+
+Set this option to 1 if you want to include trashed templates in the
+search result. Trashed templates live in the trashbin. The default is 0.
+
+B<NOTE:>When searching for template_id, these three include_* flags are
+not taken into account!
+
 =back
 
 The method croaks if an invalid search criteria is provided or if both the
@@ -713,12 +744,18 @@ sub find {
     # grab ascend/descending, limit, and offset args
     my $ascend = delete $args{order_desc} ? 'DESC' : 'ASC';
     my $descend = delete $args{descend} || '';
-    my $limit = delete $args{limit} || '';
-    my $offset = delete $args{offset} || '';
+    my $limit   = delete $args{limit}   || '';
+    my $offset  = delete $args{offset}  || '';
     my $order_by = "t." . (delete $args{order_by} || 'template_id');
 
+    # set search includes
+    my $include_retired = delete $args{include_retired} || 0;
+    my $include_trashed = delete $args{include_trashed} || 0;
+    my $include_live    = delete $args{include_live};
+    $include_live = 1 unless defined($include_live);
+
     # set search fields
-    my $count = delete $args{count} || '';
+    my $count    = delete $args{count}    || '';
     my $ids_only = delete $args{ids_only} || '';
 
     # set bool to join with category table
@@ -730,11 +767,15 @@ sub find {
     # set bool to determine whether simple search should check full text
     my $simple_full_text = delete $args{simple_search_check_full_text} || 0;
 
-    croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
-          "Only one can be present.") if ($count && $ids_only);
+    croak(  __PACKAGE__
+          . "->find(): 'count' and 'ids_only' were supplied. "
+          . "Only one can be present.")
+      if ($count && $ids_only);
 
-    $fields = $count ? 'count(DISTINCT t.template_id)' :
-      ($ids_only ? 't.template_id' : join(", ", map {"t.$_"} (keys %template_cols)));
+    $fields =
+      $count
+      ? 'count(DISTINCT t.template_id)'
+      : ($ids_only ? 't.template_id' : join(", ", map { "t.$_" } (keys %template_cols)));
 
     # handle version loading
     return $self->_load_version($args{template_id}, $args{version})
@@ -745,29 +786,35 @@ sub find {
     my @invalid_cols = ();
     for my $arg (keys %args) {
         my $like = 1 if $arg =~ /_like$/;
-        ( my $lookup_field = $arg ) =~ s/^(.+)_like$/$1/;
+        (my $lookup_field = $arg) =~ s/^(.+)_like$/$1/;
 
-        push (@invalid_cols, $arg)
-          unless (grep { $lookup_field eq $_ } ( keys(%template_cols), 
-                                                 qw( simple_search 
-                                                     below_category_id 
-                                                     may_see
-                                                     may_edit
-                                                     full_text_string )));
+        push(@invalid_cols, $arg)
+          unless (
+            grep { $lookup_field eq $_ } (
+                keys(%template_cols),
+                qw( simple_search
+                  below_category_id
+                  may_see
+                  may_edit 
+                  full_text_string
+            )
+          );
 
-        if ($arg eq 'template_id' && ref ($args{$arg}) eq 'ARRAY') {
-            my $tmp = join(" OR ", map {"t.template_id = ?"} @{$args{$arg}});
+        if ($arg eq 'template_id' && (ref($args{$arg}) || "")eq 'ARRAY' && scalar(@{$args{$arg}}) > 0) {
+            my $tmp = join(" OR ", map { "t.template_id = ?" } @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
-        } elsif ($arg eq 'category_id' && (ref($args{$arg}) || "") eq 'ARRAY') {
-            my $tmp= join(" OR ", map {"t.category_id = ?"} @{$args{$arg}});
+        } elsif ($arg eq 'category_id' && (ref($args{$arg}) || "") eq 'ARRAY' && scalar(@{$args{$arg}}) > 0) {
+            my $tmp = join(" OR ", map { "t.category_id = ?" } @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
         } elsif ($arg eq 'below_category_id') {
             my ($cat) = pkg('Category')->find(category_id => $args{$arg});
             if ($cat) {
-                $where_clause = "c.category_id = ? AND " .
-                  "t.url LIKE ?" . ($where_clause ? " AND $where_clause" : '');
+                $where_clause =
+                    "c.category_id = ? AND "
+                  . "t.url LIKE ?"
+                  . ($where_clause ? " AND $where_clause" : '');
                 unshift @params, $cat->url . "%";
                 unshift @params, $args{$arg};
             }
@@ -807,33 +854,43 @@ sub find {
                 }
                 $where_clause .= ')';
             }
-        } elsif (grep { $arg eq $_ } qw(may_see may_edit)) {
+        } elsif (
+            grep {
+                $arg eq $_
+            } qw(may_see may_edit)
+          )
+        {
             my $fqfield = "ucpc.$arg";
+
             # On may_see and may_edit, always return "global" templates -- templates w/o a category
             $where_clause .= " AND " if ($where_clause);
             if ($args{$arg}) {
+
                 # If we're looking for true vals, accept 1 or NULL
                 $where_clause .= "($fqfield=1 OR $fqfield IS NULL)";
             } else {
+
                 # If we're looking for false vals, accept only 0
                 $where_clause .= "$fqfield=0";
             }
         } else {
-            my $and = defined $where_clause && $where_clause ne '' ?
-              ' AND' : '';
+            my $and = defined $where_clause && $where_clause ne '' ? ' AND' : '';
             $lookup_field = "t." . $lookup_field;
             if (not defined $args{$arg}) {
                 $where_clause .= "$and $lookup_field IS NULL";
             } else {
-                $where_clause .= $like ? "$and $lookup_field LIKE ?" :
-                  "$and $lookup_field = ?";
+                $where_clause .=
+                  $like
+                  ? "$and $lookup_field LIKE ?"
+                  : "$and $lookup_field = ?";
                 push @params, $args{$arg};
             }
         }
     }
 
-    croak("The following passed search parameters are invalid: '" .
-          join("', '", @invalid_cols) . "'") if @invalid_cols;
+    croak(
+        "The following passed search parameters are invalid: '" . join("', '", @invalid_cols) . "'")
+      if @invalid_cols;
 
     # Get user asset permissions -- overrides may_edit if false
     my $template_access = pkg('Group')->user_asset_permissions('template');
@@ -847,9 +904,38 @@ sub find {
         if ($template_access eq "edit") {
             push(@may_fields, "ucpc.may_edit as may_edit");
         } else {
-            push(@may_fields, $dbh->quote("0") ." as may_edit");
-        };
-        $fields .= ", ". join(", ", @may_fields);
+            push(@may_fields, $dbh->quote("0") . " as may_edit");
+        }
+        $fields .= ", " . join(", ", @may_fields);
+    }
+
+    # include live/retired/trashed
+    unless ($args{template_id}) {
+        if ($include_live) {
+            unless ($include_retired) {
+                $where_clause .= ' and ' if $where_clause;
+                $where_clause .= ' t.retired = 0';
+            }
+            unless ($include_trashed) {
+                $where_clause .= ' and ' if $where_clause;
+                $where_clause .= ' t.trashed  = 0';
+            }
+        } else {
+            if ($include_retired) {
+                if ($include_trashed) {
+                    $where_clause .= ' and ' if $where_clause;
+                    $where_clause .= ' t.retired = 1 AND t.trashed = 1';
+                } else {
+                    $where_clause .= ' and ' if $where_clause;
+                    $where_clause .= ' t.retired = 1 AND t.trashed = 0';
+                }
+            } else {
+                if ($include_trashed) {
+                    $where_clause .= ' and ' if $where_clause;
+                    $where_clause .= ' t.trashed = 1';
+                }
+            }
+        }
     }
 
     # construct base query
@@ -877,7 +963,7 @@ sub find {
         $query .= " LIMIT $offset, -1";
     }
 
-    debug(__PACKAGE__."->find: Executing query $query with params: @params");
+    debug(__PACKAGE__ . "->find: Executing query $query with params: @params");
 
     my $sth = $dbh->prepare($query);
     $sth->execute(@params);
@@ -890,15 +976,17 @@ sub find {
     if ($single_column) {
         $sth->bind_col(1, \$row);
     } else {
-        $sth->bind_columns(\( @$row{@{$sth->{NAME_lc}}} ));
+        $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
     }
 
     # construct template objects from results
     while ($sth->fetchrow_arrayref()) {
+
         # if we just want count or ids
         if ($single_column) {
             push @templates, $row;
         } else {
+
             # Handle permissions for global templates -- set to asset permissions
             unless (defined($row->{category_id})) {
                 $row->{may_edit} = 1 if ($template_access eq "edit");
@@ -909,8 +997,7 @@ sub find {
             foreach my $date_field (grep { /_date$/ } keys %{$templates[-1]}) {
                 my $val = $templates[-1]->{$date_field};
                 if (defined $val and $val ne '0000-00-00 00:00:00') {
-                    $templates[-1]->{$date_field} =
-                      Time::Piece->from_mysql_datetime($val);
+                    $templates[-1]->{$date_field} = Time::Piece->from_mysql_datetime($val);
                 } else {
                     $templates[-1]->{$date_field} = undef;
                 }
@@ -940,11 +1027,10 @@ sub _search_text_to_phrases {
     return @phrases;
 }
 
-
 # handles version loading for find()
 sub _load_version {
     my ($self, $id, $version) = @_;
-    my $dbh = dbh();
+    my $dbh   = dbh();
     my $query = <<SQL;
 SELECT data FROM template_version
 WHERE template_id = ? AND version = ?
@@ -952,12 +1038,11 @@ SQL
     my ($row) = $dbh->selectrow_array($query, undef, $id, $version);
 
     my @result;
-    eval {@result = (thaw($row))};
+    eval { @result = (thaw($row)) };
     croak("Unable to thaw version '$version' for id '$id': $@") if $@;
 
     return @result;
 }
-
 
 # Validates the input from new(), and croaks if an arg isn't in %template_args
 sub init {
@@ -971,14 +1056,16 @@ sub init {
     }
 
     # croak if we've been given invalid args
-    croak(__PACKAGE__ . "->init(): The following invalid arguments were " .
-          "supplied - " . join' ', @bad_args) if @bad_args;
-
+    croak(
+        __PACKAGE__ . "->init(): The following invalid arguments were " . "supplied - " . join ' ',
+        @bad_args
+    ) if @bad_args;
 
     # if we have a category are use it to set 'category_id'
     my $category = delete $args{category} || '';
 
     if ($category) {
+
         # make sure it's a category object before attempting to set
         croak(__PACKAGE__ . "->init(): 'category' argument must be a 'Krang::Category' object.")
           unless (ref($category) and $category->isa('Krang::Category'));
@@ -993,16 +1080,17 @@ sub init {
     $self->{testing}        = 0;
     $self->{creation_date}  = localtime();
     $self->{template_uuid}  = pkg('UUID')->new();
+    $self->{retired}        = 0;
+    $self->{trashed}        = 0;
 
     $self->hash_init(%args);
 
     # Set up permissions
-    $self->{may_see} = 1;
+    $self->{may_see}  = 1;
     $self->{may_edit} = 1;
 
     return $self;
 }
-
 
 =item $template = $template->mark_for_testing()
 
@@ -1071,11 +1159,10 @@ Returns an arrayref containing all the existing version numbers for this templat
 
 sub all_versions {
     my $self = shift;
-    my $dbh = dbh;
-    return $dbh->selectcol_arrayref('SELECT version FROM template_version WHERE template_id=?', 
-                                    undef, $self->template_id);
+    my $dbh  = dbh;
+    return $dbh->selectcol_arrayref('SELECT version FROM template_version WHERE template_id=?',
+        undef, $self->template_id);
 }
-
 
 =item C<< $template->prune_versions(number_to_keep => 10); >>
 
@@ -1098,12 +1185,14 @@ sub prune_versions {
     my @all_versions     = @{$self->all_versions};
     my $number_to_delete = @all_versions - $number_to_keep;
     return 0 unless $number_to_delete > 0;
-    
+
     # delete the oldest ones (which will be first since the list is ascending)
     my @versions_to_delete = splice(@all_versions, 0, $number_to_delete);
-    $dbh->do('DELETE FROM template_version WHERE template_id = ? AND version IN ('.
-             join(',', ("?") x @versions_to_delete) . ')',
-             undef, $self->template_id, @versions_to_delete);
+    $dbh->do(
+        'DELETE FROM template_version WHERE template_id = ? AND version IN ('
+          . join(',', ("?") x @versions_to_delete) . ')',
+        undef, $self->template_id, @versions_to_delete
+    ) unless $args{test_mode};
     return $number_to_delete;
 }
 
@@ -1126,7 +1215,7 @@ URL errors, etc.), the object itself is returned; if not, an error is returned.
 sub revert {
     my ($self, $version) = @_;
     my $dbh = dbh();
-    my $id = $self->template_id();
+    my $id  = $self->template_id();
 
     $self->verify_checkout();
 
@@ -1139,17 +1228,19 @@ SQL
     my @row = $dbh->selectrow_array($query, undef, ($id, $version));
 
     # preserve version and checkout status
-    my %preserve = ( version        => $self->{version},
-                     checked_out_by => $self->{checked_out_by},
-                     checked_out    => $self->{checked_out} );
+    my %preserve = (
+        version        => $self->{version},
+        checked_out_by => $self->{checked_out_by},
+        checked_out    => $self->{checked_out}
+    );
 
     # get old version
     my $obj;
-    eval {$obj = thaw($row[0])};
+    eval { $obj = thaw($row[0]) };
 
     # catch Storable exception
-    croak(__PACKAGE__ . "->revert(): Unable to deserialize object for " .
-          "template id '$id' - $@") if $@;
+    croak(__PACKAGE__ . "->revert(): Unable to deserialize object for " . "template id '$id' - $@")
+      if $@;
 
     # copy old data into current object, perserving what is meant to
     # be preserved.
@@ -1164,13 +1255,13 @@ SQL
     return $self;
 }
 
-
 =item $template = $template->save()
 
 Saves template data in memory to the database.
 
 Stores a copy of the objects current contents to the template table. The
-version field is incremented on each save.
+version field is incremented on each save unless called with 'keep_version'
+ set to 1.
 
 duplicate_check() throws an exception if the template's url isn't unique.
 verify_checkout() throws an exception if the template isn't checked out or if
@@ -1186,17 +1277,18 @@ to the specified category.
 =cut
 
 sub save {
-    my $self = shift;
+    my ($self, %args) = @_;
     my $user_id = $ENV{REMOTE_USER};
     my $id = $self->{template_id} || 0;
 
     # list of DB fields to insert or update; exclude 'template_id'
-    my @save_fields = grep {$_ ne 'template_id'} keys %template_cols;
+    my @save_fields = grep { $_ ne 'template_id' } keys %template_cols;
 
     # Throw exception unless we have edit access
-    Krang::Template::NoEditAccess->throw( message=>"Not allowed to save this template", 
-                                          template_id=>$self->template_id )
-        unless ($self->may_edit);
+    Krang::Template::NoEditAccess->throw(
+        message     => "Not allowed to save this template",
+        template_id => $self->template_id
+    ) unless ($self->may_edit);
 
     # calculate url
     my $url = "";
@@ -1204,9 +1296,10 @@ sub save {
         my ($cat) = pkg('Category')->find(category_id => $self->{category_id});
 
         # Throw exception unless we have edit access
-        Krang::Template::NoCategoryEditAccess->throw( message => "Not allowed to save template in this category", 
-                                                      category_id => $self->{category_id} )
-            unless ($cat->may_edit);
+        Krang::Template::NoCategoryEditAccess->throw(
+            message     => "Not allowed to save template in this category",
+            category_id => $self->{category_id}
+        ) unless ($cat->may_edit);
 
         $url = $cat->url;
     }
@@ -1220,24 +1313,27 @@ sub save {
     $self->verify_checkout() if $id;
 
     # increment version number
-    $self->{version} = $self->{version} + 1;
+    $self->{version} = $self->{version} + 1 unless $args{keep_version};
 
     # set up query
     my ($query, @tmpl_params);
     if ($id) {
-        $query = "UPDATE template SET " .
-          join(', ', map {"$_=?"} @save_fields) . "WHERE template_id = ?";
+        $query =
+            "UPDATE template SET "
+          . join(', ', map { " $_=? " } @save_fields)
+          . "WHERE template_id = ?";
     } else {
-        $query = "INSERT INTO template (" .
-          join(",", @save_fields) .
-            ") VALUES (" . join(",", (("?")x@save_fields)) . ")";
+        $query =
+            "INSERT INTO template ("
+          . join(",", @save_fields)
+          . ") VALUES ("
+          . join(",", (("?") x @save_fields)) . ")";
     }
 
     # construct array of bind_parameters
     foreach my $field (@save_fields) {
         if ($field =~ /_date$/) {
-            push(@tmpl_params, defined $self->{$field} ? 
-                               $self->{$field}->mysql_datetime : undef);
+            push(@tmpl_params, defined $self->{$field} ? $self->{$field}->mysql_datetime : undef);
         } else {
             push(@tmpl_params, $self->{$field});
         }
@@ -1247,10 +1343,10 @@ sub save {
     # get database handle
     my $dbh = dbh();
 
-    
     debug(__PACKAGE__ . "::save() SQL: " . $query);
-    debug(__PACKAGE__ . "::save() SQL ARGS: " . join(',', map { defined $_ ? $_ : 'undef' } @tmpl_params));
-
+    debug(  __PACKAGE__
+          . "::save() SQL ARGS: "
+          . join(',', map { defined $_ ? $_ : 'undef' } @tmpl_params));
 
     # do the save
     $dbh->do($query, undef, @tmpl_params);
@@ -1260,19 +1356,17 @@ sub save {
 
     # save a copy in the version table
     my $frozen;
-    eval {$frozen = nfreeze($self)};
+    eval { $frozen = nfreeze($self) };
 
     # catch any exception thrown by Storable
-    croak(__PACKAGE__ . "->prepare_for_edit(): Unable to serialize object " .
-          "template id '$id' - $@") if $@;
+    croak(  __PACKAGE__
+          . "->prepare_for_edit(): Unable to serialize object "
+          . "template id '$id' - $@")
+      if $@;
 
     # do the insert
-    $dbh->do("INSERT INTO template_version (data, template_id, version) " .
-             "VALUES (?,?,?)",
-             undef,
-             $frozen,
-             $self->{template_id},
-             $self->{version});
+    $dbh->do("REPLACE INTO template_version (data, template_id, version) " . "VALUES (?,?,?)",
+        undef, $frozen, $self->{template_id}, $self->{version});
 
     # prune previous versions from the version table
     $self->prune_versions();
@@ -1282,7 +1376,6 @@ sub save {
 
     return $self;
 }
-
 
 =item $template = $template->update_url( $url );
 
@@ -1296,7 +1389,6 @@ sub update_url {
     return $self;
 }
 
-
 =item $template->serialize_xml(writer => $writer, set => $set)
 
 Serialize as XML.  See Krang::DataSet for details.
@@ -1304,28 +1396,31 @@ Serialize as XML.  See Krang::DataSet for details.
 =cut
 
 sub serialize_xml {
-    my ($self, %args) = @_;
-    my ($writer, $set) = @args{qw(writer set)};
+    my ($self,   %args) = @_;
+    my ($writer, $set)  = @args{qw(writer set)};
     local $_;
-                                                                                       
-    # open up <template> linked to schema/template.xsd
-    $writer->startTag('template',
-                      "xmlns:xsi" =>
-                        "http://www.w3.org/2001/XMLSchema-instance",
-                      "xsi:noNamespaceSchemaLocation" =>
-                        'template.xsd');
 
-    $writer->dataElement( template_id => $self->{template_id} );
-    $writer->dataElement( template_uuid => $self->{template_uuid} );
-    $writer->dataElement( filename => $self->{filename} );
-    $writer->dataElement( url => $self->{url} );
-    $writer->dataElement( category_id => $self->{category_id} )
+    # open up <template> linked to schema/template.xsd
+    $writer->startTag(
+        'template',
+        "xmlns:xsi"                     => "http://www.w3.org/2001/XMLSchema-instance",
+        "xsi:noNamespaceSchemaLocation" => 'template.xsd'
+    );
+
+    $writer->dataElement(template_id   => $self->{template_id});
+    $writer->dataElement(template_uuid => $self->{template_uuid});
+    $writer->dataElement(filename      => $self->{filename});
+    $writer->dataElement(url           => $self->{url});
+    $writer->dataElement(category_id   => $self->{category_id})
       if $self->{category_id};
-    $writer->dataElement( content => $self->{content} );
-    $writer->dataElement( creation_date => $self->{creation_date}->datetime );
-    $writer->dataElement( deploy_date => $self->{deploy_date}->datetime ) if $self->{deploy_date};
-    $writer->dataElement( version => $self->{version} );
-    $writer->dataElement( deployed_version => $self->{deployed_version} ) if $self->{deployed_version};
+    $writer->dataElement(content       => $self->{content});
+    $writer->dataElement(creation_date => $self->{creation_date}->datetime);
+    $writer->dataElement(deploy_date   => $self->{deploy_date}->datetime) if $self->{deploy_date};
+    $writer->dataElement(version       => $self->{version});
+    $writer->dataElement(deployed_version => $self->{deployed_version})
+      if $self->{deployed_version};
+    $writer->dataElement(retired => $self->retired);
+    $writer->dataElement(trashed => $self->trashed);
 
     # add category to set
     $set->add(object => $self->category, from => $self)
@@ -1348,7 +1443,7 @@ fields are ignored when importing templates.
 Also, all templates are deployed after deserialization.
 
 =cut
-                                         
+
 sub deserialize_xml {
     my ($pkg, %args) = @_;
     my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
@@ -1360,14 +1455,17 @@ sub deserialize_xml {
     @complex{
         qw(template_id deploy_date creation_date url
           checked_out checked_out_by version deployed testing
-          deployed_version category_id template_uuid)}
+          deployed_version category_id template_uuid trashed retired)
+      }
       = ();
-    %simple = map { ($_,1) } grep { not exists $complex{$_} } (TEMPLATE_RO,TEMPLATE_RW);
- 
+    %simple = map { ($_, 1) } grep { not exists $complex{$_} } (TEMPLATE_RO, TEMPLATE_RW);
+
     # parse it up
-    my $data = pkg('XML')->simple(xml           => $xml,
-                                  suppressempty => 1);
-   
+    my $data = pkg('XML')->simple(
+        xml           => $xml,
+        suppressempty => 1
+    );
+
     # is there an existing object?
     my $template;
 
@@ -1376,9 +1474,9 @@ sub deserialize_xml {
         ($template) = $pkg->find(template_uuid => $data->{template_uuid});
 
         # if not updating this is fatal
-        Krang::DataSet::DeserializationFailed->throw(message =>
-            "A template object with the UUID '$data->{template_uuid}' already"
-            . " exists and no_update is set.")
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A template object with the UUID '$data->{template_uuid}' already"
+              . " exists and no_update is set.")
           if $template and $no_update;
     }
 
@@ -1387,15 +1485,15 @@ sub deserialize_xml {
         ($template) = pkg('Template')->find(url => $data->{url});
 
         # if not updating this is fatal
-        Krang::DataSet::DeserializationFailed->throw(message =>
-                      "A template object with the url '$data->{url}' already "
-                      . "exists and no_update is set.")
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A template object with the url '$data->{url}' already "
+              . "exists and no_update is set.")
           if $template and $no_update;
     }
 
     if ($template) {
-        debug (__PACKAGE__."->deserialize_xml : found template");
-       
+        debug(__PACKAGE__ . "->deserialize_xml : found template");
+
         $template->checkout;
 
         # update simple fields
@@ -1403,20 +1501,26 @@ sub deserialize_xml {
 
         # update the category, which can change now with UUID matching
         if ($data->{category_id}) {
-            my $category_id = $set->map_id(class => pkg('Category'),
-                                           id    => $data->{category_id});
+            my $category_id = $set->map_id(
+                class => pkg('Category'),
+                id    => $data->{category_id}
+            );
             $template->category_id($category_id);
         }
-    
+
     } else {
+
         # create a new template object with category and simple fields
         if ($data->{category_id}) {
-            $template = pkg('Template')->new(category_id =>
-                                   $set->map_id(class => pkg('Category'),
-                                                id    => $data->{category_id}),
-                                   (map { ($_,$data->{$_}) } keys %simple));
+            $template = pkg('Template')->new(
+                category_id => $set->map_id(
+                    class => pkg('Category'),
+                    id    => $data->{category_id}
+                ),
+                (map { ($_, $data->{$_}) } keys %simple)
+            );
         } else {
-            $template = pkg('Template')->new( (map { ($_,$data->{$_}) } keys %simple) );
+            $template = pkg('Template')->new((map { ($_, $data->{$_}) } keys %simple));
         }
     }
 
@@ -1427,7 +1531,7 @@ sub deserialize_xml {
 
     # only deploy if the previous template was deployed
     $publisher->deploy_template(template => $template)
-        if( $data->{deployed_version} );
+      if ($data->{deployed_version});
 
     return $template;
 }
@@ -1440,32 +1544,272 @@ out to the current user.
 A Krang::Template::Checkout exception is thrown if the template isn't checked
 out or is checked out by another user, otherwise, '1' is returned.
 
-=back
-
 =cut
 
 sub verify_checkout {
-    my $self = shift;
-    my $id = $self->{template_id};
+    my $self    = shift;
+    my $id      = $self->{template_id};
     my $user_id = $ENV{REMOTE_USER};
 
-    Krang::Template::Checkout->throw(message => "Template isn't checked out.",
-                                     template_id => $id)
-        unless $self->{checked_out};
+    Krang::Template::Checkout->throw(
+        message     => "Template isn't checked out.",
+        template_id => $id
+    ) unless $self->{checked_out};
 
     my $cob = $self->{checked_out_by};
 
-    Krang::Template::Checkout->throw(message => "Template checked out by " .
-                                     "another user.",
-                                     template_id => $id,
-                                     user_id => $cob)
-        unless $cob == $user_id;
+    Krang::Template::Checkout->throw(
+        message     => "Template checked out by " . "another user.",
+        template_id => $id,
+        user_id     => $cob
+    ) unless $cob == $user_id;
 
     return 1;
 }
 
+sub _build_url { (my $url = join('/', @_)) =~ s|/+|/|g; return $url; }
 
-sub _build_url { (my $url = join('/', @_)) =~ s|/+|/|g; return $url;}
+=item C<< $template->retire() >>
+
+=item C<< Krang::Template->retire(template_id => $template_id) >>
+
+Archive the template, i.e. undeploy it and don't show it on the Find
+Template screen.  Throws a Krang::Template::NoEditAccess exception if
+user may not edit this template. Croaks if the template is checked out
+by another user.
+
+=cut
+
+sub retire {
+    my ($self, %args) = @_;
+    unless (ref $self) {
+        my $template_id = $args{template_id};
+        ($self) = pkg('Template')->find(template_id => $template_id);
+        croak("Unable to load template '$template_id'.") unless $self;
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Template::NoEditAccess->throw(
+        message     => "Not allowed to edit template",
+        template_id => $self->template_id
+    ) unless ($self->may_edit);
+
+    # make sure we are the one
+    $self->checkout;
+
+    # undeploy
+    pkg('Publisher')->new->undeploy_template(template => $self);
+
+    # retire the template
+    my $dbh = dbh();
+    $dbh->do(
+        "UPDATE template
+              SET    retired = 1
+              WHERE  template_id = ?", undef,
+        $self->{template_id}
+    );
+
+    # living in retire
+    $self->{retired} = 1;
+
+    $self->checkin();
+
+    add_history(
+        object => $self,
+        action => 'retire'
+    );
+}
+
+=item C<< $template->unretire() >>
+
+=item C<< Krang::Template->unretire(template_id => $template_id) >>
+
+Unretire the template, i.e. show it again on the Find Template
+screen, but don't redeploy it. Throws a Krang::Template::NoEditAccess
+exception if user may not edit this template. Throws a
+Krang::Template::DuplicateURL exception if a template with the same
+URL has been created in Live. Croaks if the template is checked out by
+another user.
+
+=cut
+
+sub unretire {
+    my ($self, %args) = @_;
+    unless (ref $self) {
+        my $template_id = $args{template_id};
+        ($self) = pkg('Template')->find(template_id => $template_id);
+        croak("Unable to load template '$template_id'.") unless $self;
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Template::NoEditAccess->throw(
+        message     => "Not allowed to edit template",
+        template_id => $self->template_id
+    ) unless ($self->may_edit);
+
+    # make sure no other template occupies our initial place (URL)
+    $self->duplicate_check();
+
+    # make sure we are the one
+    $self->checkout;
+
+    # alive again
+    $self->{retired} = 0;
+
+    # unretire the template
+    my $dbh = dbh();
+    $dbh->do(
+        'UPDATE template
+              SET    retired = 0
+              WHERE  template_id = ?', undef,
+        $self->{template_id}
+    );
+
+    add_history(
+        object => $self,
+        action => 'unretire',
+    );
+
+    # check it back in
+    $self->checkin();
+}
+
+=item C<< $template->trash() >>
+
+=item C<< Krang::Template->trash(template_id => $template_id) >>
+
+Move the template to the trashbin, i.e. undeploy it and don't show it
+on the Find Template screen.  Throws a Krang::Template::NoEditAccess
+exception if user may not edit this template. Croaks if the template
+is checked out by another user.
+
+=cut
+
+sub trash {
+    my ($self, %args) = @_;
+    unless (ref $self) {
+        my $template_id = $args{template_id};
+        ($self) = pkg('Template')->find(template_id => $template_id);
+        croak("Unable to load template '$template_id'.") unless $self;
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Template::NoEditAccess->throw(
+        message     => "Not allowed to edit template",
+        template_id => $self->template_id
+    ) unless ($self->may_edit);
+
+    # make sure we are the one
+    $self->checkout;
+
+    # undeploy
+    pkg('Publisher')->new->undeploy_template(template => $self);
+
+    # store in trash
+    pkg('Trash')->store(object => $self);
+
+    # update object
+    $self->{trashed} = 1;
+
+    # release it
+    $self->checkin();
+
+    # and log it
+    add_history(object => $self, action => 'trash');
+}
+
+=item C<< $template->untrash() >>
+
+=item C<< Krang::Template->untrash(template_id => $template_id) >>
+
+Restore the template from the trashbin, i.e. show it again on the Find
+Template or Archived Templates screens (depending on the location from
+where it was deleted).  Throws a Krang::Template::NoRestoreAccess
+exception if user may not edit this template. Croaks if the template
+is checked out by another user. This method is called by
+Krang::Trash->restore().
+
+=cut
+
+sub untrash {
+    my ($self, %args) = @_;
+    unless (ref $self) {
+        my $template_id = $args{template_id};
+        ($self) = pkg('Template')->find(template_id => $template_id);
+        croak("Unable to load template '$template_id'.") unless $self;
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Template::NoRestoreAccess->throw(
+        message     => "Not allowed to restore template",
+        template_id => $self->template_id
+    ) unless ($self->may_edit);
+
+    # make sure no other template occupies our initial place (URL)
+    $self->duplicate_check unless $self->retired;
+
+    # make sure we are the one
+    $self->checkout;
+
+    # unset trash flag in template table
+    my $dbh = dbh();
+    $dbh->do(
+        'UPDATE template
+              SET trashed = ?
+              WHERE template_id = ?', undef,
+        0,                            $self->{template_id}
+    );
+
+    # remove from trash
+    pkg('Trash')->remove(object => $self);
+
+    # maybe in retire, maybe alive again
+    $self->{trashed} = 0;
+
+    # check back in
+    $self->checkin();
+
+    add_history(
+        object => $self,
+        action => 'untrash',
+    );
+}
+
+=item C<< $template->clone(category_id => $category_id) >>
+
+Copy $template to the category having the specified category_id.  Returns
+an unsaved and checked out copy.
+
+=back
+
+=cut
+
+sub clone {
+    my ($self, %args) = @_;
+
+    croak("No Category ID specified where to copy to template to")
+      unless $args{category_id};
+
+    my $copy = bless({%$self} => ref($self));
+
+    # redefine
+    $copy->{template_id}      = undef;
+    $copy->{template_uuid}    = pkg('UUID')->new;
+    $copy->{category_id}      = $args{category_id};
+    $copy->{version}          = 0;
+    $copy->{testing}          = 0;
+    $copy->{creation_date}    = localtime();
+    $copy->{deploy_date}      = undef;
+    $copy->{deployed}         = 0;
+    $copy->{deployed_version} = 0;
+    $copy->{retired}          = 0;
+    $copy->{trashed}          = 0;
+    $copy->{url}              = '';                   # is set by save()
+    $copy->{checked_out}      = 1;
+    $copy->{checked_out_by}   = $ENV{REMOTE_USER};
+
+    return $copy;
+}
 
 =head1 TO DO
 

@@ -374,32 +374,44 @@ One can handle such an exception thusly:
 =cut
 
 sub dependent_check {
-    my $self = shift;
-    my $id = shift || $self->{user_id};
+    my $self       = shift;
+    my $id         = shift || $self->{user_id};
     my $dependents = 0;
     my %info;
 
-    for my $class(qw/media story template/) {
-        my $module = ucfirst $class;
-        no strict 'subs';
-
-        my $pkg = pkg($module);
-        eval "require $pkg";
+    for my $class ($self->dependent_class_list) {
+        eval "require $class";
         die $@ if $@;
 
-        my @objects = $pkg->find(checked_out_by => $id);
+        my @objects = $class->find(checked_out_by => $id);
         if (@objects) {
-            my $id_field = $class . "_id";
+            my $id_method = $class->id_meth();
             $dependents += scalar @objects;
-            push @{$info{$class}}, map {$_->$id_field} @objects;
+            push @{$info{$class}}, map { $_->$id_method } @objects;
         }
     }
 
-    Krang::User::Dependency->throw(message => 'Objects depend on this user',
-                                   dependencies => \%info)
-        if $dependents;
+    Krang::User::Dependency->throw(
+        message      => 'Objects depend on this user',
+        dependencies => \%info
+    ) if $dependents;
 
     return 0;
+}
+
+=item * dependent_class_list
+
+Returns a list of classes to check for potential objects that could
+be checked-out by users. This is called by C<dependent_check()> and mainly
+exists to be overridden by addons.
+
+Classes in this list must implement the C<find()> and C<id_meth()> methods.
+
+=cut
+
+sub dependent_class_list {
+    my $self = shift;
+    return (pkg('Media'), pkg('Story'), pkg('Template'));
 }
 
 
@@ -484,6 +496,8 @@ characters must surround the sub-striqng).  The valid search fields are:
 
 =over 4
 
+=item * login
+
 =item * email
 
 =item * first_name
@@ -504,7 +518,7 @@ characters must surround the sub-striqng).  The valid search fields are:
 
 =item * simple_search
 
-Seaches first_name, last_name for matching LIKE strings
+Seaches first_name, last_name and login for matching LIKE strings
 
 =back
 
@@ -620,13 +634,8 @@ sub find {
         } elsif ($arg eq 'simple_search') {
             my @words = split(/\s+/, $args{$arg});
             for (@words) {
-                if ($where_clause) {
-                    $where_clause .= " AND concat(u.first_name, ' ', " .
-                      "u.last_name) LIKE ?";
-                } else {
-                    $where_clause = "concat(u.first_name, ' ', u.last_name) " .
-                      "LIKE ?";
-                }
+		$where_clause .= ($where_clause ? " AND " : '') .
+                                 "concat(u.first_name, ' ', u.last_name, ' ', u.login) LIKE ?";
                 push @params, "%" . $_ . "%";
             }
         } else {

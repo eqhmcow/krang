@@ -84,6 +84,10 @@ our %CONFIG = (
         type => 'scalar',
         row  => 'language',
     },
+    syntax_highlighting => {
+        type => 'scalar',
+        row  => 'syntax_highlighting',
+    },
 );
 
 =pod

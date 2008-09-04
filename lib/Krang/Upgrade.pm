@@ -6,8 +6,14 @@ use strict;
 
 use Krang::ClassLoader 'Conf';
 use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader 'AddOn';
 use Carp qw(croak);
+use File::Spec::Functions qw(catfile);
 
+# call the init-handler of any AddOns being used
+BEGIN {
+    pkg('AddOn')->call_handler('InitHandler');
+}
 
 =head1 NAME
 
@@ -77,30 +83,54 @@ The upgrade() method is called by the krang_upgrade script to implement
 an upgrade.  This method calls C<per_installation()>, and then calls 
 C<per_instance()> once for each installed instance.
 
+The following named parameters may be passed which will then get passed
+along to C<per_installation()> and C<per_instance()>.
+
+=over
+
+=item * no_db
+
+This tells the upgrade module that the upgrade should not make changes to
+the database.
 
 =back
 
+=item remove_files()
+
+This convenience method is provided to help remove old files during the upgrade.
+It's best to call this method in the C<per_installation()> method since files
+are per-installation. File names are given relative to C<KRANG_ROOT>.
+
+    $self->remove_files(
+        'lib/Krang/Foo.pm',
+        'src/Foo-1.00.tar.gz',
+    );
+
+=back
 
 =head1 SEE ALSO
 
 Releasing Krang: Creating Upgrade Modules  F<docs/release.pod>
 
-
-
 =cut
-
 
 sub per_installation {
     my $self = shift;
     croak("No per_installation() method implemented in $self");
 }
 
-
 sub per_instance {
     my $self = shift;
     croak("No per_instance() method implemented in $self");
 }
 
+sub remove_files {
+    my ($self, @files) = @_;
+    foreach my $file (@files) {
+        $file = catfile($ENV{KRANG_ROOT}, $file);
+        system("rm -rf $file") if (-e $file || -d $file)
+    }
+}
 
 # Create a trivial object
 sub new {
@@ -108,12 +138,11 @@ sub new {
     bless({}, $class);
 }
 
-
 sub upgrade {
-    my $self = shift;
+    my ($self, %args) = @_;
 
     # Run per_installation() method
-    $self->per_installation();
+    $self->per_installation(%args);
 
     # Run per_instance() method, for each instance
     my @instances = pkg('Conf')->instances();
@@ -125,11 +154,8 @@ sub upgrade {
         my $dbh = dbh(ignore_version=>1);
 
         # Call per_instance(), now that the environment has been established
-        $self->per_instance();
+        $self->per_instance(%args);
     }
 }
-
-
-
 
 1;

@@ -251,7 +251,7 @@ sub get_message_text {
         $msg = $conf->get($key);
 
         # turn UTF-8 on the string if we need to
-        $msg = decode_utf8(encode_utf8($msg)) if pkg('Charset')->is_utf8;
+        $msg = decode_utf8($msg) if pkg('Charset')->is_utf8;
 
         last if $msg;
     }

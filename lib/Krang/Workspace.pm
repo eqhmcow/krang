@@ -4,8 +4,8 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader DB => qw(dbh);
-use Krang::ClassLoader Log => qw(debug);
+use Krang::ClassLoader DB      => qw(dbh);
+use Krang::ClassLoader Log     => qw(debug);
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Template';
@@ -89,16 +89,16 @@ Results will be in sorted in ascending order unless this is set to 1
 =cut
 
 sub find {
-    my $pkg = shift;
+    my $pkg  = shift;
     my %args = @_;
-    my $dbh = dbh();
+    my $dbh  = dbh();
 
     # get search parameters out of args, leaving just field specifiers
-    my $order_by  = delete $args{order_by} || 'type';
+    my $order_by = delete $args{order_by} || 'type';
     my $order_dir = delete $args{order_desc} ? 'DESC' : 'ASC';
-    my $limit     = delete $args{limit}    || 0;
-    my $offset    = delete $args{offset}   || 0;
-    my $count     = delete $args{count}    || 0;
+    my $limit  = delete $args{limit}  || 0;
+    my $offset = delete $args{offset} || 0;
+    my $count  = delete $args{count}  || 0;
 
     # an order_by of type really means type,class,id.  Go figure.
     $order_by = 'type,class,id' if $order_by eq 'type';
@@ -108,8 +108,8 @@ sub find {
 
     # use logged in user_id unless user_id passed in
     my $user_id = $args{user_id} ? $args{user_id} : $ENV{REMOTE_USER};
-    my @param  = ($user_id) x 3;
-    
+    my @param = ($user_id) x 3;
+
     # FIX: this code could be smarter about which fields to SELECT
     # based on the needed order_by
 
@@ -122,7 +122,7 @@ sub find {
         s.title AS title,
         class
  FROM story AS s LEFT JOIN story_category AS sc USING (story_id) 
- WHERE s.checked_out_by = ? AND sc.ord = 0) 
+ WHERE s.checked_out_by = ? AND sc.ord = 0 AND s.retired = 0 AND s.trashed = 0)
 
 UNION 
 
@@ -132,8 +132,8 @@ UNION
         creation_date AS date, 
         title,
         '' as class
- FROM media
- WHERE checked_out_by = ?) 
+ FROM media AS m
+ WHERE checked_out_by = ? AND m.retired = 0 AND m.trashed = 0)
 
 UNION 
 
@@ -144,7 +144,7 @@ UNION
         filename AS title,
         '' as class
  FROM template
- WHERE checked_out_by = ?) 
+ WHERE checked_out_by = ?)
 SQL
 
     # mix in order_by
@@ -159,7 +159,7 @@ SQL
 
     debug(__PACKAGE__ . "::find() SQL: " . $query);
     debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', @param));
-    
+
     # execute the search
     my $sth = $dbh->prepare($query);
     $sth->execute(@param);
@@ -191,29 +191,27 @@ SQL
     # load stories
     my %stories;
     if (@story_ids) {
-        %stories = map { ($_->story_id, $_) }
-          pkg('Story')->find(story_id => \@story_ids);
+        %stories = map { ($_->story_id, $_) } pkg('Story')->find(story_id => \@story_ids);
     }
 
     # load media
     my %media;
     if (@media_ids) {
-        %media = map { ($_->media_id, $_) }
-          pkg('Media')->find(media_id => \@media_ids);
+        %media = map { ($_->media_id, $_) } pkg('Media')->find(media_id => \@media_ids);
     }
 
     # load template
     my %templates;
     if (@template_ids) {
-        %templates = map { ($_->template_id, $_) }
-          pkg('Template')->find(template_id => \@template_ids);
+        %templates =
+          map { ($_->template_id, $_) } pkg('Template')->find(template_id => \@template_ids);
     }
-    
+
     # collate results in order
     my @objects;
     foreach my $row (@$results) {
         my ($id, $type) = @$row;
-        if ($type == 1) {            
+        if ($type == 1) {
             push @objects, $stories{$id};
         } elsif ($type == 2) {
             push @objects, $media{$id};
@@ -230,6 +228,4 @@ SQL
 =back
 
 =cut 
-
-
 

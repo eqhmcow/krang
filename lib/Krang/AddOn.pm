@@ -78,25 +78,17 @@ Get the addon's configuration, a Config::ApacheFormat object.
 Get a list of addons sorted by their Priority.
 supported:
 
-=back
-
 =over
 
 =item name
 
 Find an addon based on name.
 
-=back
-
-=over
-
 =item condition
 
 Find a set of addons based on boolean flag
 
 =back
-
-=over
 
 =item C<< pkg('AddOn')->call_handler($name, @args) >>
 
@@ -107,44 +99,41 @@ NavigationHandler is triggered using:
 
 =back
 
-=head1 Scheduler Addons
+=head1 Scheduler AddOns
 
 Two types of scheduler addons are supported.  They are configured with the following directives in krang_addon.conf.
 
 =over
 
-=item EnableAdminSchedulerActions 1
+=item EnableAdminSchedulerActions
 
- flags scheduler to look in this addon for items to add to the admin scheduler screen
+Flags scheduler to look in this addon for items to add to the admin scheduler screen
 
-=over
+    EnableAdminSchedulerActions 1
 
-=item AdminSchedulerActionList Foo Bar
+=item AdminSchedulerActionList
 
- List of actions to add to admin scheduler screen 
+List of actions to add to admin scheduler screen 
 
-=back
+    AdminSchedulerActionList Foo Bar
 
-=back
+=item EnableObjectSchedulerActions
 
-=over
+Flags scheduler to look in this addon for actions to add to the story/media scheduler screen
 
-=item EnableObjectSchedulerActions 1
+    EnableObjectSchedulerActions 1
 
- flags scheduler to look in this addon for actions to add to the story/media scheduler screen
+=item ObjectSchedulerActionList
 
-=over
+List of actions to add to story/media scheduler screen 
 
-=item ObjectSchedulerActionList Foo Bar
-
- List of actions to add to story/media scheduler screen 
-
-=back
+    ObjectSchedulerActionList Foo Bar
 
 =back
 
 =cut
 
+use version;
 use Carp qw(croak);
 use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catdir catfile canonpath splitdir);
@@ -295,7 +284,7 @@ sub install {
     # installed
     my ($old) = pkg('AddOn')->find(name => $conf->get('name'));
     $args{old} = $old;
-    if ($old and $old->version >= $conf->get('version') and not $force) {
+    if ($old and $pkg->_compare_versions($old->version, '>=', $conf->get('version')) and not $force) {
         die "Unable to install version " . $conf->get('version') . " of " . 
           $conf->get('name') . ", version " . $old->version . 
            " is already installed!\n";
@@ -320,7 +309,7 @@ sub install {
             die "This addon requires the '$req_name' addon version '$req_ver' ".
               "or greater, but only version '" . $req->version . 
                 "' is installed.\n"
-                  if $req_ver > $req->version;
+                  if $pkg->_compare_versions($req_ver, '>', $req->version);
         }
     }
 
@@ -344,7 +333,7 @@ sub install {
     pkg('ClassFactory')->reload_configuration();
 
     # perform upgrades if necessary
-    $pkg->_upgrade(%args) if $old;
+    $pkg->upgrade(%args, old_version => $old->version) if $old;
 
     # run the post install script if required
     system("KRANG_ROOT=" . KrangRoot . " $^X " . 
@@ -360,17 +349,18 @@ sub install {
 #
 
 # do upgrades if necessary
-sub _upgrade {
+sub upgrade {
     my ($pkg, %args) = @_;
-    my ($source, $verbose, $force, $conf, $old) = 
-      @args{('src', 'verbose', 'force', 'conf', 'old')};
+    my ($verbose, $old_version) = @args{qw(verbose old_version)};
 
     return unless -d 'upgrade';
-    my $old_version = $old->version;
     
     # get list of potential upgrades
     opendir(UDIR, 'upgrade') or die $!;
-    my @mod = grep { /^V(\d+)\_(\d+)\.pm$/ and "$1.$2" > $old_version } 
+    my @mod = grep {
+        /^V(\d+)\_(\d+)(?:_(\d+))?\.pm$/
+          and $pkg->_compare_versions("$1.$2" . ($3 ? ".$3" : ''), '>', $old_version)
+      }
       sort readdir(UDIR);
     closedir(UDIR);
 
@@ -547,6 +537,29 @@ sub _open_addon {
     if (@entries == 1 and -d $entries[0]) {
         chdir($entries[0]) or die $!;
     }
+}
+
+sub _compare_versions {
+    my ($pkg, $first, $op, $last) = @_;
+
+    # first make sure that they are the same length.. 1.2 vs 1.2.1
+    my @first_nums = split(/\./, $first);
+    my @last_nums = split(/\./, $last);
+    while(@first_nums != @last_nums) {
+        if( @first_nums < @last_nums ) {
+            push(@first_nums, 0)                                    
+        } else {
+            push(@last_nums, 0) 
+        }
+    }
+
+    # because we already have a version() subroutine/method that
+    # our MethodMaker creates so it means we can't use a class by the same
+    # name or we get a bare-word conflict
+    my $version_class = 'version';
+    $first = $version_class->new(join('.', @first_nums))->numify;
+    $last = $version_class->new(join('.', @last_nums))->numify;
+    return eval "$first $op $last";
 }
 
 1;

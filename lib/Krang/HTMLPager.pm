@@ -66,6 +66,7 @@ use Krang::ClassLoader MethodMaker => (
                                                command_column_labels
                                                columns_sortable 
                                                columns_sort_map
+                                               columns_hidden
                                                default_sort_order_desc
                                                row_handler
                                                id_handler
@@ -124,6 +125,7 @@ sub init {
                     column_labels => {},
                     columns_sortable => [],
                     columns_sort_map => {},
+                    columns_hidden => [],
                     default_sort_order_desc => 0,
                     command_column_commands => [],
                     command_column_labels => {},
@@ -143,6 +145,11 @@ sub init {
 
     # Set default row_count
     $self->{row_count} = undef;
+
+    # Register hidden columns
+    for my $hidden_col (@{$self->columns_hidden}) {
+        $self->column_display($hidden_col => 0);
+    }
 
     return $self;
 }
@@ -347,7 +354,7 @@ END
 EOF
 
     $pager_tmpl .= localize('None found');
-
+    $pager_tmpl .= '<tmpl_if other_search_place> <a href="javascript:other_search_rm()"><tmpl_var other_search_place></a></tmpl_if>';
     $pager_tmpl .= <<"EOF";
 </p>
 
@@ -355,6 +362,49 @@ EOF
 EOF
 
     return $pager_tmpl;
+}
+
+=item column_display($col => 0 | 1)
+
+   $pager->column_display(status => 1, ...)
+
+This method allows to control whether certain columns should be
+displayed or not.  It is meant to be used in row handlers.  This way,
+columns that would be displayed per default can be hidden depending on
+some row object property.  Likewise, columns that would be hidden (see
+the property 'columns_hidden' below) can be shown.
+
+For each column name passed to this method, the pager creates a
+special tmpl_if that can be used to actually control the column
+display in the templates:
+
+   <tmpl_if __show_status__><td><tmpl_var status></tmpl_if>
+
+This method can be called multiple times for the same column name
+allowing for more involved control schemes.
+
+Displaying the list buttons can be controlled via the checkbox_column
+display.
+
+=cut
+
+sub column_display {
+    my ($self) = shift;
+
+    croak("Argument to Krang::HTMLPager::column_display() is not an even sized list")
+      if scalar(@_) % 2;
+
+    # First use?
+    $self->{column_display} = {}
+      unless exists($self->{column_display});
+
+    # Store them
+    my %cols = @_;
+    while (my($column, $visibility) = each %cols) {
+        $self->{column_display}{$column} = $visibility;
+    }
+
+    return $self->{column_display};
 }
 
 =back
@@ -500,6 +550,36 @@ which "select all" and "un-select all" functions can be triggered.
 This column header functionality can be overridden via "column_labels"
 below.
 
+=item columns_hidden
+
+  columns_hidden => [qw( status )]
+
+An arrayref containing the names of columns that should not be
+displayed per default.  Members of this list must also be members of
+the arrayref 'columns'.  Together with B<column_display()>, this list
+allows to display the named columns depending on some row object
+property.
+
+For each member of this list, the pager creates a special tmpl_if that
+can be used to control the column display in the templates.  The
+default value of those tmpl_if is '0', but can be changed via
+column_display().
+
+ B<Example:>
+
+On Retired Asset screens, the status column should normally not show
+up.  There is however one edge case making it desirable to display
+this column. When searching an asset by ID, all assets are found, no
+matter whether they are actually retired or live or trashed.  A live
+or trashed asset should indicate its living place and the status
+column seems the right place for this piece of information. For this
+edge the status column hidden per default should be displayed
+nonetheless.  The default -- hide the column -- is specified using the
+'columns_hidden' list, inverting the default from within a row handler
+is done via B<column_display()>.
+
+  <tmpl_if __show_status__><td><tmpl_var status></tmpl_if>
+
 
 =item column_labels
 
@@ -601,18 +681,24 @@ to "ascending".
 
 A subroutine reference pointing to a custom function to process each
 row of data.  This function will receive, as arguments, a hashref into
-which row data should be placed and a reference to the object to be
-displayed on this row.  The job of your custom function is to convert
-the object attributes into template data and set that data in the 
-hashref.  For example:
+which row data should be placed, a reference to the object to be
+displayed on this row and a reference to the pager object.  The job of
+your custom function is to convert the object attributes into template
+data and set that data in the hashref.  For example:
 
   sub my_row_handler {
-    my ($self, $row_hashref, $row_obj) = @_;
+    my ($self, $row_hashref, $row_obj, $pager) = @_;
     $row_hashref->{first_middle} = $row_obj->first() . " " . $row_obj->middle();
     $row_hashref->{last} = $row_obj->last();
     $row_hashref->{type} = join(", ", ($row_obj->contrib_type_names()) );
+    $pager->column_display('checkbox_column' => 1) if $row_obj->may_edit;
   }
 
+The purpose of passing in the pager object is to make the display of
+list controls (list checkbox and buttons) dependant on some row object
+attribute.  The Trash for example may contain stories, media and
+templates. If a user has only template edit permission, but the trash
+contains no templates, the list controls should not be displayed.
 
 =item id_handler
 
@@ -958,6 +1044,7 @@ sub _fill_template {
 
     # Process pager and get rows
     my $pager_view = $self->get_pager_view();
+
     $t->param($pager_view);
 
     # Set up persist_vars
@@ -1080,7 +1167,7 @@ sub get_pager_view {
 
         # Call row_handler
         my $row_handler = $self->row_handler();
-        $row_handler->(\%row_data, $fobj);
+        $row_handler->(\%row_data, $fobj, $self);
 
         # Propagate to template
         push(@krang_pager_rows, \%row_data);
@@ -1108,7 +1195,14 @@ sub get_pager_view {
                       next_page_number   => $next_page_number,
                       krang_pager_rows   => \@krang_pager_rows,
                       plural             => ($found_count > 1 ? 1 : 0),
+                      other_search_place => ($q->param('other_search_place') || ''),
                      );
+
+    # Add column display
+    my %column_display = %{$self->column_display()};
+    for my $col (keys %column_display) {
+        $pager_view{"__show_${col}__"} = $column_display{$col};
+    }
 
     return \%pager_view;
 }
