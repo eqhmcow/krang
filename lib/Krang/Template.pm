@@ -796,7 +796,7 @@ sub find {
                   below_category_id
                   may_see
                   may_edit 
-                  full_text_string
+                  full_text_string )
             )
           );
 

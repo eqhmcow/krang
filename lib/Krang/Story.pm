@@ -2351,6 +2351,8 @@ sub clone {
         $copy->resolve_url_conflict(append => 'copy');
     }
 
+    # new story should be editable even if old one wasn't
+    $copy->{may_edit} = 1;
     return $copy;
 }
 
@@ -2395,10 +2397,6 @@ sub resolve_url_conflict {
         $self->{category_cache} = [];
         $self->{url_cache}      = [];
     }
-
-    # new story should be editable even if old one wasn't
-    $copy->{may_edit} = 1;
-    return $copy;
 }
 
 =item C<< @linked_stories = $story->linked_stories >>
