@@ -1,0 +1,213 @@
+<tmpl_include header.tmpl>
+
+<form name="view_log_form" method="post" action="media.pl">
+<input type="hidden" name="rm" value="save_and_view_log">
+<input type="hidden" name="media_id" value="<tmpl_var escape=html media_id>">
+<input type="hidden" name="return_to_transform" value="1">
+</form>
+
+<p class="cram east">
+  <input value="View Log" onclick="view_log()" type="button" class="button">
+</p>
+
+<h2>
+Transform Image
+</h2>
+
+<h3><tmpl_var title escape=html></h3>
+
+<div id="transform_controls">
+<form name="transform_controls_form">
+  <img class="control" src="/static/<tmpl_var krang_install_id>/images/rotate_left.png">
+  <input type="button" class="button" value="Rotate Left" onclick="do_rotate('l')">
+  <img class="control" src="/static/<tmpl_var krang_install_id>/images/rotate_right.png">
+  <input type="button" class="button" value="Rotate Right" onclick="do_rotate('r')">
+  <img class="control" src="/static/<tmpl_var krang_install_id>/images/flip_horizontal.png">
+  <input type="button" class="button" value="Flip Horizontal" onclick="do_flip('h')">
+  <img class="control" src="/static/<tmpl_var krang_install_id>/images/flip_vertical.png">
+  <input type="button" class="button" value="Flip Vertical" onclick="do_flip('v')">
+
+  <div id="resize_track" class="slider_track">
+    <div id="resize_handle" class="slider_handle"></div>
+  </div>
+
+  <label for="control_width">Width</label>
+  <input type="text" name="control_width" id="control_width" value="<tmpl_var original_width>" size="5" onblur="change_width(this.value)">
+  &nbsp; &nbsp;
+  <label for="control_height">Height</label>
+  <input type="text" name="control_height" id="control_height" value="<tmpl_var original_height>" size="5" onblur="change_height(this.value)">
+
+</form>
+</div>
+
+<div class="panel"><form>
+<input value="Cancel" onclick="do_cancel()" type="button" class="west">
+<input value="Apply" onclick="do_transform_image()" type="button">
+<input value="Save" onclick="do_save_image_transform()" type="button">
+</form>
+</div>
+
+<div id="resize_image_container" style="width: 700px; max-height: 400px; overflow: auto">
+  <img src="<tmpl_var url>" id="the_image" style="width: <tmpl_var original_width>; height: <tmpl_var original_height>">
+</div>
+
+<script>
+var original_width = <tmpl_var original_width>;
+var original_height = <tmpl_var original_height>;
+var cropper;
+var slider;
+
+Krang.onload( function() {
+  Krang.Nav.edit_mode();
+  Krang.Help.set( 'media_edit' );
+} );
+
+do_transform_image = function() {
+    Krang.Form.submit('transform_form', { rm: 'transform_image' });
+}
+
+do_rotate = function(direction) {
+    Krang.Form.submit('transform_form', { rm: 'transform_image', rotate_direction: direction });
+}
+
+do_flip = function(direction) {
+    Krang.Form.submit('transform_form', { rm: 'transform_image', flip_direction: direction });
+}
+
+view_log = function() {
+    Krang.Form.submit('view_log_form');
+}
+
+do_cancel = function() {
+    Krang.Form.submit('cancel_form');
+}
+
+do_save_image_transform = function() {
+    Krang.Form.submit('transform_form', { rm: 'save_image_transform' });
+}
+
+change_width = function(new_width) {
+}
+Krang.onload(function() {
+    slider = new Control.Slider('resize_handle','resize_track', { 
+        axis        : 'horizontal', 
+        range       : $R(-100, 100), 
+        values      : $R(-100, 100), 
+        sliderValue : 1,
+        onSlide     : function(v) { 
+            remove_cropper();
+            if(!dont_change_dimensions) {
+                var new_width =  calculate_dimension(original_width, v);
+                $('the_image').style.width = new_width + 'px';
+                $('control_width').value   = new_width;
+                $('control_height').value  = calculate_dimension(original_height, v);
+            }
+        },
+        onChange    : function(v) {
+            if(!dont_change_dimensions) {
+                $('new_width').value = calculate_dimension(original_width, v);
+                $('new_height').value = calculate_dimension(original_height, v);
+            }
+            if(!cropper) {
+                cropper = new_cropper();
+            }
+        }
+    });
+
+    cropper = new_cropper();
+});
+
+new_cropper = function() {
+    Krang.show_indicator();
+    var cropper = new Cropper.Img('the_image', {
+        onEndCrop: function(coords, dimensions) {
+            $('crop_x').value = coords.x1;
+            $('crop_y').value = coords.y1;
+            $('crop_width').value = dimensions.width;
+            $('crop_height').value = dimensions.height;
+        }
+    });
+    Krang.hide_indicator();
+    return cropper;
+}
+
+remove_cropper = function() {
+    if(cropper) {
+        cropper.remove();
+        cropper = null;
+    }
+}
+
+reset_cropper = function() {
+    remove_cropper();
+    cropper = new_cropper();
+}
+
+Krang.onunload(function() { remove_cropper() });
+
+calculate_dimension = function(original, percent) {
+  return Math.floor((percent/100) * original) + original;
+}
+
+var dont_change_dimensions = false;
+change_width = function(new_width) {
+    dont_change_dimensions = true;
+    $('the_image').style.width = new_width + 'px';
+    $('new_width').value = new_width;
+
+    // reset the cropper since our image has changed.
+    reset_cropper()
+
+    // calculate and set the new height
+    var ratio = new_width/original_width;
+    var new_height = Math.floor(original_height * ratio);
+    $('the_image').style.height = new_height + 'px';
+    $('control_height').value = new_height;
+    $('new_height').value = new_height;
+
+    // calculate the slider position
+    var position = Math.floor(ratio * 100) - 100;
+    slider.setValue(position);
+    dont_change_dimensions = false;
+}
+change_height = function(new_height) {
+    dont_change_dimensions = true;
+    $('the_image').style.height = new_height + 'px';
+    $('new_height').value = new_height;
+
+    // reset the cropper since our image has changed.
+    reset_cropper()
+
+    // calculate and set the new width
+    var ratio = new_height/original_height;
+    var new_width = Math.floor(original_width * ratio);
+    $('the_image').style.width = new_width + 'px';
+    $('control_width').value = new_width;
+    $('new_width').value = new_width;
+
+    // calculate the slider position
+    var position = Math.floor(ratio * 100) - 100;
+    slider.setValue(position);
+    dont_change_dimensions = false;
+}
+</script>
+
+<form name="cancel_form" action="media.pl" method="post">
+<input type="hidden" name="rm" value="cancel_image_transform">
+</form>
+
+<form name="transform_form" action="media.pl" method="post">
+<input type="hidden" name="rm" value="">
+<input type="hidden" name="apply_transform" value="1">
+<input type="hidden" id="crop_x" name="crop_x" value="">
+<input type="hidden" id="crop_y" name="crop_y" value="">
+<input type="hidden" id="crop_width" name="crop_width" value="">
+<input type="hidden" id="crop_height" name="crop_height" value="">
+<input type="hidden" id="new_width" name="new_width" value="">
+<input type="hidden" id="new_height" name="new_height" value="">
+<input type="hidden" id="rotate_direction" name="rotate_direction" value="">
+<input type="hidden" id="flip_direction" name="flip_direction" value="">
+</form>
+
+<tmpl_include footer.tmpl>
+

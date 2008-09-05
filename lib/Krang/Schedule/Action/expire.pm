@@ -80,7 +80,7 @@ sub _expire {
     my $self = shift;
     my $obj = $self->{object};
 
-    $obj->delete();
+    $obj->trash();
     debug(sprintf("%s->_expire(): Deleted %s id '%i'.",
                  __PACKAGE__, $self->{object_type}, $self->{object_id}));
 

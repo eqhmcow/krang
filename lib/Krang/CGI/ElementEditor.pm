@@ -296,8 +296,48 @@ sub element_edit {
     # whip up child element picker from available classes
     my @available =  $element->available_child_classes();
     if (@available) {
-        my @values = sort { $a cmp $b } map { $_->name } @available;
-        my %labels = map { ($_->name, localize($_->display_name)) } @available;
+        my (@values, %labels);
+        if (my @elements_in_order = $element->class->order_of_available_children) {
+            # if the element class defines the order, use it 
+            my %element_order;
+            if (ref $elements_in_order[0] eq 'HASH') {
+                # build the menu with optgroups
+                for (my $i = 0; $i < @elements_in_order; ++$i) {
+                    %element_order = ();
+
+                    # get elements for this group
+                    my @element_names = @{$elements_in_order[$i]->{elements}};
+                    for (my $j = 0; $j < @element_names; ++$j) {
+                        $element_order{$element_names[$j]} = $j;
+                    }
+
+                    # we only care about available elements
+                    my @elements = grep { exists $element_order{$_->name} } @available;
+                    next unless @elements;
+                    
+                    my @sorted = sort { ($element_order{$a} || 0) <=> ($element_order{$b} || 0) } map { $_->name } @elements;
+                    my %group_labels = map { ($_->name, localize($_->display_name)) } @elements;
+
+                    push @values, $query->optgroup(
+                        -name => $elements_in_order[$i]->{optgroup},
+                        -values => \@sorted,
+                        -labels => \%group_labels,
+                    );
+                }
+            } else {
+                # single list
+                for (my $i = 0; $i < @elements_in_order; ++$i) {
+                    $element_order{$elements_in_order[$i]} = $i;
+                }
+                @values = sort { ($element_order{$a} || 0) <=> ($element_order{$b} || 0) } map { $_->name } @available;
+                %labels = map { ($_->name, localize($_->display_name)) } @available;
+            }
+        } else {
+            # otherwise sort by display name
+            @values = map { $_->name } sort { localize($a->display_name) cmp localize($b->display_name) } @available;
+            %labels = map { ($_->name, localize($_->display_name)) } @available;
+        }
+
         $template->param(child_select => 
                          $query->popup_menu(-name   => "child",
                                             -values => \@values,
@@ -555,7 +595,7 @@ sub find_story_link {
 sub find_story_link_row_handler {
     my $self = shift;
     my $q = $self->query;
-    my ($row, $story) = @_;
+    my ($row, $story, $pager) = @_;
 
     # Columns:
     #
@@ -735,7 +775,7 @@ sub find_media_link {
 # Pager row handler for media find run-mode
 sub find_media_link_row_handler {
     my $self = shift;
-    my ($row, $media) = @_;
+    my ($row, $media, $pager) = @_;
 
     # Columns:
     #

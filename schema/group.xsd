@@ -42,6 +42,7 @@
 				<xs:element name="admin_scheduler" type="xs:boolean"/>
 				<xs:element name="admin_desks" type="xs:boolean"/>
                                 <xs:element name="admin_lists" type="xs:boolean"/>
+                                <xs:element name="admin_delete" type="xs:boolean"/>
 				<xs:element name="asset_story" type="xs:string"/>
 				<xs:element name="asset_media" type="xs:string"/>
 				<xs:element name="asset_template" type="xs:string"/>

@@ -430,7 +430,6 @@ sub preview_story {
     my $scheme = PreviewSSL ? 'https' : 'http';
     print qq|<script type="text/javascript">\nwindow.location = '$scheme://$url';\n</script>\n|
       if $url;
-
 }
 
 # update the progress bar during preview or publish
@@ -443,7 +442,9 @@ sub _progress_callback {
     } else {
         $string = "Media " . $object->media_id . ": " . $object->url;
     }
-    print qq|<script type="text/javascript">\nKrang.update_progress( $counter, $total, '$string' );\n</script>\n|;
+    print qq|
+        <script type="text/javascript">Krang.Progress.update($counter, $total, '$string');</script>
+    |;
 }
 
 =item preview_media
@@ -525,11 +526,10 @@ sub preview_media {
 	return $self->redirect_to_workspace;
     } else {
         # redirect to preview
-        $self->header_type('redirect');
-
         my $scheme = PreviewSSL ? 'https' : 'http';
-        $self->header_props(-uri => "$scheme://$url");
-        return "Redirecting to <a href='$scheme://$url'>$scheme://$url</a>.";
+        $self->header_props(-uri => $scheme . '://' . $url);
+        $self->header_type('redirect');
+        return "Redirect: <a href=\"$url\">$url</a>";
     }
 }
 
@@ -604,6 +604,13 @@ sub _build_asset_list {
             # Nothing else should make it this far.
             croak sprintf("%s: I have no idea what to do with this: ISA='%s'", __PACKAGE__, $_->isa());
         }
+    }
+
+    # add the even flag to stories and media
+    my $even = 0;
+    foreach my $asset (@stories, @media) {
+        $asset->{even} = $even;
+        $even = !$even;
     }
 
     return (\@stories, \@media, $checked_out_assets);
@@ -747,7 +754,7 @@ sub _publish_assets_now {
     print qq|
     <script type="text/javascript">
         setTimeout(
-            function() { Krang.Window.pass_id(); location.replace('workspace.pl') },
+            function() { location.replace("workspace.pl?window_id=$ENV{KRANG_WINDOW_ID}") },
             10
         )
     </script>

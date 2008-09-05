@@ -67,9 +67,7 @@ BEGIN {
       "${lib}";
     unshift @INC, $lib, "$lib/".$Config{archname};
 
-    # load Krang::Conf (don't need to load Krang here because we won't
-    # be slinging elements)
-    $ENV{KRANG_NO_ELEMENTLIBS} = 1;
+    # load Krang::Conf 
     eval { require Krang::Conf };
     warn << "END" and exit(1) if $@;
 ######################################################################
@@ -123,9 +121,8 @@ BEGIN {
 }        
 
 
-# use first instance if one isn't set.  Addons are installation wide
-# anyway.
 use Krang::ClassLoader Conf => qw(KrangRoot);
+# use first instance if one isn't set.  AddOns are installation wide anyway.
 BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 use Krang::ClassLoader 'Script';
 use File::Copy qw(copy);

@@ -184,7 +184,7 @@ SKIP: {
     $mech->content_contains('Log Tools');
     $mech->content_like(qr/<a.*?log_viewer.pl.*>.*?View Log/);
     ## SchedulerAddon entry
-    $mech->content_contains('schedule.pl?advanced_schedule=1&rm=edit_admin');
+    $mech->content_contains('schedule.pl?advanced_schedule=1&amp;rm=edit_admin');
 
     # Clean should be removing spaces
     $mech->content_like(qr/<html[^>]*><head[^>]*><title[^>]*>/);

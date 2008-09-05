@@ -110,6 +110,17 @@ Output results of upgrade to console.
 
  --no-backup         - Skip making a backup before running the upgrade.
 
+ --no-start          - Skip starting the Krang services after the upgrade
+
+ --no-chown          - Skip re-chowning all of the files to the KrangUser
+                       and KrangGroup. This is useful if you have a lot of
+                       data files and you know that nothing has changed the
+                       ownership of the files
+
+ --no-db             - Skip any database related changes for the upgrade. This
+                       is mainly used if you have multiple machines running Krang
+                       but which share a common database.
+
  --help              - Show usage
 
  --man               - Show full man page
@@ -195,10 +206,10 @@ sub do_upgrade {
     install_new_krang();
     apply_upgrades();
     update_version();
-    update_db_version();
-    clear_sessions();
+    update_db_version() unless $options{'no-db'};
+    clear_sessions() unless $options{'no-db'};
 
-    start_krang();
+    start_krang() unless $options{'no-start'};
     output_report();
 }
 
@@ -441,6 +452,7 @@ sub install_new_krang {
     # Krang which had links to install directory.  It'd be nice to
     # write an upgrade module to weed them out but upgrade modules
     # don't run until after the chown...
+    return if $options{'no-chown'};
     my $chown = $CHOWN_BIN ." -R  --no-dereference $KrangUser\:$KrangGroup ";
     find({ no_chdir => 1,
            follow   => 0,
@@ -486,9 +498,10 @@ sub apply_upgrades {
         # Get package name by trimming off ".pm"
         my $package = $module;
         $package =~ s/\.pm$//;
+        my $no_db = $options{'no-db'} ? 1 : 0;
 
         my $upgrade_cmd = "KRANK_CONF_NOCHECK=1 KRANG_ROOT=$KrangRoot PERL5LIB=$perl5lib $PERL_BIN";
-        $upgrade_cmd .= " -M$package -e 'my \$ug = $package->new(); \$ug->upgrade()'";
+        $upgrade_cmd .= " -M$package -e 'my \$ug = $package->new(); \$ug->upgrade(no_db => $no_db)'";
         system($upgrade_cmd) && die("Error using upgrade module '$module'");
     }
     
@@ -585,16 +598,22 @@ sub exit_error {
 
 
 sub setup_getopts {
+
     # Copy the original args for re-invoking later
     @original_args = @ARGV;
 
-    pod2usage(2) unless
-        GetOptions( 'help'          => \$help,
-                    'man'           => \$man,
-                    'no-backup'     => \$options{'no-backup'},
-                    (map { $_."=s"  => \$options{$_} } @opt_params) );
+    pod2usage(2)
+      unless GetOptions(
+              'help'      => \$help,
+              'man'       => \$man,
+              'no-backup' => \$options{'no-backup'},
+              'no-start'  => \$options{'no-start'},
+              'no-chown'  => \$options{'no-chown'},
+              'no-db'     => \$options{'no-db'},
+              (map { $_ . "=s" => \$options{$_} } @opt_params)
+      );
 
-    pod2usage(1)             if $help;
+    pod2usage(1) if $help;
     pod2usage(-verbose => 2) if $man;
 
     # Set opt defaults

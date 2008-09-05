@@ -68,7 +68,8 @@ use constant CHECKBOX_FIELDS => qw( may_publish
                                     admin_jobs
                                     admin_scheduler
                                     admin_desks
-                                    admin_lists );
+                                    admin_lists
+                                    admin_delete );
 use constant GROUP_PROTOTYPE => {
                                  group_id            => '',
                                  name                => '',
@@ -680,7 +681,7 @@ sub _edit {
     $t->param(add_mode => 1) unless ($g->group_id);
     $t->param(%ui_messages) if (%ui_messages);
 
-    # Convert Krang::Contrib object to tmpl data
+    # Convert Krang::Group object to tmpl data
     my $group_tmpl = $self->get_group_tmpl($g);
 
     # Propagate to template

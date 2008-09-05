@@ -882,14 +882,14 @@ There are a number of benefits to this:
 
 =item *
 
-Addons are an easy way to move element libraries from one Krang
+AddOns are an easy way to move element libraries from one Krang
 installation to another.
 
 =item *
 
 You can maintain an addon separately from Krang.  Using a versioning
 system like CVS/Subversion/Bitkeeper is now easy, and encouraged -
-especially since Krang uses version numbers when tracking Addons.
+especially since Krang uses version numbers when tracking AddOns.
 
 =item *
 
@@ -900,7 +900,7 @@ project, for the world at large (hint, hint!)
 
 Read HREF[Building a Krang Add-on|add_on.html] for more information on
 creating an Add-on, and take a look at available
-HREF[Krang Addons|http://krang.sourceforge.net/addons.html] to see
+HREF[Krang AddOns|http://krang.sourceforge.net/addons.html] to see
 some existing addons.
 
 

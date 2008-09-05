@@ -1,33 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- edited with XMLSPY v5 rel. 4 U (http://www.xmlspy.com) by rth77 (rth77) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="unqualified" attributeFormDefault="unqualified">
-	<xs:element name="schedule">
-		<xs:annotation>
-			<xs:documentation>Comment describing your root element</xs:documentation>
-		</xs:annotation>
-		<xs:complexType>
-			<xs:sequence>
-                                <xs:element name="schedule_id" type="xs:int"/>
-				<xs:element name="object_type" type="xs:string"/>
-				<xs:element name="object_id" type="xs:int"/>
-				<xs:element name="action" type="xs:string"/>
-				<xs:element name="repeat" type="xs:string"/>
-				<xs:element name="next_run" type="xs:dateTime"/>
-                                <xs:element name="last_run" type="xs:dateTime" minOccurs="0"/>
-                                <xs:element name="initial_date" type="xs:dateTime" />
-				<xs:element name="hour" type="xs:int" minOccurs="0"/>
-				<xs:element name="minute" type="xs:int" minOccurs="0"/>
-				<xs:element name="day_of_week" type="xs:int" minOccurs="0"/>
-				<xs:element name="priority" type="xs:int" minOccurs="0"/>
-				<xs:element name="context" minOccurs="0" maxOccurs="unbounded">
-					<xs:complexType>
-						<xs:sequence>
-							<xs:element name="key" type="xs:string"/>
-							<xs:element name="value" type="xs:string"/>
-						</xs:sequence>
-					</xs:complexType>
-				</xs:element>
-			</xs:sequence>
-		</xs:complexType>
-	</xs:element>
+    <xs:element name="schedule">
+        <xs:annotation>
+            <xs:documentation>Comment describing your root element</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="schedule_id" type="xs:int"/>
+                <xs:element name="object_type" type="xs:string"/>
+                <xs:element name="object_id" type="xs:int"/>
+                <xs:element name="action" type="xs:string"/>
+                <xs:element name="repeat" type="xs:string"/>
+                <xs:element name="next_run" type="xs:dateTime"/>
+                <xs:element name="last_run" type="xs:dateTime" minOccurs="0"/>
+                <xs:element name="initial_date" type="xs:dateTime" />
+                <xs:element name="expires" type="xs:dateTime" minOccurs="0"/>
+                <xs:element name="hour" type="xs:int" minOccurs="0"/>
+                <xs:element name="minute" type="xs:int" minOccurs="0"/>
+                <xs:element name="day_of_week" type="xs:int" minOccurs="0"/>
+                <xs:element name="day_of_month" type="xs:int" minOccurs="0"/>
+                <xs:element name="day_interval" type="xs:int" minOccurs="0"/>
+                <xs:element name="priority" type="xs:int" minOccurs="0"/>
+                <xs:element name="context" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="key" type="xs:string"/>
+                    <xs:element name="value" type="xs:string"/>
+                </xs:sequence>
+                </xs:complexType>
+                </xs:element>
+                <xs:element name="inactive" type="xs:boolean"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
 </xs:schema>

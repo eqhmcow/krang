@@ -19,6 +19,8 @@ CREATE TABLE template (
         testing 		int(1) UNSIGNED NOT NULL,
         url			text NOT NULL,
         version 		smallint UNSIGNED NOT NULL,
+        retired        BOOL NOT NULL DEFAULT 0,
+        trashed         BOOL NOT NULL DEFAULT 0,
         PRIMARY KEY  (template_id),
         INDEX (category_id),
         INDEX (checked_out_by),

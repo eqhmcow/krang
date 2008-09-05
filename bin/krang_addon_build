@@ -91,10 +91,9 @@ use Pod::Usage;
 use Getopt::Long;
 use File::Temp qw(tempdir);
 
-# use first instance if one isn't set.  Addons are installation wide
-# anyway.
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Conf => qw(KrangRoot);
+# use first instance if one isn't set.  AddOns are installation wide anyway.
 BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'AddOn';

@@ -4,17 +4,25 @@ use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
 
-# readable labels for Krang::History actions
 our %ACTION_LABELS = (
-                      new      => 'Created',
-                      save     => 'Saved',
-                      checkin  => 'Checked In',
-                      checkout => 'Checked Out',
-                      publish  => 'Published',
-                      deploy   => 'Deployed',
-                      move     => 'Moved',
-                      revert   => 'Reverted',
-                     );
+    new      => 'created',
+    save     => 'saved',
+    checkin  => 'checked in',
+    checkout => 'checked out',
+    steal    => 'stolen',
+    publish  => 'published',
+    deploy   => 'deployed',
+    move     => 'moved',
+    revert   => 'reverted',
+    retire   => 'retired',
+    unretire => 'unretired',
+    trash    => 'trashed',
+    untrash  => 'untrashed',
+    resize   => 'resized',
+    crop     => 'cropped',
+    rotate   => 'rotated',
+    flip     => 'flipped',
+);
 
 use Carp qw(croak);
 use Krang::ClassLoader 'History';
@@ -56,9 +64,13 @@ sub setup {
 
     $self->start_mode('show');
 
-    $self->run_modes([qw(
-                         show
-                        )]);
+    $self->run_modes(
+        [
+            qw(
+              show
+              )
+        ]
+    );
 
     $self->tmpl_path('History/');
 }
@@ -103,100 +115,101 @@ might be used:
 =cut
 
 sub show {
-    my $self = shift;
-    my $query = $self->query;
+    my $self     = shift;
+    my $query    = $self->query;
     my $template = $self->load_tmpl('show.tmpl', associate => $query, loop_context_vars => 1);
 
     # load params
-    my $story_id    = $query->param('story_id');
-    my $media_id    = $query->param('media_id');
-    my $template_id = $query->param('template_id');
-    croak("Missing required story_id, media_id or template_id")
-      if not $story_id and not $media_id and not $template_id;
-    my $history_return_script = $query->param('history_return_script');
-    croak("Missing required history_return_script")
-      unless $history_return_script;
-    my @history_return_params = $query->param('history_return_params');
-    croak("Missing required history_return_params")
-      unless @history_return_params;
-    
+    my $id      = $query->param('id')      or croak("Missing required id");
+    my $class   = $query->param('class')   or croak("Missing required class param");
+    my $id_meth = $query->param('id_meth') or croak("Missing required id_meth param");
+    my $history_return_script = $query->param('history_return_script')
+      or croak("Missing required history_return_script");
+    my @history_return_params = $query->param('history_return_params')
+      or croak("Missing required history_return_params");
+    my $label = $query->param('label') || (split('::', $class))[-1];    # from the query or class
+    $self->param(label => $label);                                      # save for our row_handler
+
+    # we assume the class needs to run through pkg(); if it doesn't work, just use the class name
+    my $real_class = pkg($class);
+    eval "require $real_class";
+    if ($@) {
+        $real_class = $class;
+        eval "require $real_class";
+        croak("Unable to load class $real_class: $@") if $@;
+    }
 
     # load an object
-    my $object;
-    if ($story_id) {
-        ($object) = pkg('Story')->find(   story_id    => $story_id);
-    } elsif ($media_id) {
-        ($object) = pkg('Media')->find(   media_id    => $media_id);
-    } else {
-        ($object) = pkg('Template')->find(template_id => $template_id);
-    }
-    croak("Unable to load object!")
-      unless $object;
+    my ($object) = $real_class->find($id_meth => $id);
+    croak("Unable to load object!") unless $object;
 
     # setup return variables
-    $template->param(return_script => $history_return_script);
     my $return_hidden = "";
-    for(my $x = 0; $x <= $#history_return_params; $x += 2) {
-        my ($name, $value) = @history_return_params[($x, $x+1)];
-        $return_hidden .= $query->hidden(-name    => $name,
-                                         -default => $value,
-                                         -override => 1) . "\n";
+    for (my $x = 0 ; $x <= $#history_return_params ; $x += 2) {
+        my ($name, $value) = @history_return_params[($x, $x + 1)];
+        $return_hidden .= $query->hidden(
+            -name     => $name,
+            -default  => $value,
+            -override => 1
+        ) . "\n";
     }
-    $template->param(return_hidden => $return_hidden);
-
+    $template->param(
+        return_script => $history_return_script,
+        return_hidden => $return_hidden,
+        label         => $label,
+    );
 
     # setup the pager
-    my $pager = pkg('HTMLPager')->new
-      (
-       cgi_query => $query,
-       persist_vars => {
-                        rm => 'show',
-                        story_id => $story_id,
-                        media_id => $media_id,
-                        template_id => $template_id,
-                        history_return_script => $history_return_script,
-                        history_return_params => \@history_return_params,
-                       },
-       use_module => pkg('History'),
-       find_params => { object => $object },
-       columns => [qw(action user timestamp attr)],
-       column_labels => {
-                         action    => 'Action',
-                         user      => 'Triggered By',
-                         timestamp => 'Date',
-                         attr      => 'Attributes',
-                        },
-       columns_sortable => [qw( timestamp action )],
-       default_sort_order_desc => 1,
-       command_column_commands => [],
-       command_column_labels   => {},
-       row_handler => sub { $self->show_row_handler(@_) },
-       id_handler  => sub { 0 },
-      );
+    my $pager = pkg('HTMLPager')->new(
+        cgi_query    => $query,
+        persist_vars => {
+            rm                    => 'show',
+            id                    => $id,
+            class                 => $class,
+            id_meth               => $id_meth,
+            label                 => $label,
+            history_return_script => $history_return_script,
+            history_return_params => \@history_return_params,
+        },
+        use_module    => pkg('History'),
+        find_params   => {object => $object},
+        columns       => [qw(action user timestamp attr)],
+        column_labels => {
+            action    => 'Action',
+            user      => 'Triggered By',
+            timestamp => 'Date',
+            attr      => 'Attributes',
+        },
+        columns_sortable        => [qw( timestamp action )],
+        default_sort_order_desc => 1,
+        command_column_commands => [],
+        command_column_labels   => {},
+        row_handler             => sub { $self->show_row_handler(@_) },
+        id_handler              => sub { 0 },
+    );
 
     # Set up output
     $pager->fill_template($template);
 
     return $template->output;
-
 }
 
 sub show_row_handler {
-    my $self = shift;
-    my $q    = $self->query;
-    my ($row, $history) = @_;
-    
+    my $self  = shift;
+    my $q     = $self->query;
+    my $label = $self->param('label');
+    my ($row, $history, $pager) = @_;
+
     # setup action
-    my $name = ucfirst((split('::', $history->object_type))[-1]);
-    my $action = $history->action;
-    $action = $ACTION_LABELS{$action} if exists $ACTION_LABELS{$action};
-    $row->{action} = $q->escapeHTML("$name " . localize($action));
-    
+    my $object_type = ucfirst((split('::', $history->object_type))[-1]);
+    $row->{action} = $q->escapeHTML("$object_type " . localize($self->action_label($history->action)));
+
     # setup user
     my ($user) = pkg('User')->find(user_id => $history->user_id);
     if ($user) {
         $row->{user} = $q->escapeHTML($user->first_name . " " . $user->last_name);
     } else {
+
         # user does not exist, might have been deleted
         $row->{user} = localize("Unknown User");
     }
@@ -213,6 +226,10 @@ sub show_row_handler {
     $row->{attr} = $q->escapeHTML($attr);
 }
 
+sub action_label {
+    my ($self, $action) = @_;
+    return $ACTION_LABELS{$action} || $action;
+}
 
 =back
 

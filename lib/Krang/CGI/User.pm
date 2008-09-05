@@ -116,6 +116,8 @@ sub add {
 
     $t->param($self->get_user_params($user));
 
+    $t->param(password_spec => pkg('PasswordHandler')->_password_spec);
+
     return $t->output();
 }
 
@@ -311,7 +313,7 @@ sub delete_selected {
     my $self = shift;
 
     my $q = $self->query();
-    my %user_delete_list = map {$_ => 1} ($q->param('krang_pager_rows_checked'));
+    my %user_delete_list = map { $_ => 1 } ($q->param('krang_pager_rows_checked'));
     $q->delete('krang_pager_rows_checked');
 
     # return to search if no ids were passed
@@ -324,41 +326,45 @@ sub delete_selected {
     # destroy users
     for my $u (keys %user_delete_list) {
 
-	# list of users we may not delete
-	unless ($current_user->may_delete_user($u)) {
-	    # CGI param tampering, remember it
-	    push @users_not_deleted, pkg('User')->find(user_id => $u);
-	    next;
-	}
+        # list of users we may not delete
+        unless ($current_user->may_delete_user($u)) {
 
-        eval {pkg('User')->delete($u);};
+            # CGI param tampering, remember it
+            push @users_not_deleted, pkg('User')->find(user_id => $u);
+            next;
+        }
+
+        eval { pkg('User')->delete($u); };
 
         if ($@) {
             if (ref $@ && $@->isa('Krang::User::Dependency')) {
-                critical("Unable to delete user '$u': objects are checked " .
-                         "out by this user.");
+                critical("Unable to delete user '$u': objects are checked " . "out by this user.");
                 my ($user) = pkg('User')->find(user_id => $u);
-                add_alert('error_deletion_failure',
-                            login => $user->login,
-                            user_id => $user->user_id,);
-                return $self->search();
+                add_alert(
+                    'error_deletion_failure',
+                    login   => $user->login,
+                    user_id => $user->user_id,
+                );
+                delete $user_delete_list{$u};
+                next;
             } else {
                 croak($@);
             }
+        } else {
+            $num_users_deleted++;
         }
-
-	$num_users_deleted++;
-
-	# suicidal?
-	if ($user_delete_list{$ENV{REMOTE_USER}}) {
-	    add_alert('user_suicide');
-	    return $self->_redirect_to_login();
-	}
     }
 
-    $self->add_message_for_delete_selected($num_users_deleted, @users_not_deleted);
+    # suicidal?
+    my $suicide = 0;
+    if ($user_delete_list{$ENV{REMOTE_USER}}) {
+        add_alert('user_suicide');
+        $suicide = 1;
+    }
 
-    return $self->search();
+    $self->add_message_for_delete_selected($num_users_deleted, @users_not_deleted)
+      if $num_users_deleted;
+    return $suicide ? $self->_redirect_to_login() : $self->search();
 }
 
 
@@ -396,6 +402,8 @@ sub edit {
     $t->param(%ui_messages) if %ui_messages;
 
     $t->param($self->get_user_params($user));
+
+    $t->param(password_spec => pkg('PasswordHandler')->_password_spec);
 
     return $t->output();
 }
@@ -567,21 +575,21 @@ sub search {
                                       },
                                       columns => [
                                                   'login',
-                                                  'last',
                                                   'first',
+                                                  'last',
                                                   'command_column',
                                                   'checkbox_column',
                                                  ],
                                       column_labels => {login => 'User Name',
-                                                        last => 'Last Name',
                                                         first => 'First Name',
+                                                        last => 'Last Name',
                                                        },
                                       columns_sortable =>
                                       [qw(login last first)],
                                       columns_sort_map => {
-                                                           last => 'last_name',
                                                            first =>
-                                                           'first_name'
+                                                           'first_name',
+                                                           last => 'last_name',
                                                           },
                                       command_column_commands =>
                                       [qw(edit_user)],
@@ -792,7 +800,7 @@ sub validate_user {
 
 # Handles rows for search run mode
 sub search_row_handler {
-    my ($self, $row, $user) = @_;
+    my ($self, $row, $user, $pager) = @_;
     my $q = $self->query;
     $row->{login} = $q->escapeHTML($user->login);
     $row->{last}  = $q->escapeHTML($user->last_name);
@@ -813,27 +821,28 @@ sub add_message_for_delete_selected {
 
     if (@users_not_deleted) {
         if (scalar(@users_not_deleted) == 1) {
-	    add_alert('may_not_delete_user', user => $users_not_deleted[0]->login);
+            add_alert('may_not_delete_user', user => $users_not_deleted[0]->login);
         } else {
-	    my $u = pop(@users_not_deleted);
-	    my $users = $u->login;
-	    while (@users_not_deleted) {
-		my $u = pop(@users_not_deleted);
-		if (scalar(@users_not_deleted)) {
-		    $users .= ', ' . $u->login;
-		} else {
-		    $users .= ' ' . localize('and') . ' ' . $u->login;
-		}
-	    }
-	    add_alert('may_not_delete_users', users => $users);
+            my $u     = pop(@users_not_deleted);
+            my $users = $u->login;
+            while (@users_not_deleted) {
+                my $u = pop(@users_not_deleted);
+                if (scalar(@users_not_deleted)) {
+                    $users .= ', ' . $u->login;
+                } else {
+                    $users .= ' ' . localize('and') . ' ' . $u->login;
+                }
+            }
+            add_alert('may_not_delete_users', users => $users);
         }
         if ($num_users_deleted) {
-	    my $s = $num_users_deleted == 1
-	      ? add_alert('one_user_deleted')
-		: add_alert('num_users_deleted', num => $num_users_deleted);
+            my $s =
+              $num_users_deleted == 1
+              ? add_alert('one_user_deleted')
+              : add_alert('num_users_deleted', num => $num_users_deleted);
         }
     } else {
-	add_message('message_selected_deleted');
+        add_message('message_selected_deleted');
     }
 }
 

@@ -101,7 +101,6 @@ document.onunload = function() {
     oldOnUnload();
 }
 
-
 /*
     // Initialize the name and title of current window
     Krang.Window.init();
@@ -120,76 +119,38 @@ document.onunload = function() {
     Krang.Window.log_out_all();
 */
 Krang.Window = {
-    init : function() {
+    init : function(id) {
         // set name and title of our window
-        var id = Krang.Window.get_id();
-            if (!id) { 
-            // we couldn't find a valid Window ID; get a new one!
-            alert (Krang.L10N.loc("Krang couldn't find a valid Window ID for this login. Please login again, and if the problem persists, try restarting your browser."));
-            window.location = 'login.pl?rm=logout';
-            return;
-        }
-
-        window.name = 'krang_window_' + id;
-        if( id > 1 ) {
-            document.title += ' ('+id+')';
-        }
-
-        // make sure page refresh will send Handler our ID 
-        window.onbeforeunload = Krang.Window.pass_id; // this doesn't work in Safari
-    },
-
-    get_id : function() {
-        var id = Krang.Window._id_from_name() || Krang.Window._id_from_pool();
-        return parseInt(id);
-    },
-
-    pass_id : function() {
-        var id = Krang.Window.get_id();
         if (id) {
-            Krang.Cookie.set('krang_window_id', id);    
+            window.name = 'krang_window_' + id;
+            if( id > 1 ) {
+                document.title += ' ('+id+')';
+            }
         }
+    },
+
+    pass_id : function(url) {
+        url += /\?/.test(url) ? '&' : '?';
+        url += 'window_id=';
+        url += Krang.Window.get_id();
+        return url;
     },
     
     log_out : function() {
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
-            window.location = 'login.pl?rm=logout&window='+Krang.Window.get_id();
+            window.location = 'login.pl?rm=logout';
             window.name = '';
         }    
     },
 
-    log_out_all : function() {
-	if (!confirm(Krang.L10N.loc('Are you sure? This will discard any unsaved changes in any window.'))) { return; }
-        Krang.show_indicator();
-
-        // clear new-window cookie (in case we're closing a window that hasn't been initialized)
-        Krang.Cookie.set('krang_new_window_id', '0');
-
-        // log out any other windows that have cookies set
-        var win_names = document.cookie.match(/(krang_window_\d+)/g);
-        for (i = 0; i < win_names.length; i++) {
-            var win_name = win_names[i];
-            if (win_name != window.name) { // make sure this isn't the current window
-                win_id = win_name.match(/\d+$/);
-                var win = window.open('login.pl?rm=logout&window='+win_id, win_name);
-                win.name = '';
-            }
+    get_id : function() {
+        var matches = window.name.match(/^krang_window_(\w+)/);
+        if(matches == null ) {
+            return '';
+        } else {
+            return matches[1];
         }
-
-        // then log out this window
-        window.location = 'login.pl?rm=logout&window='+Krang.Window.get_id();
-        window.name = '';
-    },
-
-    _id_from_name : function() {
-        return window.name.match(/^krang_window_/) && window.name.match(/\d+$/);        
-    },    
-
-    _id_from_pool : function() {
-        var id = Krang.Cookie.get('krang_login_id');
-        Krang.Cookie.set('krang_login_id', '0'); // so next window doesn't find our ID!
-        return id;
-    }    
+    }
 }
 
 
@@ -202,7 +163,7 @@ Krang.popup = function(url, options) {
     if( ! options ) options = {};
     var height = options.height || 600;
     var width  = options.width  || 800;
-    Krang.Window.pass_id();
+    url = Krang.Window.pass_id(url);
     var win = window.open( url, 'krangpopup', 'width=' + width + ',height=' + height + ',top=25,left=50,resizable,scrollbars,status' );
     if ( win ) win.focus();
 };
@@ -283,6 +244,15 @@ Krang.Ajax = {
             }
         }
         params.base64 = 1;
+    },
+    toQueryParams : function(str) {
+        var params;
+        if( str.match(/;/) ) {
+            params = str.toQueryParams(';');
+        } else {
+            params = str.toQueryParams();
+        }
+        return params;
     }
 };
 /*
@@ -335,9 +305,7 @@ Krang.Ajax.request = function(args) {
     params['ajax'] = 1;
 
     // pass window ID to handler
-    Krang.Window.pass_id();
-
-    Krang.unload();
+    url = Krang.Window.pass_id(url);
 
     new Ajax.Request(
         url,
@@ -430,11 +398,13 @@ Krang.Ajax.update = function(args) {
     params['ajax'] = 1;
 
     // pass window ID to handler
-    Krang.Window.pass_id();
+    url = Krang.Window.pass_id(url);
 
     // the default target
-    if( target == null || target == '' )
-        target = 'C';
+    if( target == null || target == '' ) target = 'C';
+
+    // run the unloader if we are targetting C
+    if( target == 'C' ) Krang.unload();
 
     new Ajax.Updater(
         { success : target },
@@ -492,10 +462,17 @@ Krang.Ajax.update = function(args) {
     Select a form (can be either the name of the form, or the form object
     itself) and set the values of its inputs
 
+    Krang.Form.get(form, input);
+    Select a form (can be either the name of the form, or the form object
+    itself) and get the value of an input
+
     Krang.Form.submit(form, { input: 'value' }, { new_window: true })
     Select a form (can either be the name of the form, or the form object
     itself) optionally sets the values of those elements and then submits 
     the form. 
+
+    Krang.Form.get_field(form, input);
+    Returns the HTML object representing the input field of the form.
 
     You can also specify a third parameter which contains other optional
     flags that can be passed to dictact the behaviour.
@@ -509,6 +486,8 @@ Krang.Ajax.update = function(args) {
                      Defaults to true.
         target     : the id of an element for which the content is intended
                      for
+        onComplete : a callback to be executed when the request is finished
+                     (only works with AJAX requests)
 
     *NOTE* - This should not be used by the onclick handler of
     an input of type 'button' if the form is not of the 'non_ajax'
@@ -519,13 +498,12 @@ Krang.Ajax.update = function(args) {
     to set the values and let the form take care of the rest.
 */
 Krang.Form = {
-
     set : function(form, inputs) {
         form = typeof form == 'object' ? form : document.forms[form];
         var err = 'Krang.Form.set(): ';
 
         if( !form ) alert(err + 'form "' + form.name + '" does not exist!');
- 
+
         if( inputs ) {
             $H(inputs).each( function(pair) {
                 var el = form.elements[pair.key];
@@ -534,12 +512,21 @@ Krang.Form = {
             });
         }
     },
+    get_field : function(form, input) {
+        form = typeof form == 'object' ? form : document.forms[form];
+        var err = 'Krang.Form.get(): ';
+
+        if( !form ) alert(err + 'form "' + form.name + '" does not exist!');
+        if( !form.elements[input] ) alert(err + 'input "' + input + '" does not exist in form "' + form.name + '"!');
+        return form.elements[input];
+    },
+    get : function(form, input) {
+        var field = Krang.Form.get_field(form, input);
+        return field.value;
+    },
     submit : function(form, inputs, options) {
         form = typeof form == 'object' ? form : document.forms[form];
         if( inputs ) Krang.Form.set(form, inputs);
-
-        // pass window ID to handler
-        Krang.Window.pass_id();
 
         // take care of our default options
         if(options == null ) options = {};
@@ -548,7 +535,8 @@ Krang.Form = {
             // save the old target of the form so we can restore it after
             // submission
             var old_target = form.target;
-            form.target = '_blank';
+            form.target = window.name + '_b';
+            form.action = Krang.Window.pass_id(form.action);
             form.submit();
             form.target = old_target;
         } else {
@@ -565,7 +553,7 @@ Krang.Form = {
                     break;
                 }
             }
-            
+
             if( use_ajax ) {
                 var url;
                 if( form.action ) {
@@ -577,12 +565,14 @@ Krang.Form = {
                 }
 
                 Krang.Ajax.update({
-                    url    : url,
-                    params : Form.serialize(form, true),
-                    target : options.target,
-                    to_top : options.to_top
+                    url        : url,
+                    params     : Form.serialize(form, true),
+                    target     : options.target,
+                    to_top     : options.to_top,
+                    onComplete : options['onComplete']
                 });
             } else {
+                form.action = Krang.Window.pass_id(form.action);
                 form.submit();
             }
         }
@@ -638,26 +628,38 @@ Krang.hide_indicator = function(indicator) {
 };
 
 /*
-    Krang.update_progress(count, total, label)
+    Krang.Progress.update(count, total, label)
 
     Updates the progress bar (with id "progress_bar") to the correct
     width, sets the percentage counter (with id "progress_bar_percent")
     and the optionally updates a label (with id "progress_bar_label")
+
+    Krang.Progress.reset(label);
+
+    Resets the progress bar back to zero so that subsequent calls to Krang.Progress.update()
+    will start over again.
 */
-Krang.update_progress = function( count, total, label ) {
-    var bar      = document.getElementById('progress_bar');
-    var percent  = document.getElementById('progress_bar_percent');
-    var progress = total > 0 ? ( count + 1 ) / total : 1;
+Krang.Progress = {
+    update : function( count, total, label ) {
+        var bar      = $('progress_bar');
+        var percent  = $('progress_bar_percent');
+        var progress = total > 0 ? ( count + 1 ) / total : 1;
 
-    // can't go over 100%
-    if ( progress > 1 ) progress = 1;
+        // can't go over 100%
+        if ( progress > 1 ) progress = 1;
 
-    var width = Math.floor( progress * 297 );
+        var width = Math.floor( progress * 297 );
 
-    bar.style.width   = width + 'px';
+        bar.style.width   = width + 'px';
 
-    percent.innerHTML = Math.floor( progress * 100 ) + '%';
-    if ( label ) document.getElementById( 'progress_bar_label' ).innerHTML = label;
+        percent.update(Math.floor( progress * 100 ) + '%');
+        if ( label ) $('progress_bar_label').update(label);
+    },
+    reset : function(label) {
+        $('progress_bar').style.width = '0px';
+        $('progress_bar_percent').update('0%');
+        if ( label ) $('progress_bar_label').update(label);
+    }
 };
 
 /*
@@ -705,18 +707,17 @@ Krang.Nav = {
     },
     goto_url       : function(url, ajax) {
 
-        Krang.Window.pass_id();
-
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
             if( ajax ) {
                 var matches = url.match(/(.*)\?(.*)/);
+                var query   = matches[2] || '';
                 Krang.Ajax.update({
-                    url    : matches[1],
-                    params : matches[2].toQueryParams()
+                    url    : Krang.Window.pass_id(matches[1]),
+                    params : Krang.Ajax.toQueryParams(matches[2])
                 });
             } else {
                 Krang.show_indicator();
-                window.location = url;
+                window.location = Krang.Window.pass_id(url);
             }
             Krang.Nav.edit_mode_flag = false;
         }
@@ -938,14 +939,16 @@ Krang.Pager = {
     input_key     : function(key) {
         Krang.Pager._form = Krang.Pager._get_form(key);
     },
+    init          : function() {
+        Krang.Pager.target = null;
+        Krang.Pager._form  = null;
+    },
     goto_page     : function(num) {
         Krang.Form.submit(
             Krang.Pager._form, 
             { krang_pager_curr_page_num : num }, 
             { to_top : false, target: Krang.Pager.target }
         );
-        // reset the target so it defaults to null
-        Krang.Pager.target = null;
     },
     sort          : function(field, desc) {
         Krang.Form.set( 
@@ -1043,19 +1046,18 @@ Krang.update_order = function( select, prefix ) {
     Krang.preview(type, id)
 
     Opens up a new window to preview an element of a certain type
-    (either 'story' or 'media') with a certain id (if not id is present
-    the it will preview the one currently in the session)
+    (either 'story' or 'media') with a certain id (if no id is present
+    it will preview the one currently in the session)
 */
 Krang.preview = function(type, id) {
-    var url = 'publisher.pl?rm=preview_' + type + '&amp;'
+    var url = 'publisher.pl?rm=preview_' + type + '&'
             + ( ( id == null ) ? ( 'session=' + type ) : ( type + '_id=' + id ) );
 
     var instance = Krang.instance;
     // remove problematic characters for use as window name (IE may otherwise choke)
     instance = instance.toLowerCase().replace( new RegExp( '[^a-z]' , 'g' ), '' );
    
-    Krang.Window.pass_id();
-    var pop = window.open( url, instance + 'preview' );
+    var pop = window.open( Krang.Window.pass_id(url), instance + 'preview' );
 
     if ( pop ) pop.focus();
 }
@@ -1086,10 +1088,11 @@ Object.extend( Krang.Navigation.prototype, {
             var contents = panel.childNodes[ 1 ];
 
             // is this panel opened?
-            if ( this.opened_panels.indexOf( pos ) == -1 )
+            if ( this.opened_panels.indexOf(pos) == -1 ) {
               Element.hide( contents );
-            else
+            } else {
               Element.show( contents );
+            }
 
             // set the onclick handler to record that a panel has been
             // opened or closed, and to use Krang.Widget.BlindUpDown to
@@ -1110,6 +1113,7 @@ Object.extend( Krang.Navigation.prototype, {
         }
     },
     save_opened_panels: function(positions) {
+        positions = $A(positions).uniq();
         Krang.Cookie.set(this.cookie_name, positions.join(','));
         this.opened_panels = positions;
     },
@@ -1136,7 +1140,8 @@ Object.extend( Krang.Navigation.prototype, {
 
         // if we have nav cookie, then just use what it gives us
         if ( value && value != '' ) {
-            panels = value.split(',');
+            // make sure what we get are Ints not strings
+            panels = $A(value.split(',')).map(function(s) { return parseInt(s) }).toArray();
         } else { // just show the first panel
             panels = [ 0 ];
         }
@@ -1657,12 +1662,24 @@ var rules = {
             var matches = this.href.match(/(.*)\?(.*)/);
             Krang.Ajax.update({
                 url       : matches[1],
-                params    : matches[2].toQueryParams(),
+                params    : Krang.Ajax.toQueryParams(matches[2]),
                 div       : Krang.class_suffix(el, 'for_'),
                 indicator : Krang.class_suffix(el, 'show_')
             });
             Event.stop(event);
         }.bindAsEventListener(el));
+    },
+    'a.nav_link' : function(el) {
+        el.observe('click', function(event) {
+            if (event.ctrlKey
+                || (Prototype.Browser.IE && event.button == 4)
+                || event.button == 1) {
+                el.setAttribute('target', '_blank');
+            } else {
+                Krang.Nav.goto_url(el.getAttribute('href'));
+                Event.stop(event);
+            }
+        });
     },
     'form' : function(el) {
         // if we have an on submit handler, then we don't want to
@@ -1697,12 +1714,11 @@ var rules = {
             new Ajax.Autocompleter(
                 el,
                 div,
-                request_url,
+                Krang.Window.pass_id(request_url),
                 { 
                     paramName: 'phrase',
                     tokens   : [' '],
                     callback : function(el, url) {
-                        Krang.Window.pass_id();
                         url = url + '&rm=autocomplete';
                         return url;
                     }

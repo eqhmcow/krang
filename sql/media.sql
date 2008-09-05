@@ -5,31 +5,30 @@ DROP TABLE IF EXISTS media;
 --
 
 CREATE TABLE media (
-        media_id                mediumint unsigned NOT NULL auto_increment,
-        media_uuid              CHAR(36) NOT NULL,
-        category_id             mediumint unsigned NOT NULL,
-        title                   varchar(255) NOT NULL,
-        filename                varchar(255) NOT NULL,
-        caption                 text,
-        copyright               text,
-	notes                   text,
-	url                     varchar(255) NOT NULL,
-	alt_tag                 varchar(255) default NULL,
-	mime_type               varchar(255),
-	version                 SMALLINT unsigned NOT NULL,
-	creation_date           datetime NOT NULL,
-	media_type_id           mediumint unsigned default NULL,
-        preview_version         INT UNSIGNED,
-	published_version       mediumint unsigned default NULL,
-	publish_date            datetime default NULL,
-	checked_out_by          smallint unsigned default NULL,
-	PRIMARY KEY (media_id),
-	KEY (category_id),
-        KEY (media_type_id),
-	KEY (url),
-        KEY (title),
-	KEY (checked_out_by),
-        UNIQUE KEY (media_uuid)
+    media_id                mediumint unsigned NOT NULL auto_increment,
+    media_uuid              CHAR(36) NOT NULL,
+    category_id             mediumint unsigned NOT NULL,
+    title                   varchar(255) NOT NULL,
+    filename                varchar(255) NOT NULL,
+    caption                 text,
+    copyright               text,
+    notes                   text,
+    url                     varchar(255) NOT NULL,
+    alt_tag                 varchar(255) default NULL,
+    mime_type               varchar(255),
+    version                 SMALLINT unsigned NOT NULL,
+    creation_date           datetime NOT NULL,
+    media_type_id           mediumint unsigned default NULL,
+    preview_version         INT UNSIGNED,
+    published_version       mediumint unsigned default NULL,
+    publish_date            datetime default NULL,
+    checked_out_by          smallint unsigned default NULL,
+    retired                bool NOT NULL DEFAULT 0,
+    trashed                 bool NOT NULL DEFAULT 0,
+    PRIMARY KEY (media_id),
+    KEY (category_id), KEY (media_type_id),
+    KEY (url), KEY (title),
+    KEY (checked_out_by), UNIQUE KEY (media_uuid)
 ) TYPE=MyISAM;
 
 DROP TABLE IF EXISTS media_version;
@@ -39,12 +38,12 @@ DROP TABLE IF EXISTS media_version;
 --
 
 CREATE TABLE media_version (
-	media_id        mediumint unsigned NOT NULL,
-	version         SMALLINT unsigned NOT NULL,
-	data            mediumblob NOT NULL,
-	PRIMARY KEY (media_id, version),
-	KEY (media_id),
-	KEY (version)
+    media_id        mediumint unsigned NOT NULL,
+    version         SMALLINT unsigned NOT NULL,
+    data            mediumblob NOT NULL,
+    PRIMARY KEY (media_id, version),
+    KEY (media_id),
+    KEY (version)
 ) TYPE=MyISAM;
 
 DROP TABLE IF EXISTS media_type;
@@ -54,9 +53,9 @@ DROP TABLE IF EXISTS media_type;
 --
 
 CREATE TABLE media_type (
-	media_type_id   smallint unsigned NOT NULL auto_increment,
-	name            varchar(255) NOT NULL,
-	PRIMARY KEY (media_type_id)
+    media_type_id   smallint unsigned NOT NULL auto_increment,
+    name            varchar(255) NOT NULL,
+    PRIMARY KEY (media_type_id)
 ) TYPE=MyISAM;
 
 -- Default data for media_type
@@ -80,11 +79,11 @@ insert into media_type (name) values ('Include');
 
 DROP TABLE IF EXISTS media_contrib;
 CREATE TABLE media_contrib (
-        media_id        mediumint UNSIGNED NOT NULL,
-        contrib_id      mediumint UNSIGNED NOT NULL,
-        contrib_type_id smallint UNSIGNED NOT NULL,
-        ord             smallint UNSIGNED NOT NULL,
-        PRIMARY KEY (media_id, contrib_id, ord),
-        KEY (media_id),
-        KEY (contrib_id)
+    media_id        mediumint UNSIGNED NOT NULL,
+    contrib_id      mediumint UNSIGNED NOT NULL,
+    contrib_type_id smallint UNSIGNED NOT NULL,
+    ord             smallint UNSIGNED NOT NULL,
+    PRIMARY KEY (media_id, contrib_id, ord),
+    KEY (media_id),
+    KEY (contrib_id)
 );

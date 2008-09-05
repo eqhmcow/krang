@@ -12,7 +12,8 @@ sub per_installation {
 }
 
 sub per_instance {
-    my $self = shift;
+    my ($self, %args) = @_;
+    return if $args{no_db};
     my $dbh = dbh();
 
     # correct size of binary DB columns

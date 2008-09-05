@@ -36,7 +36,7 @@ END
 
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'AddOn';
-# call the init-handler of any Addons being used
+# call the init-handler of any AddOns being used
 BEGIN {
     print STDERR "Initializing AddOns...\n";
     pkg('AddOn')->call_handler('InitHandler');

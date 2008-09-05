@@ -53,6 +53,10 @@ This optional argument causes every object to be opened & resaved before
 it is pruned, ensuring that the database's version table has the latest copy.
 (NOTE: Running in this mode forcibly checks in any checked-out objects.)
 
+=item --test-mode
+
+This is a mode in which actions will be displayed but not performed.
+
 =item --verbose
 
 If specified once, every object that has versions deleted will be displayed. If
@@ -107,11 +111,14 @@ use Krang::Conf qw(SavedVersionsPerStory SavedVersionsPerMedia SavedVersionsPerT
 use Getopt::Long;
 use Pod::Usage;
 
-my ($help, $man, $per_story, $per_media, $per_template, $all_instances, $first_resave);
+my ($help, $man, $per_story, $per_media, $per_template, $all_instances, $first_resave, $test_mode);
 my $verbose = 0;
 
 print "\nkrang_prune_versions\n".
         "--------------------\n";
+
+print "\n* * * TEST MODE - NO ACTUAL CHANGES WILL BE WRITTEN TO THE DATABASE * * *\n\n" 
+    if $test_mode;
 
 pod2usage(2) unless
   GetOptions(
@@ -120,6 +127,7 @@ pod2usage(2) unless
              'versions-per-template=s' => \$per_template,
              'all-instances'    => \$all_instances,
 	     'first-resave'     => \$first_resave,
+             'test-mode'        => \$test_mode,
              'verbose+'         => \$verbose,
              'help'             => \$help,
              'man'              => \$man,
@@ -128,16 +136,24 @@ pod2usage(2) unless
 pod2usage(1) if $help or $man or not($per_story or $per_media or $per_template);
 my %versions_to_keep = (story => $per_story, media => $per_media, template => $per_template);
 
+# make sure we have at least one instance
+unless ($all_instances || $ENV{KRANG_INSTANCE}) {
+    print "\nYou must either set the KRANG_INSTANCE environment variable or use the --all-instances argument.\n\n";
+    exit 1;
+}
+
 # make sure we weren't passed anything strange for arguments
 foreach my $type ('story', 'media', 'template') {
     if (my $versions = $versions_to_keep{$type}) {
-        die "\nversions-per-$type must be an integer or 'default'\n\n" 
-            unless $versions =~ /^\d+$/ || $versions eq 'default';
+	unless ($versions =~ /^\d+$/ || $versions eq 'default') {
+	    print "\nversions-per-$type must be an integer or 'default'\n\n";
+	    exit 1;
+	}
     }
 }
 
 # begin actual work
-foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE})) {
+foreach my $instance ($all_instances ? pkg('Conf')->instances() : $ENV{KRANG_INSTANCE}) {
     print "\n$instance:\n";
     pkg('Conf')->instance($instance);
     foreach my $type ('story', 'media', 'template') {
@@ -145,13 +161,29 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
         if (my $versions_to_keep = $versions_to_keep{$type}) {
             print "\npruning $type objects\n";
             my %args = ($versions_to_keep eq 'default' ? () : (number_to_keep => $versions_to_keep));
+	    $args{test_mode} = 1 if $test_mode;
             foreach my $object_id (pkg($pkg_name)->find(ids_only => 1)) {
                 my ($object) = pkg($pkg_name)->find($type.'_id' => $object_id);
-		if ($first_resave) {
-		    $object->checkin if ($object->checked_out);
+		if ($first_resave && !$test_mode) {
+		    # before modifying current version of object, record its location
+		    my $checked_out_by = $object->checked_out  && $object->checked_out_by;
+		    my $desk_id        = $type->can('desk_id') && $object->desk_id;
+		    $object->checkin if $object->checked_out;
 		    $object->checkout;
 		    $object->save(keep_version => 1);
 		    $object->checkin;
+
+		    # if object was checked out to a user, return it to him/her
+		    if ($checked_out_by) {
+			my $me = $ENV{REMOTE_USER};
+			$ENV{REMOTE_USER} = $checked_out_by; # need to trick API!
+			$object->checkout;
+			$ENV{REMOTE_USER} = $me;
+		    }
+		    # and if it was on a desk, return it to that desk
+		    if ($desk_id) {
+			$object->move_to_desk($desk_id);
+		    }
 		}
                 my $number_deleted = $object->prune_versions(%args);
                 if ($verbose and ($number_deleted or $verbose > 1)) {
@@ -163,3 +195,6 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
     }
 }
 print "\ndone\n\n";
+
+print "* * * TEST MODE - NO ACTUAL CHANGES WERE WRITTEN TO THE DATABASE * * *\n\n" 
+    if ($test_mode && $verbose);

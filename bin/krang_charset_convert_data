@@ -70,6 +70,10 @@ run only for a specific story (and no non-story data). This can be specified mul
 This parameter (which is mutually exclusive with --only-story-id) will convert all
 tables and all stories except the given one. This can be specified multiple times.
 
+=item --test-mode
+
+This is a mode in which actions will be displayed but not performed.
+
 =item --verbose
 
 Show more information about what is being converted.
@@ -134,17 +138,24 @@ use Encode qw(from_to);
 use Storable qw(nfreeze thaw);
 use MIME::Base64 qw(encode_base64 decode_base64);
 
+
+# Hot pipes
+local($|) = 1;
+
+
 # options
-my ($from, $to, $help, $man, $all_instances, @only_site_ids, @only_story_ids, @skip_story_ids, $v);
+my ($from, $to, $help, $man, $all_instances, @only_site_ids, @only_story_ids, @skip_story_ids, $test_mode, $v);
 GetOptions(
     'from=s'          => \$from,
     'to=s'            => \$to,
     'help'            => \$help,
     'man'             => \$man,
+    'test_mode'       => \$test_mode,
     'all-instances'   => \$all_instances,
     'site-id=s'       => \@only_site_ids,
     'only-story-id=s' => \@only_story_ids,
     'skip-story-id=s' => \@skip_story_ids,
+    'test-mode'       => \$test_mode,
     'verbose'         => \$v,
 ) or pod2usage(2);
 pod2usage(1) if $help;
@@ -158,6 +169,9 @@ die "You can't use both --all-instances and a specific story ID!\n"
   if $all_instances and (@only_story_ids or @skip_story_ids);
 die "You can't use both --only-story-id and --skip-story-id at the same time!\n"
   if @only_story_ids and @skip_story_ids;
+
+print "* * * TEST MODE - NO ACTUAL CHANGES WILL BE WRITTEN TO THE DATABASE * * *\n\n" 
+    if $test_mode;
 
 # figure out which instances we're going to use, and loop through them
 foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE})) {
@@ -240,7 +254,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
             $sql .= $table->{extra_sql};
             @binds = @{$table->{binds}};
         }
-        my $sth = $dbh->prepare_cached($sql);
+        my $sth = $dbh->prepare_cached($sql, { "mysql_use_result" => 1});
 
         # what we need to update the info
         my $update_sql =
@@ -248,7 +262,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
           . join(', ', map { " $_ = ? " } @fields)
           . " WHERE "
           . join(' AND ', map { " $_ = ? " } @id_fields);
-        my $update_sth = $dbh->prepare_cached($update_sql);
+        my $update_sth = $dbh->prepare_cached($update_sql, { "mysql_use_result" => 1});
         $sth->execute(@binds);
         my $count = 0;
         while(my $row = $sth->fetchrow_hashref) {
@@ -258,11 +272,13 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
             # convert each data field
             @data = map { convert_scalar($_) || '' } @data;
 
+            print "    Updated $count rows in $name                \r" if $v;
+
             # now put the data back
-            $update_sth->execute(@data, @ids);
+            $update_sth->execute(@data, @ids) unless $test_mode;
             $count++;
         }
-        print "    Updated $count rows in $name\n" if $v;
+        print "    Updated $count rows in $name              \n" if $v;
     }
 
     # now that template contents have changed, redeploy all deployed templates
@@ -270,10 +286,11 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
         foreach my $template_id (pkg('Template')->find(ids_only => 1)) {
             my ($template) = pkg('Template')->find(template_id => $template_id);
             if ($template->deployed) {
-                $template->deploy;
+                $template->deploy unless $test_mode;
                 print "  Re-deployed template $template_id\n" if $v;
             }
         } 
+	print "\n(DIDN'T ACTUALLY RE-DEPLOY TEMPLATES - RUNNING IN TEST-MODE)\n\n" if ($test_mode and $v);
     }
 
     # if there are no stories, no need to convert element table
@@ -307,15 +324,20 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
           JOIN category c ON (c.element_id = e.root_id)
           WHERE c.site_id IN ($site_ph)
           /
-          ));
+          ), { "mysql_use_result" => 1});
 
-    my $update_sth = $dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?');
+    my $update_sth = $dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?', { "mysql_use_result" => 1});
     $fetch_sth->execute(@story_ids, @only_story_ids ? () : @site_ids);
 
     my $count = 0;
+    my $loops = 0;
+
     while(my $row = $fetch_sth->fetchrow_hashref) {
         my $data = $row->{data};
         my $id = $row->{id};
+
+        $loops++;
+        print "Processing element ".$loops." (id: $id, modified: $count)                \r" if $v;
 
         next unless defined $data;
 
@@ -323,10 +345,15 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
         my $frozen;
         eval {
             no warnings;
-            if (ref (my $thawed = thaw(decode_base64($data)))) {
-                $data = $thawed;
-                $frozen = 1;
-            }
+	    # if data is valid base64...
+	    if ($data =~ /^[A-Za-z0-9\+\/\=\n]+$/) {
+		# and thawing its decoded value returns an object reference...
+		if (ref (my $thawed = thaw(decode_base64($data)))) {
+		    # then this eval will succeed and we can assume object was frozen
+		    $data = $thawed;
+		    $frozen = 1;
+		}
+	    }
         };
         
         $data = convert_element_data($data);
@@ -334,7 +361,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
             if ($frozen) {
                 $data = encode_base64(nfreeze($data));
             }
-            $update_sth->execute($data, $id);
+            $update_sth->execute($data, $id) unless $test_mode;
             $count++;
         } else {
             warn "  !Could not convert element #$id which is a "
@@ -342,6 +369,8 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
         }
     }
     print "    Converted $count elements\n" if $v;
+    print "\n* * * TEST MODE - NO ACTUAL CHANGES WERE WRITTEN TO THE DATABASE * * *\n\n" 
+	if ($test_mode && $v);
 }
 
 # restore original instance (in case we were called by another Krang script)
@@ -365,14 +394,16 @@ sub convert_element_data {
     }
 }
 
-my %cp1252_string_to_char;
-sub build_special_cp1252_conversions {
-     for (my $val = 0; $val < 256; $val++) {
-        my $char = chr($val);
-        from_to($char, 'windows-1252', $to);
-        my $string = '&#' . sprintf("%03d", $val) . ';';
-        $cp1252_string_to_char{$string} = $char;
-    }
+sub cp1252_string_to_html_entity {
+    my %cp1252_to_html = (128=>'&euro;', 130=>'&sbquo;', 131=>'&#x192;', 132=>'&bdquo;', 133=>'&hellip;', 134=>'&dagger;', 135=>'&Dagger;', 136=>'&circ;', 137=>'&permil;', 138=>'&Scaron;', 139=>'&lsaquo;', 140=>'&OElig;', 142=>'&#x17D;', 145=>'&lsquo;', 146=>'&rsquo;', 147=>'&ldquo;', 148=>'&rdquo;', 149=>'&bull;', 150=>'&ndash;', 151=>'&mdash;', 152=>'&tilde;', 153=>'&trade;', 154=>'&scaron;', 155=>'&rsaquo;', 156=>'&oelig;', 158=>'&#x17E;', 159=>'&Yuml;');
+    
+    my $orig_string = shift;
+    my ($prefix, $value) = ($orig_string =~ /^\&(\#|x|X)(.*);$/);
+    return $orig_string unless ($prefix && $value);
+    
+    $value = hex($value) if ($prefix eq 'x' || $prefix eq 'X');
+    my $html_entity = $cp1252_to_html{$value};
+    return $html_entity ? $html_entity : $orig_string;
 }
 
 my %cp1252_string_to_html_entity =
@@ -421,12 +452,11 @@ sub convert_scalar {
     my $data = shift;
     return unless defined $data;
     
-    # convert manually-entered Windows-CP1252 strings (e.g. &#151;) to HTML-entity equivalents (e.g. &mdash;)
+    # convert manually-entered Windows-CP1252 strings (e.g. &#151;) to HTML-entity equivalents (e.g. &mdash;)           
     $data =~ s/((\&\#\d\d\d\;)|(\&[xX][0-9a-fA-F][0-9a-fA-F];))/@{[cp1252_string_to_html_entity($1)]}/sg
-	unless (pkg('Charset')->mysql_charset($from) ne 'latin1');
-
-    # now perform actual charset conversion
+        unless (pkg('Charset')->mysql_charset($from) ne 'latin1');
+ 
+    # now perform actual charset conversion                                                                             
     from_to($data, $from, $to);
-
     return $data;
-}     
+}

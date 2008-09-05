@@ -28,6 +28,7 @@ CREATE TABLE group_permission (
         admin_scheduler      BOOL NOT NULL DEFAULT 0,
         admin_desks          BOOL NOT NULL DEFAULT 0,
         admin_lists          BOOL NOT NULL DEFAULT 0,
+        admin_delete         BOOL NOT NULL DEFAULT 0,
         asset_story          ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
         asset_media          ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
         asset_template       ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
@@ -37,9 +38,9 @@ CREATE TABLE group_permission (
 
 /* set up default groups w/ null UUIDs - getting real ones via Krang::UUID 
    would be better, but how? */
-INSERT INTO group_permission VALUES (1, NULL, 'Admin'  , 1,1,1,0,1,1,1,1,0,1,1,1,1, "edit", "edit", "edit");
-INSERT INTO group_permission VALUES (2, NULL, 'Editor' , 1,0,1,1,0,1,0,1,0,1,0,0,0, "edit", "edit", "read-only");
-INSERT INTO group_permission VALUES (3, NULL, 'Default', 0,0,0,0,0,0,0,0,0,0,0,0,0, "read-only", "read-only", "hide");
+INSERT INTO group_permission VALUES (1, NULL, 'Admin'  , 1,1,1,0,1,1,1,1,0,1,1,1,1,1, "edit", "edit", "edit");
+INSERT INTO group_permission VALUES (2, NULL, 'Editor' , 1,0,1,1,0,1,0,1,0,1,0,0,0,1, "edit", "edit", "read-only");
+INSERT INTO group_permission VALUES (3, NULL, 'Default', 0,0,0,0,0,0,0,0,0,0,0,0,0,0, "read-only", "read-only", "hide");
 
 
 /* Join table: desk <-> group_permission */

@@ -100,6 +100,7 @@ sub show {
 			     };
 	}
 	$template->param(may_move => 1);
+    $template->param(desk_loop => \@desk_loop);
     }
 
     # permissions
@@ -152,7 +153,7 @@ sub show {
 }
 
 sub _row_handler {
-    my ($self, $row, $obj, $desk_loop) = @_;
+    my ($self, $row, $obj, $pager, $desk_loop) = @_;
     $row->{desk_loop}  = $desk_loop;
     $row->{story_id}   = $obj->story_id;
     $row->{title}      = $obj->title;
@@ -165,6 +166,10 @@ sub _row_handler {
 
     # setup version
     $row->{version} = $obj->version;
+
+    # cover_date
+    my $tp = $obj->cover_date;
+    $row->{cover_date} = (ref($tp)) ? $tp->strftime('%m/%d/%Y %I:%M %p') : '[n/a]';
 }
 
 =item checkout_checked
@@ -265,9 +270,12 @@ sub goto_log {
     my $desk_id = $query->param('desk_id');
 
     # redirect as appropriate
-    my $id_param = 'story_id=' . $obj->story_id;
+    my $id_meth = $obj->id_meth;
+    my $id = $obj->$id_meth;
 
-    my $uri = "history.pl?${id_param}&history_return_script=desk.pl&history_return_params=rm&history_return_params=show&history_return_params=desk_id&history_return_params=$desk_id";
+    my $uri = "history.pl?id=$id&history_return_script=desk.pl&history_return_params=rm"
+        . "&history_return_params=show&history_return_params=desk_id"
+        . "&history_return_params=$desk_id&class=Story&id_meth=$id_meth";
     
     # mix in pager params for return
     foreach my $name (grep { /^krang_pager/ } $query->param) {
@@ -329,7 +337,7 @@ sub _do_move {
     my $desk_name = $desk ? localize($desk->name) : '';
 
     eval { $obj->move_to_desk($desk_id); };
-
+    
     if ($@ and ref($@)) {
         if($@->isa('Krang::Story::CheckedOut')) {
             add_alert(

@@ -233,7 +233,21 @@ CodePress = {
 	getCode : function() {
 		if(!document.getElementsByTagName('pre')[0] || editor.innerHTML == '')
 			editor = CodePress.getEditor();
-		var code = editor.innerHTML;
+
+        // KRANG EDIT - changed by mpeters 06/04/2008
+        // I replaced the following line
+        // var code = editor.innerHTML to deal with the problem of copy-pasting
+        // from other web pages that might leave markup in the paste
+        // see http://sourceforge.net/forum/message.php?msg_id=5008579 for details
+        var code;
+        if(editor.tagName == 'PRE')
+            code = editor.parentNode.innerHTML;
+        else 
+            code = editor.innerHTML;
+        code = code.replace(/<pre>/g, '');
+        code = code.replace(/<\/pre>/g, '');
+        // END KRANG EDIT
+    
 		code = code.replace(/<br>/g,'\n');
 		code = code.replace(/\u2009/g,'');
 		code = code.replace(/<.*?>/g,'');

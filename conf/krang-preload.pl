@@ -7,7 +7,7 @@
 # setup load paths
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'AddOn';
-# call the init-handler of any Addons being used
+# call the init-handler of any AddOns being used
 BEGIN {
     print STDERR "Initializing AddOns...\n";
     pkg('AddOn')->call_handler('InitHandler');
@@ -62,8 +62,12 @@ find(
 }
 
 # pre-load any addons that want it
-print STDERR "Pre-loading Addons...\n";
+print STDERR "Pre-loading AddOns...\n";
 pkg('AddOn')->call_handler('PreloadHandler');
+
+# these modules are lazy loaded so they don't get preloaded by default unless we do it explicitly
+use Apache::Registry;
+use Storable qw(freeze thaw);
 
 print STDERR "Krang Pre-load complete.\n";
 

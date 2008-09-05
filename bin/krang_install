@@ -381,7 +381,7 @@ sub check_prereqs {
     exit_error("IPAddress '$IPAddress' not bound to machine")
       unless $PLATFORM->check_ip(ip => $IPAddress);
 
-    # Addons files must exist
+    # AddOns files must exist
     foreach my $addon (@{$options{'WithAddon'}}) {
         exit_error("Addon file '$addon' does not exist")
           unless -e $addon;

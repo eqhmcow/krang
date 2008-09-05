@@ -2,7 +2,7 @@
 DROP TABLE IF EXISTS schedule;
 CREATE TABLE schedule (
         schedule_id     INT UNSIGNED NOT NULL AUTO_INCREMENT,
-        `repeat`          ENUM('never', 'hourly', 'daily', 'weekly') NOT NULL,
+        `repeat`        ENUM('never', 'hourly', 'daily', 'weekly', 'monthly', 'interval') NOT NULL,
         action          VARCHAR(255) NOT NULL,
         context         TEXT,
         object_type     VARCHAR(255) NOT NULL,
@@ -10,10 +10,14 @@ CREATE TABLE schedule (
         initial_date    DATETIME,
         last_run        DATETIME,
         next_run        DATETIME NOT NULL,
+        expires         DATETIME,
+        day_of_month    INT,
         day_of_week     INT UNSIGNED,
+        day_interval    INT UNSIGNED,
         hour            INT UNSIGNED,
         minute          INT UNSIGNED,
         priority        INT UNSIGNED NOT NULL,
+        inactive        BOOL NOT NULL DEFAULT 0,
 
         PRIMARY KEY (schedule_id),
         INDEX       (object_type, object_id),

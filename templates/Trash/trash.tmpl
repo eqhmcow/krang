@@ -1,0 +1,188 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'trash' );
+} );
+
+<tmpl_if krang_pager_rows>
+
+  restore_object = function(type_id) {
+    Krang.Form.submit('krang_pager_form', { rm: 'restore_object', type_id : type_id });
+  }
+  
+  <tmpl_if __show_checkbox_column__>
+    restore_checked = function()
+    {
+      var question = '';
+      var num_rows_checked = Krang.pager_row_checked();
+
+      if (!num_rows_checked) {
+        alert( 'Nothing selected to restore!' );
+      } else {
+        if (num_rows_checked > 1) {
+	  question = 'Are you SURE you want to restore these items?';
+        } else {
+	  question = 'Are you SURE you want to restore this item?';
+        }
+        if (confirm(question)) {
+          Krang.Form.submit( 'krang_pager_form', { rm : 'restore_checked' }, { to_top : false } );
+        }
+      }
+    }
+
+  </tmpl_if>
+
+  <tmpl_if admin_may_delete>
+    delete_checked = function()
+    {
+      var question = '';
+      var num_rows_checked = Krang.pager_row_checked();
+
+      if (!num_rows_checked) {
+        alert( 'Nothing selected to delete!' );
+      } else {
+        if (num_rows_checked > 1) {
+	  question = 'Are you SURE you want to permanently delete these items?';
+        } else {
+	  question = 'Are you SURE you want to permanently delete this item?';
+        }
+        if (confirm(question)) {
+          Krang.Form.submit( 'krang_pager_form', { rm : 'delete_checked' }, { to_top : false } );
+        }
+      }
+    }
+  </tmpl_if>
+
+  view_object = function(type, id)
+  {
+    Krang.Form.submit('krang_pager_form', { rm: 'goto_view', type: type, id: id });
+  }
+
+</tmpl_if>
+</script>
+
+<h2>
+Trash
+</h2>
+
+<tmpl_unless krang_pager_rows>
+
+  <p class="naught">
+  The Trash is currently empty.
+  </p>
+
+<tmpl_else>
+
+  <form name="krang_pager_form" method="post" action="trash.pl">
+
+  <input name="rm"      type="hidden">
+  <input name="type"    type="hidden">
+  <input name="id"      type="hidden">
+  <input name="type_id" type="hidden">
+
+  <tmpl_include HTMLPager/pager-internals.tmpl>
+
+  <tmpl_if __show_checkbox_column__><div class="panel">
+    <input value="Restore" onclick="restore_checked()" type="button">
+    <tmpl_if admin_may_delete>
+      <input value="Delete" onclick="delete_checked()" type="button">
+    </tmpl_if>
+  </div></tmpl_if>
+
+  <tmpl_include HTMLPager/pager-pagination.tmpl>
+
+  <div class="table-container">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <table cellspacing="0" class="result select_row" summary="">
+
+  <colgroup>
+  <col class="c-id f">
+  <col class="c-type">
+  <col>
+  <col class="c-thumb">
+  <col class="c-date">
+  <col class="tick l">
+  </colgroup>
+
+  <thead>
+  <tr>
+  <th class="f"><tmpl_var colhead_id></th>
+  <th><tmpl_var colhead_type></th>
+  <th><tmpl_var colhead_title> 
+      |
+      <tmpl_var colhead_url></th>
+  <th></th>
+  <th><tmpl_var colhead_date></th>
+  <th class="l tick"><tmpl_if __show_checkbox_column__><tmpl_var colhead_checkbox_column></tmpl_if></th>
+  </tr>
+  </thead>
+
+  <tbody><tmpl_loop krang_pager_rows>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+    <td class="f"><tmpl_var id></td>
+
+    <td><tmpl_var asset_type></td>
+
+    <td<tmpl_unless thumbnail_src> colspan="2"</tmpl_unless>>
+    <b><tmpl_var escape=html title></b>
+    <br><tmpl_var url><!--:markup-->
+
+    <!-- story type and version -->
+    <br><tmpl_if class><tmpl_var escape=html class> (</tmpl_if>Version <tmpl_var escape=html version><tmpl_if class>)</tmpl_if>
+
+    <br><!-- Commands -->
+    <input value="View Detail" onclick="view_object('<tmpl_var escape=html type>', <tmpl_var escape=html id>)" type="button" class="button">
+    <tmpl_if may_edit>
+    <input value="Restore" onclick="restore_object('<tmpl_var escape=html type>_<tmpl_var escape=html id>')" type="button" class="button">
+    </tmpl_if>
+    </td>
+
+    <tmpl_if thumbnail_src>
+      <td>
+      <a title="Preview <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html id>')"><img alt="" src="<tmpl_var escape=html thumbnail_src>" class="thumbnail"></a>
+      </td>
+    </tmpl_if>
+
+    <td><tmpl_var date escape=html></td>
+
+    <td class="tick l"><tmpl_if may_edit>
+      <tmpl_var checkbox_column>
+    </tmpl_if></td>
+    </tr>
+  </tmpl_loop></tbody>
+
+  </table>
+  </div>
+
+  <tmpl_include HTMLPager/pager-pagination.tmpl>
+
+  <tmpl_if __show_checkbox_column__><div class="panel capped">
+    <input value="Restore" onclick="restore_checked()" type="button">
+    <tmpl_if admin_may_delete>
+      <input value="Delete" onclick="delete_checked()" type="button">
+    </tmpl_if>
+  </div></tmpl_if>
+
+  </form>
+
+  <form name="publish_story_form" action="publisher.pl">
+  <input name="rm" value="publish_story" type="hidden">
+  <input name="story_id" value="" type="hidden">
+  </form>
+
+  <form name="publish_media_form" action="publisher.pl">
+  <input name="rm" value="publish_media" type="hidden">
+  <input name="media_id" value="" type="hidden">
+  </form>
+
+</tmpl_unless>
+
+<!-- tooltips for media previews: -->
+<div id="tooltip"><img id="tooltip-img" src="/images/icon-loading-small.gif" /></div>
+<img id="tooltip-pointer" src="/images/tooltip_arrow.gif" />
+<!-- :tooltips for media previews -->
+
+<tmpl_include footer.tmpl>
+

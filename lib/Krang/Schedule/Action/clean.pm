@@ -105,7 +105,7 @@ sub _clean_tmp {
     opendir(DIR, $tmp_path) || croak(__PACKAGE__ . "->_clean_tmp(): Can't open tmpdir: $!");
     for (readdir DIR) {
         # skip the protected files
-        next if $_ =~ /(CVS|\.{1,2}|\.(conf|cvsignore|pid))$/;
+        next if $_ =~ /(CVS|\.{1,2}|\.(conf|cvsignore|pid|svn))$/;
         # skip the SSL files
         next if $_ =~ /^ssl_/;
 

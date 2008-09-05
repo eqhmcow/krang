@@ -6,11 +6,14 @@ Krang::Schedule::Action - Abstract class for scheduler action type classes.
 
 package Krang::Schedule::Action;
 
-use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader base => 'Schedule';
-
 use strict;
 use warnings;
+
+use Time::Piece;
+use Time::Piece::MySQL;
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => 'Schedule';
 
 =head1 SYNOPSIS
 
@@ -58,7 +61,18 @@ sub clean_entry {
     } else {         # set last_run, update next_run, save.
         $self->{last_run} = $self->{next_run};
         $self->{next_run} = $self->_calc_next_run(skip_match => 1);
-        $self->save();
+
+        if ($self->expires) {
+            my $exp = Time::Piece->from_mysql_datetime($self->{expires});
+            my $next = Time::Piece->from_mysql_datetime($self->{next_run});
+            if ($exp < $next ) {
+                $self->delete;
+            } else {
+                $self->save;
+            }
+        } else {
+            $self->save;
+        }
     }
 }
 

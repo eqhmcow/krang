@@ -176,7 +176,7 @@ mod_perl/Apache.
 
 The C<Priority> directive allows you to control the order in which
 addons are loaded by Krang.  An addon which is loaded earlier will
-override a later addon.  Addons are sorted in descending order by
+override a later addon.  AddOns are sorted in descending order by
 priority so an addon with a C<Priority> of 100 will load before one
 with 5.
 

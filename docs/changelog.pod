@@ -3,7 +3,8 @@
 This document contains a list of changes for each release of Krang.
 
 
-=head2 3.03 - IN DEVELOPMENT
+
+=head2 3.04 - IN DEVELOPMENT
 
 =over
 
@@ -154,6 +155,161 @@ Implemented beta version of flat-template support, allowing
 a single template per top-level story type. [Noam Weinstein]
 
 =back
+
+
+
+=head2 3.03 - August 25th, 2008
+
+=item *
+
+Added C<forget_all_dbhs()> method to C<Krang::DB> to help in the situation
+where you fork a process and don't want the child to use the parent's handles.
+[Michael Peters] 
+
+=item *
+
+Added C<no_cache> argument to C<Krang::DB::dbh()> to by-pass the cache.
+[Michael Peters]
+
+=item *
+
+Fixing bug in L<Krang::Schedule> and L<Krang::Schedule::Daemon> which resulted
+in MySQL Lost Connection errors on really busy systems. [Michael Peters]
+
+=item *
+
+Fixed bug in Bulk Upload of media objects where Unix shell meta-characters
+in file names caused problems when unpacking. [Michael Peters]
+
+=item *
+
+Added C<--story-class> argument to F<bin/krang_publish>. [Michael Peters]
+
+=item *
+
+Enable the use of optgroups in the 'Add Element' dropdown. [Eric Folley]
+
+=item *
+
+Adding new user preference for turning CodePress on/off. [Michael Peters]
+
+=item *
+
+Adding Fedora 9 as a build target. [Michael Peters]
+
+=item *
+
+Fixing bug in the scheduler daemon that resulted in lost MySQL connection
+errors. [Michael Peters]
+
+=item *
+
+Fixed some minor bugs with the new Image Transformation. [Michael Peters]
+
+=item *
+
+Upgraded our JSON modules to use the latest JSON::XS. This gives us speed and
+better handling of UTF8. [Michael Peters]
+
+=back
+
+
+
+=head2 3.02 - July 8th, 2008
+
+=over
+
+=item * 
+
+Added new Image Transformation UI to allow basic image editting 
+(scaling, rotating and flipping). [Michael Peters]
+
+=item *
+
+Added API to Krang::HTMLPager to make it possible to control the
+display of columns and/or list controls from within row
+handlers. [Bodo Schulze]
+
+=item
+
+Made user search check for matches with login instead of just first and last name. [Noam Weinstein]
+
+=item *
+
+Fixed broken templates.kds in Default element library. [Noam Weinstein]
+
+=item *
+
+Stealing a story now logs a discrete action for the theft. [Noam Weinstein]
+
+=item *
+
+Element classes can now override sort order of available children. [Noam Weinstein]
+
+=item *
+
+Open application in a new window/tab if clicking on a navigation link
+with the CTRL key pressed or when middle-clicking. [Bodo Schulze]
+
+=item *
+
+Fixed known issues with multiple windows/tabs.  Login/Logout is now
+browser-global not window/tab-specific. Use one authentication cookie
+to store window_id/session_id mapping for all windows and use
+QUERY/tmpl_var communication channel to pass the window_id around.
+Also removed config directive MaxConcurrentKrangSessions. [Bodo Schulze]
+
+=item *
+
+Add Fedora 8 as a platform for building. [Michael Peters]
+
+=item *
+
+Added C<Krang::Schedule::Action::archive> to allow scheduled archiving
+of stories and media. [Bodo Schulze]
+
+=item *
+
+Script F<bin/krang_upload_templates> uploads templates as UTF-8 if
+Charset is UTF-8. [Bodo Schulze]
+
+=item * 
+
+History mechanism is not tied to specific types of objects and can be extended
+by addons to include any other objects. [Michael Peters]
+
+=item * 
+
+Added display of IDs to Site & Category's Find screens, and 
+to Site's Edit & View screens. [Noam Weinstein]
+
+=item *
+
+Fixed bug #32 along with a related bug in
+C<Krang::Publisher->unpublish_story()> where after deleting a story
+its preview path would not be deleted even if it is empty. [Bodo
+Schulze]
+
+=item *
+
+Fixed long standing bug where Edit button is present when viewing an
+old Story version. [Bodo Schulze]
+
+=back
+
+
+
+=head2 3.011 - March 20, 2008
+
+=over
+
+=item *
+
+Added --maintain-versions mode (and associated tests) to publisher
+to rewrite existing versions of live stories to site. [Noam Weinstein]
+
+=back
+
 
 =head2 3.01 - February 1, 2008
 
@@ -1859,7 +2015,7 @@ compilation issues with MacOSX. [Peter]
 
 =item *
 
-C<About Krang> now reports server IP address, Addons are now
+C<About Krang> now reports server IP address, AddOns are now
 alphabetized properly. [Peter]
 
 =item *

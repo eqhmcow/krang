@@ -12,7 +12,7 @@ use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Conf => qw(PasswordChangeTime DefaultLanguage);
 use Krang::ClassLoader Localization => qw(%LANG localize);
-use JSON qw(objToJson);
+use JSON::Any;
 
 =head1 NAME
 
@@ -116,7 +116,18 @@ sub edit {
 	$template->param(multi_lang => 1);
     }
 
-    return $template->output;
+    $template->param(
+        syntax_highlighting_radio => scalar $q->radio_group(
+            -name   => 'syntax_highlighting',
+            -values => [ 0, 1],
+            -labels => { 0 => 'No', 1 => 'Yes', },
+            -default => pkg('MyPref')->get('syntax_highlighting'),
+        )
+    );
+
+    $template->param(password_spec => pkg('PasswordHandler')->_password_spec);
+
+    return $template->output; 
 }
 
 =item update_prefs()
@@ -131,7 +142,7 @@ sub update_prefs {
     my $prefs_changed = 0;
 
     # look at each pref
-    my @prefs = qw(search_page_size use_autocomplete message_timeout);
+    my @prefs = qw(search_page_size use_autocomplete message_timeout syntax_highlighting);
     for my $name (@prefs) {
         my $old = pkg('MyPref')->get($name);
         my $new = $q->param($name);
@@ -168,7 +179,7 @@ sub update_prefs {
         }
         my $pref_cookie = $q->cookie(
             -name  => 'KRANG_PREFS',
-            -value => objToJson(\%prefs),
+            -value => JSON::Any->new->encode(\%prefs),
 	    -path  => '/'
         );
         $self->header_add(-cookie => [$pref_cookie->as_string]);

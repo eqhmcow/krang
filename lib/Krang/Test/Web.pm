@@ -75,7 +75,8 @@ This method extends the one from L<Test::WWW::Mechanize> so that
 it will do the right thing with krang urls.
 
 For instance, given a url of 'my_pref.pl' it will look at which ever
-instance is active and change that url to 'http://hostname.org/instance_name/my_pref.pl'
+instance is active and change that url to 
+'http://hostname.org/instance_name/my_pref.pl?window_id=1'
 
 =cut
 
@@ -85,21 +86,28 @@ sub get {
         $url = $self->script_url($url);
     }
 
-    $self->_set_window_cookie();
+    $url = $self->_set_window_id($url);
 
     return $self->SUPER::get($url, @other_args);
 }
 
 sub _make_request {
-    my $self = shift;
-    $self->_set_window_cookie();
-    return $self->SUPER::_make_request(@_);
+    my ($self, $request, @other_args) = @_;
+    # change the request to have the window_id
+    my $uri = $request->uri;
+    eval { $uri = $uri->as_string }; # turn it into a string if it's an object
+    $request->uri($self->_set_window_id($uri));
+    return $self->SUPER::_make_request($request, @other_args);
 }
 
-# set the cookie_jar to hold our window_id
-sub _set_window_cookie {
-    my $self = shift;
-    $self->cookie_jar->set_cookie(0, 'krang_window_id', 1, '/', HostName, undef, 1,);
+# add the window_id of 1 to the urls
+sub _set_window_id {
+    my ($self, $url) = @_;
+    if( $url !~ /window_id=\d/ ) {
+        $url .= $url =~ /\?/ ? '&' : '?';
+        $url .= "window_id=1";
+    }
+    return $url;
 }
 
 =item C<< contains_message($key, $class [, %args ]) >>
@@ -338,9 +346,12 @@ sub script_url {
     $uri->host(HostName . ':' . (EnableSSL ? SSLApachePort: ApachePort));
 
     # pull off any query params from the path
-    $path =~ s/\?(.*)$//;
-    my $params = $1 ? "?$1" : '';
-
+    my $params = '';
+    if( $path =~ /\?/ ) {
+        $path =~ s/\?(.*)$//;
+        $params = '?' . ($1 || '');
+    }
+    
     # if we have a script add it to the instance, else use the instance
     my $instance = pkg('Conf')->instance();
     $path = $path ? "$instance/$path" : $instance;

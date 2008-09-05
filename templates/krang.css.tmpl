@@ -36,7 +36,7 @@ form { margin: 0; padding: 0; }
 .enclose { overflow: hidden; }
 
 .clearfix:after { content: "."; display: block; height: 0; clear: both; visibility: hidden; }
-.clearfix { display: inline-block; }
+.clearfix { display: block; }
 
 /*******************
  * Header + Footer *
@@ -97,6 +97,8 @@ form { margin: 0; padding: 0; }
 #S h2.media span     { background-position:  -712px 50%; }    #S h2.media span:hover     { background-position:  -890px 50%; }
 #S h2.templates span { background-position: -1068px 50%; }    #S h2.templates span:hover { background-position: -1246px 50%; }
 #S h2.admin span     { background-position: -1424px 50%; }    #S h2.admin span:hover     { background-position: -1602px 50%; }
+#S h2.trash span     { background-position: -1780px 50%; }    #S h2.trash span:hover     { background-position: -1958px 50%; }
+#S h2.trash span a   { display: block; padding:0; font-weight: normal; color: <tmpl_var HeaderColor> }
 
 /************
  * Throbber *
@@ -157,7 +159,6 @@ form { margin: 0; padding: 0; }
 #C h2, #C h3, #C h4 { background-color: inherit; margin: 0; }
 #C h2, #C h3 { color: <tmpl_var HeaderColor>; font-weight: normal; font-family: Georgia,serif; text-transform: uppercase; }
 #C h2 { border-bottom: 1px solid <tmpl_var XLightColor>; font-size: 2.72em; letter-spacing: 1px; word-spacing: 3px; }
-#C h3, #C h4 { margin: 0 20px; }
 #C h3 { margin-top: 1.44em; font-size: 1.27em; }
 #C h4 { color: #666; margin-top: 1.82em; font-size: 1em; font-weight: bold; }
 
@@ -227,18 +228,22 @@ form { margin: 0; padding: 0; }
 #C table.bordered-request { border-bottom: 1px solid #DDD; margin-top: 10px; }
 
 /*column widths must account for padding (~1.5em):*/
-#C col.c-date  { width:    7em; }/*:format = 'xx/xx/xxxx xx:xx XX' on 2 lines*/
-#C col.c-ldate { width:   12em; }/*:format = 'xx/xx/xxxx xx:xx XX' on 1 line*/
-#C col.c-flag  { width:  2.5em; }/*:character*/
-#C col.c-id    { width:    5em; }/*:five digits, at most*/
-#C col.c-link  { width: 11.5em; }/*:per-row actions (FIX?)*/
-#C col.c-stat  { width:  6.5em; }/*:brief message*/
-#C col.c-thumb { width:    6em; }/*:room for the header "Thumbnail"*/
-#C col.c-user  { width:  9.5em; }/*:first + last name*/
-#C col.c-type  { width:    6em; }    #C col.c-type-big  { width:    9em; }
-/*FIX:*/
-#C col.c-label { width: 15.5em; }    #C col.c-label-big { width: 21.5em; }    #C col.c-mini { width: 9.5em; }
-#C col.c-sum   { width:  7.5em; }    #C col.c-big-sum   { width:  9.5em; }
+#C col.c-date        { width: 7em; }    /*:format = 'xx/xx/xxxx xx:xx XX' on 2 lines*/
+#C col.c-ldate       { width: 12em; }   /*:format = 'xx/xx/xxxx xx:xx XX' on 1 line*/
+#C col.c-flag        { width: 2.5em; }  /*:character*/
+#C col.c-id          { width: 5em; }    /*:five digits, at most*/
+#C col.c-link        { width: 11.5em; } /*:per-row actions (FIX?)*/
+#C col.c-stat        { width: 6.5em; }  /*:brief message*/
+#C col.c-thumb       { width: 6em; }    /*:room for the header "Thumbnail"*/
+#C col.c-user        { width: 9.5em; }  /*:first + last name*/
+#C col.c-type        { width: 6em; }    
+#C col.c-type-big    { width: 9em; }
+#C col.c-label-big   { width: 21.5em; } /* large column labels */
+#C col.c-label       { width: 15.5em; } /* normal column labels */
+#C col.c-label-small { width: 13em; }   /* small column labels */
+#C col.c-label-tiny  { width: 9.5em; }  /* tiny column labels */
+#C col.c-sum         { width: 7.5em; }     
+#C col.c-big-sum     { width: 9.5em; }
 
 #C col.series  { width: 8.5em;  }/*:compact button, select, label*/
 #C col.tick    { width:  40px;  }/*:checkbox ONLY (~3.5em)*/
@@ -293,7 +298,7 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
  * Action Panels *
  *****************/
 
-#C .panel  { padding: 20px 0 0; text-align: right; }
+#C .panel  { width: 100%; padding: 20px 0 0; text-align: right; } /* width fixes safari layout problem */
 
 #C .panel input       { background: <tmpl_var LinkColor> url("/static/<tmpl_var krang_install_id>/images/bkg-button-full.gif") 0 50% repeat-x; color: #FFF; width: auto; overflow: visible; margin: 0 0 0 5px; border: 1px solid <tmpl_var DarkLinkColor>; border-color: <tmpl_var LinkColor> <tmpl_var DarkLinkColor> <tmpl_var DarkLinkColor> <tmpl_var LinkColor>; padding: .1em .5em; font-size: 1.27em; line-height: 1; }
 #C .panel input.west:hover { background-color: <tmpl_var DarkLinkColor>; background-image: none; }
@@ -350,6 +355,8 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
  ********************/
 
 #C p.naught { background-color: #EEE; color: #666; padding: 1.5em 30px; font-weight: bold; }
+
+#C p.naught a { margin-left: 10px }
 
 #C .pages { background-color: inherit; color: <tmpl_var HeaderColor>; margin: 20px 0 0; border-top: 1px solid <tmpl_var XLightColor>; padding: 10px .5em 0 1em; font-weight: bold; }
 #C .killborder .pages { border: none; }
@@ -414,7 +421,7 @@ div.calendar               { position: relative; width: 204px; }
 .calendar thead .daynames { background: <tmpl_var XLightColor>; }
 
 /* TDs containing the day names */
-.calendar thead .name { background-color: #DDD; color: <tmpl_var HeaderColor>; font-family: font-size: 14px; Georgia, serif; text-align: center; }
+.calendar thead .name { background-color: #DDD; color: <tmpl_var HeaderColor>; font-family: Georgia, serif; font-size: 14px; text-align: center; }
 
 /* button :hover state */
 .calendar thead .hilite { color: #000; }
@@ -491,6 +498,49 @@ div.autocomplete li.selected { background-color: <tmpl_var HilightColor>; }
 #C #progress_bar_percent { background: #FFF; color: <tmpl_var HeaderColor>; float: left; font-size: 1.27em; }
 #C #progress_bar_label   { clear: both; padding: 20px 0 0; }
 
+
+/************************
+ * Image Transform Tools
+ ************************/
+.slider_track { margin: 10pt 0pt 10px 0px; width: 700px; height: 8px; border: 1px solid #999; }
+.slider_handle { background: transparent url("/static/<tmpl_var krang_install_id>/images/slider_handle.png") no-repeat scroll top center; cursor: move; width: 20px; height: 14px; }
+#transform_controls { margin: 5px 0 }
+#transform_controls .button { padding-left: 20px }
+#transform_controls .control { position: relative; right: -23px; top: 3px; }
+#resize_image_container { margin: 10px }
+
+/***********************
+ * Image Crop Controls *
+************************/
+.imgCrop_wrap { position: relative; cursor: crosshair; }
+/* fix for IE displaying all boxes at line-height by default, although they are still 1 pixel high until we combine them with the pointless span */
+.imgCrop_wrap, .imgCrop_wrap * { font-size: 0; }
+.imgCrop_overlay { background-color: #000; opacity: 0.5; filter:alpha(opacity=50); position: absolute; width: 100%; height: 100%; }
+.imgCrop_selArea { position: absolute; cursor: move; z-index: 2; }
+/* clickArea is all a fix for IE 5.5 & 6 to allow the user to click on the given area */
+.imgCrop_clickArea { width: 100%; height: 100%; background-color: #FFF; opacity: 0.01; filter:alpha(opacity=01); }
+.imgCrop_marqueeHoriz { position: absolute; width: 100%; height: 1px; background: transparent url("/static/<tmpl_var krang_install_id>/images/cropper_horiz.gif) repeat-x 0 0; z-index: 3;
+}
+.imgCrop_marqueeVert { position: absolute; height: 100%; width: 1px; background: transparent url("/static/<tmpl_var krang_install_id>/images/cropper_vert.gif") repeat-y 0 0; z-index: 3; }
+.imgCrop_marqueeNorth { top: 0; left: 0; }
+.imgCrop_marqueeEast  { top: 0; right: 0; }
+.imgCrop_marqueeSouth { bottom: 0px; left: 0; }
+.imgCrop_marqueeWest  { top: 0; left: 0; }
+.imgCrop_handle { position: absolute; border: 1px solid #333; width: 6px; height: 6px; background: #FFF; opacity: 0.5; filter:alpha(opacity=50); z-index: 4; }
+.imgCrop_handleN { top: -3px; left: 0; cursor: n-resize; }
+.imgCrop_handleNE { top: -3px; right: -3px; cursor: ne-resize; }
+.imgCrop_handleE { top: 0; right: -3px; cursor: e-resize; }
+.imgCrop_handleSE { right: -3px; bottom: -3px; cursor: se-resize; }
+.imgCrop_handleS { right: 0; bottom: -3px; cursor: s-resize; }
+.imgCrop_handleSW { left: -3px; bottom: -3px; cursor: sw-resize; }
+.imgCrop_handleW { top: 0; left: -3px; cursor: w-resize; }
+.imgCrop_handleNW { top: -3px; left: -3px; cursor: nw-resize; }
+/* Create an area to click & drag around on as the default browser behaviour is to let you drag the image */
+.imgCrop_dragArea { width: 100%; height: 100%; z-index: 200; position: absolute; top: 0; left: 0; }
+.imgCrop_previewWrap { overflow: hidden; position: relative; }
+.imgCrop_previewWrap img { position: absolute; }
+
+
 /* !!!!!!!!!!!!!!!!!!!!! UNSORTED CSS FOLLOWS BELOW !!!!!!!!!!!!!!!!!!!!! */
 
 /*(db2)Bugzilla/edit ONLY:*/
@@ -524,8 +574,14 @@ div.autocomplete li.selected { background-color: <tmpl_var HilightColor>; }
 #C .err td *, #C div.err input { background: <tmpl_var XHilightColor>; color: <tmpl_var InvalidColor>; }
 /*(db2)Bugzilla/edit ONLY:*/
 #C .err td p, #C .err td dl * { background: <tmpl_var BackgroundColor>; }/*:hack(db2)*/
-/*(db2)HTML::PopupTreeSelect:*/
-#C .err .hpts-outer, #C .err .hpts-outer * { background: <tmpl_var BackgroundColor>; color: <tmpl_var TextColor>; }
-#C .err .hpts-title { background: <tmpl_var DarkColor>; color: <tmpl_var LightTextColor>; }
-#C .err .hpts-label-selected a { background: <tmpl_var LightColor>; color: <tmpl_var TextColor>; }
-#C .err .hpts-bbar, #C .err .hpts-botbar { background: <tmpl_var BrightColor>; color: <tmpl_var TextColor>; }
+
+/* override error styles for .hpts-outer and children */
+#C .err td .hpts-outer, #C .err .hpts-outer * { background: <tmpl_var BackgroundColor>; color: <tmpl_var TextColor>; }
+#C .err td .hpts-title { background: #999; color: #fff; }
+#C .err td .hpts-label-selected a { background: <tmpl_var LightColor>; color: <tmpl_var TextColor>; }
+#C .err td .hpts-bbar { background: #999 url("/static/<tmpl_var krang_install_id>/images/bottom-right-corner-resize.gif") right no-repeat; color: <tmpl_var TextColor>; }
+#C .err td .hpts-botbar { background: transparent; }
+#C .err td .hpts-inner span a { text-decoration: none; color: <tmpl_var LinkColor>;}
+#C .err td .hpts-inner span a:hover, #C .err td .hpts-inner span a:focus { background-color: <tmpl_var HilightColor>; color: <tmpl_var LinkColor>; }
+#C .err td .hpts-inner span.hpts-label-selected a { background: <tmpl_var LightColor>; color: <tmpl_var TextColor>; }
+#C .err td .hpts-inner span.hpts-label-selected a:hover, #C .err td .hpts-inner span.hpts-label-selected a:active { background: <tmpl_var LightColor>; color: <tmpl_var TextColor>; }

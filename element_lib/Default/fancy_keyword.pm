@@ -140,8 +140,6 @@ sub fill_template {
     } else {
         $tmpl->param($self->name => join(', ', @{$arg{element}->data}))
     }
-
-
 }
 
 # return a list of fields if no template exists.

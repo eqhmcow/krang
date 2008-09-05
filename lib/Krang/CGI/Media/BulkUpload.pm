@@ -162,7 +162,11 @@ sub upload {
         # find all files and dirs in archive 
         File::Find::find(\&build_image_list, $opened_root);    
 
-        add_message('media_in_root'), rmtree($opened_root),  return $self->choose() if $media_in_root;
+        if( $media_in_root ) {
+            add_alert('media_in_root');
+            rmtree($opened_root);
+            return $self->choose();
+        }
 
         # check to see all dirs in archive match Krang site/cats,
         # return if not
@@ -179,12 +183,18 @@ sub upload {
         $q->param('category_id' => '');
         
         # remove tempdir 
-        rmtree($opened_root);    
+        rmtree($opened_root);
+
+        # redirect to workspace
+        my $url = 'workspace.pl';
+        $self->header_props(-uri => $url);
+        $self->header_type('redirect');
+        return "Redirect: <a href=\"$url\">$url</a>";
     } else {
         add_alert('no_file');
+        return $self->choose();
     } 
 
-    return $self->choose();
 }
 
 =item create_media
@@ -332,18 +342,18 @@ sub open_media_source {
     my $tempdir = tempdir( DIR => catdir(KrangRoot, 'tmp'));
     
     # create statement to unzip, untar, or unstuff media source file
-    my $source_open_statement; 
+    my @system_args;
 
     if ($type eq 'tar') {
         my $tar_bin = `which tar`;
         chomp $tar_bin;
         add_alert('no_opener_binary', which => 'tar', type => 'tar'), return 0 if not ( -B $tar_bin);
-        $source_open_statement = "$tar_bin -xf $filepath -C $tempdir";
+        @system_args = ($tar_bin, '-xf', $filepath, '-C', $tempdir);
     } elsif ($type eq 'zip') {
         my $unzip_bin = `which unzip`;
         chomp $unzip_bin;
         add_alert('no_opener_binary', which => 'unzip', type => 'zip'), return 0 if not ( -B $unzip_bin);
-        $source_open_statement = "$unzip_bin -oq $filepath -d $tempdir";
+        @system_args = ($unzip_bin, '-oq', $filepath, '-d', $tempdir);
     } elsif ($type eq 'sit') {
         my $unstuff_bin = `which unstuff`;
         chomp $unstuff_bin;
@@ -351,12 +361,12 @@ sub open_media_source {
         # unstuff wants relative paths
         my $rel_filepath = abs2rel( $filepath );
         my $rel_tempdir = abs2rel( $tempdir );
-        $source_open_statement = "$unstuff_bin -q -d=$rel_tempdir $rel_filepath";
+        @system_args = ($unstuff_bin, '-q', "-d=$rel_tempdir", $rel_filepath);
     }    
 
-    debug(__PACKAGE__."->open_media_source - atempting to run '$source_open_statement'");
+    debug(__PACKAGE__."->open_media_source - atempting to run '" . join(', ', @system_args));
 
-    unless (system($source_open_statement) == 0) { 
+    unless (system(@system_args) == 0) { 
         add_alert("problems_opening");
         return 0;
     }

@@ -24,7 +24,6 @@ my $pidfile;
 my $stop_daemon;
 my $schedulectl;
 
-
 # use the TestSet1 instance, if there is one
 foreach my $instance (pkg('Conf')->instances) {
     pkg('Conf')->instance($instance);
@@ -33,13 +32,11 @@ foreach my $instance (pkg('Conf')->instances) {
     }
 }
 
-
-
 BEGIN {
 
     my $found;
 
-    $pidfile = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
+    $pidfile     = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
     $schedulectl = File::Spec->catfile(KrangRoot, 'bin', 'krang_schedulectl');
     $stop_daemon = 0;
 
@@ -51,7 +48,6 @@ BEGIN {
             last;
         }
     }
-
 
     if ($found) {
         unless (-e $pidfile) {
@@ -66,12 +62,12 @@ BEGIN {
         }
         eval 'use Test::More qw(no_plan)';
     } elsif (SchedulerMaxChildren == 0) {
-        eval "use Test::More skip_all => 'SchedulerMaxChildren set to 0 -- schedule daemon will not run';";
+        eval
+          "use Test::More skip_all => 'SchedulerMaxChildren set to 0 -- schedule daemon will not run';";
     } else {
         eval "use Test::More skip_all => 'test requires a TestSet1 instance';";
     }
 }
-
 
 END {
     if ($stop_daemon) {
@@ -82,8 +78,8 @@ END {
 ##################################################
 ## Presets
 
-my $preview_url = 'scheduletest.preview.com';
-my $publish_url = 'scheduletest.com';
+my $preview_url  = 'scheduletest.preview.com';
+my $publish_url  = 'scheduletest.com';
 my $preview_path = '/tmp/krangschedtest_preview';
 my $publish_path = '/tmp/krangschedtest_publish';
 
@@ -92,11 +88,11 @@ my @schedules;
 my $creator = pkg('Test::Content')->new();
 
 my $site = $creator->create_site(
-                                 preview_url  => $preview_url,
-                                 publish_url  => $publish_url,
-                                 preview_path => $preview_path,
-                                 publish_path => $publish_path
-                                );
+    preview_url  => $preview_url,
+    publish_url  => $publish_url,
+    preview_path => $preview_path,
+    publish_path => $publish_path
+);
 
 # Make sure live templates are undeployed, create and deploy
 # a set of test templates for publishing.
@@ -114,9 +110,7 @@ END {
     rmtree $publish_path;
 }
 
-
 use_ok(pkg('Schedule::Daemon'));
-
 
 # create story objects
 
@@ -124,18 +118,26 @@ my $num_stories = 5;
 
 my $now = localtime;
 my @stories;
-for (1..$num_stories) {
+my $trashed_story;
+for my $num (1 .. $num_stories) {
 
     my $story = $creator->create_story();
-    push @stories, $story;
+
+    # trashed stories should not publish
+    if ($num == 1) {
+        $story->trash;
+        $trashed_story = $story;
+    } else {
+        push @stories, $story;
+    }
 
     my $sched = pkg('Schedule')->new(
-                                     action      => 'publish',
-                                     object_id   => $story->story_id(),
-                                     object_type => 'story',
-                                     repeat      => 'never',
-                                     date        => $now
-                                    );
+        action      => 'publish',
+        object_id   => $story->story_id(),
+        object_type => 'story',
+        repeat      => 'never',
+        date        => $now
+    );
     $sched->save();
     push @schedules, $sched;
 }
@@ -151,24 +153,46 @@ foreach my $story (@stories) {
     }
 }
 
+# trashed story should not be published
+for my $p ($creator->publish_paths(story => $trashed_story)) {
+    ok(!-e $p, "skipped scheduled publishing of trashed story");
+}
+
+# untrash and schedule-publish again
+pkg('Trash')->restore(object => $trashed_story);
+my $sched = pkg('Schedule')->new(
+    action      => 'publish',
+    object_id   => $trashed_story->story_id(),
+    object_type => 'story',
+    repeat      => 'never',
+    date        => $now
+);
+$sched->save();
+push @schedules, $sched;
+sleep 11;
+
+# trashed story now should be published
+for my $p ($creator->publish_paths(story => $trashed_story)) {
+    ok(-e $p, "story restored from trash has been published");
+}
 
 # test expiration
 foreach my $story (@stories) {
 
     my $sched = pkg('Schedule')->new(
-                                     action      => 'expire',
-                                     object_id   => $story->story_id(),
-                                     object_type => 'story',
-                                     repeat      => 'never',
-                                     date        => $now
-                                    );
+        action      => 'expire',
+        object_id   => $story->story_id(),
+        object_type => 'story',
+        repeat      => 'never',
+        date        => $now
+    );
 
     $sched->save();
     push @schedules, $sched;
 
 }
 
-# wait to see if it got published.
+# wait to see if it got unpublished.
 sleep 10;
 
 foreach my $story (@stories) {
@@ -178,3 +202,24 @@ foreach my $story (@stories) {
         ok(!-e $p, 'story expired');
     }
 }
+
+# test archiving
+$sched = pkg('Schedule')->new(
+    action      => 'retire',
+    object_id   => $trashed_story->story_id(),
+    object_type => 'story',
+    repeat      => 'never',
+    date        => $now
+);
+$sched->save();
+push @schedules, $sched;
+sleep 11;
+
+# story should now be retired
+for my $p ($creator->publish_paths(story => $trashed_story)) {
+    ok(!-e $p, "previously published story has been retired (removed from website)");
+}
+
+($trashed_story) = pkg('Story')->find(story_id => $trashed_story->story_id);
+is($trashed_story->retired,
+    1, "previously published story has been retired (still exists in database)");

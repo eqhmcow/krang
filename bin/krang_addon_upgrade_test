@@ -1,0 +1,129 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_addon_upgrade_test - test the upgrade modules for Krang addons
+
+=head1 SYNOPSIS
+
+During development of a Krang addon it can be extremely useful to run
+the upgrade modules for that addon prior to creating a release.
+
+  bin/krang_addon_upgrade_test --addon Foo --version 1.21
+
+=head1 DESCRIPTION
+
+This script helps Krang addon developers to run the upgrade modules
+for their addon prior to create a distribution release.
+
+=head1 OPTIONS
+
+The following options are available:
+
+=over
+
+=item --addon
+
+The name of the addon being tested.
+
+=item --version
+
+The version we are "pretending" our addon is at before the upgrade.
+
+=item --verbose
+
+Print information about what's happening.
+
+=item --help
+
+Show usage information.
+
+=item --man
+
+Show full manpage. 
+
+=back
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    $ENV{KRANG_NO_ELEMENTLIBS} = 1;
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+# process command options
+use Krang::ClassFactory qw(pkg);
+use Pod::Usage;
+use Getopt::Long;
+use Cwd qw(getcwd);
+use File::Spec::Functions qw(catdir);
+our ($help, $man, $addon, $version);
+our $verbose;
+BEGIN {
+    $verbose = 0;
+    pod2usage(2)
+      unless GetOptions(
+        help        => \$help,
+        man         => \$man,
+        'verbose+'  => \$verbose,
+        'addon=s'   => \$addon,
+        'version=s' => \$version,
+      );
+    pod2usage(1) if $help;
+    pod2usage(-verbose => 2) if $man;
+    unless ($addon) {
+        print "You must provide an --addon.\n";
+        exit(1);
+    }
+    unless ($version) {
+        print "You must provide a --version\n.";
+        exit(1);
+    }
+}
+
+use Krang::ClassLoader Conf => qw(KrangRoot);
+# use first instance if one isn't set.  AddOns are installation wide anyway.
+BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'AddOn';
+
+# install the addon
+my $cwd = getcwd();
+my $addon_dir = catdir(KrangRoot, 'addons', $addon);
+die "Addon $addon does not exist!\n" unless -d $addon_dir;
+chdir($addon_dir) or die "Could not change to directory $addon_dir: $!";
+pkg('AddOn')->upgrade(old_version => $version, verbose => $verbose);
+chdir($cwd) or die "Could not return to directory $cwd: $!";
+
+print "Upgrade complete.\n";

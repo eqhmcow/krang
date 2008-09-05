@@ -52,6 +52,10 @@ the conversion to a particular table.
 This optional parameter (which may be used multiple times) skips a 
 particular table.
 
+=item --test-mode
+
+This is a mode in which actions will be displayed but not performed.
+
 =item --verbose
 
 Show more information about what is being converted.
@@ -106,15 +110,13 @@ END
 use Pod::Usage;
 use Getopt::Long;
 
-# use first instance if one isn't set.  Addons are installation wide
-# anyway.
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Charset';
 use Krang::ClassLoader DB => qw(dbh);
 
 # options
-my ($to, $help, $man, $all_instances, @instances, @only_tables, @skip_tables, $v);
+my ($to, $help, $man, $all_instances, @instances, @only_tables, @skip_tables, $test_mode, $v);
 GetOptions(
     'to=s'          => \$to,
     'help'          => \$help,
@@ -122,6 +124,7 @@ GetOptions(
     'all-instances' => \$all_instances,
     'only-table=s'  => \@only_tables,
     'skip-table=s'  => \@skip_tables,
+    'test-mode'     => \$test_mode,
     'verbose'       => \$v,
 ) or pod2usage(2);
 pod2usage(1) if $help;
@@ -136,6 +139,9 @@ die "You cannot use --only-table and --skip-table at the same time!\n" if (@only
 # which tables are we going to process (if not all)
 my %do_these   = @only_tables ? map { $_ => 1 } @only_tables : ();
 my %skip_these = @skip_tables ? map { $_ => 1 } @skip_tables : ();
+
+print "* * * TEST MODE - NO ACTUAL CHANGES WILL BE WRITTEN TO THE DATABASE * * *\n\n" 
+    if $test_mode;
 
 foreach my $instance (@instances) {
     pkg('Conf')->instance($instance);
@@ -181,15 +187,17 @@ foreach my $instance (@instances) {
                     . $col->{null} 
                     . ($col->{default} ? "DEFAULT $col->{default}" : '')
                     . " $col->{extra}";
-                $dbh->do($sql);
+                $dbh->do($sql) unless $test_mode;
             }
         }
 
         # now change the default charset of the whole table
         print "    Changing default charset to $to_charset\n" if $v;
-        $dbh->do("ALTER TABLE $table DEFAULT CHARACTER SET $to_charset");
+        $dbh->do("ALTER TABLE $table DEFAULT CHARACTER SET $to_charset") unless $test_mode;
         
     }
 }
 print " Done\n";
 
+print "\n\n* * * TEST MODE - NO ACTUAL CHANGES WERE WRITTEN TO THE DATABASE * * *\n\n" 
+    if ($test_mode && $v);

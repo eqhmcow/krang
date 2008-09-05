@@ -114,6 +114,7 @@ my %test_params = ( name => 'Car Editors',
                     admin_scheduler      => 1,
                     admin_desks          => 1,
                     admin_lists          => 1,
+                    admin_delete         => 1,
                     asset_story          => 'edit',
                     asset_media          => 'read-only',
                     asset_template       => 'hide' );
@@ -146,6 +147,7 @@ my @scalar_params = qw( name
                         admin_scheduler
                         admin_desks
                         admin_lists
+                        admin_delete
                         asset_story
                         asset_media
                         asset_template );
@@ -459,9 +461,9 @@ die ($@) if ($@);
 ok(%user_admin_permissions, "Got admin permissions");
 
 # Check that select for individual admin matches hash
-is( $user_admin_permissions{"media"},
-    pkg('Group')->user_admin_permissions("media"),
-    "Admin 'media' permissions match" );
+is( $user_admin_permissions{"admin_delete"},
+    pkg('Group')->user_admin_permissions("admin_delete"),
+    "Admin permissions 'admin_delete' match");
 
 
 ## Check that admin permissions combine correctly

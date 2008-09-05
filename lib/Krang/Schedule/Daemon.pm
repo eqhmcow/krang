@@ -15,7 +15,7 @@ use Time::Seconds;
 use Krang::ClassLoader Conf => qw(KrangRoot instance instances SchedulerMaxChildren);
 use Krang::ClassLoader Log => qw/critical debug info reopen_log/;
 use Krang::ClassLoader 'Schedule';
-use Krang::ClassLoader DB => qw(dbh forget_dbh);
+use Krang::ClassLoader DB => qw(dbh forget_all_dbhs);
 
 use Krang::Cache;
 
@@ -121,7 +121,7 @@ sub run {
     reopen_log();
 
     # forget old dbh from parent process
-    forget_dbh();
+    forget_all_dbhs();
 
     # drop off pidfile
     my $pidfile = IO::File->new(">$pidfile");
@@ -281,7 +281,7 @@ sub _child_work {
     my $instance = pkg('Conf')->instance();
 
     # lose the parent's DB handle.
-    forget_dbh();
+    forget_all_dbhs();
 
     # reopen the log file
     reopen_log();

@@ -1,0 +1,102 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+    Krang.Nav.edit_mode();
+    Krang.Help.set( 'category_copy' );
+    <tmpl_if confirm_copy>
+    if (confirm("Some items you want to copy conflict with existing ones.\n\nIf you wish to copy those that don't conflict, click OK.\n\nIf not, click Cancel.")) {
+        copy('non_conflicting');
+    } else {
+        Krang.Form.submit('copy_category', { rm: 'prepare_copy', copy_story: '<tmpl_var copy_story>', copy_media: '<tmpl_var copy_media>', copy_template: '<tmpl_var copy_template>' });
+    }
+    </tmpl_if>
+} );
+
+cancel = function() {
+    Krang.Form.submit('copy_category', { rm: 'find' });
+}
+
+copy = function(non_conflicting) {
+    var cbx = $('copy_category').getInputs('checkbox');
+    cbx.each(function(box) {
+	var fieldname = box.name.replace(/_cbx$/, '');
+	$(fieldname).value = box.checked ? 1 : 0;
+    })
+    if (! cbx.find(function(box) { return box.checked == true }) ) {
+        alert("No content was copied because no content was selected.");
+    } else {
+        Krang.Form.submit('copy_category', { rm: 'execute_copy', non_conflicting: non_conflicting });
+    }
+}
+</script>
+
+<h2>
+Copy Category
+</h2>
+
+<form id="copy_category" name="copy_category" action="category.pl" method="post" enctype="multipart/form-data">
+
+<input name="rm" value="copy_category" type="hidden">
+<input name="copy_story"    id="copy_story"    type="hidden">
+<input name="copy_media"    id="copy_media"    type="hidden">
+<input name="copy_template" id="copy_template" type="hidden">
+<input name="overwrite"     id="overwrite"     type="hidden">
+<input name="src_category_id"  id="src_category_id"  value="<tmpl_var src_category_id>"  type="hidden">
+<input name="src_category_url" id="src_category_url" value="<tmpl_var src_category_url>" type="hidden">
+<input name="non_conflicting"  id="non_conflicting"  type="hidden">
+
+<table class="request" summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody>
+
+<tr>
+<td>Category Copying From</td>
+<td><tmpl_var escape=html src_category_url></td>
+</tr>
+
+<tr<tmpl_if bad_dst_category> class="err"</tmpl_if>>
+<td>Category Copying To</t>
+<td><tmpl_var category_chooser_button></td>
+</tr>
+
+<tr>
+<td>Copy Stories?</td>
+<td><input name="copy_story_cbx" value="1" type="checkbox"<tmpl_if copy_story>checked="checked"</tmpl_if>></td>
+</tr>
+
+<tr>
+<td>Copy Media?</td>
+<td><input name="copy_media_cbx" value="1" type="checkbox"<tmpl_if copy_media>checked="checked"</tmpl_if>></td>
+</tr>
+
+<tr>
+<td>Copy Templates?</td>
+<td><input name="copy_template_cbx" value="1" type="checkbox"<tmpl_if copy_template>checked="checked"</tmpl_if>></td>
+</tr>
+
+<tr>
+<td>Overwrite Existing Files?</td>
+<td><input name="overwrite_cbx" value="0" type="checkbox"<tmpl_if overwrite>checked="checked"</tmpl_if>></td>
+</tr>
+
+</tbody>
+
+</table>
+
+<div class="panel capped">
+<input value="Cancel" onclick="cancel()" type="button" class="west">
+<input value="Copy"   onclick="copy('0')"   type="button">
+</div>
+
+<tmpl_var category_chooser_logic>
+
+</form>
+
+<tmpl_include footer.tmpl>
+

@@ -36,6 +36,8 @@ pkg('CGI::Story')->new(
             save_and_change_bulk_edit_sep => { story => ['edit'] },
             save_and_find_story_link      => { story => ['edit'] },
             save_and_find_media_link      => { story => ['edit'] },
+            archive                       => { story => ['edit'] },
+            unarchive                     => { story => ['edit'] },
         },
     },
 )->run();

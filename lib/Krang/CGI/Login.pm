@@ -42,13 +42,12 @@ use Krang::ClassLoader Conf => qw(
     InstanceApachePort
     InstanceDisplayName
     InstanceHostName
-    MaxConcurrentKrangSessions
     PasswordChangeTime
     Secret
     SMTPServer
 );
 use CGI::Application::Plugin::RateLimit;
-use JSON qw(objToJson);
+use JSON::Any;
 
 sub setup {
     my $self = shift;
@@ -170,16 +169,6 @@ sub _do_login {
     my ($self, $user_id, $mode) = @_;
     my $q = $self->query();
 
-    # find next available window ID
-    my $window_id = 1;
-    while ($q->cookie("krang_window_$window_id")) { ++$window_id };
-
-    # and if the number of windows is getting too high...
-    if ($window_id > (MaxConcurrentKrangSessions || 10)) {
-      add_alert('too_many_krang_sessions', num => $window_id-1);
-      return $self->show_form;
-    }
-
     # if we are enforcing password changes every few days
     if( PasswordChangeTime ) {
         my ($user) = pkg('User')->find(user_id => $user_id);
@@ -198,76 +187,59 @@ sub _do_login {
     my %filling    = ( user_id    => $user_id, 
                        session_id => $session_id,
                        instance   => $instance,
+                       next_wid   => 2,
+                       wid_1      => $session_id,
                        hash       => md5_hex($user_id . $instance .
                                              $session_id . Secret()) );
 
-    # Propagate user to environment
-    $ENV{REMOTE_USER} = $user_id;
-
     $session{language} = pkg('MyPref')->get('language') || DefaultLanguage || 'en';
+
+    # the login window is our first window: pass its id around
+    $ENV{KRANG_WINDOW_ID} = 1;
 
     # Unload the session
     pkg('Session')->unload();
 
+    # Propagate user to environment
+    $ENV{REMOTE_USER} = $user_id;
+
     # build the session cookie (using next available window ID)
-    my $session_cookie = $q->cookie(
-        -name  => "krang_window_$window_id",
+    my $authen_cookie = $q->cookie(
+        -name  => $instance,
         -value => \%filling,
         -path  => '/'
     );
 
-    # pass ID of new window to handler and JS
-    my $login_id_cookie = $q->cookie(
-        -name  => 'krang_login_id',
-        -value => $window_id,
+    # otherwise, store preferences via JSON so the client-side JS can access them
+    my %prefs;
+    for my $name qw(search_page_size use_autocomplete message_timeout syntax_highlighting) {
+        $prefs{$name} = pkg('MyPref')->get($name);
+    }
+    my $pref_cookie = $q->cookie(
+        -name  => 'KRANG_PREFS',
+        -value => JSON::Any->new->encode(\%prefs),
         -path  => '/'
     );
 
-    # if we're copying an existing window's user, preferences, etc.
-    if ($mode && $mode eq 'copy_existing') {
+    # and store meta information about this installation/instance of Krang
+    my %conf_info = (
+        charset => ( Charset() || '' ),
+    );
+    my $conf_cookie = $q->cookie(
+        -name  => 'KRANG_CONFIG',
+        -value => JSON::Any->new->encode(\%conf_info),
+	-path  => '/'
+    );
 
-      # then all we need to store in cookies is the new session and login ID
-      $self->header_add(-cookie => [$session_cookie->as_string, $login_id_cookie->as_string]);
-
-   } else {
-
-      # otherwise, store preferences via JSON so the client-side JS can access them
-      my %prefs;
-      for my $name qw(search_page_size use_autocomplete message_timeout language) {
-        $prefs{$name} = pkg('MyPref')->get($name);
-      }
-      my $pref_cookie = $q->cookie(
-          -name  => 'KRANG_PREFS',
-          -value => objToJson(\%prefs),
-          -path  => '/'
-      );
-
-      # and store meta information about this installation/instance of Krang
-      my %conf_info = (
-          charset => ( Charset() || '' ),
-      );
-      my $conf_cookie = $q->cookie(
-          -name  => 'KRANG_CONFIG',
-          -value => objToJson(\%conf_info),
-	  -path  => '/'
-      );
-    
-      # and set all four cookies
-      $self->header_add(-cookie => [$session_cookie->as_string, $login_id_cookie->as_string, 
-				    $pref_cookie->as_string, $conf_cookie->as_string]);
-    }
+    # and set all four cookies
+    $self->header_add(-cookie => [$authen_cookie->as_string,
+                                  $pref_cookie->as_string, $conf_cookie->as_string]);
 
     # now we're ready to redirect
     my $target = './';
     $self->header_add(-uri => $target);
     $self->header_type('redirect');
-    return "Redirect: <a href=\"$target\">$target</a>";
-}
-
-# build new session for new window (keeping same user)
-sub new_window {
-    my $self = shift;
-    return $self->_do_login($ENV{REMOTE_USER}, 'copy_existing');
+    return "Redirect: <a href=\"$target?window_id=1\">$target</a>";
 }
 
 # handle a logout
@@ -276,8 +248,8 @@ sub logout {
     my $query    = $self->query();
 
     # build a poison cookie
-    my $cookie = $query->cookie(
-				-name   => "krang_window_".$ENV{KRANG_WINDOW_ID},
+    my $authen_cookie = $query->cookie(
+                                -name   => pkg('Conf')->instance,
 				-value  => "",
 				-expires=>'-90d',
 			       );
@@ -288,7 +260,7 @@ sub logout {
 
     # redirect to login
     $self->header_props(-uri => 'login.pl',
-			-cookie => [$cookie->as_string]);
+			-cookie => [$authen_cookie->as_string]);
     $self->header_type('redirect');
     return '';
 }

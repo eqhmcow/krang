@@ -1,0 +1,59 @@
+<tmpl_if krang_pager_rows>
+
+<form name="krang_pager_form" action="template.pl" method="post">
+
+<tmpl_include HTMLPager/pager-internals.tmpl>
+
+<tmpl_include HTMLPager/pager-pagination.tmpl>
+
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="result select_row" summary="">
+
+<colgroup>
+<!-- 'template_id' column -->
+<col class="c-id">
+<!-- 'filename|url' column -->
+<col>
+<!-- 'user' column -->
+<col class="c-user">
+<!-- 'commands_column' column -->
+<col style="width:13em" class="c-link">
+<!-- 'checkbox_column' column -->
+<col class="tick">
+</colgroup>
+
+<thead>
+<tr>
+<th class="f"><tmpl_var colhead_template_id></th>
+<th><tmpl_var colhead_filename> | <tmpl_var colhead_url></th>
+<th><tmpl_var colhead_user></th>
+<th><tmpl_var colhead_commands_column></th>
+<th class="l"><tmpl_var colhead_checkbox_column></th>
+</tr>
+</thead>
+
+<tbody><tmpl_loop krang_pager_rows>
+<tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+<td class="f"><tmpl_var template_id></td>
+<td><strong><tmpl_var filename></strong><br><tmpl_var url></td>
+<td><tmpl_var user></td>
+<td><tmpl_var commands_column></td><td class="l"><tmpl_var checkbox_column></td>
+
+</tr>
+</tmpl_loop></tbody>
+
+</table></div>
+
+<tmpl_include HTMLPager/pager-pagination.tmpl>
+
+</form>
+
+<tmpl_else>
+
+<p class="naught">
+None found<tmpl_if other_search_place> <a href="javascript:other_search_rm()"><tmpl_var other_search_place></a></tmpl_if>
+</p>
+
+</tmpl_if>

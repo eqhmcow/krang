@@ -177,7 +177,7 @@ isn't particularly clear but one is obviously needed.
 =item Add-on scripts should get #! handling
 
 Krang fixes the #! line on scripts in bin/ to point to the Perl used
-to install Krang.  Addons should get similar processing during
+to install Krang.  AddOns should get similar processing during
 install.
 
 =item Add-ons should be able to include their own platform/ files

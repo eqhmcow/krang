@@ -114,7 +114,15 @@ END
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader 'Conf';
+BEGIN {
+    # we don't care right now which instance we use, but Krang::Script does
+    # so just use the first one
+    my ($first_instance) = pkg('Conf')->instances();
+    pkg('Conf')->instance($first_instance);
+    $ENV{KRANG_INSTANCE} = $first_instance;
+}
 use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader 'Script';
 BEGIN {
     pkg('AddOn')->call_handler('InitHandler');
 };
