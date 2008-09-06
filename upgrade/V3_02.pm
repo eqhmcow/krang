@@ -39,9 +39,6 @@ sub per_instance {
     return if $args{no_db};
     my $dbh = dbh();
 
-    # add the 'language' preference
-    $dbh->do('INSERT INTO pref (id, value) VALUES ("language", "en")');
-
     # add 'retired' and 'trashed' columns to STORY
     $dbh->do('ALTER TABLE story ADD COLUMN retired BOOL NOT NULL DEFAULT 0');
     $dbh->do('ALTER TABLE story ADD COLUMN trashed  BOOL NOT NULL DEFAULT 0');
