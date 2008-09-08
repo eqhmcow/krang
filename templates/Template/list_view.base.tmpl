@@ -10,20 +10,19 @@ add_template = function() {
     Krang.Form.submit('template_search_form', { rm: 'add'});
 }
 
-<tmpl_if do_advanced_search>
-  simple_search = function()
+show_advanced_search = function( show_advanced )
   {
-    Krang.Form.submit('template_search_form', { rm: 'search' }, { to_top: false });
+  Krang.Form.submit( 'template_search_form', { do_advanced_search: show_advanced }, { to_top: false } );
+}
+
+other_search_rm = function() {
+  Krang.Form.submit('template_search_form', { rm: 'list_retired', other_search_place: 'Search in Live' });
   }
 
+<tmpl_if do_advanced_search>
   clear_advanced_search = function()
   {
     Krang.Form.submit('clear_advanced_search_form', {}, { to_top: false });
-  }
-<tmpl_else>
-  advanced_search = function()
-  {
-    Krang.Form.submit('template_search_form', { rm: 'advanced_search' }, { to_top: false });
   }
 </tmpl_if>
 
@@ -53,6 +52,12 @@ add_template = function() {
     else if ( confirm( Krang.L10N.loc('Are you SURE you want to deploy the checked Templates?') ) )
       Krang.Form.submit('krang_pager_form', { rm: 'deploy_selected' }, { to_top: false });
   }
+
+  retire_template = function(id)
+  {
+    if (confirm('Are you SURE you want to retire this Template?'))
+      Krang.Form.submit('find_template', { rm: 'retire', template_id: id });
+  }
 </tmpl_if>
 </script>
 
@@ -62,23 +67,25 @@ add_template = function() {
 
 <form name="template_search_form" id="template_search_form" method="post" action="template.pl">
 
-<input name="rm" value="<tmpl_if do_advanced_search>advanced_</tmpl_if>search" type="hidden">
+<input name="rm" value="search" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
 <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
 <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+<input name="do_advanced_search" value="<tmpl_if do_advanced_search>1<tmpl_else>0</tmpl_if>" type="hidden">
 <tmpl_if do_advanced_search>
   <input name="search_filter" value="" type="hidden">
 </tmpl_if>
+<input name="other_search_place" value="Search in Retire" type="hidden">
 
 <div class="tabset finder">
 
 <ul class="tabs"><li>
-<tmpl_if do_advanced_search><a href="javascript:simple_search()"><tmpl_else><b></tmpl_if><span>
+<tmpl_if do_advanced_search><a href="javascript:show_advanced_search('0')"><tmpl_else><b></tmpl_if><span>
 <tmpl_lang Simple Search>
 </span><tmpl_if do_advanced_search></a><tmpl_else></b></tmpl_if>
 </li><li>
-<tmpl_if do_advanced_search><b><tmpl_else><a href="javascript:advanced_search()"></tmpl_if><span>
+<tmpl_if do_advanced_search><b><tmpl_else><a href="javascript:show_advanced_search('1')"></tmpl_if><span>
 <tmpl_lang Advanced Search>
 </span><tmpl_if do_advanced_search></b><tmpl_else></a></tmpl_if>
 </li></ul>
@@ -179,7 +186,8 @@ add_template = function() {
 
 <tmpl_if do_advanced_search>
   <form name="clear_advanced_search_form" id="clear_advanced_search_form" method="post" action="template.pl">
-  <input name="rm" value="advanced_search" type="hidden">
+  <input name="rm" value="search" type="hidden">
+  <input name="do_advanced_search" value="1" type="hidden">
   <input name="search_filter" value="" type="hidden">
   <input name="clear_search_form" value="1" type="hidden">
   </form>
@@ -189,6 +197,7 @@ add_template = function() {
   <form name="find_template" id="find_template" method="post" action="template.pl">
   <input name="rm" value="view" type="hidden">
   <input name="template_id" type="hidden">
+  <input name="return_script" value="template.pl" type="hidden">
   <tmpl_var history_return_params>
   </form>
 </tmpl_if>

@@ -33,12 +33,12 @@ show_advanced_search = function( show_advanced )
       var num_rows_checked = Krang.pager_row_checked();
 
       if (!num_rows_checked) {
-        alert( 'Nothing selected to delete!' );
+        alert( Krang.L10N.loc('Nothing selected to delete!') );
       } else {
         if (num_rows_checked > 1) {
-	  question = 'Are you SURE you want to delete the checked Templates?';
+	  question = Krang.L10N.loc('Are you SURE you want to delete the checked Templates?');
         } else {
-	  question = 'Are you SURE you want to delete the checked Template';
+	  question = Krang.L10N.loc('Are you SURE you want to delete the checked Template');
         }
         if (confirm(question)) {
           Krang.Form.submit( 'krang_pager_form', { rm : 'delete_selected' }, { to_top : false } );
@@ -54,7 +54,7 @@ show_advanced_search = function( show_advanced )
 </script>
 
 <h2>
-Retired Templates
+<tmpl_lang Retired Templates>
 </h2>
 
 <form name="template_search_form" method="post" action="template.pl">
@@ -75,11 +75,11 @@ Retired Templates
 
 <ul class="tabs"><li>
 <tmpl_if do_advanced_search><a href="javascript:show_advanced_search('0')"><tmpl_else><b></tmpl_if><span>
-Simple Search
+<tmpl_lang Simple Search>
 </span><tmpl_if do_advanced_search></a><tmpl_else></b></tmpl_if>
 </li><li>
 <tmpl_if do_advanced_search><b><tmpl_else><a href="javascript:show_advanced_search('1')"></tmpl_if><span>
-Advanced Search
+<tmpl_lang Advanced Search>
 </span><tmpl_if do_advanced_search></b><tmpl_else></a></tmpl_if>
 </li></ul>
 
@@ -89,7 +89,7 @@ Advanced Search
 
   <div class="faux-p">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
-  <input value="Search" type="submit" class="button">
+  <input value="<tmpl_lang Search>" type="submit" class="button">
   </div>
 
 <tmpl_else>
@@ -106,9 +106,9 @@ Advanced Search
   <tbody class="demi">
 
   <tr>
-  <th>URL</th>
+  <th><tmpl_lang URL></th>
   <td><input name="search_url" value="<tmpl_var escape=html search_url>"></td>
-  <th>Template ID</th>
+  <th><tmpl_lang Template ID></th>
   <td><input name="search_template_id" value="<tmpl_var escape=html search_template_id>"></td>
   </tr>
 
@@ -117,12 +117,12 @@ Advanced Search
   <tbody>
 
   <tr>
-  <th>Element</th>
+  <th><tmpl_lang Element></th>
   <td colspan="3"><tmpl_var element_chooser></td>
   </tr>
 
   <tr>
-  <th>Site/Category</th>
+  <th><tmpl_lang Site/Category></th>
   <td colspan="3"><tmpl_var category_chooser></td>
   </tr>
 
@@ -131,8 +131,8 @@ Advanced Search
   </table>
 
   <div class="panel">
-  <input value="Clear" onclick="clear_advanced_search()" type="button">
-  <input value="Search" type="submit">
+  <input value="<tmpl_lang Clear>" onclick="clear_advanced_search()" type="button">
+  <input value="<tmpl_lang Search>" type="submit">
   </div>
 
 </tmpl_unless>
@@ -144,13 +144,13 @@ Advanced Search
 </form>
 
 <h3>
-Search Results
+<tmpl_lang Search Results>
 </h3>
 
 <tmpl_unless read_only>
 <div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <tmpl_if row_count>
-    <input value="Delete" onclick="delete_selected()" type="button">
+    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
   </tmpl_if>
 </form></div>
 </tmpl_unless>
@@ -162,7 +162,7 @@ Search Results
 <tmpl_unless read_only>
 <div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <tmpl_if row_count>
-    <input value="Delete" onclick="delete_selected()" type="button">
+    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
   </tmpl_if>
 </form></div>
 </tmpl_unless>

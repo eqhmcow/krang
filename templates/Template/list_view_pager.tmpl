@@ -2,9 +2,9 @@
 
 <form name="krang_pager_form" action="template.pl" method="post">
 
-<tmpl_include HTMLPager/pager-internals.tmpl>
+<tmpl_include HTMLPager/<tmpl_lang en>/pager-internals.tmpl>
 
-<tmpl_include HTMLPager/pager-pagination.tmpl>
+<tmpl_include HTMLPager/<tmpl_lang en>/pager-pagination.tmpl>
 
 <div class="table-container">
 <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
@@ -61,14 +61,14 @@
 
 </table></div>
 
-<tmpl_include HTMLPager/pager-pagination.tmpl>
+<tmpl_include HTMLPager/<tmpl_lang en>/pager-pagination.tmpl>
 
 </form>
 
 <tmpl_else>
 
 <p class="naught">
-None found<tmpl_if other_search_place> <a href="javascript:other_search_rm()"><tmpl_var other_search_place></a></tmpl_if>
+<tmpl_lang None found><tmpl_if other_search_place> <a href="javascript:other_search_rm()"><tmpl_var other_search_place></a></tmpl_if>
 </p>
 
 </tmpl_if>

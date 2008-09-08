@@ -6,15 +6,13 @@ Krang.onload( function() {
   Krang.Help.set( 'template_<tmpl_if add_mode>new<tmpl_else>edit</tmpl_if>' );
 } );
 
-do_save_stay = function()
-{
-  templateEditor.toggleEditor();
+do_save_stay = function() {
+  save_editor_text();
   Krang.Form.submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save_stay' }, { to_top: false });
 }
 
-do_save = function()
-{
-  templateEditor.toggleEditor();
+do_save = function() {
+  save_editor_text();
   Krang.Form.submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save' });
 }
 
@@ -29,15 +27,13 @@ do_save = function()
 //  Krang.Form.submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_cancel' });
 //}
 
-do_deploy = function()
-{
-  templateEditor.toggleEditor();
+do_deploy = function() {
+  save_editor_text();
   Krang.Form.submit('edit_template_form', { rm: 'deploy' });
 }
 
-save_and_view_log = function()
-{
-  templateEditor.toggleEditor();
+save_and_view_log = function() {
+  save_editor_text();
   Krang.Form.submit('edit_template_form', { rm: 'save_and_view_log' });
 }
 
@@ -101,7 +97,7 @@ save_and_view_log = function()
 
 // Register CodePress's onload event:
 Krang.onload( function() { 
-  CodePress.run();
+    if( use_editor ) CodePress.run();
 } );
 
 </script>
