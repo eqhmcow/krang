@@ -8,6 +8,7 @@ use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
 use Krang;
 use Krang::ClassLoader 'AddOn';
+use Krang::ClassLoader Session => qw(%session);
 
 =head1 NAME
 
@@ -48,7 +49,7 @@ The only available run-mode, displays the navigation menu.
 
 sub show {
     my $self = shift;
-    my $template = $self->load_tmpl('nav.tmpl');
+    my $template = $self->load_tmpl('nav.tmpl', path => [ $session{language} || '' ]);
     pkg('Navigation')->fill_template(template => $template, force_ajax => 1);
     return $template->output;
 }
