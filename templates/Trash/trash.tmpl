@@ -18,12 +18,12 @@ Krang.onload( function() {
       var num_rows_checked = Krang.pager_row_checked();
 
       if (!num_rows_checked) {
-        alert( 'Nothing selected to restore!' );
+        alert( Krang.L10N.loc('Nothing selected to restore!') );
       } else {
         if (num_rows_checked > 1) {
-	  question = 'Are you SURE you want to restore these items?';
+	  question = Krang.L10N.loc('Are you SURE you want to restore these items?');
         } else {
-	  question = 'Are you SURE you want to restore this item?';
+	  question = Krang.L10N.loc('Are you SURE you want to restore this item?');
         }
         if (confirm(question)) {
           Krang.Form.submit( 'krang_pager_form', { rm : 'restore_checked' }, { to_top : false } );
@@ -40,12 +40,12 @@ Krang.onload( function() {
       var num_rows_checked = Krang.pager_row_checked();
 
       if (!num_rows_checked) {
-        alert( 'Nothing selected to delete!' );
+        alert( Krang.L10N.loc('Nothing selected to delete!') );
       } else {
         if (num_rows_checked > 1) {
-	  question = 'Are you SURE you want to permanently delete these items?';
+	  question = Krang.L10N.loc('Are you SURE you want to permanently delete these items?');
         } else {
-	  question = 'Are you SURE you want to permanently delete this item?';
+	  question = Krang.L10N.loc('Are you SURE you want to permanently delete this item?');
         }
         if (confirm(question)) {
           Krang.Form.submit( 'krang_pager_form', { rm : 'delete_checked' }, { to_top : false } );
@@ -69,7 +69,7 @@ Trash
 <tmpl_unless krang_pager_rows>
 
   <p class="naught">
-  The Trash is currently empty.
+  <tmpl_lang The Trash is currently empty.>
   </p>
 
 <tmpl_else>
@@ -81,16 +81,16 @@ Trash
   <input name="id"      type="hidden">
   <input name="type_id" type="hidden">
 
-  <tmpl_include HTMLPager/pager-internals.tmpl>
+  <tmpl_include HTMLPager/<tmpl_lang en>/pager-internals.tmpl>
 
   <tmpl_if __show_checkbox_column__><div class="panel">
-    <input value="Restore" onclick="restore_checked()" type="button">
+    <input value="<tmpl_lang Restore>" onclick="restore_checked()" type="button">
     <tmpl_if admin_may_delete>
-      <input value="Delete" onclick="delete_checked()" type="button">
+      <input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button">
     </tmpl_if>
   </div></tmpl_if>
 
-  <tmpl_include HTMLPager/pager-pagination.tmpl>
+  <tmpl_include HTMLPager/<tmpl_lang en>/pager-pagination.tmpl>
 
   <div class="table-container">
   <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
@@ -133,15 +133,15 @@ Trash
     <br><tmpl_if class><tmpl_var escape=html class> (</tmpl_if>Version <tmpl_var escape=html version><tmpl_if class>)</tmpl_if>
 
     <br><!-- Commands -->
-    <input value="View Detail" onclick="view_object('<tmpl_var escape=html type>', <tmpl_var escape=html id>)" type="button" class="button">
+    <input value="<tmpl_lang View Detail>" onclick="view_object('<tmpl_var escape=html type>', <tmpl_var escape=html id>)" type="button" class="button">
     <tmpl_if may_edit>
-    <input value="Restore" onclick="restore_object('<tmpl_var escape=html type>_<tmpl_var escape=html id>')" type="button" class="button">
+    <input value="<tmpl_lang Restore>" onclick="restore_object('<tmpl_var escape=html type>_<tmpl_var escape=html id>')" type="button" class="button">
     </tmpl_if>
     </td>
 
     <tmpl_if thumbnail_src>
       <td>
-      <a title="Preview <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html id>')"><img alt="" src="<tmpl_var escape=html thumbnail_src>" class="thumbnail"></a>
+      <a title="<tmpl_lang Preview> <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html id>')"><img alt="" src="<tmpl_var escape=html thumbnail_src>" class="thumbnail"></a>
       </td>
     </tmpl_if>
 
@@ -156,12 +156,12 @@ Trash
   </table>
   </div>
 
-  <tmpl_include HTMLPager/pager-pagination.tmpl>
+  <tmpl_include HTMLPager/<tmpl_lang en>/pager-pagination.tmpl>
 
   <tmpl_if __show_checkbox_column__><div class="panel capped">
-    <input value="Restore" onclick="restore_checked()" type="button">
+    <input value="<tmpl_lang Restore>" onclick="restore_checked()" type="button">
     <tmpl_if admin_may_delete>
-      <input value="Delete" onclick="delete_checked()" type="button">
+      <input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button">
     </tmpl_if>
   </div></tmpl_if>
 
