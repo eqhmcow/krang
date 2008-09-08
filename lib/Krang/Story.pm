@@ -1408,31 +1408,40 @@ or bin/ scripts make calls to C<find()>!
                 }
                 next;
             }
-        
-            # handle simple_search
+
+            # handle simple search
             if ($key eq 'simple_search') {
                 $from{"story_category as sc"} = 1;
                 push(@where, 's.story_id = sc.story_id');
-
-                my @words = split(/\s+/, ($args{'simple_search'} || ""));
-                foreach my $word (@words) {
-                    my $numeric = ($word =~ /^\d+$/) ? 1 : 0;
-                    push(
-                        @where,
-                        '('
-                          . join(' OR ',
-                            ($numeric ? 's.story_id = ?' : ()),
-                            's.title LIKE ?',
-                            'sc.url LIKE ?')
-                          . ')'
-                    );
-                
-                    # escape any literal SQL wildcard chars
-                    if (!$numeric) {
-                        $word =~ s/_/\\_/g;
-                        $word =~ s/%/\\%/g;
+                if ($simple_full_text) {
+                    $from{"element as el"} = 1;
+                    push(@where, 'el.root_id = s.element_id');
+                }
+                foreach my $phrase ($pkg->_search_text_to_phrases($value)) {
+                    my $numeric = ($phrase =~ /^\d+$/) ? 1 : 0;
+                    if( !$numeric ) {
+                        $phrase =~ s/_/\\_/g; # escape any literal 
+                        $phrase =~ s/%/\\%/g; # SQL wildcard chars
                     }
-                    push(@param, ($numeric ? ($word) : ()), "%${word}%", "%${word}%");
+                    my $where = join(' OR ', 
+                                     ($numeric ? 's.story_id = ?' : ()),
+                                     's.title LIKE ?', 
+                                     'sc.url LIKE ?');
+                    push(@param, ($numeric ? ($phrase) : ()), 
+                         "%${phrase}%", 
+                         "%${phrase}%");
+                    if ($simple_full_text) {
+                        if ($phrase =~ /^\s(.*)\s$/) {
+                            # user wants full-word match: replace spaces w/ MySQL word boundaries
+                            $where .= ' OR el.data RLIKE CONCAT( "[[:<:]]", ?, "[[:>:]]" )';
+                            push(@param, $1);
+                        } else {
+                            # user wants regular substring match 
+                            $where .= ' OR el.data LIKE ?';
+                            push(@param, "%${phrase}%");
+                        }
+                    }
+                    push (@where, "($where)");
                 }
                 next;
             }
@@ -1509,43 +1518,6 @@ or bin/ scripts make calls to C<find()>!
                 next;
             }
 
-            # handle simple search
-            if ($key eq 'simple_search') {
-                $from{"story_category as sc"} = 1;
-                push(@where, 's.story_id = sc.story_id');
-                if ($simple_full_text) {
-                    $from{"element as el"} = 1;
-                    push(@where, 'el.root_id = s.element_id');
-                }
-                foreach my $phrase ($pkg->_search_text_to_phrases($value)) {
-                    my $numeric = ($phrase =~ /^\d+$/) ? 1 : 0;
-                    if( !$numeric ) {
-                        $phrase =~ s/_/\\_/g; # escape any literal 
-                        $phrase =~ s/%/\\%/g; # SQL wildcard chars
-                    }
-                    my $where = join(' OR ', 
-                                     ($numeric ? 's.story_id = ?' : ()),
-                                     's.title LIKE ?', 
-                                     'sc.url LIKE ?');
-                    push(@param, ($numeric ? ($phrase) : ()), 
-                         "%${phrase}%", 
-                         "%${phrase}%");
-                    if ($simple_full_text) {
-                        if ($phrase =~ /^\s(.*)\s$/) {
-                            # user wants full-word match: replace spaces w/ MySQL word boundaries
-                            $where .= ' OR el.data RLIKE CONCAT( "[[:<:]]", ?, "[[:>:]]" )';
-                            push(@param, $1);
-                        } else {
-                            # user wants regular substring match 
-                            $where .= ' OR el.data LIKE ?';
-                            push(@param, "%${phrase}%");
-                        }
-                    }
-                    push (@where, "($where)");
-                }
-                next;
-            }
-            
             # handle full-text search
             if ($key eq 'full_text_string') {
                 $from{"element as el"} = 1;
