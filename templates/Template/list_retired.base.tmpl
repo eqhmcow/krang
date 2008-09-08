@@ -90,6 +90,7 @@ show_advanced_search = function( show_advanced )
   <div class="faux-p">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
   <input value="<tmpl_lang Search>" type="submit" class="button">
+  <input name="search_filter_check_full_text" type="checkbox" <tmpl_if search_filter_check_full_text>checked</tmpl_if>><tmpl_lang Search full text?>
   </div>
 
 <tmpl_else>
