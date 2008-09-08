@@ -124,7 +124,7 @@ $clone_cat->delete();
 
 my $tmpl2 = pkg('Template')->new(
     category_id => $category->category_id(),
-    content     => '<html></html>',
+    content     => '<html>test content</html>',
     filename    => 't_w_c.tmpl'
 );
 
@@ -220,7 +220,7 @@ isa_ok($tmplXYZ, 'Krang::Template');
 is($tmplXYZ->version(), 2, 'Template version test');
 
 # full-text find
-my ($tmpl7) = pkg('Template')->find(full_text_string => 'html');
+my ($tmpl7) = pkg('Template')->find(full_text_string => 'test content');
 ok($tmpl7);
 is($tmpl7->filename, 't_w_c.tmpl', "Find - search by full text that exists");
 my ($tmpl8) = pkg('Template')->find(full_text_string => 'ascii');
