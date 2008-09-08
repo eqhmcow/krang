@@ -99,6 +99,7 @@ other_search_rm = function() {
   <div class="faux-p">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
   <input value="<tmpl_lang Search>" type="submit" class="button">
+  <input name="search_filter_check_full_text" type="checkbox" <tmpl_if search_filter_check_full_text>checked</tmpl_if>><tmpl_lang Search full text?>
   </div>
 
 <tmpl_else>
@@ -133,6 +134,11 @@ other_search_rm = function() {
   <td><input name="search_story_id" value="<tmpl_var escape=html search_story_id>"></td>
   <th><tmpl_lang Creator></th>
   <td><input name="search_creator_simple" value="<tmpl_var escape=html search_creator_simple>"></td>
+  </tr>
+
+  <tr>
+  <th><tmpl_lang Full Text Search></th>
+  <td colspan="3"><input name="search_full_text_string" value="<tmpl_var escape=html search_full_text_string>"></td>
   </tr>
 
   </tbody>
