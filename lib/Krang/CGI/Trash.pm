@@ -23,10 +23,13 @@ This application manages Krang's trashbin.
 
 =cut
 
-use Krang::ClassLoader Log => qw(debug);
 use Krang::ClassLoader 'HTMLPager';
-use Krang::ClassLoader Widget  => qw(format_url);
+use Krang::ClassLoader Localization => qw(localize);
+use Krang::ClassLoader Log => qw(debug);
 use Krang::ClassLoader Message => qw(add_message add_alert);
+use Krang::ClassLoader Widget  => qw(format_url);
+
+
 
 use UNIVERSAL::moniker;
 use Carp qw(croak);
