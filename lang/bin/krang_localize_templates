@@ -158,6 +158,7 @@ $ENV{KRANG_RECORD_MISSING_LOCALIZATIONS} = $print_missing;
 my @single_templates = ( qw(
     footer
     header
+    nav
 ));
 
 
