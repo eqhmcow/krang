@@ -5,7 +5,7 @@ Krang.onload( function() {
     Krang.Nav.edit_mode();
     Krang.Help.set( 'category_copy' );
     <tmpl_if confirm_copy>
-    if (confirm("Some items you want to copy conflict with existing ones.\n\nIf you wish to copy those that don't conflict, click OK.\n\nIf not, click Cancel.")) {
+    if (confirm(Krang.L10N.loc("Some items you want to copy conflict with existing ones.\n\nIf you wish to copy those that don't conflict, click OK.\n\nIf not, click Cancel."))) {
         copy('non_conflicting');
     } else {
         Krang.Form.submit('copy_category', { rm: 'prepare_copy', copy_story: '<tmpl_var copy_story>', copy_media: '<tmpl_var copy_media>', copy_template: '<tmpl_var copy_template>' });
@@ -24,7 +24,7 @@ copy = function(non_conflicting) {
 	$(fieldname).value = box.checked ? 1 : 0;
     })
     if (! cbx.find(function(box) { return box.checked == true }) ) {
-        alert("No content was copied because no content was selected.");
+        alert(Krang.L10N.loc("No content was copied because no content was selected."));
     } else {
         Krang.Form.submit('copy_category', { rm: 'execute_copy', non_conflicting: non_conflicting });
     }
@@ -56,32 +56,32 @@ Copy Category
 <tbody>
 
 <tr>
-<td>Category Copying From</td>
+<td><tmpl_lang Category Copying From></td>
 <td><tmpl_var escape=html src_category_url></td>
 </tr>
 
 <tr<tmpl_if bad_dst_category> class="err"</tmpl_if>>
-<td>Category Copying To</t>
+<td><tmpl_lang Category Copying To></t>
 <td><tmpl_var category_chooser_button></td>
 </tr>
 
 <tr>
-<td>Copy Stories?</td>
+<td><tmpl_lang Copy Stories?></td>
 <td><input name="copy_story_cbx" value="1" type="checkbox"<tmpl_if copy_story>checked="checked"</tmpl_if>></td>
 </tr>
 
 <tr>
-<td>Copy Media?</td>
+<td><tmpl_lang Copy Media?></td>
 <td><input name="copy_media_cbx" value="1" type="checkbox"<tmpl_if copy_media>checked="checked"</tmpl_if>></td>
 </tr>
 
 <tr>
-<td>Copy Templates?</td>
+<td><tmpl_lang Copy Templates?></td>
 <td><input name="copy_template_cbx" value="1" type="checkbox"<tmpl_if copy_template>checked="checked"</tmpl_if>></td>
 </tr>
 
 <tr>
-<td>Overwrite Existing Files?</td>
+<td><tmpl_lang Overwrite Existing Files?></td>
 <td><input name="overwrite_cbx" value="0" type="checkbox"<tmpl_if overwrite>checked="checked"</tmpl_if>></td>
 </tr>
 
@@ -90,8 +90,8 @@ Copy Category
 </table>
 
 <div class="panel capped">
-<input value="Cancel" onclick="cancel()" type="button" class="west">
-<input value="Copy"   onclick="copy('0')"   type="button">
+<input value="<tmpl_lang Cancel>" onclick="cancel()" type="button" class="west">
+<input value="<tmpl_lang Copy>"   onclick="copy('0')"   type="button">
 </div>
 
 <tmpl_var category_chooser_logic>
