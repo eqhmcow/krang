@@ -444,8 +444,7 @@ sub authen_handler ($$) {
             return $self->_redirect_to_workspace($r, $instance, $window_id);
         }
     }
-
-    pkg('Session')->unload();
+#    pkg('Session')->unload();
 
     return OK;
 }

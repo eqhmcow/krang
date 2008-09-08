@@ -5,6 +5,8 @@ use warnings;
 
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Log => qw(critical);
+use Krang::ClassLoader 'MyPref';
+
 use Apache::Session::MySQL;
 use Carp qw(croak);
 use Storable qw/nfreeze thaw/;
@@ -201,10 +203,10 @@ sub persist_to_mypref {
     # session's persistant part
     my $persist = $session{KRANG_PERSIST};
 
-    # delete what might be harmfull
+    # delete what might be harmful
     delete $persist->{DUPE_STORIES};
-    use Krang::Log qw(info);
-info('In persist_to_mypref - User: '.$ENV{REMOTE_USER});
+    use Krang::Log qw(debug);
+    debug('In persist_to_mypref - User: '.$ENV{REMOTE_USER});
     pkg('MyPref')->set(config => nfreeze($persist));
 }
 

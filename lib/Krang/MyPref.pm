@@ -5,7 +5,6 @@ use warnings;
 
 use Carp qw(croak);
 use Krang::ClassLoader DB => qw(dbh);
-use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Pref';
 
 =head1 NAME
