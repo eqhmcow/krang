@@ -569,7 +569,6 @@ sub make_history_return_params {
 sub search_row_handler {
     my ($self, $row, $site, $pager) = @_;
     $row->{site_id} = $site->site_id();
-    $row->{site_id} = $site->site_id();
     $row->{url} = $site->url();
     $row->{preview_url} = $site->preview_url();
 }
