@@ -17,6 +17,11 @@ add_category = function()
     Krang.Form.submit( 'edit_category_form', { category_id: id } );
   }
 
+  copy_category = function( id )
+  { 
+    Krang.Form.submit( 'copy_category_form', { rm: 'prepare_copy', src_category_id: id } );
+  }
+
   delete_selected = function()
   {
     if ( !Krang.pager_row_checked() )
@@ -90,6 +95,11 @@ add_category = function()
   <form name="edit_category_form" id="edit_category_form" action="category.pl" method="post">
   <input name="rm" value="edit" type="hidden">
   <input name="category_id" value="" type="hidden">
+  </form>
+
+  <form name="copy_category_form" action="category.pl" method="post">
+  <input name="rm" value="prepare_copy" type="hidden">
+  <input name="src_category_id" value="" type="hidden">
   </form>
 </tmpl_if>
 
