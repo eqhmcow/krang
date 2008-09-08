@@ -63,7 +63,7 @@ sub setup {
         revert                        => 'revert',
         find                          => 'find',
         list_active                   => 'list_active',
-        cancel_create                 => 'cancel_create',
+        cancel_edit                   => 'cancel_edit',
         list_retired                  => 'list_retired',
         delete                        => 'delete',
         delete_selected               => 'delete_selected',
@@ -208,21 +208,6 @@ sub new_story {
 
     return $template->output();
 }
-
-=item cancel
-
-Returns to Workspace without creating a new story.
-
-=cut
-
-sub cancel_create {
-    my $self = shift;
-    add_message('cancel_new_story');
-    $self->redirect_to_workspace;
-}
-
-
-    
 
 =item create
 

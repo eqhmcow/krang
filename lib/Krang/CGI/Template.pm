@@ -65,7 +65,6 @@ sub setup {
         [
             qw/
               add
-              add_cancel
               add_save
               add_checkin
               add_save_stay
@@ -78,7 +77,6 @@ sub setup {
               deploy_selected
               checkout_and_edit
               edit
-              edit_cancel
               edit_save
               edit_checkin
               edit_save_stay
@@ -480,25 +478,6 @@ sub edit {
     $t->param($self->get_tmpl_params($template));
 
     return $t->output();
-}
-
-=item edit_cancel
-
-Cancels edit of template object on "Edit" screen and returns to 'search' run
-mode.
-
-=cut
-
-sub edit_cancel {
-    my $self = shift;
-
-    my $q = $self->query();
-
-    add_message('message_edit_cancelled');
-
-    delete $session{template};
-
-    return $self->search();
 }
 
 =item edit_checkin

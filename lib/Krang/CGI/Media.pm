@@ -69,7 +69,7 @@ sub setup {
               advanced_find
               add
               save_add
-              cancel_add
+              cancel_edit
               checkin_add
               checkin_edit
               checkin_selected
