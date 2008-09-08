@@ -200,11 +200,9 @@ sub delete {
 sub persist_to_mypref {
     my $self = shift;
 
-    # session's persistant part
+    # session's persistent part
     my $persist = $session{KRANG_PERSIST};
 
-    # delete what might be harmful
-    delete $persist->{DUPE_STORIES};
     use Krang::Log qw(debug);
     debug('In persist_to_mypref - User: '.$ENV{REMOTE_USER});
     pkg('MyPref')->set(config => nfreeze($persist));
