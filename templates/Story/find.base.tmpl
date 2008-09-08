@@ -43,7 +43,7 @@ other_search_rm = function() {
 
   view_story_log = function( id )
   {
-    Krang.Form.submit( 'view_story_log_form', { story_id: id } );
+    Krang.Form.submit( 'view_story_log_form', { id: id } );
   }
 
   copy_story = function(id) {
@@ -270,7 +270,7 @@ other_search_rm = function() {
 
 <tmpl_if row_count>
   <form name="view_story_log_form" id="view_story_log_form" action="history.pl" method="post">
-  <input name="story_id" type="hidden">
+  <input name="id" type="hidden">
   <input name="class" value="Story" type="hidden">
   <input name="id_meth" value="story_id" type="hidden">
   <input name="history_return_script" value="story.pl" type="hidden">
