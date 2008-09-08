@@ -160,6 +160,8 @@ a single template per top-level story type. [Noam Weinstein]
 
 =head2 3.03 - August 25th, 2008
 
+=over
+
 =item *
 
 Added C<forget_all_dbhs()> method to C<Krang::DB> to help in the situation
