@@ -192,6 +192,10 @@ sub _do_login {
                        hash       => md5_hex($user_id . $instance .
                                              $session_id . Secret()) );
 
+    # Propagate user to environment
+    $ENV{REMOTE_USER} = $user_id;
+
+    # Put language pref in session
     $session{language} = pkg('MyPref')->get('language') || DefaultLanguage || 'en';
 
     # the login window is our first window: pass its id around
@@ -199,9 +203,6 @@ sub _do_login {
 
     # Unload the session
     pkg('Session')->unload();
-
-    # Propagate user to environment
-    $ENV{REMOTE_USER} = $user_id;
 
     # build the session cookie (using next available window ID)
     my $authen_cookie = $q->cookie(

@@ -2358,7 +2358,9 @@ sub find_story_row_handler {
           . qq|" onclick="edit_story('|
           . $story->story_id
           . qq|')" type="button" class="button">| . ' '
-          . qq|<input value="Retire" onclick="retire_story('|
+          . qq|<input value="|
+          . localize('Retire')
+          . qq|" onclick="retire_story('|
           . $story->story_id
           . qq|')" type="button" class="button">|
               if $may_edit_and_retire;

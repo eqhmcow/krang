@@ -281,15 +281,18 @@ sub _register_msg {
             add_alert(
                 'restored_with_some_exceptions',
                 restored_phrase =>
-                  (scalar(@restored) > 1 ? 'These items have been' : 'This item has been'),
+                  (scalar(@restored) > 1 ? localize('These items have been')
+                                         : localize('This item has been')),
                 restored_list => join('<br/>', @restored),
-                failed_phrase => (scalar(@failed) > 1 ? 'These items' : 'This item'),
+                failed_phrase => (scalar(@failed) > 1 ? localize('These items')
+                                                      : localize('This item')),
                 failed_list => join('<br/>', @failed),
             );
         } else {
             add_alert(
                 'restored_with_exceptions_only',
-                failed_phrase => (scalar(@failed) > 1 ? 'These items' : 'This item'),
+                failed_phrase => (scalar(@failed) > 1 ? localize('These items')
+                                                      : localize('This item')),
                 failed_list => join '<br/>',
                 @failed,
             );
@@ -298,7 +301,8 @@ sub _register_msg {
         add_message(
             'restored_without_exceptions',
             restored_phrase =>
-              (scalar(@restored) > 1 ? 'These items have been' : 'This item has been'),
+              (scalar(@restored) > 1 ? localize('These items have been')
+                                     : localize('This item has been')),
             restored_list => join '<br/>',
             @restored,
         );
@@ -317,8 +321,8 @@ sub _format_msg {
 
     # Success
     unless ($ex) {
-        my ($msg) = $object->retired ? ("The retired " . $type) : ucfirst($type);
-        $msg .= ' ' . $id . ' has been restored.';
+        my ($msg) = $object->retired ? (localize('The retired') . " $type") : ucfirst($type);
+        $msg .= " $id " . localize('has been restored.');
         return $msg;
     }
 
@@ -326,7 +330,7 @@ sub _format_msg {
     my $ex_type = $ex->moniker;
 
     # No restore permission
-    return $msg . " (no restore permission)"
+    return "$msg  " . localize('(no restore permission)')
       if $ex_type eq 'norestoreaccess';
 
     # URL conflict
@@ -335,22 +339,22 @@ sub _format_msg {
             my @cats = @{$ex->categories};
             return
                 $msg 
-              . '<br/>( URL conflict with <br/>'
+              . '<br/>(' . localize('URL conflict with') . ' <br/>'
               . join('<br/>', map { "Category $_->{id} $_->{url}" } @cats) . ' )';
         } elsif ($ex->can('stories') and $ex->stories) {
             my @stories = @{$ex->stories};
             return
                 $msg 
-              . '<br/>( URL conflict with <br/>'
+              . '<br/>(' . localize('URL conflict with') . ' <br/>'
               . join('<br/>', map { "Story $_->{id} $_->{url}" } @stories) . ' )';
         } elsif (my $id = $ex->$id_meth) {
-            return $msg . '<br/>(URL conflict with ' . ucfirst($type) . ' ' . $id . ')';
+            return $msg . '<br/>(' . localize('URL conflict with') . ' ' . ucfirst($type) . ' ' . $id . ')';
         } else {
-            return $msg . '<br/>(URL conflict - no further information)';
+            return $msg . '<br/>(' . localize('URL conflict - no further information)');
         }
     }
 
-    return $msg . '(unknown reason)';
+    return "$msg " . localize('(unknown reason)');
 }
 
 # transform type_id into an object

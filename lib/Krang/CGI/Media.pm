@@ -2028,9 +2028,9 @@ sub find_media_row_handler {
                   . localize('Checked out by')
                   . '<b>' . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login . '</b>';
             } else {
-                $row->{status} = 'Live';
+                $row->{status} = localize('Live');
             }
-            $row->{pub_status} = $media->published ? '<b>P</b>' : '&nbsp;';
+            $row->{pub_status} = $media->published ? ('<b>' . localize('P') . '</b>') : '&nbsp;';
         }
     } else {
 
@@ -2040,26 +2040,30 @@ sub find_media_row_handler {
 
             # Media is retired
             $row->{pub_status}      = '';
-            $row->{status}          = 'Retired';
+            $row->{status}          = localize('Retired');
             $row->{checkbox_column} = "&nbsp;";
         } else {
 
             # Media is not retired: Maybe we may edit and retire
             $row->{commands_column} .= ' '
-              . qq|<input value="Edit" onclick="edit_media('|
+              . qq|<input value="|
+              . localize('Edit')
+              . qq|" onclick="edit_media('|
               . $media->media_id
               . qq|')" type="button" class="button">| . ' '
-              . qq|<input value="Retire" onclick="retire_media('|
+              . qq|<input value="|
+              . localize('Retire')
+              . qq|" onclick="retire_media('|
               . $media->media_id
               . qq|')" type="button" class="button">|
               if $may_edit_and_retire;
             if ($media->checked_out) {
-                $row->{status} = "Checked out by <b>"
+                $row->{status} = localize('Checked out by') . " <b>"
                   . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login . '</b>';
             } else {
                 $row->{status} = '&nbsp;';
             }
-            $row->{pub_status} = $media->published ? '<b>P</b>' : '&nbsp;';
+            $row->{pub_status} = $media->published ? ('<b>' . localize('P') . '</b>') : '&nbsp;';
         }
     }
 

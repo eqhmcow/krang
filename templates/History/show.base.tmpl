@@ -7,14 +7,7 @@ Krang.onload( function() {
 </script>
 
 <h2>
-<tmpl_if story_id>
-  <tmpl_lang Story>
-<tmpl_else><tmpl_if media_id>
-  <tmpl_lang Media>
-<tmpl_else><tmpl_if template_id>
-  <tmpl_lang Template>
-</tmpl_if></tmpl_if></tmpl_if>
-<tmpl_lang Log>
+<tmpl_var label escape=html>
 </h2>
 
 <tmpl_if krang_pager_rows>

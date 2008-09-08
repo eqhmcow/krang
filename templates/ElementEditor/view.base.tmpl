@@ -39,7 +39,7 @@ view_path = function( p )
 
   <tbody><tmpl_loop child_loop>
     <tr <tmpl_unless __odd__> class="even"</tmpl_unless>>
-    <td class="f"><b><tmpl_var escape=html name></b></th>
+    <td class="f"><b><tmpl_var escape=html name></b></td>
     <td class="l">
     <tmpl_if is_container>
       <input value="<tmpl_lang View Detail>" onclick="view_path('<tmpl_var escape=html path>')" type="button" class="button">

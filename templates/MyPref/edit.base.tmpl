@@ -46,7 +46,7 @@ update_prefs = function() {
   </td>
   </tr>
 
-  <tr>
+  <tr class="evden">
   <td class="f"><tmpl_lang Autocomplete Searches?></td>
   <td class="l"><tmpl_var use_autocomplete_selector></td>
   </tr>
@@ -57,6 +57,11 @@ update_prefs = function() {
   <tmpl_var message_timeout_selector>
   <tmpl_lang seconds>
   </td>
+  </tr>
+
+  <tr>
+  <td class="f"><tmpl_lang Use Syntax Highlighting?></td>
+  <td class="l"><tmpl_var syntax_highlighting_radio></td>
   </tr>
 
   <tmpl_if multi_lang>
@@ -80,7 +85,7 @@ update_prefs = function() {
 
 <tr>
 <td class="f l" colspan="2">
-<tmpl_lang Password must be at least 8 characters long and include at least one number and one symbol.>
+<tmpl_var escape=html password_spec>
 </td>
 </tr>
 
@@ -88,7 +93,7 @@ update_prefs = function() {
 
 </table></div>
 
-<div class="panel capped">
+<div class="panel">
 <input value="<tmpl_lang Update Preferences>" type="button" onclick="update_prefs()">
 </div>
 

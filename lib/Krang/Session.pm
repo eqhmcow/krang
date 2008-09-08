@@ -7,6 +7,7 @@ use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Log => qw(critical);
 use Apache::Session::MySQL;
 use Carp qw(croak);
+use Storable qw/nfreeze thaw/;
 
 =head1 NAME
 
@@ -153,12 +154,13 @@ Unloads the current session, saving modified state to disk.  If this
 routine is not called then the session will be saved the next time a
 session is loaded or when the process ends.
 
-After this call, C<%session> will be unavailble until the next call to
+After this call, C<%session> will be unavailable until the next call to
 C<load()>.
 
 =cut
 
-sub unload { 
+sub unload {
+    $_[0]->persist_to_mypref();
     untie %session if $tied; 
     $tied = 0;
 }
@@ -191,6 +193,19 @@ sub delete {
         untie(%session);
         $tied = 0;
     }
+}
+
+sub persist_to_mypref {
+    my $self = shift;
+
+    # session's persistant part
+    my $persist = $session{KRANG_PERSIST};
+
+    # delete what might be harmfull
+    delete $persist->{DUPE_STORIES};
+    use Krang::Log qw(info);
+info('In persist_to_mypref - User: '.$ENV{REMOTE_USER});
+    pkg('MyPref')->set(config => nfreeze($persist));
 }
 
 1;

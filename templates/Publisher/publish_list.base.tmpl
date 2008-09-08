@@ -77,7 +77,7 @@ Krang.onload( function() {
 <tmpl_if media>
 
   <tmpl_loop stories>
-    <tr<tmpl_if checked_out> class="err"</tmpl_if>>
+    <tr class="<tmpl_if even> even</tmpl_if><tmpl_if checked_out> err</tmpl_if>">
     <td class="f"><tmpl_var escape=html id></td>
     <td><tmpl_lang Story></td>
     <td><tmpl_var escape=html title></td>
@@ -88,7 +88,7 @@ Krang.onload( function() {
   </tmpl_loop>
 
   <tmpl_loop media>
-    <tr<tmpl_if checked_out> class="err"</tmpl_if>>
+    <tr class="<tmpl_if even> even</tmpl_if><tmpl_if checked_out> err</tmpl_if>">
     <td class="f"><tmpl_var escape=html id></td>
     <td><tmpl_lang Media></td>
     <td><tmpl_var escape=html title></td>
@@ -103,7 +103,7 @@ Krang.onload( function() {
 <tmpl_else>
 
   <tmpl_loop stories>
-    <tr<tmpl_if checked_out> class="err"</tmpl_if>>
+    <tr class="<tmpl_if even> even</tmpl_if><tmpl_if checked_out> err</tmpl_if>">
     <td class="f"><tmpl_var escape=html id></td>
     <td><tmpl_lang Story></td>
     <td><tmpl_var escape=html title></td>

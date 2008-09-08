@@ -204,7 +204,7 @@ Krang.onload( function() {
         <input value="<tmpl_lang Copy>" onclick="copy('<tmpl_var escape=html id>')" type="button" class="button">
         <tmpl_if desk_loop><span class="glue">
           <input value="<tmpl_lang Check In To>" onclick="checkin('<tmpl_var escape=html id>')" type="button" class="button">
-          <select name="checkin_to_<tmpl_var escape=html id>"><tmpl_loop desk_loop>
+          <select name="checkin_to_<tmpl_var escape=html id>" style="width:10em"><tmpl_loop desk_loop>
             <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected</tmpl_if>><tmpl_var escape=html choice_desk_name> <tmpl_lang Desk></option>
           </tmpl_loop></select>
         </span></tmpl_if>
@@ -227,7 +227,7 @@ Krang.onload( function() {
 
     <tmpl_if thumbnail>
       <td>
-      <a title="<tmpl_lang Preview> <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html media_id>')"><img alt="" src="<tmpl_var escape=html thumbnail>"></a>
+      <a title="<tmpl_lang Preview> <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html media_id>')"><img alt="" src="<tmpl_var escape=html thumbnail>" class="thumbnail"></a>
       </td>
     </tmpl_if>
 
@@ -270,6 +270,11 @@ Krang.onload( function() {
   </form>
 
 </tmpl_unless>
+
+<!-- tooltips for media previews: -->
+<div id="tooltip"><img id="tooltip-img" src="/images/icon-loading-small.gif" /></div>
+<img id="tooltip-pointer" src="/images/tooltip_arrow.gif" />
+<!-- :tooltips for media previews -->
 
 <tmpl_include footer.tmpl>
 

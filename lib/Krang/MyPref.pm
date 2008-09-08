@@ -64,6 +64,10 @@ our %CONFIG = (
         type => 'scalar',
         row  => 'language',
     },
+    config   => {
+        type => 'scalar',
+        row  => 'config',
+    },
 );
 
 =pod

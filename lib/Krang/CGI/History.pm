@@ -156,7 +156,7 @@ sub show {
     $template->param(
         return_script => $history_return_script,
         return_hidden => $return_hidden,
-        label         => $label,
+        label         => localize($label . ' Log'),
     );
 
     # setup the pager

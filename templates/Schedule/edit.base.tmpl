@@ -6,6 +6,11 @@ Krang.onload( function() {
   Krang.Form.toggle_list_btn('current_schedule_form', 'schedule_delete_list');
 } );
 
+schedule_action = function()
+{ 
+  Krang.Form.submit('add_schedule_form');
+}
+
 save_and_view = function()
 {
   Krang.Form.submit('add_schedule_form', { rm: 'save_and_view' });
@@ -257,7 +262,7 @@ do_return = function()
 </table>
 
 <div class="panel">
-<input value="<tmpl_lang Schedule Action>" type="submit">
+<input value="<tmpl_lang Schedule Action>" onclick="schedule_action()" type="button">
 </div>
 
 </div></div>

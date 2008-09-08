@@ -15,6 +15,7 @@ use Carp qw(croak);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Site';
+use Krang::ClassLoader Localization => qw(localize);
 
 use Krang::ClassLoader base => 'CGI::ElementEditor';
 
@@ -673,7 +674,7 @@ sub prepare_copy {
     my ($cat_chooser_button, $cat_chooser_logic) = category_chooser(
         name        => 'dst_category_id',
         query       => $q,
-        label       => 'Choose',
+        label       => localize('Choose'),
         may_edit    => 1,
         allow_clear => 1,
         persistkey  => 'category_copy_dst',
