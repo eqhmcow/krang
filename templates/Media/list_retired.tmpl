@@ -38,12 +38,12 @@ other_search_rm = function() {
       var num_rows_checked = Krang.pager_row_checked();
 
       if (!num_rows_checked) {
-        alert( 'Nothing selected to delete!' );
+        alert( Krang.L10N.loc('Nothing selected to delete!') );
       } else {
         if (num_rows_checked > 1) {
-	  question = 'Are you SURE you want to delete the checked Media?';
+	  question = Krang.L10N.loc('Are you SURE you want to delete the checked Media?');
         } else {
-	  question = 'Are you SURE you want to delete the checked Media?';
+	  question = Krang.L10N.loc('Are you SURE you want to delete the checked Media?');
         }
         if (confirm(question)) {
           Krang.Form.submit( 'krang_pager_form', { rm : 'delete_selected' }, { to_top : false } );
@@ -53,14 +53,14 @@ other_search_rm = function() {
 
   unretire_media = function(id)
   {
-    if (confirm('Are you SURE you want to unretire this Media?'))
+    if (confirm(Krang.L10N.loc('Are you SURE you want to unretire this Media?')))
       Krang.Form.submit('find_media', { rm: 'unretire', media_id: id });
   }
 </tmpl_if>
 </script>
 
 <h2>
-Retired Media
+<tmpl_lang Retired Media>
 </h2>
 
 <form id="search_form" name="search_form" action="media.pl" method="post">
@@ -80,17 +80,17 @@ Retired Media
 
 <p class="tab-option">
 <input id="show_thumbnails_ck" name="show_thumbnails_ck" value="1" type="checkbox" onclick="do_search(this)"<tmpl_if show_thumbnails> checked</tmpl_if>>
-<label for="show_thumbnails">Show Thumbnails</label>
+<label for="show_thumbnails"><tmpl_lang Show Thumbnails></label>
 <input name="show_thumbnails" value="<tmpl_var show_thumbnails>" type="hidden"/>
 </p>
 
 <ul class="tabs"><li>
 <tmpl_if do_advanced_search><a href="javascript:show_advanced_search('0')"><tmpl_else><b></tmpl_if><span>
-Simple Search
+<tmpl_lang Simple Search>
 </span><tmpl_if do_advanced_search></a><tmpl_else></b></tmpl_if>
 </li><li>
 <tmpl_if do_advanced_search><b><tmpl_else><a href="javascript:show_advanced_search('1')"></tmpl_if><span>
-Advanced Search
+<tmpl_lang Advanced Search>
 </span><tmpl_if do_advanced_search></b><tmpl_else></a></tmpl_if>
 </li></ul>
 
@@ -100,7 +100,7 @@ Advanced Search
 
   <div class="faux-p">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
-  <input value="Search" type="submit" class="button">
+  <input value="<tmpl_lang Search>" type="submit" class="button">
   </div>
 
 <tmpl_else>
@@ -117,16 +117,18 @@ Advanced Search
   <tbody class="demi">
 
   <tr>
-  <th>File Name</th>
+  <th><tmpl_lang File Name></th>
   <td><input name="search_filename" value="<tmpl_var escape=html search_filename>"></td>
-  <th>Media ID</th>
+  <th>
+
+  <p><tmpl_lang Media ID></th>
   <td><input name="search_media_id" value="<tmpl_var escape=html search_media_id>"></td>
   </tr>
 
   <tr>
-  <th>Title</th>
+  <th><tmpl_lang Title></th>
   <td><input name="search_title" value="<tmpl_var escape=html search_title>"></td>
-  <th>Alt Text</th>
+  <th><tmpl_lang Alt Text></th>
   <td><input name="search_alt_tag" value="<tmpl_var escape=html search_alt_tag>"></td>
   </tr>
 
@@ -135,24 +137,24 @@ Advanced Search
   <tbody>
 
   <tr>
-  <th>Creation Date</th>
+  <th><tmpl_lang Creation Date></th>
   <td colspan="3">
-  From
+  <tmpl_lang From>
   <tmpl_var date_from_chooser>
-  To
+  <tmpl_lang To>
   <tmpl_var date_to_chooser>
   </td>
   </tr>
 
   <tr>
-  <th>Site/Category</th>
+  <th><tmpl_lang Site/Category></th>
   <td colspan="3"><tmpl_var category_chooser></td>
   </tr>
 
   <tr>
   <td colspan="4"><label>
   <input name="search_no_attributes" value="1" type="checkbox"<tmpl_if search_no_attributes> checked</tmpl_if>>
-  Without Attributes
+  <tmpl_lang Without Attributes>
   </label></td>
   </tr>
 
@@ -161,8 +163,8 @@ Advanced Search
   </table>
 
   <div class="panel">
-  <input value="Clear" onclick="clear_advanced_search()" type="button">
-  <input value="Search" type="submit">
+  <input value="<tmpl_lang Clear>" onclick="clear_advanced_search()" type="button">
+  <input value="<tmpl_lang Search>" type="submit">
   </div>
 
 </tmpl_unless>
@@ -174,13 +176,13 @@ Advanced Search
 </form>
 
 <h3>
-Search Results
+<tmpl_lang Search Results>
 </h3>
 
 <tmpl_unless read_only>
 <div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <tmpl_if row_count>
-    <input value="Delete" onclick="delete_selected()" type="button">
+    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
   </tmpl_if>
 </form></div>
 </tmpl_unless>
@@ -192,7 +194,7 @@ Search Results
 <tmpl_unless read_only>
 <div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <tmpl_if row_count>
-    <input value="Delete" onclick="delete_selected()" type="button">
+    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
   </tmpl_if>
 </form></div>
 </tmpl_unless read_only>

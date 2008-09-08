@@ -8,26 +8,29 @@ Krang.onload( function() {
   Krang.Help.set( 'media_view' );
 } );
 
-view_log = function()
-{
-  Krang.Form.submit( 'view_log_form' );
-}
-
-do_return = function()
-{
+do_return = function() {
   Krang.Form.submit( 'return_form' );
 }
 
+view_log = function() {
+  Krang.Form.submit( 'view_log_form' );
+}
+
+edit_schedule = function() {
+    Krang.Form.submit('view_log_form', { rm: 'edit_schedule' });
+}
+
 <tmpl_unless is_old_version><tmpl_if can_edit>
-  do_edit_media = function()
-  {
+  do_edit_media = function() {
     Krang.Form.submit( 'edit_media_form' );
   }
 </tmpl_if></tmpl_unless>
 
 // Register CodePress's onload event:
 Krang.onload( function() { 
+  if (! Prototype.Browser.WebKit && Krang.my_prefs().syntax_highlighting == 1) {
   CodePress.run();
+  }
 } );
 
 </script>
@@ -40,13 +43,16 @@ Krang.onload( function() {
 <tmpl_lang View Media>
 </h2>
 
+
+<h3>
+Properties
+</h3>
+
+<div>
 <tmpl_if thumbnail_path><div class="east">
   <tmpl_if media_id><a title="<tmpl_lang Preview> <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html media_id>')"></tmpl_if><img alt="" src="<tmpl_var escape=html thumbnail_path>"><tmpl_if media_id></a></tmpl_if>
 </div></tmpl_if>
 
-<!-- <h3> -->
-<!-- <tmpl_lang Properties> -->
-<!-- </h3> -->
 
 <table class="result" summary="">
 
@@ -153,6 +159,7 @@ Krang.onload( function() {
 </tbody>
 
 </table>
+</div>
 
 <div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_unless can_edit> lame</tmpl_unless></tmpl_if> capped"><form>
 <input value="<tmpl_lang Back>" onclick="do_return()" type="button" class="west">
@@ -184,6 +191,7 @@ Krang.onload( function() {
 
 <form name="return_form" action="<tmpl_var escape=html return_script>" method="post">
 <input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
+<input name="retired" value="<tmpl_var escape=html retired>" type="hidden">
 <tmpl_var return_params>
 </form>
 

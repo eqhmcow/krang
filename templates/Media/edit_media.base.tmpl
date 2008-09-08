@@ -1,51 +1,63 @@
 <tmpl_include header.tmpl>
 
 <script type="text/javascript">
+var use_editor = <tmpl_if is_text>!Prototype.Browser.WebKit && Krang.my_prefs().syntax_highlighting == 1<tmpl_else>false</tmpl_if>;
+
+save_editor_text = function() {
+    if(use_editor) mediaEditor.toggleEditor();
+}
+
 Krang.onload( function() {
   Krang.Nav.edit_mode();
   Krang.Help.set( 'media_<tmpl_if add_mode>new<tmpl_else>edit</tmpl_if>' );
 } );
 
-do_checkin = function()
-{
-  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
+publish_media_preview = function() {
+  save_editor_text();
+  Krang.Form.submit('edit_media_form', { rm: 'save_and_preview' });
+}
+
+do_checkin = function() {
+  save_editor_text();
   Krang.Form.submit( 'edit_media_form', { rm: 'checkin_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' });
 }
 
-do_save = function()
-{
-  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
+do_save = function() {
+  save_editor_text();
   Krang.Form.submit( 'edit_media_form', { rm: 'save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' });
 }
 
-do_save_stay = function()
-{
-  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
+do_save_stay = function() {
+  save_editor_text();
   Krang.Form.submit( 'edit_media_form', { rm: 'save_stay_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' }, { to_top: false });
 }
 
-edit_contribs = function()
-{
-  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
+edit_contribs = function() {
+  save_editor_text();
   Krang.Form.submit('edit_media_form', { rm: 'save_and_associate_media' });
 }
 
-save_and_edit_schedule = function()
-{
-  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
+save_and_edit_schedule = function() {
+  save_editor_text();
   Krang.Form.submit('edit_media_form', { rm: 'save_and_edit_schedule' });
 }
 
-save_and_view_log = function()
-{
-  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
+save_and_view_log = function() {
+  save_editor_text();
   Krang.Form.submit('edit_media_form', { rm: 'save_and_view_log' });
 }
 
+<tmpl_unless add_mode>
+<tmpl_if is_image>
+transform_image = function() {
+  Krang.Form.submit('edit_media_form', { rm: 'transform_image' });
+}
+</tmpl_if>
+</tmpl_unless>
+
 <tmpl_if may_publish>
-  publish_media = function()
-  {
-    <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
+  publish_media = function() {
+    save_editor_text();
     Krang.Form.submit('edit_media_form', { rm: 'save_and_publish' });
   }
 </tmpl_if>
@@ -102,7 +114,7 @@ save_and_view_log = function()
 
 // Register CodePress's onload event:
 Krang.onload( function() { 
-  CodePress.run();
+    if( use_editor ) CodePress.run();
 } );
 
 </script>
@@ -131,6 +143,7 @@ Krang.onload( function() {
 </h2>
 
 <tmpl_unless add_mode>
+  <div>
   <tmpl_if thumbnail_path><div class="east">
     <tmpl_if media_id><a title="<tmpl_lang Preview> <tmpl_var escape=html title>" href="javascript:Krang.preview('media',null)"></tmpl_if><img alt="" src="<tmpl_var escape=html thumbnail_path>"><tmpl_if media_id></a></tmpl_if>
   </div></tmpl_if>
@@ -172,6 +185,7 @@ Krang.onload( function() {
   </tbody>
 
   </table>
+  </div>
 </tmpl_unless>
 
 <table class="request" summary=""><!--:FIX(db2)-->

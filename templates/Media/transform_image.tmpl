@@ -7,11 +7,11 @@
 </form>
 
 <p class="cram east">
-  <input value="View Log" onclick="view_log()" type="button" class="button">
+  <input value="<tmpl_lang View Log>" onclick="view_log()" type="button" class="button">
 </p>
 
 <h2>
-Transform Image
+<tmpl_lang Transform Image>
 </h2>
 
 <h3><tmpl_var title escape=html></h3>
@@ -19,31 +19,31 @@ Transform Image
 <div id="transform_controls">
 <form name="transform_controls_form">
   <img class="control" src="/static/<tmpl_var krang_install_id>/images/rotate_left.png">
-  <input type="button" class="button" value="Rotate Left" onclick="do_rotate('l')">
+  <input type="button" class="button" value="<tmpl_lang Rotate Left>" onclick="do_rotate('l')">
   <img class="control" src="/static/<tmpl_var krang_install_id>/images/rotate_right.png">
-  <input type="button" class="button" value="Rotate Right" onclick="do_rotate('r')">
+  <input type="button" class="button" value="<tmpl_lang Rotate Right>" onclick="do_rotate('r')">
   <img class="control" src="/static/<tmpl_var krang_install_id>/images/flip_horizontal.png">
-  <input type="button" class="button" value="Flip Horizontal" onclick="do_flip('h')">
+  <input type="button" class="button" value="<tmpl_lang Flip Horizontal>" onclick="do_flip('h')">
   <img class="control" src="/static/<tmpl_var krang_install_id>/images/flip_vertical.png">
-  <input type="button" class="button" value="Flip Vertical" onclick="do_flip('v')">
+  <input type="button" class="button" value="<tmpl_lang Flip Vertical>" onclick="do_flip('v')">
 
   <div id="resize_track" class="slider_track">
     <div id="resize_handle" class="slider_handle"></div>
   </div>
 
-  <label for="control_width">Width</label>
+  <label for="control_width"><tmpl_lang Width></label>
   <input type="text" name="control_width" id="control_width" value="<tmpl_var original_width>" size="5" onblur="change_width(this.value)">
   &nbsp; &nbsp;
-  <label for="control_height">Height</label>
+  <label for="control_height"><tmpl_lang Height></label>
   <input type="text" name="control_height" id="control_height" value="<tmpl_var original_height>" size="5" onblur="change_height(this.value)">
 
 </form>
 </div>
 
 <div class="panel"><form>
-<input value="Cancel" onclick="do_cancel()" type="button" class="west">
-<input value="Apply" onclick="do_transform_image()" type="button">
-<input value="Save" onclick="do_save_image_transform()" type="button">
+<input value="<tmpl_lang Cancel>" onclick="do_cancel()" type="button" class="west">
+<input value="<tmpl_lang Apply>" onclick="do_transform_image()" type="button">
+<input value="<tmpl_lang Save>" onclick="do_save_image_transform()" type="button">
 </form>
 </div>
 
