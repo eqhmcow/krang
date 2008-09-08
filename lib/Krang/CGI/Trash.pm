@@ -29,8 +29,6 @@ use Krang::ClassLoader Log => qw(debug);
 use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Widget  => qw(format_url);
 
-
-
 use UNIVERSAL::moniker;
 use Carp qw(croak);
 
