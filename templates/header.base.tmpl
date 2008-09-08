@@ -136,21 +136,9 @@ if( Prototype.Browser.WebKit ) {
 
 <div class="nav"><ul>
 
-<li class="menu l" onclick="Krang.Window.log_out();"><b class="logout">
+<li class="l"><a href="javascript:Krang.Window.log_out()">
 <tmpl_lang Log Out>
-</b><ul>
-
-<li class="logout"><a class="def" id="lo1" href="#" onclick="Krang.Window.log_out(); Event.stop(event);">
-<tmpl_lang Window>
-</a></li>
-
-<li class="logout"><a href="#" onclick="Krang.Window.log_out_all(); Event.stop(event);"
-	        onmouseover="document.getElementById('lo1').className=''"     
-		onmouseout="document.getElementById('lo1').className='def'">   
-<tmpl_lang All Logins>
-</a></li>
-
-</ul></li>
+<li>
 
 <li id="menu-help" class="menu"><b>
 <tmpl_lang Help>
