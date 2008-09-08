@@ -205,7 +205,7 @@ sub persist_to_mypref {
 
     use Krang::Log qw(debug);
     debug('In persist_to_mypref - User: '.$ENV{REMOTE_USER});
-    pkg('MyPref')->set(config => nfreeze($persist));
+    pkg('MyPref')->set(config => nfreeze($persist)) if $persist;
 }
 
 1;
