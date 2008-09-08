@@ -20,8 +20,10 @@
 <col>
 <!-- 'cover_date' column -->
 <col class="c-date">
+<tmpl_if __show_status__>
 <!-- 'status' column -->
 <col class="c-stat">
+</tmpl_if>
 <!-- 'checkbox_column' column -->
 <col class="tick">
 </colgroup>
@@ -36,7 +38,7 @@
   <tmpl_var colhead_url>
 </th>
 <th><tmpl_var colhead_cover_date></th>
-<th><tmpl_var colhead_status></th>
+<tmpl_if __show_status__><th><tmpl_var colhead_status></th></tmpl_if>
 <th class="l"><tmpl_var colhead_checkbox_column></th>
 </tr>
 </thead>
@@ -56,7 +58,7 @@
     <tmpl_var commands_column>
 </td>
 <td><tmpl_var cover_date escape=html></td>
-<td><tmpl_var status></td>
+<tmpl_if __show_status__><td><tmpl_var status></td></tmpl_if>
 <td class="l"><tmpl_var checkbox_column></td>
 </tr>
 </tmpl_loop></tbody>
@@ -70,7 +72,7 @@
 <tmpl_else>
 
 <p class="naught">
-<tmpl_lang None found.>
+<tmpl_lang None found><tmpl_if other_search_place> <a href="javascript:other_search_rm()"><tmpl_var other_search_place></a></tmpl_if>
 </p>
 
 </tmpl_if>

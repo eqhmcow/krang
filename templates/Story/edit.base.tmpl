@@ -30,17 +30,15 @@ preview_and_stay = function() {
 
 <tmpl_if is_root>
 
-  <tmpl_if story_id>  //:ever not the case?(db2)
-    save_and_view_log = function() {
-        Krang.ElementEditor.run_save_hooks();
-        Krang.Form.submit('edit', { rm: 'save_and_view_log' });
-    }
+  save_and_view_log = function() {
+      Krang.ElementEditor.run_save_hooks();
+      Krang.Form.submit('edit', { rm: 'save_and_view_log' });
+  }
 
-    save_and_edit_schedule = function() {
-        Krang.ElementEditor.run_save_hooks();
-        Krang.Form.submit('edit', { rm: 'save_and_edit_schedule' });
-    }
-  </tmpl_if>
+  save_and_edit_schedule = function() {
+      Krang.ElementEditor.run_save_hooks();
+      Krang.Form.submit('edit', { rm: 'save_and_edit_schedule' });
+  }
 
   save_and_edit_contribs = function() {
     Krang.ElementEditor.run_save_hooks();

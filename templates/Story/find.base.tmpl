@@ -19,6 +19,10 @@ do_search = function() {
   Krang.Form.submit('search_form');
 }
 
+other_search_rm = function() {
+  Krang.Form.submit('search_form', { rm: 'list_retired', other_search_place: 'Search in Live' });
+}
+
 <tmpl_if do_advanced_search>
   clear_advanced_search = function()
   {
@@ -46,12 +50,22 @@ do_search = function() {
     Krang.Form.submit('find_story', { rm: 'copy', story_id: id });
   }
 
-  delete_selected = function()
-  {
-    if ( !Krang.pager_row_checked() )
-      alert( Krang.L10N.loc('Nothing selected to delete!') );
-    else if ( confirm( Krang.L10N.loc('Are you SURE you want to delete the checked Stories?') ) )
+  delete_selected = function() {
+      var question = '';
+      var num_rows_checked = Krang.pager_row_checked();
+
+      if (!num_rows_checked) {
+        alert( Krang.L10N.loc('Nothing selected to delete!') );
+      } else {
+        if (num_rows_checked > 1) {
+	  question = Krang.L10N.loc('Are you SURE you want to delete the checked Stories?');
+        } else {
+	  question = Krang.L10N.loc('Are you SURE you want to delete the checked Story?');
+        }
+        if (confirm(question)) {
       Krang.Form.submit( 'krang_pager_form', { rm: 'delete_selected' }, { to_top: false } );
+  }
+      }
   }
 
   checkout_selected = function()
@@ -62,15 +76,30 @@ do_search = function() {
       Krang.Form.submit( 'krang_pager_form', { rm: 'checkout_selected' } );
   }
 
-  publish_selected = function()
-  {
-    if ( !Krang.pager_row_checked() )
-      alert( Krang.L10N.loc('Nothing selected to publish!') );
-    else if ( confirm( Krang.L10N.loc('Are you SURE you want to publish these items?') ) )
-    {
+  <tmpl_if may_publish>
+  publish_selected = function() {
+      var question = '';
+      var num_rows_checked = Krang.pager_row_checked();
+
+      if (!num_rows_checked) {
+        alert( Krang.L10N.loc('Nothing selected to publish!') );
+      } else {
+        if (num_rows_checked > 1) {
+	  question = Krang.L10N.loc('Are you SURE you want to publish the checked Stories?');
+        } else {
+	  question = Krang.L10N.loc('Are you SURE you want to publish the checked Story?');
+        }
+        if (confirm(question)) {
       document.forms[ 'krang_pager_form' ].action = 'publisher.pl';
       Krang.Form.submit( 'krang_pager_form', { rm: 'publish_story_list' } );
     }
+  }
+  }
+  </tmpl_if>
+
+  retire_story = function(id) {
+    if (confirm('Are you SURE you want to retire this Story?'))
+      Krang.Form.submit('find_story', { rm: 'retire', story_id: id });
   }
 </tmpl_if>
 </script>
@@ -87,6 +116,7 @@ do_search = function() {
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
 <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
 <input name="do_advanced_search" value="<tmpl_if do_advanced_search>1<tmpl_else>0</tmpl_if>" type="hidden">
+<input name="other_search_place" value="Search in Retire" type="hidden">
 
 <div class="tabset finder">
 
@@ -209,7 +239,7 @@ do_search = function() {
   <input value="<tmpl_lang Add Story>" onclick="add_story()" type="button" class="west">
   <tmpl_if row_count>
     <input value="<tmpl_lang Check Out>" onclick="checkout_selected()" type="button" class="list-btn">
-    <input value="<tmpl_lang Publish>" onclick="publish_selected()" type="button" class="list-btn">
+    <tmpl_if may_publish><input value="<tmpl_lang Publish>" onclick="publish_selected()" type="button" class="list-btn"></tmpl_if>
     <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
   </tmpl_if>
 </form></div>
@@ -224,7 +254,7 @@ do_search = function() {
   <input value="<tmpl_lang Add Story>" onclick="add_story()" type="button" class="west">
   <tmpl_if row_count>
     <input value="<tmpl_lang Check Out>" onclick="checkout_selected()" type="button" class="list-btn">
-    <input value="<tmpl_lang Publish>" onclick="publish_selected()" type="button" class="list-btn">
+    <tmpl_if may_publish><input value="<tmpl_lang Publish>" onclick="publish_selected()" type="button" class="list-btn"></tmpl_if>
     <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
   </tmpl_if>
 </form></div>
@@ -241,6 +271,8 @@ do_search = function() {
 <tmpl_if row_count>
   <form name="view_story_log_form" id="view_story_log_form" action="history.pl" method="post">
   <input name="story_id" type="hidden">
+  <input name="class" value="Story" type="hidden">
+  <input name="id_meth" value="story_id" type="hidden">
   <input name="history_return_script" value="story.pl" type="hidden">
   <input name="history_return_params" value="rm" type="hidden">
   <input name="history_return_params" value="find" type="hidden">
