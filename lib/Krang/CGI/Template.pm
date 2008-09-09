@@ -1325,7 +1325,7 @@ sub search_row_handler {
               . qq|" onclick="edit_template('|
               . $template->template_id
               . qq|')" type="button" class="button">| . ' '
-              . qq|<input value="'|
+              . qq|<input value="|
               . localize('Retire')
               . qq|" onclick="retire_template('|
               . $template->template_id
