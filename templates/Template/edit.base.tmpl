@@ -1,6 +1,12 @@
 <tmpl_include header.tmpl>
 
 <script type="text/javascript">
+var use_editor = !Prototype.Browser.WebKit && Krang.my_prefs().syntax_highlighting == 1;
+
+save_editor_text = function() {
+    if(use_editor) templateEditor.toggleEditor();
+}
+
 Krang.onload( function() {
   Krang.Nav.edit_mode();
   Krang.Help.set( 'template_<tmpl_if add_mode>new<tmpl_else>edit</tmpl_if>' );
