@@ -92,7 +92,6 @@ db_save_and_stay = function() {
 <!--:ElementEditor/edit.tmpl-->
 
 <div class="panel capped">
-<input class="west" type="button" onclick="cancel_category_change()" value="<tmpl_lang Cancel>"/>
 
 <tmpl_if bulk_edit> 
   <input value="<tmpl_var bulk_done_with_this_element>" onclick="save_and_leave()" type="button" class="west">
@@ -100,7 +99,8 @@ db_save_and_stay = function() {
 <tmpl_else>
 
   <tmpl_if is_root>
-    <input value="<tmpl_lang Delete>" onclick="remove_category()" type="button">
+    <input value="<tmpl_lang Cancel>" onclick="cancel_category_change()" type="button" class="west" />
+    <input value="<tmpl_lang Delete>" onclick="remove_category()" type="button" class="west">
   <tmpl_else>
     <input value="<tmpl_var done_with_this_element>" onclick="save_and_leave()" type="button" class="west">
     <tmpl_unless bulk_edit><tmpl_if allow_delete>
@@ -108,8 +108,8 @@ db_save_and_stay = function() {
     </tmpl_if></tmpl_unless>
   </tmpl_if>
 
-  <input value="<tmpl_lang Save &amp; Stay>" onclick="db_save_and_stay()" type="button">
-  <input value="<tmpl_lang Save>" onclick="db_save()" type="button">
+  <input value="<tmpl_lang Save>" onclick="db_save()" type="button" class="east">
+  <input value="<tmpl_lang Save &amp; Stay>" onclick="db_save_and_stay()" type="button" class="east">
 
 </tmpl_if>
 
