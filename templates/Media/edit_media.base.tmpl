@@ -306,15 +306,15 @@ Krang.onload( function() {
 
 <div class="panel capped<tmpl_if add_mode> clearfix</tmpl_if>">
 
+<input value="<tmpl_lang Cancel>" onclick="do_cancel_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>()" type="button" class="west">
 <input value="<tmpl_lang Save>" onclick="do_save()" type="button" class="east">
 <input value="<tmpl_lang Save &amp; Stay>" onclick="do_save_stay()" type="button" class="east">
-<input value="<tmpl_lang Cancel>" onclick="do_cancel_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>()" type="button" class="east">
 
 <tmpl_if may_publish>
-  <input value="<tmpl_lang Publish>" onclick="publish_media()" type="button" class="west">
+  <input value="<tmpl_lang Publish>" onclick="publish_media()" type="button" class="east">
 </tmpl_if>
 <tmpl_unless add_mode><tmpl_if can_transform_image>
-<input value="Transform" onclick="transform_image()" type="button" class="west">
+<input value="Transform" onclick="transform_image()" type="button" class="east">
 </tmpl_if></tmpl_unless>
 <tmpl_unless add_mode>
   <input value="<tmpl_lang Delete>" onclick="do_delete()" type="button" class="west">
