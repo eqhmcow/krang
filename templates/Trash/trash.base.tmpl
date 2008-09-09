@@ -3,6 +3,7 @@
 <script type="text/javascript">
 Krang.onload( function() {
   Krang.Help.set( 'trash' );
+  Krang.Form.toggle_list_btn();
 } );
 
 <tmpl_if krang_pager_rows>
@@ -84,9 +85,9 @@ Trash
   <tmpl_include HTMLPager/<tmpl_lang en>/pager-internals.tmpl>
 
   <tmpl_if __show_checkbox_column__><div class="panel">
-    <input value="<tmpl_lang Restore>" onclick="restore_checked()" type="button">
+    <input value="<tmpl_lang Restore>" onclick="restore_checked()" type="button" class="list-btn">
     <tmpl_if admin_may_delete>
-      <input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button">
+      <input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button" class="list-btn">
     </tmpl_if>
   </div></tmpl_if>
 
@@ -159,9 +160,9 @@ Trash
   <tmpl_include HTMLPager/<tmpl_lang en>/pager-pagination.tmpl>
 
   <tmpl_if __show_checkbox_column__><div class="panel capped">
-    <input value="<tmpl_lang Restore>" onclick="restore_checked()" type="button">
+    <input value="<tmpl_lang Restore>" onclick="restore_checked()" type="button" class="list-btn">
     <tmpl_if admin_may_delete>
-      <input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button">
+      <input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button" class="list-btn">
     </tmpl_if>
   </div></tmpl_if>
 
