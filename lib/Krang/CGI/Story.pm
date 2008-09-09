@@ -2337,31 +2337,39 @@ sub find_story_row_handler {
             $row->{pub_status} = $story->published_version ? '<b>'.localize('P').'</b>' : '&nbsp;'; 
         }     
     } else {
-        $row->{commands_column} .= ' '
-          . qq|<input value="|
-          . localize('Edit')
-          . qq|" onclick="edit_story('|
-          . $story->story_id
-          . qq|')" type="button" class="button">| . ' '
-          . qq|<input value="|
-          . localize('Retire')
-          . qq|" onclick="retire_story('|
-          . $story->story_id
-          . qq|')" type="button" class="button">|
-              if $may_edit_and_retire;
-        if ($story->checked_out) {
-            $row->{status} = 
-              localize('Checked out by')
-              . ' <b>' . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login . '</b>';
-        } elsif ($story->desk_id) {
-            $row->{status} =
-              localize('On')
-              . ' <b>' . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name . '</b> '
-              . localize('Desk');
+        # Find Story screen
+        $pager->column_display(status => 1);
+        if ($story->retired) {
+            $row->{pub_status}      = '';
+            $row->{status}          = localize('Retired');
+            $row->{checkbox_column} = "&nbsp;";
         } else {
-            $row->{status} = '&nbsp;';
-            }        
-        $row->{pub_status} = $story->published_version ? '<b>'.localize('P').'</b>' : '&nbsp;'; 
+            $row->{commands_column} .= ' '
+              . qq|<input value="|
+              . localize('Edit')
+              . qq|" onclick="edit_story('|
+              . $story->story_id
+              . qq|')" type="button" class="button">| . ' '
+              . qq|<input value="|
+              . localize('Retire')
+              . qq|" onclick="retire_story('|
+              . $story->story_id
+              . qq|')" type="button" class="button">|
+                  if $may_edit_and_retire;
+            if ($story->checked_out) {
+                $row->{status} = 
+                  localize('Checked out by')
+                  . ' <b>' . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login . '</b>';
+            } elsif ($story->desk_id) {
+                $row->{status} =
+                  localize('On')
+                  . ' <b>' . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name . '</b> '
+                  . localize('Desk');
+            } else {
+                $row->{status} = '&nbsp;';
+                }        
+            $row->{pub_status} = $story->published_version ? '<b>'.localize('P').'</b>' : '&nbsp;'; 
+        }
     }
 
     unless ($may_edit_and_retire) {
