@@ -583,7 +583,7 @@ Krang.Form = {
         if (!form) { return false }
         if (!ckbx) { ckbx = 'krang_pager_rows_checked' }
         [ [$('C'), 'list-btn'], [form, 'mini-list-btn'] ].each(function(spec) {
-            spec[0].getElementsByClassName(spec[1]).each(function(btn) {
+            $A(spec[0].getElementsByClassName(spec[1])).each(function(btn) {
                 if (Krang.row_checked(form, ckbx)) {
                     btn.addClassName(spec[1]+'-enabled');
                     btn.enable();
