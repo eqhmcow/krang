@@ -310,6 +310,11 @@ log_entry = function( item_id, action, data )
   change_log.push( entry );
 }
 
+do_cancel = function()
+{
+  Krang.Form.submit('edit_form', { rm: 'search' });
+}
+
 do_save = function()
 {
   Krang.Form.set('edit_form', { rm: 'save', changes: change_log.join( '%^%' ) });
@@ -395,8 +400,9 @@ do_save_stay = function()
 </table>
 
 <div class="panel capped">
-<input value="<tmpl_lang Save &amp; Stay>" onclick="do_save_stay()" type="button">
-<input value="<tmpl_lang Save>" onclick="do_save()" type="submit">
+<input value="<tmpl_lang Cancel>" onclick="do_cancel()" type="submit" class="west">
+<input value="<tmpl_lang Save>" onclick="do_save()" type="submit" class="east">
+<input value="<tmpl_lang Save &amp; Stay>" onclick="do_save_stay()" type="button" class="east">
 </div>
 
 </form>
