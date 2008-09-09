@@ -101,10 +101,11 @@ Krang.onload( function() {
 <textarea id="templateViewer" class="codepress html readonly-on" rows="30" cols="50"><tmpl_var escape=html content></textarea>
 </p>
 
+</div>
 <div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_unless can_edit> lame</tmpl_unless></tmpl_if> capped">
 <input value="<tmpl_lang Back>" onclick="do_return()" type="button" class="west">
 <tmpl_unless is_old_version><tmpl_if can_edit>
-  <input value="<tmpl_lang Edit>" onclick="do_edit_template()" type="button">
+  <input value="<tmpl_lang Edit>" onclick="do_edit_template()" type="button" class="east">
 </tmpl_if></tmpl_unless>
 </div>
 
