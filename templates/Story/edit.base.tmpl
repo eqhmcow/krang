@@ -390,6 +390,7 @@ preview_and_stay = function() {
 
   <tmpl_if is_root>
 
+    <input value="<tmpl_lang Cancel>" onclick="cancel_edit()" type="button" class="west"> 
     <tmpl_if may_publish>
       <input value="<tmpl_lang Publish>" onclick="save_and_publish()" type="button" class="west">
     </tmpl_if>
@@ -406,9 +407,9 @@ preview_and_stay = function() {
        <input value="<tmpl_var delete_this_element>" onclick="remove_element()" type="button" class="west">
      </tmpl_if>
 
+     <input value="<tmpl_lang Cancel>" onclick="cancel_edit()" type="button"> 
   </tmpl_if>
 
-  <input value="<tmpl_lang Cancel>" onclick="cancel_edit()" type="button"> 
   <input value="<tmpl_lang Save &amp; Stay>" onclick="db_save_and_stay()" type="button">
   <input value="<tmpl_lang Save>" onclick="db_save()" type="button">
 
