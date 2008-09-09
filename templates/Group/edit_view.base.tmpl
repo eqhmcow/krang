@@ -269,12 +269,12 @@ cancel_group_change = function()
 
 <div class="panel capped">
 <input value="<tmpl_lang Cancel>" onclick="cancel_group_change()" type="button" class="west">
-<tmpl_unless associate_mode>
-  <input value="<tmpl_lang Save &amp; Stay>" onclick="save_stay()" type="button">
-</tmpl_unless>
-<input value="<tmpl_lang Save>" onclick="do_save()" type="button">
 <tmpl_unless add_mode>
-  <input value="<tmpl_lang Delete>" onclick="delete_group()" type="button">
+  <input value="<tmpl_lang Delete>" onclick="delete_group()" type="button" class="west">
+</tmpl_unless>
+<input value="<tmpl_lang Save>" onclick="do_save()" type="button" class="east">
+<tmpl_unless associate_mode>
+  <input value="<tmpl_lang Save &amp; Stay>" onclick="save_stay()" type="button" class="east">
 </tmpl_unless>
 </div>
 
