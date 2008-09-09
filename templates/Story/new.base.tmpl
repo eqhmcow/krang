@@ -13,7 +13,8 @@ create = function()
 
 cancel_create = function()
 {
-  Krang.Form.submit( 'new_story', { rm: 'cancel_create' } );
+  if (confirm(Krang.L10N.loc("Discard new Story?")))
+    Krang.Form.submit( 'new_story', { rm: 'cancel_create' } );
 }
 
 
@@ -204,7 +205,7 @@ usr_changed_slug = function(new_value) {
 
 <div class="panel capped">
 <input value="<tmpl_lang Cancel>" onclick="cancel_create()" type="button" class="west">
-<input value="<tmpl_lang Create>" onclick="create()" type="button">
+<input value="<tmpl_lang Create>" onclick="create()" type="button" class="east">
 </div>
 
 </form>

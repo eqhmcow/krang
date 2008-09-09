@@ -55,6 +55,7 @@ sub setup {
     # add story specific modes to existing set
     $self->run_modes(
         new_story                     => 'new_story',
+        cancel_create                 => 'cancel_create',
         create                        => 'create',
         edit                          => 'edit',
         checkout_and_edit             => 'checkout_and_edit',
@@ -207,6 +208,21 @@ sub new_story {
     }
 
     return $template->output();
+}
+
+=item cancel_create
+
+Returns to My Workspace without creating a new story.
+
+=cut
+
+sub cancel_create {
+    my $self = shift;
+
+    # return to my workspace
+    $self->header_props(-uri => 'workspace.pl');
+    $self->header_type('redirect');
+    return;
 }
 
 =item create
