@@ -3,6 +3,7 @@
 <script type="text/javascript">
 Krang.onload( function() {
   Krang.Help.set( 'story_retired' );
+  Krang.Form.toggle_list_btn();
 } );
 
 show_advanced_search = function( show_advanced )
@@ -184,7 +185,7 @@ other_search_rm = function() {
 <tmpl_unless read_only>
 <div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <tmpl_if row_count>
-    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
   </tmpl_if>
 </form></div>
 </tmpl_unless>
@@ -196,7 +197,7 @@ other_search_rm = function() {
 <tmpl_unless read_only>
 <div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <tmpl_if row_count>
-    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
   </tmpl_if>
 </form></div>
 </tmpl_unless>
