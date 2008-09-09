@@ -578,7 +578,6 @@ Krang.Form = {
         }
     },
     toggle_list_btn : function(form, ckbx) {
-#      return false;
         if (!form) { form = 'krang_pager_form' }
         form = $(form);
         if (!form) { return false }
