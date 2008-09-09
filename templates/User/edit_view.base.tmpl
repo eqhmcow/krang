@@ -249,13 +249,14 @@ cancel_user_change = function()
 
 <div class="panel capped">
 <input value="<tmpl_lang Cancel>" onclick="cancel_user_change()" type="button" class="west">
-<input value="<tmpl_lang Reset>" type="reset" class="west">
-<tmpl_unless associate_mode><!--:associate_mode seems never to be set(db2)-->
-  <input value="<tmpl_lang Save &amp; Stay>" onclick="save_stay()" type="button">
-</tmpl_unless>
-<input value="<tmpl_lang Save>" onclick="get_group_ids()" type="submit">
 <tmpl_unless add_mode>
-  <input value="<tmpl_lang Delete>" onclick="delete_user()" type="button">
+  <input value="<tmpl_lang Delete>" onclick="delete_user()" type="button" class="west">
+</tmpl_unless>
+<input value="<tmpl_lang Reset>" type="reset" class="west">
+
+<input value="<tmpl_lang Save>" onclick="get_group_ids()" type="submit" class="east">
+<tmpl_unless associate_mode><!--:associate_mode seems never to be set(db2)-->
+  <input value="<tmpl_lang Save &amp; Stay>" onclick="save_stay()" type="button" class="east">
 </tmpl_unless>
 </div>
 
