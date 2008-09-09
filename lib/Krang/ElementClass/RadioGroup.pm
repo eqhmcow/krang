@@ -85,6 +85,18 @@ sub input_form {
 }
 
 
+sub view_data {
+    my ($self, %arg) = @_;
+    my $element = $arg{element};
+
+    my $data = $element->data;
+    return '' unless $data;
+
+    my $labels = $self->labels;
+
+    return %$labels ? $labels->{$data} : $data;
+}
+
 # do the normal XML serialization, but also include the linked list_item
 # object in the dataset
 sub freeze_data_xml {

@@ -73,8 +73,17 @@ sub template_data {
 sub view_data {
     my ($self, %arg) = @_;
     my $element = $arg{element};
-    return "" unless $element->data;
-    return join("<br>", @{$element->data});
+
+    my @data   = @{$element->data};
+    return '' unless @data;
+
+    my $labels = $self->labels;
+
+    if (%$labels) {
+        return join('<br/>', map { $labels->{$_} } @data);
+    } else {
+        return join("<br>", @data);
+    }
 }
 
 sub labels {

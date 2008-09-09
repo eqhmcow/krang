@@ -37,6 +37,18 @@ sub input_form {
                                      -labels    => $labels);
 }
 
+sub view_data {
+    my ($self, %arg) = @_;
+    my $element = $arg{element};
+
+    my $data = $element->data;
+    return '' unless $data;
+
+    my $labels = $self->labels;
+
+    return %$labels ? $labels->{$data} : $data;
+}
+
 sub labels {
     my ($self, $val) = @_;
 
