@@ -8,6 +8,8 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+Standardized locations of bottom-panel buttons on Edit screens. [Noam Weinstein]
+
 =item *
 
 Made it possible to associate contributors with a story or media
