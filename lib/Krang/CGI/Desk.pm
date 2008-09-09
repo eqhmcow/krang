@@ -169,7 +169,7 @@ sub _row_handler {
 
     # cover_date
     my $tp = $obj->cover_date;
-    $row->{cover_date} = (ref($tp)) ? $tp->strftime('%m/%d/%Y %I:%M %p') : '[n/a]';
+    $row->{cover_date} = (ref($tp)) ? $tp->strftime(localize('%m/%d/%Y %I:%M %p')) : localize('[n/a]');
 }
 
 =item checkout_checked
