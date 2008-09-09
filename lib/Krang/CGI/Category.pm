@@ -758,7 +758,7 @@ sub execute_copy {
         } elsif ($@->isa('Krang::Category::CopyAssetConflict')) {
             $query->param(confirm_copy => 1);
             return $self->prepare_copy;
-        } elsif( $@->isa('Krang::Category::InfiniteRecursion')) {
+        } elsif( $@->isa('Krang::Category::CantCopyParentToChild')) {
             add_alert(
                 'cant_copy_parent_to_child',
                 parent_id => $src_cat->category_id,
@@ -768,7 +768,7 @@ sub execute_copy {
             );
             return $self->prepare_copy;
         } else {
-            croak("Unknow error: " . $@);
+            croak("Unknown error: " . $@);
         }
     } elsif ($@) {
         croak $@;
