@@ -1604,7 +1604,7 @@ sub replace_category {
             eval { $old_category->delete };
             if ($@ and ref $@ and $@->isa('Krang::Category::Dependent')) {
                 add_alert(
-                    'dependancy_check_on_uuid_category_failed',
+                    'dependency_check_on_uuid_category_failed',
                     id         => $old_category->category_id,
                     story_uuid => $story->story_uuid
                 );
