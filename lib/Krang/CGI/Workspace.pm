@@ -254,8 +254,9 @@ sub copy {
         $self->header_props(-uri => 'template.pl?rm=copy&template_id=' .
                             $obj->template_id);
     }
-    
+
     $self->header_type('redirect');
+    $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER});
     return "";
 }
 
