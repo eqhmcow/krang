@@ -634,6 +634,8 @@ sub edit {
     $template->param(cancel_changes_owner     => $self->_cancel_edit_changes_owner);
     $template->param(cancel_goes_to_workspace => $self->_cancel_edit_goes_to_workspace);
 
+    $template->param(editing_unsaved_copy     => 1) unless $story->story_id;
+
     return $template->output();
 }
 
@@ -838,6 +840,7 @@ sub copy {
     $query->delete_all;
 
     # go edit the copy
+    $self->_cancel_edit_goes_to('workspace.pl');
     return $self->edit();
 }
 

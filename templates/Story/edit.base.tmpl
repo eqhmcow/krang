@@ -10,10 +10,11 @@ Krang.onload( function() {
 
 cancel_edit = function() {
   if (confirm(<tmpl_if cancel_deletes>Krang.L10N.loc("Delete new Story?")
+              <tmpl_else><tmpl_if editing_unsaved_copy>Krang.L10N.loc("Discard new Copy?")
               <tmpl_else><tmpl_if cancel_goes_to_workspace>Krang.L10N.loc("Discard any unsaved changes and go to Workspace?")
               <tmpl_else><tmpl_if cancel_changes_owner>Krang.L10N.loc("Discard any changes and return the Story to its previous location?")
               <tmpl_else>Krang.L10N.loc("Discard any changes and go back to where you opened the Story?")
-              </tmpl_if></tmpl_if></tmpl_if>)) {
+              </tmpl_if></tmpl_if></tmpl_if></tmpl_if>)) {
      Krang.Form.submit('edit', { rm: 'cancel_edit' });
   }           
 }                 

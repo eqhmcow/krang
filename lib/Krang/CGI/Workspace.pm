@@ -256,7 +256,6 @@ sub copy {
     }
 
     $self->header_type('redirect');
-    $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER});
     return "";
 }
 
