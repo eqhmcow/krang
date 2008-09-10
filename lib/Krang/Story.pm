@@ -501,7 +501,7 @@ sub init {
       for ('class', 'categories', 'slug', 'title');
     croak("categories parameter must be an ARRAY ref.")
       unless ref $args{categories} and ref $args{categories} eq 'ARRAY';
-    croak("categories parameter must contain at least one catgeory")
+    croak("categories parameter must contain at least one category")
       unless @{$args{categories}}
           and (UNIVERSAL::isa($args{categories}[0], 'Krang::Category')
               or (defined $args{categories}[0] and $args{categories}[0] =~ /^\d+$/));
