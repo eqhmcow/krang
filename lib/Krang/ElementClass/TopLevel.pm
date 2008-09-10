@@ -267,7 +267,7 @@ sub category_input     {
 
 This method auto-selects one or more category IDs based on cover_date, title, 
 and/or slug. The default implementation simply returns the first category ID 
-it can find.
+it can find. (Multiple values must be returned as an array, not an arrayref.)
 
 =cut 
 
