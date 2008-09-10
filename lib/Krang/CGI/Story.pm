@@ -6,7 +6,7 @@ use warnings;
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader History => qw(add_history);
-use Krang::ClassLoader Log     => qw(debug assert ASSERT);
+use Krang::ClassLoader Log     => qw(debug info assert ASSERT);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Message => qw(add_message add_alert clear_messages clear_alerts);
 use Krang::ClassLoader Widget =>
@@ -266,7 +266,6 @@ sub create {
              slug        => $slug,
              cover_date  => $cover_date);
     }
-    push(@bad, 'category_id'), add_alert('missing_category')   unless $category_id;
     push(@bad, 'cover_date'),  add_alert('missing_cover_date') unless $cover_date;
     return $self->new_story(bad => \@bad) if @bad;
 
