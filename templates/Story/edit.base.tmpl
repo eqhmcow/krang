@@ -68,9 +68,9 @@ preview_and_stay = function() {
     }
   }
 
-  check_in = function() {
+  check_in = function(desk_id) {
     Krang.ElementEditor.run_save_hooks();
-    Krang.Form.submit('edit', { rm: 'check_in_and_save' });
+    Krang.Form.submit('edit', { rm: 'check_in_and_save', checkin_to: desk_id });
   }
 
   revert = function() {
@@ -157,6 +157,7 @@ preview_and_stay = function() {
 <form name="edit" id="edit" action="story.pl" method="post" enctype="multipart/form-data">
 
 <input name="rm" value="edit" type="hidden">
+<input name="checkin_to" value="" type="hidden">
 <input name="reverted_to_version" value="<tmpl_var reverted_to_version>" type="hidden">
 
 <tmpl_if is_root><tmpl_if story_id><p class="cram east">
@@ -403,7 +404,7 @@ preview_and_stay = function() {
     <select name="checkin_to" class="east"><tmpl_loop desk_loop>
       <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected</tmpl_if>><tmpl_var escape=html choice_desk_name> <tmpl_lang Desk></option>
     </tmpl_loop></select>
-    <input value="<tmpl_lang Check In To>" onclick="check_in()" type="button" class="east">
+    <input value="<tmpl_lang Check In To>" onclick="check_in(document.categories.checkin_to.value)" type="button" class="east">
 
   <tmpl_else>
 
