@@ -102,14 +102,14 @@ sub edit {
 
     # Show language selector only if we have more than one AvailableLanguage
     if (scalar keys %LANG > 1) {
-	my $lang = pkg('MyPref')->get('language') || DefaultLanguage;
+	my $lang_pref = pkg('MyPref')->get('language') || DefaultLanguage;
 
 	$template->param(
             language_selector => scalar $q->popup_menu(
                 -name     => 'language',
                 -values   => [ sort keys %LANG ],
                 -labels   => \%LANG,
-                -default  => $lang,
+                -default  => ($session{language} || $lang_pref || 'en'),
                 -onchange => q|$('edit_pref_form').addClassName('non_ajax')|,
             )
         );

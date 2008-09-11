@@ -87,11 +87,11 @@ use Krang::ClassLoader 'CGI::Login';
 use Krang::ClassLoader 'ErrorHandler';
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader 'HTMLTemplate';
-use Krang::ClassLoader Conf => qw(KrangRoot PasswordChangeTime ApacheMaxSize Secret ApacheMaxUnsharedSize ForceStaticBrowserCaching);
+use Krang::ClassLoader Conf => qw(KrangRoot PasswordChangeTime ApacheMaxSize Secret ApacheMaxUnsharedSize ForceStaticBrowserCaching DefaultLanguage);
 use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader 'AddOn';
 use Krang;
-use Krang::ClassLoader 'Session';
+use Krang::ClassLoader 'Session' => qw(%session);
 
 BEGIN { pkg('AddOn')->call_handler('InitHandler') }
 
@@ -398,6 +398,10 @@ sub authen_handler ($$) {
         $session_id = pkg('Session')->create();
         # store mapping between new window ID and new session ID in cookie
         $cookie{"wid_$window_id"} = $session_id;
+
+        # put language pref in new session
+        $session{language} = pkg('MyPref')->get('language', $cookie{user_id})
+                          || DefaultLanguage || 'en';
 
         # if there are more than $max_active_windows windows then we need to get rid
         # of the LRU
