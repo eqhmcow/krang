@@ -1646,6 +1646,37 @@ sub can_copy_test {
             }
         }
     }
+
+    return unless $args{story};
+
+    #
+    # Finally verify if a would-be-created story would conflict with
+    # an existing category. If the existing category has no category
+    # index story, silently make the copied story a category
+    # index. Otherwise ask user if he wants to copy non-conflicting
+    # assets. Overwriting an existing category index story has been
+    # handled further up.
+    #
+    for my $src_story (pkg('Story')->find(below_category_id => $self->category_id)) {
+        # Build URL of would-be-created story
+        (my $rel_src_path = $src_story->url) =~ s!^$src_cat_url!!;
+        my $dst_story_url = $dst_cat_url . $rel_src_path;
+
+        # check if a cat with this URL exists
+        my ($conflicting_dst_cat) = pkg('Category')->find(url => $dst_story_url . '/');
+        if ($conflicting_dst_cat) {
+            # does this cat already have a category index?
+            my ($index) = pkg('Story')->find(category_id => $conflicting_dst_cat->category_id,
+                                             slug        => '');
+            if ($index) {
+                # ask user if non-conflicting assets should be copied
+                Krang::Category::CopyAssetConflict->throw(message =>
+                      "At least one asset below source category would cause a DuplicateURL conflict with an asset existing below the destination category."
+                );
+            }
+        }
+    }
+
 }
 
 =item * C<< $category->copy(dst_category => $destination_category) >>
@@ -1771,9 +1802,12 @@ sub copy {
 
             for my $obj ($pkg->find(category_id => $src->category_id)) {
 
-                # is the URL of our would-be-copy already occupied?
+                my $dst_cat_id = $dst->category_id;
+
+                # is the URL of our would-be-copy already occupied by
+                # another asset of the same type?
                 my ($conflict) = $pkg->find(
-                    category_id => $dst->category_id,
+                    category_id => $dst_cat_id,
                     $asset_meth => $obj->$asset_meth,
                 );
 
@@ -1786,8 +1820,33 @@ sub copy {
                     }
                 }
 
+                # a story's URL might conflict with an existing category
+                my $slug = undef;
+                if ($asset_type eq 'story') {
+                    my $would_be_story_url = $dst->url . $obj->slug . '/';
+                    my ($c_cat) = pkg('Category')->find(url => $would_be_story_url);
+                    if ($c_cat) {
+                        # we might transform the story into a category
+                        # index of the existing category
+                        my ($index) = pkg('Story')->find(category_id => $c_cat->category_id,
+                                                         slug        => '');
+                        # trash the existing category index to make room
+                        if ($index) {
+                            if ($args{overwrite}) {
+                                $index->trash;
+                            } else {
+                                next;
+                            }
+                        }
+
+                        # cat and slug for a new index category
+                        $dst_cat_id = $c_cat->category_id;
+                        $slug = '';
+                    }
+                }
+
                 # make the copy
-                my $copy = $obj->clone(category_id => $dst->category_id);
+                my $copy = $obj->clone(category_id => $dst_cat_id, slug => $slug);
 
                 $copy->save();
                 $copy->checkin;

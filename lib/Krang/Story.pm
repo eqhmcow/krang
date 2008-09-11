@@ -2317,6 +2317,7 @@ sub clone {
 
     # cooked copy or raw clone?
     if ($args{category_id}) {
+        $copy->{slug} = $args{slug} if defined($args{slug});
         $copy->categories($args{category_id});
     } else {
         $copy->{title} = localize('Copy of') . ' ' . $copy->{title};

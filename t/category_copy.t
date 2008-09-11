@@ -57,7 +57,7 @@ $user->save();
 END { $user->delete }
 
 # some variables
-my ($creator, $this, $that, $source, $water, $conflict, $copied);
+my ($creator, $this, $that, $source, $destination, $water, $conflict, $copied);
 my (@categories, @stories, @media, @templates, @tmp);
 
 diag('');
@@ -569,6 +569,176 @@ push @categories, $conflict;
     isa_ok($@, 'Krang::Category::NoEditAccess');
 }
 
+diag('');
+diag('11. Conflict between would-be-created story and existing category');
+diag('');
+setup_tree();
+
+$conflict = pkg('Story')->new(
+    categories => [$this],
+    slug       => 'destination',
+    class      => 'article',
+    title      => 'Conflicting with existing destination category'
+);
+$conflict->save;
+$conflict->checkin;
+push @stories, $conflict;
+$conflict->checkin();
+
+diag('Testing without overwrite - should not throw exception');
+
+eval {
+    $this->can_copy_test(
+        dst_category => $that,
+        story        => 1,
+        media        => 0,
+        template     => 0,
+        overwrite    => 0
+    );
+};
+diag($@);
+is(!$@, 1, 'No Krang::Category::CopyAssetConflict thrown');
+
+# do copy
+eval {
+    $copied = $this->copy(
+        dst_category => $that,
+        story        => 1,
+        media        => 1,
+        template     => 1,
+        overwrite    => 0
+    );
+};
+
+is(not($@), 1, "Trying to copy did not throw error");
+@tmp = pkg('Story')->find(url => $that->url . 'destination/');
+is(scalar(@tmp), 1, "Story has been transformed into category index of existing category");
+
+push @categories, @{$copied->{category}} if $copied->{category};
+push @stories,    @{$copied->{story}}    if $copied->{story};
+push @media,      @{$copied->{media}}    if $copied->{media};
+push @templates,  @{$copied->{template}} if $copied->{template};
+
+diag('');
+diag('12. Conflict between would-be-created story and existing category having index story - without overwrite');
+diag('');
+setup_tree();
+
+$conflict = pkg('Story')->new(
+    categories => [$this],
+    slug       => 'destination',
+    class      => 'article',
+    title      => 'Conflicting with existing destination category\'s index story'
+);
+$conflict->save;
+$conflict->checkin;
+push @stories, $conflict;
+
+my $index = pkg('Story')->new(
+    categories => [$destination],
+    slug       => '',
+    class      => 'article',
+    title      => 'Exsting category\'s index story',
+);
+$index->save;
+$index->checkin;
+push @stories, $index;
+
+eval {
+    $this->can_copy_test(
+        dst_category => $that,
+        story        => 1,
+        media        => 0,
+        template     => 0,
+        overwrite    => 0,
+    );
+};
+
+diag('Testing without overwrite - should throw exception');
+isa_ok($@, 'Krang::Category::CopyAssetConflict');
+
+# do copy
+eval {
+    $copied = $this->copy(
+        dst_category => $that,
+        story        => 1,
+        media        => 1,
+        template     => 1,
+        overwrite    => 0,
+    );
+};
+
+my ($findex) = pkg('Story')->find(url => $index->url);
+is($findex->story_id, $index->story_id, 'The existing index category has been preserved. No copy occured.');
+
+push @categories, @{$copied->{category}} if $copied->{category};
+push @media,      @{$copied->{media}}    if $copied->{media};
+push @templates,  @{$copied->{template}} if $copied->{template};
+push @stories,    @{$copied->{story}}    if $copied->{story};
+
+diag('');
+diag('13. Conflict between would-be-created story and existing category having index story - with overwrite');
+diag('');
+setup_tree();
+
+$conflict = pkg('Story')->new(
+    categories => [$this],
+    slug       => 'destination',
+    class      => 'article',
+    title      => 'Conflicting with existing destination category\'s index story'
+);
+$conflict->save;
+$conflict->checkin;
+push @stories, $conflict;
+
+$index = pkg('Story')->new(
+    categories => [$destination],
+    slug       => '',
+    class      => 'article',
+    title      => 'Exsting category\'s index story',
+);
+$index->save;
+$index->checkin;
+push @stories, $index;
+
+eval {
+    $this->can_copy_test(
+        dst_category => $that,
+        story        => 1,
+        media        => 0,
+        template     => 0,
+        overwrite    => 1,
+    );
+};
+
+diag('Testing with overwrite - should not throw exception');
+is(!$@, 1, 'No Krang::Category::CopyAssetConflict thrown');
+
+# do copy
+eval {
+    $copied = $this->copy(
+        dst_category => $that,
+        story        => 1,
+        media        => 1,
+        template     => 1,
+        overwrite    => 1,
+    );
+};
+
+my @indices = pkg('Story')->find(url => $index->url, include_trashed => 1);
+is(scalar(@indices), 2, "Two stories with the same URL exist now");
+
+($index)        = grep {$_->story_id == $index->story_id} @indices;
+is($index->trashed, 1, "Original category index story has been trashed.");
+
+my ($new_index) = grep {$_->story_id != $index->story_id} @indices;
+isa_ok($new_index, 'Krang::Story');
+
+push @stories,    @{$copied->{story}}    if $copied->{story};
+push @categories, @{$copied->{category}} if $copied->{category};
+push @media,      @{$copied->{media}}    if $copied->{media};
+push @templates,  @{$copied->{template}} if $copied->{template};
+
 #   --- End tests ---
 
 sub setup_tree {
@@ -693,7 +863,7 @@ sub setup_tree {
     $that->save;
     push @categories, $that;
 
-    my $destination = pkg('Category')->new(
+    $destination = pkg('Category')->new(
         parent_id => $that->category_id,
         dir       => 'destination'
     );
