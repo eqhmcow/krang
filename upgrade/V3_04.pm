@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader base => 'Upgrade';
-use Krang::ClassLoader DB => 'dbh'
+use Krang::ClassLoader DB => 'dbh';
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::Conf qw(KrangRoot InstanceElementSet);
 use File::Spec::Functions qw(catfile catdir);
