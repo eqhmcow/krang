@@ -4,9 +4,10 @@ use strict;
 use warnings;
 use Krang::ClassLoader DB   => qw(dbh);
 use Krang::ClassLoader Conf => qw(KrangRoot SavedVersionsPerMedia);
-use Krang::ClassLoader Log  => qw(debug assert ASSERT);
+use Krang::ClassLoader Log  => qw(debug info assert ASSERT);
 use Krang::ClassLoader 'Contrib';
 use Krang::ClassLoader 'Category';
+use Krang::ClassLoader Element => qw(foreach_element);
 use Krang::ClassLoader 'Group';
 use Krang::ClassLoader History => qw( add_history );
 use Krang::ClassLoader 'Publisher';
@@ -30,7 +31,7 @@ use FileHandle;
 use constant THUMBNAIL_SIZE     => 35;
 use constant MED_THUMBNAIL_SIZE => 200;
 use constant FIELDS =>
-  qw(media_id media_uuid title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published_version preview_version publish_date checked_out_by retired trashed);
+  qw(media_id media_uuid element_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published_version preview_version publish_date checked_out_by retired trashed);
 
 # setup exceptions
 use Exception::Class (
@@ -77,6 +78,10 @@ use Exception::Class (
 
     # change assignment to include just the first contributor
     $media->contribs($contribs[0]);
+
+    # get media element 
+    my $element = $media->element();
+    $element_id = $media->element_id; # undef until after save()
 
     # save the object to the database
     $media->save();
@@ -284,6 +289,10 @@ sub init {
     $self->{may_edit} = 1;
 
     $self->{media_uuid} = pkg('UUID')->new;
+
+    # initialize the element
+    $self->{element} = pkg('Element')->new(class  => pkg('ElementClass::Media')->element_class_name, 
+                                           object => $self);
 
     # finish the object
     $self->hash_init(%args);
@@ -702,6 +711,34 @@ sub height {
     }
 }
 
+=item * C<element> (readonly)
+
+The element for this media object.
+
+=cut
+
+sub element {
+    my $self = shift;
+    return $self->{element} if $self->{element};
+    ($self->{element}) = pkg('Element')->load(
+        element_id => $self->{element_id},
+        object     => $self
+     );
+
+    return $self->{element};
+}
+
+=item * C<element_id> (readonly)
+
+The element_id for this media object.
+
+=cut
+
+sub element_id {
+    my $self = shift;
+    return $self->{element_id};
+}
+
 =item $media->save()
 
 =item C<< $media->save(keep_version => 1) >>
@@ -751,6 +788,11 @@ sub save {
 
     # croak if media_type_id not defined
     croak('media_type_id must be set before saving media object!') unless $self->{media_type_id};
+
+    # save element, get id back
+    my $element = $self->element;
+    $element->save();
+    $self->{element_id} = $element->element_id();
 
     # if this is not a new media object
     if (defined $self->{media_id}) {
@@ -1026,6 +1068,16 @@ search result. Trashed media live in the trashbin. The default is 0.
 B<NOTE:>When searching for media_id, these three include_* flags are
 not taken into account!
 
+=item element_index_like - BETA FEATURE: NEEDS MORE TESTING
+
+This find option allows you to search against indexed element data.
+For details on element indexing, see L<Krang::ElementClass>.  This
+option should be set with an array containing the element name and the
+value to match against.  For example, to search for media objects containing
+'boston' in their location, assuming location is an indexed element:
+
+  @media = pkg('Media')->find(element_index_like => [location => '%boston%']);
+
 =back
 
 =cut
@@ -1073,6 +1125,7 @@ sub find {
         include_live      => 1,
         include_retired   => 1,
         include_trashed   => 1,
+        element_index_like => 1
     );
 
     # check for invalid params and croak if one is found
@@ -1271,6 +1324,15 @@ sub find {
         }
     }
 
+    # ELEMENT_INDEX_LIKE -- BETA FEATURE: NEEDS MORE TESTING
+    if ($args{element_index_like}) {
+        my $element_index = $args{element_index_like};
+        $where_string .= ' and ' if $where_string;
+        $where_string .= 'element.class = ? ';
+        $where_string .= 'and element_index.value LIKE ?';
+        push(@where, $element_index->[0], '%'.$element_index->[1].'%');
+    }
+
     if ($args{'simple_search'}) {
         my @words = split(/\s+/, $args{'simple_search'});
         foreach my $word (@words) {
@@ -1355,6 +1417,7 @@ sub find {
                   left join user_category_permission_cache as ucpc
                   ON ucpc.category_id = media.category_id
                   );
+    $sql .= ', element, element_index' if $args{element_index_like};
     $sql .= ", media_contrib"          if $args{'contrib_id'};
     $sql .= ', category'               if $args{site_id};
     $sql .= " where " . $where_string  if $where_string;
@@ -1895,7 +1958,7 @@ Permenantly delete media object or media object with given id.
 
 Attempts to checkout the media object, will croak if checked out by another user.
 
-Will throw "Krang::Media::NoEditAccess" exception if user ius not allowed to edit
+Will throw "Krang::Media::NoEditAccess" exception if user is not allowed to edit
 this media.
 
 =cut
@@ -1927,6 +1990,9 @@ sub delete {
     # first delete history for this object
     pkg('History')->delete(object => $self);
 
+    # and delete media element
+    $self->element->delete;
+
     my $file_dir = catdir($root, 'data', 'media', pkg('Conf')->instance, $self->_media_id_path);
 
     $dbh->do('DELETE from media where media_id = ?',         undef, $self->{media_id});
@@ -1939,6 +2005,10 @@ sub delete {
     $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
         undef, 'media', $self->{media_id});
 
+    # delete alerts for this media
+    $dbh->do('DELETE FROM alert WHERE object_type = ? and object_id = ?',
+      undef, 'media', $self->{media_id});
+
     # remove from trash
     pkg('Trash')->remove(object => $self);
 
@@ -1946,6 +2016,63 @@ sub delete {
         object => $self,
         action => 'delete',
     );
+}
+
+
+=item * C<< @linked_stories = $media->linked_stories >>
+
+Returns a list of stories linked to from this media object.  These will be
+  Krang::Story objects.  If no stories are linked, returns an empty
+list.  This list will not contain any duplicate stories, even if a
+story is linked more than once.
+
+=cut
+
+sub linked_stories {
+    my $self    = shift;
+    my $element = $self->element;
+
+    # find StoryLinks and index by id
+    my %story_links;
+    my $story;
+    foreach_element {
+        if (    $_->class->isa('Krang::ElementClass::StoryLink')
+            and $story = $_->data)
+          {
+            $story_links{$story->story_id} = $story;
+        }
+    }
+    $element;
+
+    return values %story_links;
+}
+
+=item * C<< @linked_media = $media->linked_media >>
+
+
+Returns a list of media linked to from this media.  These will be
+  Krang::Media objects.  If no media are linked, returns an empty list.
+This list will not contain any duplicate media, even if a media object
+is linked more than once.
+
+=cut
+
+sub linked_media {
+    my $self    = shift;
+    my $element = $self->element;
+
+    # find MediaLinks and index by id
+    my %media_links;
+    my $media;
+    foreach_element {
+        if (    $_->class->isa('Krang::ElementClass::MediaLink')
+            and $media = $_->data)
+          {
+            $media_links{$media->media_id} = $media;
+        }
+    }
+    $element;
+    return values %media_links;
 }
 
 =item C<< $media->serialize_xml(writer => $writer, set => $set) >>
@@ -2020,6 +2147,10 @@ sub serialize_xml {
         $set->add(object => $schedule, from => $self);
     }
 
+    # serialize elements
+    $self->element->serialize_xml(writer => $writer,
+                                  set    => $set);
+
     # all done
     $writer->endTag('media');
 }
@@ -2043,7 +2174,7 @@ sub deserialize_xml {
     # divide FIELDS into simple and complex groups
     my (%complex, %simple);
     @complex{
-        qw(media_id filename publish_date creation_date checked_out_by
+        qw(media_id filename publish_date creation_date checked_out_by element_id
           version url published_version category_id media_uuid trashed retired)
       }
       = ();
@@ -2052,7 +2183,7 @@ sub deserialize_xml {
     # parse it up
     my $data = pkg('XML')->simple(
         xml           => $xml,
-        forcearray    => ['contrib'],
+        forcearray    => ['contrib', 'element', 'data'],
         suppressempty => 1
     );
 
@@ -2081,7 +2212,6 @@ sub deserialize_xml {
           if $media and $no_update;
     }
 
-    my $update = 0;
     if ($media) {
 
         # update simple fields
@@ -2093,9 +2223,6 @@ sub deserialize_xml {
             id    => $data->{category_id}
         );
         $media->category_id($category_id);
-
-        # set the update flag
-        $update = 1;
 
     } else {
 
@@ -2180,6 +2307,22 @@ sub deserialize_xml {
         id        => $data->{media_id},
         import_id => $media->media_id,
     );
+    
+    # deserialize elements for update
+    my $element = pkg('Element')->deserialize_xml(
+        data      => $data->{element}[0],
+        set       => $set,
+        no_update => $no_update,
+        object    => $media
+    );
+
+    # remove existing element tree
+    $media->element->delete(skip_delete_hook => 1) if ($media->element);
+    $media->{element}    = $element;
+    $media->{element_id} = undef;
+
+    # save again; this time element will be saved and element_id will be set
+    $media->save;
 
     # make sure there's a file on the other end
     assert($media->file_path and -e $media->file_path, "Media saved successfully") if ASSERT;
@@ -2197,6 +2340,9 @@ ensure this works correctly.
 sub STORABLE_freeze {
     my ($self, $cloning) = @_;
     return if $cloning;
+
+    # make sure element tree is loaded
+    $self->element();
 
     # avoid serializing category cache since they contain objects not
     # owned by the media
@@ -2221,6 +2367,7 @@ Deserialize frozen media.  Krang::Media implements STORABLE_thaw() to ensure thi
 
 sub STORABLE_thaw {
     my ($self, $cloning, $data) = @_;
+    local $Krang::Element::THAWING_OBJECT = $self;
 
     # retrieve object
     eval { %$self = %{thaw($data)} };

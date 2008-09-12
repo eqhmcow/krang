@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS media;
 CREATE TABLE media (
     media_id                mediumint unsigned NOT NULL auto_increment,
     media_uuid              CHAR(36) NOT NULL,
+    element_id              int unsigned NOT NULL;
     category_id             mediumint unsigned NOT NULL,
     title                   varchar(255) NOT NULL,
     filename                varchar(255) NOT NULL,

@@ -242,7 +242,7 @@ sub data {
 =item C<< $object = $element->object() >>
 
 Returns the object containing this element tree.  This will be either
-a Krang::Story or a Krang::Category object.
+a Krang::Story, a Krang::Category, or a Krang::Media object.
 
 =cut
 

@@ -1,10 +1,10 @@
 <tmpl_include header.tmpl>
 
+
+<!-- BEGIN JAVASCRIPT -->
+
 <script type="text/javascript">
 Krang.onload( function() {
-<tmpl_if was_edit>
-  Krang.Nav.edit_mode();
-</tmpl_if>
   Krang.Help.set( 'media_view' );
 } );
 
@@ -13,11 +13,7 @@ do_return = function() {
 }
 
 view_log = function() {
-  Krang.Form.submit( 'view_log_form' );
-}
-
-edit_schedule = function() {
-    Krang.Form.submit('view_log_form', { rm: 'edit_schedule' });
+  Krang.Form.submit( 'view', { rm: 'view_log' } );
 }
 
 <tmpl_unless is_old_version><tmpl_if can_edit>
@@ -28,112 +24,167 @@ edit_schedule = function() {
 
 // Register CodePress's onload event:
 Krang.onload( function() { 
-  if (! Prototype.Browser.WebKit && Krang.my_prefs().syntax_highlighting == 1) {
-  CodePress.run();
-  }
+  <tmpl_if is_text><tmpl_if use_codepress>CodePress.run()</tmpl_if></tmpl_if>
 } );
 
 </script>
 
+<!-- END JAVASCRIPT -->
+
+
+
+<!-- BEGIN MAIN VIEW FORM -->
+
+<form name="view" method="post" action="media.pl">
+
+<span style="float: right">
+  <tmpl_if thumbnail_path>
+    <tmpl_if media_id><a title="<tmpl_lang Preview> <tmpl_var escape=html title>" href="javascript:Krang.preview('media',null)"></tmpl_if><img alt="" src="<tmpl_var escape=html thumbnail_path>"><tmpl_if media_id></a></tmpl_if>
+  </tmpl_if>
+</span>
+
+<tmpl_unless is_old_version>
 <p class="cram east">
-  <input value="<tmpl_lang View Log>" onclick="view_log()" type="button" class="button">
+  <tmpl_if is_root>
+    <input value="<tmpl_lang View Log>" onclick="view_log()" type="button" class="button">
+  </tmpl_if>
 </p>
+</tmpl_unless>
 
 <h2>
 <tmpl_lang View Media>
 </h2>
 
+<input name="rm" value="view" type="hidden">
+<input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
+<input name="version" value="<tmpl_var escape=html version>" type="hidden">
+<input name="return_script" value="<tmpl_var escape=html return_script>" type="hidden">
+<input name="return_runmode" value="<tmpl_var escape=html return_runmode>" type="hidden">
+<input name="return_params" value="<tmpl_var escape=html return_params>" type="hidden">
 
-<h3>
-Properties
-</h3>
+<!-- BEGIN BASIC PROPERTIES -->
 
-<div>
-<tmpl_if thumbnail_path><div class="east">
-  <tmpl_if media_id><a title="<tmpl_lang Preview> <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html media_id>')"></tmpl_if><img alt="" src="<tmpl_var escape=html thumbnail_path>"><tmpl_if media_id></a></tmpl_if>
-</div></tmpl_if>
+<div class="table-container">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <table cellspacing="0" class="props" summary="">
+
+  <colgroup>
+   <col class="c-label">
+   <col>
+  </colgroup>
+
+  <thead>
+    <tr>
+    <th class="f l"><tmpl_lang Properties></th>
+    <td style="text-align: right; vertical-align: middle">
+        Media ID <tmpl_var media_id>, 
+        Created <tmpl_var escape=html creation_date>&nbsp;
+    </td>
+    </tr>
+  </thead>
+
+  <tbody class="half">
+  
+  <tr>
+  <td class="f"><tmpl_lang URL></td>
+  <td class="l"><tmpl_var url></td>
+  </tr>
+
+<tmpl_if is_root>
+
+  <tr class="even">
+  <td class="f"><tmpl_lang Type></th>
+  <td class="l"><tmpl_var escape=html type></td>
+  </tr>
+
+  <tr>
+  <td class="f"><tmpl_lang Title></th>
+  <td class="l"><tmpl_var escape=html title></td>
+  </tr>
+
+  <tr class="even">
+  <td class="f"><tmpl_lang File Name></th>
+  <td class="l">
+    <a href="javascript:Krang.preview('media','<tmpl_var escape=html media_id>')"><tmpl_var escape=html filename></a>
+    <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
+  </td>
+  </tr>
+
+  <tr class="f">
+  <td class="f"><tmpl_lang Current Version></th>
+  <td class="l"><tmpl_var escape=html version>&nbsp;&nbsp;
+                (<tmpl_lang Published Version>: <tmpl_if published_version><tmpl_var published_version><tmpl_else>None</tmpl_if>)
+  </td>
+  </tr>
+
+</tmpl_if>
+
+</tbody>
+</table>
+</div>
+
+<!-- END BASIC PROPERTIES -->
 
 
-<table class="result" summary="">
+
+<!-- BEGIN METADATA -->
+<tmpl_if is_root>
+
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="">
 
 <colgroup>
-<col class="c-label">
-<col>
+ <col class="c-label">
+ <col>
 </colgroup>
 
-<tbody>
+<thead>
+  <tr>
+  <th class="f l" colspan="2"><tmpl_lang Metadata></th>
+  </tr>
+</thead>
+
+<tbody class="half">
 
 <tr>
-<th><tmpl_lang Media ID></th>
-<td><tmpl_var escape=html media_id></td>
+<td class="f"><tmpl_lang Site/Category></td>
+<td class="l"><tmpl_var escape=html category></td>
 </tr>
 
-<tr>
-<th><tmpl_lang Title></th>
-<td><tmpl_var escape=html title></td>
-</tr>
-
-<tr>
-<th><tmpl_lang Type></th>
-<td><tmpl_var escape=html type></td>
-</tr>
-
-<tr>
-<th><tmpl_lang Current Version></th>
-<td><tmpl_var escape=html version></td>
-</tr>
-
-<tr>
-<th><tmpl_lang Published Version></th>
-<td><tmpl_unless published_version>[n/a]<tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
-</tr>
-
-<tr>
-<th><tmpl_lang URL></th>
-<td><tmpl_var url><!--:markup--></td>
-</tr>
-
-<tr>
-<th><tmpl_lang Site/Category></th>
-<td><tmpl_var escape=html category></td>
-</tr>
-
-<tr>
-<th><tmpl_lang File Name></th>
-<td>
+<tr class="even">
+<td class="f"><tmpl_lang File Name></td>
+<td class="l">
 <a href="javascript:Krang.preview('media','<tmpl_var escape=html media_id>')"><tmpl_var escape=html filename></a>
 <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
 </td>
 </tr>
 
 <tr>
-<th><tmpl_lang Default Caption></th>
-<td><tmpl_var escape=html caption></td>
+<td class="f"><tmpl_lang Default Caption></td>
+<td class="l"><tmpl_var escape=html caption></td>
+</tr>
+
+<tr class="even">
+<td class="f"><tmpl_lang Default Copyright></td>
+<td class="l"><tmpl_var escape=html copyright></td>
 </tr>
 
 <tr>
-<th><tmpl_lang Default Copyright></th>
-<td><tmpl_var escape=html copyright></td>
+<td class="f"><tmpl_lang Alt Text></td>
+<td class="l"><tmpl_var escape=html alt_tag></td>
+</tr>
+
+<tr class="even">
+<td class="f"><tmpl_lang Notes></td>
+<td class="l"><tmpl_var escape=html notes></td>
 </tr>
 
 <tr>
-<th><tmpl_lang Alt Text></th>
-<td><tmpl_var escape=html alt_tag></td>
-</tr>
-
-<tr>
-<th><tmpl_lang Creation Date></th>
-<td><tmpl_var escape=html creation_date></td>
-</tr>
-
-<tr>
-<th><tmpl_lang Notes></th>
-<td><tmpl_var escape=html notes></td>
-</tr>
-
-<tr>
-<th><tmpl_lang Contributors></th>
-<td>
+<td class="f"><tmpl_lang Contributors></td>
+<td class="l">
 <tmpl_if contribs><!--(db2)no context var; single item == trailing comma:-->
   <tmpl_loop contribs>
     <tmpl_var escape=html first> <tmpl_var escape=html last> (<tmpl_var escape=html type>)<tmpl_unless __last__>,</tmpl_unless>
@@ -144,53 +195,60 @@ Properties
 </td>
 </tr>
 
-<tmpl_if is_text>
-<tr>
-<td colspan="2">
-<h3>
-<tmpl_lang Content>
-</h3>
-<textarea style="width: 100%" name="text_content" id="mediaEditor" rows="30" cols="60"
-  class="codepress readonly-on <tmpl_var text_type>"><tmpl_var escape=html text_content></textarea>
-</td>
-</tr>
-</tmpl_if>
-
 </tbody>
-
 </table>
 </div>
+</tmpl_if>
+<!-- END METADATA -->
 
-<div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_unless can_edit> lame</tmpl_unless></tmpl_if> capped"><form>
+
+<!-- BEGIN TEXT CONTENT -->
+
+<tmpl_if is_text><tmpl_if is_root>
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="" style="margin: 0; padding: 0; border: 0">
+<thead>
+<tr>
+<th class="f l">Content</th>
+</tr>
+</thead>
+</table>
+<textarea style="width: 100%" name="text_content" id="mediaEditor" rows="30" cols="60"
+  <tmpl_if use_codepress>class="codepress readonly-on <tmpl_var text_type>"</tmpl_if>>
+  <tmpl_var escape=html text_content>
+</textarea>
+</div>
+</tmpl_if></tmpl_if>
+
+<!-- BEGIN ELEMENTS -->
+<tmpl_include /ElementEditor/<tmpl_lang en>/view.tmpl>
+<!-- END ELEMENTS -->
+
+
+
+<!-- BEGIN BUTTONS -->
+
+<div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_if prevent_edit> lame</tmpl_if></tmpl_if> capped">
 <input value="<tmpl_lang Back>" onclick="do_return()" type="button" class="west">
 <tmpl_unless is_old_version><tmpl_if can_edit>
   <input value="<tmpl_lang Edit>" onclick="do_edit_media()" type="button">
 </tmpl_if></tmpl_unless>
-</form></div>
+</div>
 
-<form name="view_log_form" action="history.pl" method="post">
-<input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
-<input name="history_return_script" value="media.pl" type="hidden">
-<input name="history_return_script" value="return_script" type="hidden">
-<input name="history_return_script" value="media.pl" type="hidden">
-<input name="history_return_params" value="rm" type="hidden">
-<input name="history_return_params" value="view" type="hidden">
-<input name="history_return_params" value="media_id" type="hidden">
-<input name="history_return_params" value="<tmpl_var escape=html media_id>" type="hidden">
-<input name="history_return_params" value="version" type="hidden">
-<input name="history_return_params" value="<tmpl_var escape=html version>" type="hidden">
-<input name="history_return_params" value="return_script" type="hidden">
-<input name="history_return_params" value="<tmpl_var escape=html return_script>" type="hidden">
-<tmpl_loop return_params_loop>
-  <input name="history_return_params" value="return_params" type="hidden">
-  <input name="history_return_params" value="<tmpl_var escape=html name>" type="hidden">
-  <input name="history_return_params" value="return_params" type="hidden">
-  <input name="history_return_params" value="<tmpl_var escape=html value>" type="hidden">
-</tmpl_loop>
+<!-- END BUTTONS -->
+
+
 </form>
 
+<!-- END MAIN VIEW FORM -->
+
+
+
 <form name="return_form" action="<tmpl_var escape=html return_script>" method="post">
-<input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
+<input name="rm" value="<tmpl_if parent_path>view<tmpl_else><tmpl_var escape=html return_runmode></tmpl_if>" type="hidden">
+<input name="parent_path" value="<tmpl_var parent_path>" type="hidden">
 <input name="retired" value="<tmpl_var escape=html retired>" type="hidden">
 <tmpl_var return_params>
 </form>
@@ -201,6 +259,7 @@ Properties
   <input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
   </form>
 </tmpl_if></tmpl_unless>
+
 
 <tmpl_include footer.tmpl>
 

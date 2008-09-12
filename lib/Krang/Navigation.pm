@@ -215,7 +215,7 @@ sub default_tree {
 
     $sub  = $node->new_daughter();
     $sub->name('New Media');
-    $sub->link('media.pl?rm=add');
+    $sub->link('media.pl?rm=add_media');
     $sub->condition(sub { shift->{asset}{media} ne 'read-only' });
 
     $sub  = $node->new_daughter();

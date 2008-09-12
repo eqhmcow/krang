@@ -121,7 +121,8 @@ sub new_story {
     }
 
     # setup the type selector
-    my @types = grep { $_ ne 'category' } pkg('ElementLibrary')->top_levels;
+    my $media_class = pkg('ElementClass::Media')->element_class_name;
+    my @types = grep { $_ ne 'category' && $_ ne $media_class } pkg('ElementLibrary')->top_levels;
 
     # sort the type by their display name, not their real name
     @types = sort {

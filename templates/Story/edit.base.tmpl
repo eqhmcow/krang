@@ -281,6 +281,8 @@ preview_and_stay = function() {
 
 </form>
 
+
+
 <tmpl_if is_root>
 
 <form name="categories" id="categories" action="story.pl" method="post" enctype="multipart/form-data">
@@ -307,10 +309,10 @@ preview_and_stay = function() {
 
   <tmpl_else>
 
-  <div class="table-container">
-  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
-  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
-  <table cellspacing="0" class="result edit select_row" summary="">
+    <div class="table-container">
+    <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+    <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+    <table cellspacing="0" class="result edit select_row" summary="">
 
     <colgroup>
     <col class="series">
@@ -430,4 +432,3 @@ preview_and_stay = function() {
 </form>
 
 <tmpl_include footer.tmpl>
-

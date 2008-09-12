@@ -1,8 +1,8 @@
-
 package Krang::CGI::Media;
+
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader base => qw(CGI);
-use Krang::ClassLoader Log  => qw(debug critical);
+use Krang::ClassLoader base => 'CGI::ElementEditor';
+
 use strict;
 use warnings;
 
@@ -38,9 +38,11 @@ is 'add'.
 
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader History => qw(add_history);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Localization => qw(localize);
+use Krang::ClassLoader Log  => qw(debug info critical);
 use Krang::ClassLoader 'Media';
 use Krang::ClassLoader Message => qw(add_message add_alert clear_messages);
 use Krang::ClassLoader 'Pref';
@@ -53,6 +55,9 @@ use File::Copy qw(copy);
 use File::Spec::Functions qw(catfile catdir abs2rel);
 use File::Basename qw(fileparse);
 
+sub _get_element     { $session{media}->element; }
+sub _get_script_name { "media.pl" }
+
 ##############################
 #####  OVERRIDE METHODS  #####
 ##############################
@@ -60,6 +65,8 @@ use File::Basename qw(fileparse);
 sub setup {
     my $self = shift;
 
+    $self->SUPER::setup();
+    $self->mode_param('rm');
     $self->start_mode('find');
 
     $self->run_modes(
@@ -67,8 +74,7 @@ sub setup {
             qw(
               find
               advanced_find
-              add
-              save_add
+              add_media
               cancel_edit
               checkin_add
               checkin_edit
@@ -87,6 +93,14 @@ sub setup {
               save_and_view_log
               save_and_publish
               save_and_preview
+              save_and_jump
+              save_and_add
+              save_and_go_up
+              save_and_bulk_edit
+              save_and_leave_bulk_edit
+              save_and_change_bulk_edit_sep
+              save_and_find_story_link
+              save_and_find_media_link
               view
               view_log
               view_version
@@ -605,14 +619,14 @@ sub list_active {
     return $template->output;
 }
 
-=item add
+=item add_media
 
-The "add" run-mode displays the form through which
+The "add_media" run-mode displays the form through which
 new Media objects may be added to Krang.
 
 =cut
 
-sub add {
+sub add_media {
     my $self = shift;
     my %args = (@_);
 
@@ -622,52 +636,6 @@ sub add {
 
     # Call and return the real add function
     return $self->_add(%args);
-}
-
-=item save_add
-
-Save the new media object, check it out, and redirect to Workspace.
-
-This run-mode expects to find media object in session.
-
-=cut
-
-sub save_add {
-    my $self = shift;
-
-    my $q = $self->query();
-
-    my $m = $session{media};
-    die("No media object in session") unless (ref($m));
-
-    # Update object in session
-    $self->update_media($m) || return $self->redirect_to_workspace;
-
-    # Validate input.  Return errors, if any.
-    my %errors = $self->validate_media($m);
-    return $self->_add(%errors) if (%errors);
-
-    # Save object to database
-    my %save_errors = ($self->do_save_media($m));
-    if (%save_errors) {
-	undef $m->{filename} if $save_errors{duplicate_url};
-	return $self->_add(%save_errors);
-    }
-
-    # Publish to preview
-    $m->preview();
-
-    # Checkout to Workspace
-    $m->checkout();
-
-    # Notify user
-    add_message("new_media_saved");
-
-    # Clear media object from session
-    delete $session{media};
-
-    # Redirect to workspace.pl
-    $self->redirect_to_workspace;
 }
 
 =item checkin_add 
@@ -712,8 +680,8 @@ sub checkin_add {
 
 =item save_stay_add
 
-Functions the same as save_add, except user is
-redirected to edit screen with same object.
+Saves the new object and redirects to edit screen
+(Triggered by 'create' button.)
 
 =cut
 
@@ -831,9 +799,13 @@ sub edit {
     }
     die("Can't find media object with media_id '$media_id'") unless (ref($m));
 
-    my $t = $self->load_tmpl('edit_media.tmpl', associate => $q, loop_context_vars => 1);
+    my $t = $self->load_tmpl('edit_media.tmpl', associate => $q, loop_context_vars => 1, die_on_bad_params => 0);
+    $self->query->param(rm => 'edit'); # so the return param for rm is 'edit' even after a 'save_stay_edit', etc.
     my $media_tmpl_data = $self->make_media_tmpl_data($m);
     $t->param($media_tmpl_data);
+
+    # run the element editor edit
+    $self->element_edit(template => $t, element => $m->element);
 
     # permissions
     my %admin_perms = pkg('Group')->user_admin_permissions();
@@ -841,6 +813,13 @@ sub edit {
 
     # Propagate messages, if we have any
     $t->param(%args) if (%args);
+
+    # keep track of whether we're at the top level of element or not
+    my $path = $self->query->param('path');
+    $t->param(is_root => 1) unless ($path && $path ne '/');
+
+    # this affects display in ElementEditor.tmpl
+    $t->param(elements_belong_to_media_object => 1);
 
     $t->param(cancel_changes_owner     => $self->_cancel_edit_changes_owner);
     $t->param(cancel_goes_to_workspace => $self->_cancel_edit_goes_to_workspace);
@@ -858,20 +837,13 @@ Redirect the user to their Workspace.
 sub save_edit {
     my $self = shift;
 
-    my $q = $self->query();
-
-    my $m = $session{media};
-    die("No media object in session") unless (ref($m));
-
-    # Update object in session
-    $self->update_media($m) || return $self->redirect_to_workspace;
-
-    # Validate input.  Return errors, if any.
-    my %errors = $self->validate_media($m);
-    return $self->edit(%errors) if (%errors);
+    # Validate & save object in session
+    my $output = $self->_save();
+    return $output if $output;
 
     # Save object to database
-    my %save_errors = ($self->do_save_media($m));
+    my $m = $session{media};
+    my %save_errors = ( $self->do_save_media($m) );
     return $self->edit(%save_errors) if (%save_errors);
 
     # Publish to preview
@@ -901,19 +873,12 @@ Redirect the user to their Workspace.
 sub checkin_edit {
     my $self = shift;
 
-    my $q = $self->query();
-
-    my $m = $session{media};
-    die("No media object in session") unless (ref($m));
-
-    # Update object in session
-    $self->update_media($m) || return $self->redirect_to_workspace;
-
-    # Validate input.  Return errors, if any.
-    my %errors = $self->validate_media($m);
-    return $self->edit(%errors) if (%errors);
+    # Validate and save object in session
+    my $output = $self->_save();
+    return $output if $output;
 
     # Save object to database
+    my $m = $session{media};
     my %save_errors = ($self->do_save_media($m));
     return $self->edit(%save_errors) if (%save_errors);
 
@@ -941,19 +906,12 @@ Return the user to the edit screen.
 sub save_stay_edit {
     my $self = shift;
 
-    my $q = $self->query();
-
-    my $m = $session{media};
-    die("No media object in session") unless (ref($m));
-
-    # Update object in session
-    $self->update_media($m) || return $self->redirect_to_workspace;
-
-    # Validate input.  Return errors, if any.
-    my %errors = $self->validate_media($m);
-    return $self->edit(%errors) if (%errors);
+    # Validate and save object in session
+    my $output = $self->_save();
+    return $output if $output;
 
     # Save object to database
+    my $m = $session{media};
     my %save_errors = ($self->do_save_media($m));
     return $self->edit(%save_errors) if (%save_errors);
 
@@ -972,12 +930,7 @@ sub save_stay_edit {
       if $self->_cancel_edit_changes_owner;
 
     # Redirect to edit mode
-    my $url = $q->url(-relative => 1);
-    $url .= "?rm=edit&media_id=" . $m->media_id();
-    $self->header_props(-uri => $url);
-    $self->header_type('redirect');
-
-    return "Redirect: <a href=\"$url\">$url</a>";
+    return $self->edit;
 }
 
 =item delete
@@ -1052,10 +1005,11 @@ edit schedule for media.
 sub save_and_edit_schedule {
     my $self = shift;
 
-    # Update media object
-    my $m = $session{media};
-    $self->update_media($m) || return $self->redirect_to_workspace;
+    # Update media object in session
+    my $output = $self->_save();
+    return $output if $output;
 
+    # Redirect to scheduler
     $self->header_props(-uri => 'schedule.pl?rm=edit&object_type=media');
     $self->header_type('redirect');
     return;
@@ -1075,13 +1029,11 @@ it performs an HTTP redirect to:
 sub save_and_associate_media {
     my $self = shift;
 
-    my $q = $self->query();
+    # Update media object in session
+    my $output = $self->_save();
+    return $output if $output;
 
-    # Update media object
-    my $m = $session{media};
-    $self->update_media($m) || return $self->redirect_to_workspace;
-
-    # Redirect to associate screen
+    # Redirect to associate-media screen
     my $url = 'contributor.pl?rm=associate_media';
     $self->header_props(-uri => $url);
     $self->header_type('redirect');
@@ -1099,20 +1051,13 @@ then redirects to publisher.pl to publish the media object.
 sub save_and_publish {
     my $self = shift;
 
-    my $q = $self->query();
-
-    my $m = $session{media};
-    die("No media object in session") unless (ref($m));
-
-    # Update object in session
-    $self->update_media($m) || return $self->redirect_to_workspace;
-
-    # Validate input.  Return errors, if any.
-    my %errors = $self->validate_media($m);
-    return $self->edit(%errors) if (%errors);
+    # Validate and save object in session
+    my $output = $self->_save();
+    return $output if $output;
 
     # Save object to database
-    my %save_errors = ($self->do_save_media($m));
+    my $m = $session{media};
+    my %save_errors = ( $self->do_save_media($m) );
     return $self->edit(%save_errors) if (%save_errors);
 
     # publish should also send to preview
@@ -1121,7 +1066,7 @@ sub save_and_publish {
     # Clear media object from session
     delete $session{media};
 
-    # Redirect to associate screen
+    # Redirect to publish screen
     my $url = 'publisher.pl?rm=publish_media&media_id=' . $m->media_id;
     $self->header_props(-uri => $url);
     $self->header_type('redirect');
@@ -1139,24 +1084,12 @@ then redirects to publisher.pl to preview the media object.
 sub save_and_preview {
     my $self = shift;
 
-    my $q = $self->query();
+    # Validate and save object in session
+    my $output = $self->_save();
+    return $output if $output;
 
-    my $m = $session{media};
-    die("No media object in session") unless (ref($m));
-
-    # Update object in session
-    $self->update_media($m) || return $self->redirect_to_workspace;
-
-    # Validate input.  Return errors, if any.
-    my %errors = $self->validate_media($m);
-    return $self->edit(%errors) if (%errors);
-
-    # Save object to database
-    my %save_errors = ($self->do_save_media($m));
-    return $self->edit(%save_errors) if (%save_errors);
-
-    # Redirect to associate screen
-    my $url = 'publisher.pl?rm=preview_media&no_view=1&media_id=' . $m->media_id;
+    # Redirect to preview screen
+    my $url = 'publisher.pl?rm=preview_media&no_view=1&media_id=' . $session{media}->media_id;
     $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
@@ -1175,16 +1108,13 @@ history.pl.
 sub save_and_view_log {
     my $self = shift;
 
-    my $q = $self->query();
-
-    # Update media object
-    my $m = $session{media};
-    $self->update_media($m) || return $self->redirect_to_workspace;
-    my $id = $m->media_id;
-
-    my $return_rm = $q->param('return_to_transform') ? 'transform_image' : 'edit';
+    # Update media in session
+    my $output = $self->_save();
+    return $output if $output;
 
     # Redirect to history screen
+    my $id = $session{media}->media_id;
+    my $return_rm = 'edit';
     my $url =
         "history.pl?history_return_script=media.pl"
       . "&history_return_params=rm&history_return_params=$return_rm"
@@ -1231,7 +1161,9 @@ sub view {
     my $version = shift;
 
     my $q = $self->query();
-    my $t = $self->load_tmpl('view_media.tmpl');
+    my $t = $self->load_tmpl('view_media.tmpl', loop_context_vars => 1);
+
+    $version ||= $q->param('version');
 
     # get media_id from params or from the media in the session
     my $media_id =
@@ -1256,6 +1188,13 @@ sub view {
     my $media_view_tmpl_data = $self->make_media_view_tmpl_data($m);
     $t->param($media_view_tmpl_data);
 
+    # run the element editor view
+    $self->element_view(template => $t, element => $m->element);
+
+    # keep track of whether we're at root of element
+    my $path = $self->query->param('path');
+    $t->param(is_root => 1) unless ($path && $path ne '/');
+
     return $t->output();
 }
 
@@ -1274,9 +1213,9 @@ sub view_version {
     die("Invalid selected version '$selected_version'")
       unless ($selected_version and $selected_version =~ /^\d+$/);
 
-    # Update media object
-    my $m = $session{media};
-    $self->update_media($m) || return $self->redirect_to_workspace;
+    # Update media object in session 
+    my $output = $self->_save();
+    return $output if $output;
 
     # Return view mode with version
     return $self->view($selected_version);
@@ -1370,9 +1309,177 @@ sub checkout_selected {
 
 }
 
+
+# ELEMENT-EDITOR-SPECIFIC RUNMODES
+
+=item save_and_jump
+
+This mode saves the current data to the session and jumps to editing
+an element within the media.
+
+=cut
+
+sub save_and_jump {
+    my $self = shift;
+    my $output = $self->_save();
+    return $output if $output;
+
+    my $query = $self->query;
+    my $jump_to = $query->param('jump_to') || croak("Missing jump_to on save_and_jump!");
+    
+    $query->param(path => $jump_to);
+    $query->param(bulk_edit => 0);
+    return $self->edit();
+}
+
+=item save_and_add
+
+This mode saves the current data to the session and passes control to
+Krang::ElementEditor::add to add a new element.
+
+=cut
+
+sub save_and_add {
+    my $self = shift;
+    my $output = $self->_save();
+    return $output if $output;
+
+    return $self->add();
+}
+
+=item save_and_bulk_edit
+
+This mode saves the current element data to the session and goes to
+the bulk edit mode.
+
+=cut
+
+sub save_and_bulk_edit {
+    my $self = shift;
+    my $output = $self->_save();
+    return $output if $output;
+
+    $self->query->param(bulk_edit => 1);
+    return $self->edit();
+}
+
+=item save_and_change_bulk_edit_sep
+
+Saves and changes the bulk edit separator, returning to edit.
+
+=cut
+
+sub save_and_change_bulk_edit_sep {
+    my $self = shift;
+    my $output = $self->_save();
+    return $output if $output;
+
+    my $query = $self->query;
+    $query->param(bulk_edit_sep => $query->param('new_bulk_edit_sep'));
+    $query->delete('new_bulk_edit_sep');
+    return $self->edit();
+}
+
+
+=item save_and_leave_bulk_edit
+
+This mode saves the current element data to the session and goes to
+the edit mode.
+
+=cut
+
+sub save_and_leave_bulk_edit {
+    my $self = shift;
+    my $output = $self->_save();
+    return $output if $output;
+
+    $self->query->param(bulk_edit => 0);
+    return $self->edit();
+}
+
+
+=item save_and_find_story_link
+
+This mode saves the current element data to the session and goes to
+the find_story_link mode in Krang::CGI::ElementEditor.
+
+=cut
+
+sub save_and_find_story_link {
+    my $self = shift;
+    my $output = $self->_save();
+    return $output if $output;
+
+    my $query = $self->query;
+    my $jump_to = $query->param('jump_to') || croak("Missing jump_to on save_and_find_story_link!");
+    
+    $query->param(path => $jump_to);
+    return $self->find_story_link();
+}
+
+=item save_and_find_media_link
+
+This mode saves the current element data to the session and goes to
+the find_media_link mode in Krang::CGI::ElementEditor.
+
+=cut
+
+sub save_and_find_media_link {
+    my $self = shift;
+    my $output = $self->_save();
+    return $output if $output;
+
+    my $query = $self->query;
+    my $jump_to = $query->param('jump_to') || croak("Missing jump_to on save_and_find_media_link!");
+    
+    $query->param(path => $jump_to);
+    return $self->find_media_link();
+}
+
+=item save_and_go_up
+
+This mode saves the current element data to the session and jumps to
+edit the parent of this element.
+
+=cut
+
+sub save_and_go_up {
+    my $self = shift;
+    my $output = $self->_save();
+    return $output if $output;
+
+    my $query = $self->query;
+    my $path = $query->param('path'); 
+    $path =~ s!/[^/]+$!!;
+
+    $query->param(path => $path);
+    return $self->edit();
+}
+
+
 #############################
 #####  PRIVATE METHODS  #####
 #############################
+
+# underlying save routine.  returns false on success or HTML to show
+# to the user on failure.
+sub _save {
+    my ($self, %args) = @_;
+    my $query = $self->query;
+
+    # run element editor save and return to edit on errors
+    my $m = $session{media} || croak ("Unable to load media from session!");
+    $self->element_save(element => $m->element) || return $self->edit;
+
+    # if we're saving in the root then save the media data
+    if (($query->param('path') || '/') eq '/') {
+        $self->update_media($m) || return $self->redirect_to_workspace;
+        my %errors = $self->validate_media($m);
+        return $self->edit(%errors) if %errors;
+    }
+
+    return '';
+}
 
 # Validate media object to check validity.  Return errors as hash and add_alert()s.
 # Must pass in $media object
@@ -1412,6 +1519,9 @@ sub validate_media {
             $media->upload_file(filehandle => $filehandle,
                                 filename => $filename);        
             add_message('empty_file_created', filename => $filename);
+
+            # Remember that a file was created (affects dupe-URL error)
+            $self->query->param('created_empty_file' => 1);
         }
     }
 
@@ -1594,7 +1704,7 @@ sub make_media_tmpl_data {
 
     # Set up details only found on edit (not add) view
     if ($tmpl_data{media_id} = $m->media_id()) {
-        my $thumbnail_path = $m->thumbnail_path(relative => 1, medium => 1) || '';
+        my $thumbnail_path = $m->thumbnail_path(relative => 1) || '';
         $tmpl_data{thumbnail_path} = $thumbnail_path;
         $tmpl_data{url}            = format_url(
             url    => $m->url(),
@@ -1641,6 +1751,7 @@ sub make_media_tmpl_data {
         $text_type = $extension_map{$extension} if $extension_map{$extension};
         debug("CodePress text type: $text_type");
         $tmpl_data{text_type} = $text_type;
+        $tmpl_data{use_codepress} = pkg('MyPref')->get('syntax_highlighting');
 
     } elsif( $m->is_image ) {
         $tmpl_data{is_image} = 1;
@@ -1660,7 +1771,6 @@ sub make_media_tmpl_data {
         -values  => \@media_type_ids,
         -labels  => \%media_types,
         -default => ($m->media_type_id() || $session{KRANG_PERSIST}{pkg('Media')}{media_type_id}),
-        -class   => 'usual',
     );
 
     # persist media_type_id in session for next time someone adds media..
@@ -1707,12 +1817,7 @@ sub make_media_tmpl_data {
     );
 
     foreach my $mf (@m_fields) {
-
-        # Copy data from object into %tmpl_data
-        # unless key exists in CGI data already
-        unless (defined($q->param($mf))) {
-            $tmpl_data{$mf} = $m->$mf();
-        }
+        $tmpl_data{$mf} = $m->$mf();
     }
 
     # Persist data for return from view in "return_params"
@@ -1733,7 +1838,7 @@ sub make_media_view_tmpl_data {
 
     $tmpl_data{media_id} = $m->media_id();
 
-    my $thumbnail_path = $m->thumbnail_path(relative => 1, medium => 1) || '';
+    my $thumbnail_path = $m->thumbnail_path(relative => 1) || '';
     $tmpl_data{thumbnail_path} = $thumbnail_path;
 
     $tmpl_data{url} = format_url(
@@ -1776,6 +1881,7 @@ sub make_media_view_tmpl_data {
     }
     $tmpl_data{contribs}      = \@contribs;
     $tmpl_data{return_script} = $q->param('return_script');
+    $tmpl_data{return_runmode} = $q->param('return_runmode');
 
     # Display creation_date
     my $creation_date = $m->creation_date();
@@ -1791,12 +1897,7 @@ sub make_media_view_tmpl_data {
     );
 
     foreach my $mf (@m_fields) {
-
-        # Copy data from object into %tmpl_data
-        # unless key exists in CGI data already
-        unless (defined($q->param($mf))) {
-            $tmpl_data{$mf} = $m->$mf();
-        }
+       $tmpl_data{$mf} = $m->$mf();
     }
 
     # CodePress tmppl_vars: is_text, text_content & text_type
@@ -1822,9 +1923,10 @@ sub make_media_view_tmpl_data {
         $text_type = $extension_map{$extension} if $extension_map{$extension};
         debug("CodePress text type: $text_type");
         $tmpl_data{text_type} = $text_type;
+        $tmpl_data{use_codepress} = pkg('MyPref')->get('syntax_highlighting');
     }
 
-    # Set up return state
+    # Store any special return params
     my %return_params        = $q->param('return_params');
     my @return_params_hidden = ();
     while (my ($k, $v) = each(%return_params)) {
@@ -1836,7 +1938,6 @@ sub make_media_view_tmpl_data {
                 -override => 1
             )
         );
-        $tmpl_data{was_edit} = 1 if (($k eq 'rm') and ($v eq 'checkout_and_edit'));
     }
     $tmpl_data{return_params} = join("\n", @return_params_hidden);
 
@@ -2085,7 +2186,12 @@ sub do_save_media {
     # Is it a dup?
     if ($@) {
         if (ref($@) and $@->isa('Krang::Media::DuplicateURL')) {
-            add_alert('duplicate_url');
+            if ($self->query->param('created_empty_file')) {
+                $m->filename(''); clear_messages;
+                add_alert('duplicate_url_without_file');
+            } else {
+                add_alert('duplicate_url');
+            }
             return (duplicate_url => 1);
         } elsif (ref($@) and $@->isa('Krang::Media::NoCategoryEditAccess')) {
 
@@ -2199,8 +2305,7 @@ sub save_and_transform_image {
     my $q = $self->query();
 
     # Update media object
-    my $m = $session{media};
-    $self->update_media($m) || return $self->redirect_to_workspace;
+    $self->_save;
 
     return $self->transform_image;
 }
