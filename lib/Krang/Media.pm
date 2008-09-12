@@ -997,6 +997,10 @@ simple_search - Performs a per-word LIKE substring match against title, filename
 
 =item *
 
+exclude_media_ids - excludes (an array ref of) IDs from the result set
+
+=item *
+
 no_attributes - returns objects where the fields caption, copyright, notes, and alt_tag are empty if this is set.
 
 =item *
@@ -1125,6 +1129,7 @@ sub find {
         include_live      => 1,
         include_retired   => 1,
         include_trashed   => 1,
+        exclude_media_ids => 1,
         element_index_like => 1
     );
 
@@ -1321,6 +1326,16 @@ sub find {
             $where_string .= " and " if $where_string;
             $where_string .=
               " media.creation_date = '" . $args{'creation_date'}->mysql_datetime . "'";
+        }
+    }
+
+    # handle exclude_media_ids => [1, 2, 3]
+    if (my $exclude_ids = $args{exclude_media_ids}) {
+        if (@$exclude_ids) {
+            foreach my $id (@$exclude_ids) {
+                $where_string .= " and " if $where_string;
+                $where_string .= "media.media_id != $id";
+            }
         }
     }
 

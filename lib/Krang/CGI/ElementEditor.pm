@@ -763,6 +763,11 @@ sub find_media_link {
     # always show only what should be seen
     $find{may_see} = 1;
 
+    # exclude this story when editing a story
+    if ($self->isa('Krang::CGI::Media') and $session{media}->media_id) {
+        $find{exclude_media_ids} = [ $session{media}->media_id ];
+    }
+
     # Apply hard find params
     while (my ($k, $v) = each(%$hard_find)) {
         $find{$k} = $v;
