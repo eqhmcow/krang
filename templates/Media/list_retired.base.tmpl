@@ -29,7 +29,7 @@ other_search_rm = function() {
 <tmpl_if row_count>
   view_media = function( id )
   {
-    Krang.Form.submit( 'find_media', { rm: 'view', media_id: id, retired: 1 } );
+    Krang.Form.submit( 'find_media', { rm: 'view', media_id: id } );
   }
 
   delete_selected = function()
@@ -215,6 +215,7 @@ other_search_rm = function() {
   <input name="media_id" type="hidden">
   <input name="retired" value="1" type="hidden">
   <input name="return_script" value="media.pl" type="hidden">
+  <input name="return_runmode" value="list_retired" type="hidden">
   <tmpl_var return_params>
   </form>
 </tmpl_if>

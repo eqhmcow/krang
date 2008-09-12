@@ -155,7 +155,7 @@ searches on retired media objects, which will be listed on paging
 view 'Retired Media'.
 
 From this paging view the user may choose to view or unretire an
-object, or select a set of objects to be deleteted (depending on the
+object, or select a set of objects to be deleted (depending on the
 user's permission set).
 
 =cut
