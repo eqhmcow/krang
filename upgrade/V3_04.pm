@@ -152,7 +152,7 @@ EOF
   if ($media_without_elements_total) {
 
       # 7. add rows to element and media tables
-      print "Adding root element to $media_without_elements_total media rows... ";
+      print "\nAdding root element to $media_without_elements_total media rows... \r";
       my $add_element = $dbh->prepare(qq{
          INSERT INTO element (class) values ('$class')
       });
@@ -164,15 +164,18 @@ EOF
         WHERE media.media_id = ? AND element.element_id = ?
       });
 
+      my $written;
       while (my ($media_id) = $media_ids->fetchrow_array()) {
          $add_element->execute;
          my $element_id = $dbh->{mysql_insertid} || die 'No mysql_insert_id';
          $multi_table_update->execute($media_id, $element_id);
+         print "Adding root element to $media_without_elements_total media rows... $written written\r"
+            unless (++$written % 50);
       }
-      print "done\n";
-    }
+      print "Adding root element to $media_without_elements_total media rows... done\n";
+  }
 
-    print "\n";
+  print "\n";
 }
 
 1;

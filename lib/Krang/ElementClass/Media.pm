@@ -66,7 +66,7 @@ sub publish {
     my $publisher = $args{publisher};
 
     # make sure any linked media objects are also published
-    foreach my $linked_media ($media->linked_media) {
+    for my $linked_media ($media->linked_media) {
         my $linked_media_id = $linked_media->media_id; 
         my ($linked_media_object) = pkg('Media')->find(media_id => $linked_media_id); # pull from DB in case recursion already published it
         next unless $linked_media_object;
@@ -80,28 +80,18 @@ sub publish {
         }
     }
     
-    # now call each child element's publish() method.  In stories, this "element 
-    # walk" is done when the top-level publish() calls fill_template(), which 
-    # calls each child element's publish() method gathering their returned html 
-    # into its template vars, and they in turn take care of calling their kids' 
-    # publish methods to build their html.
-    #
-    # since we're not building up a structure of template params, here we'll 
-    # simply call each child's publish method for their side effects,ignoring 
-    # their return values.
-    
-    # You must override the publish() method of child elements which are 
-    # containers (have children of their own) or else they will not just 
-    # harmlessly return their data(), instead the publish() methods of the 
-    # containers will try to "do the story thing" i.e. fall back to the 
-    # ElementClass::publish() method which (among other things) calls 
-    # find_template() which dies in turn dies when one is not found.
+    # now we try to call each child element's publish() method. in stories, this "element walk" is done when the top-level
+    # publish() calls fill_template(), which calls each child's publish() method, gathering their returned html into its
+    # tmpl params, and they in turn take care of calling their kids' publish methods to build their html. since we're not building
+    # up a structure of template params, we simply call each child's publish method for any desired side effects, ignoring return values.
+
+    # we use an eval block around the publish() call because if one of the child elements is a container whose publish() method
+    # has not been overridden, the SUPER's publish() method will look for an appropriate template, and, if it finds none, die
+    # (which in our case shouldn't yield an error -- we're just calling these publish methods to do due diligence.)
     for my $child ($element->children) {
-      $child->publish(
-        media     => $media,
-        publisher => $publisher,
-        element   => $child,
-      );
+        eval { $child->publish(media     => $media,
+                               publisher => $publisher,
+                               element   => $child) };
     }
 }
 
@@ -109,7 +99,7 @@ sub publish {
 
 =item unpublish
 
-Called when a media object is published 
+Called when a media object is unpublished 
 
 =cut
 
@@ -119,17 +109,14 @@ sub unpublish {
     my $media     = $args{media};
     my $element   = $args{element};
     my $publisher = $args{publisher};
-    
+
     for my $child ($element->children) {
-      if ($child->class->can('unpublish')) {
-        $child->class->unpublish(
-          media     => $media,
-          publisher => $publisher,
-          element   => $child,
-        )
+        if ($child->class->can('unpublish')) {
+            $child->class->unpublish(media     => $media,
+                                    publisher => $publisher,
+                                    element   => $child)
       }
     }
-
 }
 
 1;
