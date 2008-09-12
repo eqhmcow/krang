@@ -81,6 +81,10 @@ necessary parameters to display the element editor.
 This method will show the bulk edit interface if the CGI param
 'bulk_edit' is set true.
 
+The bulk edit screen's standard edit area is a big textarea
+field. This is triggered by setting an elementclasse's 'bulk_edit'
+property to the legacy value '1' or to 'standard'.
+
 =item $self->element_view(template => $template, element  => $element)
 
 Called to fill in template parameters for the element viewer
@@ -347,8 +351,14 @@ sub element_edit {
     # bulk edit selector
     my @bulk_edit = grep { $_->bulk_edit } $element->class->children;
     if (@bulk_edit) {
-        my @values = map { $_->name } @bulk_edit;
-        my %labels = map { ($_->name, localize($_->display_name)) } @bulk_edit;
+        my @values  = map { $_->name } @bulk_edit;
+        my %labels  = map { ($_->name, localize($_->display_name)) } @bulk_edit;
+        my @global  = grep { $_->bulk_edit != 1 and $_->bulk_edit ne 'standard' } @bulk_edit;
+        if (scalar(@global) > 1) {
+            my $global = join('__!__', map { $_->name } @global);
+            push @values, $global;
+            $labels{$global} = localize('All Textfields');
+        }
         $template->param(bulk_edit_select => 
                          $query->popup_menu(-name   => "bulk_edit_child",
                                             -values => \@values,
@@ -375,8 +385,46 @@ sub element_bulk_edit {
     # find the element being edited using path
     my $element = $self->_find_element($root, $path);
 
+    # bulk_edit_type: standard bulk edit or wysiwyg-based?
+    my $bulk_edit_type = 'standard';
+    my @names = split(/__!__/, $query->param('bulk_edit_child'));
+    if (scalar(@names) > 1) {
+        $bulk_edit_type = $element->class->child($names[0])->bulk_edit;
+    }
+
+    # pass the bulk_edit_type around
+    $template->param(bulk_edit_type => $bulk_edit_type);
+
+    # and dispatch to type-specific edit method
+    $self->bulk_edit_dispatch(
+        bulk_edit_type => $bulk_edit_type,
+        element        => $element,
+        template       => $template,
+    );
+}
+
+#
+# Dispatcher for various bulk edit types:
+# 'standard' : the legacy behavior using one big textarea field
+#
+sub bulk_edit_dispatch {
+    my ($self, %args) = @_;
+
+    $args{bulk_edit_type} eq 'standard' and $self->bulk_edit_standard(%args);
+}
+
+#
+# This method is the workhorse for the legacy 'standard' bulk edit
+#
+sub bulk_edit_standard {
+    my ($self, %args) = @_;
+    my $query    = $self->query();
+    my $template = $args{template};
+    my $element  = $args{element};
+
     # get list of existing elements to be bulk edited
     my $name = $query->param('bulk_edit_child');
+
     my @children = grep { $_->name eq $name } $element->children;
 
     my $sep = $query->param('bulk_edit_sep');
@@ -394,7 +442,7 @@ sub element_bulk_edit {
                                          -class    => 'radio',
                                         ),
                      bulk_edit_sep => $sep);
-    
+
     $template->param(bulk_edit => 1,
                      bulk_data => join(($sep eq "__TWO_NEWLINE__" ? 
                                         "\n\n" : "\n" . $sep . "\n"), 
@@ -938,9 +986,30 @@ sub _find_element {
 sub element_bulk_save {
     my ($self, %args) = @_;
     my $query = $self->query();
-    my $path    = $query->param('path') || '/';
 
-    my $root = $args{element};
+    $self->bulk_save_dispatch(
+        bulk_edit_type => ($query->param('bulk_edit_type') || 'standard'),
+        %args,
+    );
+}
+
+#
+# Dispatcher for various bulk save types:
+# 'standard' : the legacy behavior using one big textarea field
+#
+sub bulk_save_dispatch {
+    my ($self, %args) = @_;
+    $args{bulk_edit_type} eq 'standard' and $self->bulk_save_standard(%args);
+}
+
+#
+# This method is the workhorse for the legacy 'standard' bulk saving
+#
+sub bulk_save_standard {
+    my ($self, %args) = @_;
+    my $query   = $self->query;
+    my $path    = $query->param('path') || '/';
+    my $root    = $args{element};
     my $element = $self->_find_element($root, $path);
 
     my $sep = $query->param('bulk_edit_sep');

@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Refactored element_bulk_edit() and element_bulk_save() to ease the
+implementation of WYSIWYG-based bulk edit areas. [Bodo Schulze]
+
+=item *
+
 Standardized locations of bottom-panel buttons on Edit screens. [Noam Weinstein]
 
 =item *

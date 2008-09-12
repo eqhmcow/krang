@@ -124,7 +124,8 @@
 <input name="bulk_edit" value="<tmpl_var escape=html bulk_edit>" type="hidden">
 <tmpl_if bulk_edit>
   <input name="bulk_edit_child" value="<tmpl_var escape=html bulk_edit_child>" type="hidden">
-  <input name="bulk_edit_sep" value="<tmpl_var escape=html bulk_edit_sep>" type="hidden">
+  <input name="bulk_edit_sep"   value="<tmpl_var escape=html bulk_edit_sep>" type="hidden">
+  <input name="bulk_edit_type"  value="<tmpl_var bulk_edit_type>" type="hidden">
 </tmpl_if>
 
 <tmpl_if crumbs><div class="crumbs"><tmpl_loop crumbs>
