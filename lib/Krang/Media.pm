@@ -794,9 +794,6 @@ sub save {
     $element->save();
     $self->{element_id} = $element->element_id();
 
-    info $element->element_id;
-    info join(', ', map { $_->name } $element->children);
-
     # if this is not a new media object
     if (defined $self->{media_id}) {
         $media_id = $self->{media_id};
