@@ -15,6 +15,16 @@ use Krang::ClassLoader 'Script';
 use File::Spec::Functions qw(catdir catfile splitdir canonpath);
 use FindBin qw($RealBin);
 
+# set up site/category
+my $site = pkg('Site')->new(
+    preview_path => './sites/test1/preview/',
+    preview_url  => 'preview.testsite1.com',
+    publish_path => './sites/test1/',
+    url          => 'testsite1.com'
+);
+$site->save();
+END { $site->delete(); }
+
 # load element library
 eval { pkg('ElementLibrary')->load_set(set => 'TestSet1') };
 ok(! $@ => 'Load TestSet1 element set');

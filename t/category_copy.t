@@ -499,7 +499,7 @@ eval {
 isa_ok($@, 'Krang::Story::CantCheckOut');
 
 diag(
-    "Trying to copy althoug we can't check out some story should throw a Krang::Category::DuplicateURL"
+    "Trying to copy although we can't check out some story should throw a Krang::Category::DuplicateURL"
 );
 eval {
     $copied = $this->copy(
