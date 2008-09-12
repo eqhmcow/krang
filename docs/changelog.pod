@@ -10,6 +10,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added elements to Media objects, enhanced Media Edit UI to take advantage of the ability 
+to create, edit, and publish element data along with media objects. Wrote upgrade code 
+to instantiate skeletal media element class. [Noam Weinstein]
+
+=item *
+
 Refactored element_bulk_edit() and element_bulk_save() to ease the
 implementation of WYSIWYG-based bulk edit areas. [Bodo Schulze]
 

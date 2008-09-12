@@ -49,6 +49,8 @@ Borrowing from the
 HREF[Krang Element System Overview|element_system.html], an Element
 Set (or Library - the terms are interchangable) describes how all
 story and category data is structured and handled in a Krang instance.
+(Starting in Krang v3.04, it can also describe how customized media
+data is stored.)
 
 Every story within Krang has a number of standard fields - title,
 slug, category, publish date.  Beyond that, everything is defined by
@@ -137,7 +139,7 @@ etc.
 
 The second part is the element's class, covered
 by L<Krang::ElementClass> and the modules derived from it
-(e.g. L<Krang::ElementClass::TopLevel>,
+(e.g. L<Krang::ElementClass::TopLevel>, L<Krang::ElementClass::Media>,
 L<Krang::ElementClass::Textarea>, L<Krang::ElementClass::StoryLink>).
 
 =back
@@ -194,6 +196,14 @@ A category element (C<category>).
 The category will have a display_name, and nothing else at the moment.
 
 
+=item *
+
+A media element (C<media>).
+
+The media element will be empty for the moment (but is still necessary,
+as explained later).
+
+
 =back
 
 These requirements define a very basic element set - a real site would
@@ -230,6 +240,12 @@ would look something like this:
 
   + category
      - display_name  (textbox)
+
+
+  Media:
+
+  + media
+     - <no children>
 
 
 By putting together this tree, we now have a much clearer idea of
@@ -320,6 +336,12 @@ element, with the following children:
 C<display_name> - a L<Krang::ElementClass::Text> element.
 
 =back
+
+=item *
+
+C<media> - a subclass of the L<Krang::ElementClass::Media>
+element, empty by default, but allowing media objects to
+store additional element information.
 
 =back
 
@@ -454,9 +476,46 @@ On the other hand,
 Would change the name from 'category' (as defined originally) to
 'new_category'.
 
-=head2 Step 3 - Creating cover_story
 
-Repeating the process we started with C<category>, we now create
+
+=head2 Step 3 - Creating media.pm
+
+Starting in Krang v3.04, Media objects also have the ability to
+store element information. This is a new feature still being
+fine-tuned, and can mostly be ignored unless you'd like to associate
+customized data with images and other media objects. The only
+requirement is that your element set contains at least one module 
+(preferably media.pm) that inherits from Krang::ElementClass::Media; 
+its list of children can be empty. (This is required because the user 
+interface needs to know where to look for infomation about media elements.)
+
+  package Tutorial::media;
+
+  =head1 NAME
+
+  Tutorial::media;
+
+  =head1 DESCRIPTION
+
+  Media element class for Krang.
+
+  =cut
+
+  use base 'Krang::ElementClass::Media';
+
+  sub new {
+    my $pkg = shift;
+    my %args = (
+      name => 'media',
+      children => [],
+      ,
+    );
+    return $pkg->SUPER::new(%args);
+  }
+
+=head2 Step 4 - Creating cover_story
+
+Repeating the process we started with C<category> and C<media>, we now create
 C<KRANG_ROOT/element_lib/Tutorial/cover_story.pm>:
 
   package Tutorial::cover_story;
@@ -548,7 +607,7 @@ media objects in Krang.
 
 =back
 
-=head2 Step 4 - Configuration Changes
+=head2 Step 5 - Configuration Changes
 
 With a category and cover page, we now have enough to look at things
 in Krang.  It's time to make some configuration changes so Krang knows
@@ -562,10 +621,10 @@ A configuration file for the element library needs to be created - The
 following should go into C<KRANG_ROOT/element_lib/Tutorial/set.conf>:
 
   Version 1.0
-  TopLevels category cover_story
+  TopLevels category media cover_story
 
-What this tells Krang is that there are currently two Top-Level
-elements in the C<Tutorial> element set, C<category> and
+What this tells Krang is that there are currently three Top-Level
+elements in the C<Tutorial> element set, C<category>, C<media> and
 C<cover_story> (we will get to C<basic_article> later).  Krang will
 look for them at C<KRANG_ROOT/element_lib/Tutorial/category.pm> and
 C<KRANG_ROOT/element_lib/Tutorial/cover_story.pm>.
@@ -655,12 +714,16 @@ made the category definition more complex (optional elements, etc),
 you would have the same options to add/delete/reorder that you have
 available to you in the story UI.
 
+=head2 The Media Element
 
-Congratulations, you now have completed story and category types!  The
+If elements are added to the media element, they are displayed
+in a UI that works identically to the story and category element UI.
+
+Congratulations, you now have completed several element types!  The
 one thing missing for both of these is output templates, which we will
 address later.
 
-=head1 Step 5 - Creating the basic_article
+=head1 Step 6 - Creating the basic_article
 
 The basic_article story type is a little more involved.  Remember, the
 structure of basic_article was defined earlier as a multi-page story:
@@ -819,7 +882,7 @@ The C<< min => 1 >> argument in the lines:
  Tutorial::Page->new(name => 'article_page',
                      min  => 1)
 
-is actually redundent - it was already made in the C<page.pm> file.
+is actually redundant - it was already made in the C<page.pm> file.
 However, you could make the page element entirely optional by setting
 it to 0 in this call.  Conversely, you could force every article to
 contain multiple pages by setting C<min> to a value greater than 1.
@@ -833,14 +896,14 @@ Finally, add C<basic_article> to C<set.conf>,
 C<KRANG_ROOT/element_lib/Tutorial/set.conf>:
 
   Version 1.0
-  TopLevels category cover_story basic_article
+  TopLevels category media cover_story basic_article
 
 and restart Krang.
 
   $ sudo bin/krang_ctl stop
   $ sudo bin/krang_ctl start
 
-Congratulations!  You now have the three most fundamental story
+Congratulations!  You now have the four most fundamental story
 components of Krang.
 
 =head1 Templates
@@ -1126,7 +1189,7 @@ L<Krang::ListGroup> - Groups one or more list (L<Krang::List>) objects.
 =item *
 
 L<Krang::List> - A list of items (L<Krang::ListItem> objects) to be
-selected by a user within a story/category edit UI.
+selected by a user within a story/category/media edit UI.
 
 =item *
 

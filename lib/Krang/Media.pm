@@ -794,6 +794,9 @@ sub save {
     $element->save();
     $self->{element_id} = $element->element_id();
 
+    info $element->element_id;
+    info join(', ', map { $_->name } $element->children);
+
     # if this is not a new media object
     if (defined $self->{media_id}) {
         $media_id = $self->{media_id};
@@ -1068,7 +1071,7 @@ search result. Trashed media live in the trashbin. The default is 0.
 B<NOTE:>When searching for media_id, these three include_* flags are
 not taken into account!
 
-=item element_index_like - BETA FEATURE: NEEDS MORE TESTING
+=item  * element_index_like - BETA FEATURE: NEEDS MORE TESTING
 
 This find option allows you to search against indexed element data.
 For details on element indexing, see L<Krang::ElementClass>.  This
@@ -2006,8 +2009,8 @@ sub delete {
         undef, 'media', $self->{media_id});
 
     # delete alerts for this media
-    $dbh->do('DELETE FROM alert WHERE object_type = ? and object_id = ?',
-      undef, 'media', $self->{media_id});
+#    $dbh->do('DELETE FROM alert WHERE object_type = ? and object_id = ?',
+#      undef, 'media', $self->{media_id});
 
     # remove from trash
     pkg('Trash')->remove(object => $self);

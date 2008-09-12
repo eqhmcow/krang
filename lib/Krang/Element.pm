@@ -272,6 +272,21 @@ sub story {
     return $object;
 }
 
+=item C<< $object = $element->media() >>
+
+Convenience method which returns $element->object() if
+$element->object->isa('Krang::Media') and croaks otherwise.
+
+=cut
+
+sub media { 
+    my $self = shift;
+    my $object = $self->object;
+    croak("Expected a pkg('Media') in element->object for $self->{element_id}, but didn't find one!")
+      unless $object and $object->isa('Krang::Media');
+    return $object;
+}
+
 =item C<< $object = $element->category() >>
 
 Convenience method which returns $element->object() if
@@ -282,7 +297,7 @@ $element->object->isa('Krang::Category') and croaks otherwise.
 sub category { 
     my $self = shift;
     my $object = $self->object;
-    croak("Expected a pkg('Category') in element->object, but didn't find on!")
+    croak("Expected a pkg('Category') in element->object, but didn't find one!")
       unless $object and $object->isa('Krang::Category');
     return $object;
 }

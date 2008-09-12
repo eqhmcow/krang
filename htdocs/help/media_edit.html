@@ -6,47 +6,55 @@ If you need to make any changes to your media, whether to the actual file or the
 </p>
 
 <p>
-There are three parts of the Edit Media page:
+There may be as many as five parts of the Edit Media page:
 </p>
 
 <ol>
 <li>Properties</li>
+<li>Metadata</li>
 <li>Content</li>
+<li>Media Elements</li>
 <li>Actions</li>
 </ol>
 
 <h3>Properties</h3>
 
 <p>
-The top area on the Edit Media page has the media's properties. This information is not editable.
+The top area on the Edit Media page has the media's basic properties. 
 </p>
 
 <ul>
-<li><b>Media Id:</b> Set by the CMS on creation of new media.</li>
-<li><b>Current Version:</b> Field set by the CMS. This reflects the version number of the media.</li>
-<li><b>Published Version:</b> Version of the media that was last published. This may be different from the current version if changes were made to the media after the last publish. This field is set automatically by the CMS.</li>
 <li><b>URL:</b> The URL field is also controlled by the CMS. Although it appears as a non-editable field, it can be changed by modifying the fields that make up the URL. These fields are the site and category. </li>
-<li><b>Creation Date:</b> The date your media was created.</li>
-</ul>
-
-<h3>Content</h3>
-<p>
-Below the Properties is the Content. This is where you specify information about your media, such as its Site/Category and default caption.
-</p>
-
-<ul>
 <li><b>Type:</b> Each media file has a Type. This is set by the CMS on creation of new media and is not an editable field. If you selected the incorrect Media Type, you will need to return to the New Media page. Media Type selection determines the attributes available to the media.</li>
 <li><b>Title:</b> Required field used to give your media file a unique name.</li>
 <li><b>Site/Category:</b> Required field used to designate the URL of the site or category where you want to upload your media. Clicking the <i>Choose</i> button will launch a menu tree where you can find the correct category. From the menu tree click <i>OK</i> to accept your choice or <i>Cancel</i> to return to the New Media page.</li>
 <li><b>Upload File:</b> If you would like to replace the current media content with a new file, click on <i>Browse</i> and find an item to upload.</li>
-<li><b>Default Caption:</b> Text field where you can enter a default caption to associate with your media. This is an optional field and may not appear within the output depending on the template configuration.</li>
-<li><b>Default Copyright:</b> Text field where you can enter a default copyright to associate with your media. This is an optional field and may not appear within the output depending on the template configuration.</li>
-<li><b>Alt Tag:</b> Text field where you can enter an alt tag to associate with your media. Alt tags are displayed on a web page when the image is not available, or spoken by a screen reader.</li>
-<li><b>Notes:</b> Optional field where you can enter information about the media that will not be displayed in the story.</li>
-<li><b>Version:</b> You can revert to a previously saved version. Select the version number from the drop-down and click on <i>Revert</i>. If you prefer, you can also <i>View</i> a previously saved version.</li>
-<li><b>Contributors:</b> A contributor can be any person, for example a writer or photographer who contributed to the media. Click on <i>Edit Contributors</i>  to associate, or un-associate your contributors. See <a href="help.pl?topic=contributor_associate" class="helplink">Associate Contributors</a> for additional help.</li>
-<li><b>Content:</b> Starting with Krang v3.01, media files consisting of text content can be edited online rather than uploaded. (Images and other types of binary media will not show this field.)</li> 
+<li><b>Current Version:</b> Field set by the CMS. This reflects the version number of the media. You can also <i>Revert</i> to or <i>View</i> a previously saved version by selecting from the drop-down beneath the current version and clicking the appropriate button.
 </ul>
+
+(In addition, the Media's auto-selected ID and creation date are shown on the upper right of the Properties box.)
+
+<h3>Metadata</h3>
+<p>
+Below the Properties is the Metadata. This is where you can specify additional information about your media, such as its Default Caption/Copyright.
+</p>
+
+<ul>
+<li><b>Default Caption:</b> Text field where you can enter a default caption to associate with your media. This is an optional field and may not appear within the output depending on the template configuration.</li>
+<li><b>Default Art Credit:</b> Text field where you can enter a default copyright to associate with your media. This is an optional field and may not appear within the output depending on the template configuration.</li>
+<li><b>Alt Text:</b> Text field where you can enter an alt tag to associate with your media. Alt tags are displayed on a web page when the image is not available, or spoken by a screen reader.</li>
+<li><b>Notes:</b> Optional field where you can enter information about the media that will not be displayed in the story.</li>
+<li><b>Contributors:</b> A contributor can be any person, for example a writer or photographer who contributed to the media. Click on <i>Edit Contributors</i>  to associate, or un-associate your contributors. See <a href="help.pl?topic=contributor_associate" class="helplink">Associate Contributors</a> for additional help.</li>
+</ul>
+
+<h3>Content</h3>
+<p>
+Starting with Krang v3.01, media files consisting of text content can be edited online rather than uploaded. (Images and other types of binary media will not show this field.)</p>
+
+<h3>Media Elements</h3>
+<p>
+Starting with Krang v3.04, media files have the capacity to store additional element data, just like stories and categories. Depending on your particular installation they may or may not be present. (If they are, and you navigate deeper into the element structure, subsequent pages will show only the media's URL and element data.)
+</p>
 
 <h3>Actions</h3>
 <p>
@@ -56,12 +64,13 @@ At the bottom of the Edit Media page, there are buttons and different actions to
 <ul>
 
 <li><b>Cancel:</b> Click on <i>Cancel</i> to discard any unsaved changes.<li>
+<li><b>Delete:</b> Click on <i>Delete</i> to delete your media from the CMS.<li>
+
+<li><b>Transform:</b> If your object is an image, you can click on <i>Transform</i> to alter its contents.</li>
+<li><b>Publish:</b> Click on <i>Publish</i> to publish your media immediately to the live site. If you would like to schedule your media to publish at a later date, click on <i>Schedule</i> at the top of the page. See <a href="help.pl?topic=schedule" class="helplink">Schedule Editor</a> for more information.</li>
 <li><b>Save &amp; Stay:</b> Click on <i>Save & Stay</i> to save your media, publish it to preview, and remain on the Edit Media screen.</li>
 <li><b>Save:</b> Click on <i>Save</i> to save your media and return to your Workspace.</li>
-<li><b>Publish to Preview:</b> Click on <i>Publish to Preview</i> to publish your media immediately to the preview site. (Starting with Krang v3.01, clicking Save &amp; Stay also triggers an automatic Publish-to-Preview.)</li>
-<li><b>Publish:</b> Click on <i>Publish</i> to publish your media immediately to the live site. If you would like to schedule your media to publish at a later date, click on <i>Schedule</i> at the top of the page. See <a href="help.pl?topic=schedule" class="helplink">Schedule Editor</a> for more information.</li>
 
-<li><b>Delete:</b> Click on <i>Delete</i> to delete your media from the CMS.</li>
 </ul>
 
 <ul>

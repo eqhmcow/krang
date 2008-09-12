@@ -1093,8 +1093,10 @@ On the other hand, if you know an element will never have a template (or want to
      return $element->template_data();
  }
 
+=head2 Publishing Media Elements
 
-
+Starting in Krang v3.04, Media objects can include element data, and this data can in turn be published when the Media objects are published. 
+(See L<Krang::ElementClass::Media> for an example.) This is an advanced feature which is still being developed.
 
 =head1 Conclusion
 

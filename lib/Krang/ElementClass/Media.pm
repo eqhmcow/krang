@@ -36,6 +36,8 @@ An unpublish method that is called when a Media object is deleted.
 =cut
 
 
+=over
+
 =item element_class_name()
 
 Returns the name of the first toplevel element that inherits from ElementClass::Media
