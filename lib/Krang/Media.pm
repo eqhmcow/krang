@@ -2613,6 +2613,10 @@ sub clone {
 
     my $copy = bless({%$self} => ref($self));
 
+    # clone the element tree
+    $copy->{element} = $self->element->clone();
+    $copy->{element}{element_id} = undef; # this will be set on save()
+
     # redefine
     $copy->{media_id}          = undef;
     $copy->{media_uuid}        = pkg('UUID')->new;
