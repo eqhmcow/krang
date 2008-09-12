@@ -66,9 +66,8 @@ sub publish {
     my $publisher = $args{publisher};
 
     # make sure any linked media objects are also published
-    foreach my $media_link ( grep { $_->class->isa('Krang::ElementClass::MediaLink') } $element->children ) {
-        my $linked_media          = $media_link->data || next;
-        my $linked_media_id       = $linked_media->media_id; 
+    foreach my $linked_media ($media->linked_media) {
+        my $linked_media_id = $linked_media->media_id; 
         my ($linked_media_object) = pkg('Media')->find(media_id => $linked_media_id); # pull from DB in case recursion already published it
         next unless $linked_media_object;
 
