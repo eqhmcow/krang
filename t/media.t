@@ -7,7 +7,6 @@ use Krang::ClassLoader Conf => qw (KrangRoot);
 use Krang::ClassLoader 'Contrib';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Category';
-use Krang::ClassLoader 'Element';
 use File::Spec::Functions qw(catdir catfile splitpath canonpath);
 use FileHandle;
 
