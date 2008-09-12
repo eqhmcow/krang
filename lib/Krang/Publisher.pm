@@ -644,6 +644,13 @@ sub unpublish_media {
         $media->{publish_date},
         $media->{media_id}
     );
+
+    # if media element has an unpublish() method, call it
+    if ($media->element->class->can('unpublish')) {
+        $media->element->class->unpublish(publisher => $self,
+                                          media     => $media,
+                                          element   => $media->element);
+    }
 }
 
 =item C<< $url = $publisher->preview_media(media => $media, unsaved => 1) >>
@@ -2233,6 +2240,15 @@ sub _write_media {
         paths   => [$output_path],
         preview => $self->{is_preview}
     );
+
+    # if media element has a publish() method, call it
+    # (we do this in _write_media() since it's called by
+    # both publish_media() and preview_media())
+    if ($media->element->class->can('publish')) {
+        $media->element->class->publish(publisher => $self,
+                                        media     => $media,
+                                        element   => $media->element);
+    }
 
     # return URL
     $self->{is_preview} ? return $media->preview_url : return $media->url;
