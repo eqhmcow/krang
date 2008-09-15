@@ -949,16 +949,15 @@ sub delete {
     # Check the session.  Is this media stashed there?  (Clean, if so.)
     my $m = $session{media} || 0;
     if (ref($m) && (($m->media_id() || '') eq $media_id)) {
-
-        # Delete media and clear from session
-        $m->delete();
+        # Clear from session
         delete($session{media});
     } else {
-
-        # Delete this media by media_id
+        # Otherwise find it by media_id
         my $m = pkg('Media')->find(media_id => $media_id);
-        $m->delete();
     }
+
+    # Transfer to trash
+    $m->trash();
 
     add_message('message_media_deleted');
 

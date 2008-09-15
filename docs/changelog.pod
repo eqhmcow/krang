@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item * 
+
+Fix to transfer media to trashbin when deleting it from within the
+Edit screen (thanx Noam). [Bodo Schulze]
+
 =item *
 
 Added elements to Media objects, enhanced Media Edit UI to take advantage of the ability 
