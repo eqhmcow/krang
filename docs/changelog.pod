@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Added initial support for Xinha-backed bulk edit, based on code by
+Noam Weinstein. [Bodo Schulze]
+
 =item * 
 
 Fix to transfer media to trashbin when deleting it from within the

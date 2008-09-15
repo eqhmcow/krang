@@ -80,6 +80,7 @@ use Krang::ClassLoader MethodMaker =>
                          display_name
                          max
                          bulk_edit
+                         bulk_edit_tag
                          required
                          reorderable
                          hidden
@@ -125,10 +126,25 @@ existing stories or categories.  Defaults to 0.
 
 =item bulk_edit
 
-If set to 1 then this element will be available for bulk_editing.
-Sub-classes that set this to 1 must provide the bulk_load() method
-described below.  Furthermore, classes marked for bulk editing must
-not have a max value set.
+If set to 1 or the string 'standard' then this element will be
+available for bulk_editing in one big textarea.  Classes marked for
+bulk editing must not have a max value set.
+
+If set to 'xinha', the textarea will be replaced with a Xinha
+editor. See also 'bulk_edit_tag'.
+
+If one or more siblings of the elementclass also have this attribute
+set to 'xinha', the bulk edit drop down menu of these elements' parent
+will have an additional entry 'All WYSIWYG Elements'.  This will put
+the data of all corresponding elements into the Xinha edit area, using
+the 'bulk_edit_tag' to identify the data's elementclass.
+
+=item bulk_edit_tag
+
+If 'bulk_edit' is set to 'xinha', this attribute might be set to the
+HTML header tags 'h1' .. 'h6' or to the paragraph tag 'p'.  Besides of
+formatting the element's data when displayed in Xinha, this tag marks
+the data as belonging to its elementclass.
 
 =item required
 
@@ -1151,17 +1167,18 @@ sub init {
           unless exists $args{display_name};
 
     # setup defaults for unset parameters
-    $args{min}          = 0  unless exists $args{min};
-    $args{max}          = 0  unless exists $args{max};
-    $args{bulk_edit}    = 0  unless exists $args{bulk_edit};
-    $args{required}     = 0  unless exists $args{required};
-    $args{children}     = [] unless exists $args{children};
-    $args{hidden}       = 0  unless exists $args{hidden};
-    $args{reorderable}  = 1  unless exists $args{reorderable};
-    $args{allow_delete} = 1  unless exists $args{allow_delete};
-    $args{default}      = undef  unless exists $args{default};
-    $args{indexed}      = 0 unless exists $args{indexed};
-    $args{lazy_loaded}  = 0 unless exists $args{lazy_loaded};
+    $args{min}           = 0     unless exists $args{min};
+    $args{max}           = 0     unless exists $args{max};
+    $args{bulk_edit}     = 0     unless exists $args{bulk_edit};
+    $args{bulk_edit_tag} = undef unless exists $args{bulk_edit_tag};
+    $args{required}      = 0     unless exists $args{required};
+    $args{children}      = []    unless exists $args{children};
+    $args{hidden}        = 0     unless exists $args{hidden};
+    $args{reorderable}   = 1     unless exists $args{reorderable};
+    $args{allow_delete}  = 1     unless exists $args{allow_delete};
+    $args{default}       = undef unless exists $args{default};
+    $args{indexed}       = 0     unless exists $args{indexed};
+    $args{lazy_loaded}   = 0     unless exists $args{lazy_loaded};
 
     # call generated inititalizer
     $self->hash_init(%args);

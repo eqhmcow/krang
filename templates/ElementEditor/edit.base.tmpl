@@ -13,38 +13,106 @@
 
 <tmpl_if bulk_edit>
 
+<tmpl_if is_bulk_edit_standard>
   save_and_change_bulk_edit_sep = function() {
-    Krang.ElementEditor.run_save_hooks();
-    Krang.Form.submit('edit', { rm: 'save_and_change_bulk_edit_sep' });
+      Krang.ElementEditor.run_save_hooks();
+      Krang.Form.submit('edit', { rm: 'save_and_change_bulk_edit_sep' });
   }
 
   update_bulk_edit_counts = function() {
-    var words_span = $('bulk_edit_words');
-    var chars_span = $('bulk_edit_chars');
+      var words_span = $('bulk_edit_words');
+      var chars_span = $('bulk_edit_chars');
 
-    if( words_span && chars_span ) {
-        var text       = document.forms['edit'].bulk_data.value;
-        var words      = text.split(/\s+/);
-        var word_count = 0;
-        var char_count = 0;
-        var re         = /\S/;
+      if( words_span && chars_span ) {
+          var text       = document.forms['edit'].bulk_data.value;
+          var words      = text.split(/\s+/);
+          var word_count = 0;
+          var char_count = 0;
+          var re         = /\S/;
 
-        for( var i = 0; i < words.length; i++ ) { 
-            if( re.test(words[i]) && (words[i] != '<tmpl_var escape=js bulk_edit_sep>') ) {
-                word_count++;
-                char_count += words[i].length;
-            }
-        }
+          for( var i = 0; i < words.length; i++ ) { 
+              if( re.test(words[i]) && (words[i] != '<tmpl_var escape=js bulk_edit_sep>') ) {
+                  word_count++;
+                  char_count += words[i].length;
+              }
+          }
 
-        words_span.update(word_count);
-        chars_span.update(char_count);
+          words_span.update(word_count);
+          chars_span.update(char_count);
 
-        // update the count again in 1 sec
-        setTimeout(update_bulk_edit_counts, 1000 + ( text.length / 10 ));
-    }
+          // update the count again in 1 sec
+          setTimeout(update_bulk_edit_counts, 1000 + ( text.length / 10 ));
+      }
+  }
+</tmpl_if>
+
+<tmpl_if is_bulk_edit_xinha>
+  _editor_url  = "xinha/"
+  _editor_lang = "<tmpl_lang en>";
+
+  if (!Krang.XinhaLoaded) {
+      var xinha_script = document.createElement('script');
+      xinha_script.setAttribute('type', 'text/javascript');
+      xinha_script.setAttribute('src',  '/static/<tmpl_var krang_install_id>/xinha/htmlarea.js');
+      document.body.appendChild(xinha_script);
+      Krang.XinhaLoaded = 1;
   }
 
-<tmpl_else>
+  xinha_editors = null;
+  xinha_init    = null;
+  xinha_config  = null;
+  xinha_plugins = null;
+
+  // This contains the names of textareas we will make into Xinha editors
+  xinha_init = xinha_init ? xinha_init : function()
+  {
+      if (typeof HTMLArea == 'undefined') {
+          setTimeout(xinha_init, 10);
+          return;
+      }
+
+      xinha_plugins = xinha_plugins ? xinha_plugins :
+      [
+       'FullScreen',
+       ];
+
+      if(!HTMLArea.loadPlugins(xinha_plugins, xinha_init)) return;
+
+      xinha_editors = [ "bulk_data" ];
+
+      xinha_config = xinha_config ? xinha_config : new HTMLArea.Config();
+      xinha_config.sizeIncludesToolbar = false;
+      xinha_config.specialReplacements['href="/'] = 'href="<tmpl_var serverbase>'; 
+      xinha_config.specialReplacements['src="/'] = 'src="<tmpl_var serverbase>'; 
+      xinha_config.specialReplacements['background="/'] = 'background="<tmpl_var serverbase>';
+
+      xinha_editors   = HTMLArea.makeEditors(xinha_editors, xinha_config, xinha_plugins);
+
+      Krang.ElementEditor.add_save_hook(function() {
+          __htmlareas.each(function(xinha) {
+              xinha._textArea.value = xinha.outwardHtml(xinha.getHTML());
+          })
+              });
+
+      xinha_editors["bulk_data"].config.toolbar = [
+          [ "formatblock", "bold", "italic", "underline", "separator",
+            "insertorderedlist", "insertunorderedlist", "separator", 
+            "inserthorizontalrule", "createlink", "separator", 
+            "subscript", "superscript", "separator", 
+            "copy", "cut", "paste", "separator",
+            "htmlmode", "separator", 
+            "undo", "redo" ]
+      ];
+
+      xinha_editors["bulk_data"].config.formatblock = { <tmpl_var formatblock> };
+
+      HTMLArea.startEditors(xinha_editors);
+  }
+
+  Krang.onload(xinha_init);
+</tmpl_if>
+
+<tmpl_else> <!-- END bulk edit -->
 
   find_media = function(p) {
     Krang.ElementEditor.run_save_hooks();
@@ -124,8 +192,7 @@
 <input name="bulk_edit" value="<tmpl_var escape=html bulk_edit>" type="hidden">
 <tmpl_if bulk_edit>
   <input name="bulk_edit_child" value="<tmpl_var escape=html bulk_edit_child>" type="hidden">
-  <input name="bulk_edit_sep"   value="<tmpl_var escape=html bulk_edit_sep>" type="hidden">
-  <input name="bulk_edit_type"  value="<tmpl_var bulk_edit_type>" type="hidden">
+  <tmpl_if bulk_edit_sep><input name="bulk_edit_sep" value="<tmpl_var escape=html bulk_edit_sep>" type="hidden"></tmpl_if>
 </tmpl_if>
 
 <tmpl_if crumbs><div class="crumbs"><tmpl_loop crumbs>
@@ -145,10 +212,11 @@
 
   <tr>
   <td colspan="2" class="full">
-  <textarea name="bulk_data" rows="20" cols="60"><tmpl_var escape=html bulk_data></textarea>
+  <textarea id="bulk_data" name="bulk_data" rows="40" cols="60"><tmpl_var escape=html bulk_data></textarea>
   </td>
   </tr>
 
+  <tmpl_if bulk_edit_word_count>
   <tr>
   <th><tmpl_lang Separator String></th>
   <td>
@@ -174,6 +242,7 @@
   <script type="text/javascript">
   setTimeout( update_bulk_edit_counts, 1000 );  //:should trigger onload(db2)
   </script>
+  </tmpl_if>
 
 <tmpl_else><tmpl_unless child_loop>
 
@@ -202,21 +271,22 @@
 
   <colgroup>
   <col class="series">
-  <col class="c-mini">
+  <col class="c-label-tiny">
   <col>
   <col class="series">
   </colgroup>
 
   <thead>
   <tr>
-  <tmpl_if elements_belong_to_media_object>
-    <th class="series f" style="text-align: left" colspan=3>Media Elements</th>
-  <tmpl_else>
-    <th class="series f"><tmpl_lang Order></th>
-    <th><tmpl_lang Element></th>
-   <th><tmpl_lang Data Entry></th>
-  </tmpl_if>
-  <th class="series l"><tmpl_unless no_reorder><input name="checkallbox" id="checkallbox" type="checkbox" onclick="Krang.check_all(this,'remove_')"></tmpl_unless></th>
+
+<tmpl_if elements_belong_to_media_object>
+  <th class="series f" style="text-align: left" colspan=3><tmpl_lang Media Elements></th>
+<tmpl_else>
+  <th class="series f"><tmpl_lang Order></th>
+  <th><tmpl_lang Element></th>
+  <th><tmpl_lang Data Entry></th>
+</tmpl_if>
+  <th class="series l"><tmpl_unless no_reorder><input type="checkbox" onclick="Krang.check_all(this,'remove_')"></tmpl_unless></th><!--:unnamed control(db2)-->
   </tr>
   </thead>
 
@@ -244,7 +314,7 @@
 
   <td>&nbsp;</td>
 
-  <td><!--(db2)TODO - constrain form control widths:-->
+  <td>
   <table>
   <tmpl_if child_select><tr>
     <td><tmpl_var child_select></td>
@@ -252,14 +322,13 @@
   </tr></tmpl_if>
 
   <tmpl_if bulk_edit_select><tr>
-<!--     <br> -->
     <td><tmpl_var bulk_edit_select></td>
     <td><input value="<tmpl_lang Bulk Edit>" onclick="save_and_bulk_edit()" type="button" class="button"></td>
   </tr></tmpl_if>
   </table>
   </td>
 
-  <td class="series l"><tmpl_unless no_delete><input value="<tmpl_lang Delete>" onclick="remove_children()" type="button" class="mini-list-btn"></tmpl_unless></td>
+  <td class="series l"><tmpl_unless no_delete><input value="<tmpl_lang Delete>" onclick="remove_children()" type="button" class="mini-list-button"></tmpl_unless></td>
   </tr>
 
   </tbody>
