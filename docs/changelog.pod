@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In various templates, replaced CSS class 'c-mini' by 'c-label-tiny'
+according to Michael Peters' renaming in r5180. [Bodo Schulze]
+
+=item *
+
 Added initial support for Xinha-backed bulk edit, based on code by
 Noam Weinstein. [Bodo Schulze]
 
