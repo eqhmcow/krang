@@ -92,6 +92,11 @@ Skin Default
 #
 SchedulerMaxChildren 0
 
+# 
+# Set the number of seconds to wait before retrying a failed schedule item
+#
+SchedulerDefaultFailureDelay 300
+
 #
 # This variable controls the character-set for Krang's user interface.
 # Compliant browsers will use this setting to encode data they send to

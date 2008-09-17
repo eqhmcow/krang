@@ -10,6 +10,20 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Gave the scheduler the ability to email users after succeeding with or giving up on a job. [Noam Weinstein]
+
+=item *
+
+Made schedule failure more configurable on the API level, adding the ability to specify how many times 
+a particular job is attempted and how long the daemon waits between attempts. [Noam Weinstein]
+
+=item *
+
+Added ability to create object-specific alerts that are triggered only for particular story
+or media objects. Enhanced MyAlerts UI to allow users to control these. [Noam Weinstein]
+
+=item *
+
 In various templates, replaced CSS class 'c-mini' by 'c-label-tiny'
 according to Michael Peters' renaming in r5180. [Bodo Schulze]
 

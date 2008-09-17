@@ -61,6 +61,7 @@ RewriteLogLevel
 SavedVersionsPerMedia
 SavedVersionsPerStory
 SavedVersionsPerTemplate
+SchedulerDefaultFailureDelay
 SchedulerMaxChildren
 Secret
 SiteServerAddr

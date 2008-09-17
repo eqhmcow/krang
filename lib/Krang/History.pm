@@ -138,7 +138,7 @@ sub _save {
 
 This method adds an entry into the database of an action taken on an object.
 
-The valid trackable objects are: Krang::Story, Krang::Media, and Krang::Template. These are passed in as 'object' - 'object_type', and 'object_id' are derived from the object.  The valid actions (specified by 'action') performed on an object are new, save, checkin, checkout, revert, move, publish, deploy, and delete.  
+The valid trackable objects are: Krang::Story, Krang::Media, and Krang::Template. These are passed in as 'object' - 'object_type', and 'object_id' are derived from the object.  The valid actions (specified by 'action') performed on an object are listed in the actions() method at the bottom of this module.
 
 In addition to tracking actions on objects, the user who performed the action is tracked by 'user_id', which is found in the session object.  If the 'action' is  'save' or 'revert', version is also derived from the object. 'desk_id' can be used to track which desk an action was performed on.  A timestamp is added to each history event, and will appear in the field 'timestamp' on objects returned from find. 
 
@@ -176,11 +176,10 @@ sub add_history {
     $info_string .= " (version " . $history->{version} . ")" if $history->{version};
     $info_string .= " to desk '" . $history->{desk_id} . "'" if $history->{desk_id};
     info(__PACKAGE__ . " - " . $info_string);
-
-    # check if should trigger alert
-    if ($object_type eq pkg('Story')) {
-        pkg('Alert')->check_alert(history => $history, story => $object);
-    }
+    
+    # check if event should trigger an alert
+    pkg('Alert')->check_alert( history => $history, object => $object)
+      if ($object->isa('Krang::Story') || $object->isa('Krang::Media'));
 }
 
 =item find()

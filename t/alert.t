@@ -60,6 +60,23 @@ my @alerts = pkg('Alert')->find( alert_id => $alert->alert_id );
 
 is($alerts[0]->alert_id, $alert->alert_id, "Check for return of object from find");
 
+# check object-specific alert functionality
+is($alert->object_type, undef, "Check that object_type is NULL by default");
+is($alert->object_id, undef, "Check that object_id is NULL by default");
+
+$alert->{object_type} = 'story';
+$alert->{object_id}   = $story->story_id;
+eval { $alert->save };
+ok (!$@, "Check that alert with object_type/object_id can be saved");
+($alert) = pkg('Alert')->find(alert_id => $alert->alert_id);
+is($alert->object_type, "story", "Check for return of object_type param from DB");
+is($alert->object_id, $story->story_id, "Check for return of object_id param from DB");
+my ($count) = pkg('Alert')->find( action      => 'checkin',
+                                  object_type => 'story',
+                                  object_id   => $story->story_id,
+                                  count       => 1);
+is($count, 1, "Check that alerts can be found by object_type/object_id"); 
+
 SKIP: {
     skip('Story tests only work for TestSet1', 1)
       unless (InstanceElementSet eq 'TestSet1');

@@ -15,10 +15,46 @@ sub per_instance {
     my ($self, %args) = @_;
     return if $args{no_db};
     my $dbh = dbh();
+    print "\n";
 
-    # add the 'language' preference
-    $dbh->do('INSERT INTO pref (id, value) VALUES ("language", "en")');
+    # 1. add the 'language' preference
+    unless (my ($language_pref) = $dbh->selectrow_array('SELECT * FROM pref WHERE id = "language"')) {
+        print "Adding 'language' preference to pref table... ";
+        $dbh->do('REPLACE INTO pref (id, value) VALUES ("language", "en")');
+        print "DONE\n\n";
+    }
+    
+    # 2. add the new schedule options
+    my @schedule_columns = @{$dbh->selectcol_arrayref('SHOW columns FROM schedule')};
+    foreach my $new_col ('failure_max_tries', 'failure_delay_sec', 'failure_notify_id', 'success_notify_id') {
+        unless (grep { $_ eq $new_col } @schedule_columns) {
+            print "Adding '$new_col' column to schedule table... ";
+            $dbh->do("ALTER TABLE schedule ADD $new_col int unsigned");
+            print "DONE\n\n";
+        }
+    }
 
+    # 3. add the new alert columns
+    my @alert_columns = @{$dbh->selectcol_arrayref('SHOW columns FROM alert')};
+    my %new_cols = (object_type        => 'varchar(255)', object_id => 'int unsigned',
+                    custom_msg_subject => 'varchar(255)', custom_msg_body => 'text');
+    foreach my $new_col (keys %new_cols) {
+        unless (grep { $_ eq $new_col } @alert_columns) {
+            print "Adding '$new_col' column to alert table... ";
+            $dbh->do("ALTER TABLE alert ADD $new_col ".$new_cols{$new_col}." default NULL");
+            print "DONE\n\n";
+        }
+    }
+
+    # 4. add the new alert index
+    my $indexes = $dbh->selectall_arrayref('SHOW INDEX FROM alert');
+    unless (grep { $_->[2] eq 'object_type' } @$indexes) {
+        print "Making alerts indexable by object_type/id... ";
+        $dbh->do('ALTER TABLE alert ADD INDEX (object_type, object_id)');
+        print "DONE\n\n";
+    }
+
+    # 5. add element support to media objects
     $self->add_elements_to_media();
 }
 
@@ -27,12 +63,12 @@ sub add_elements_to_media {
 
     # 1. add column to media table
     my $dbh = dbh();
-    print "\nAdding 'element_id' column to media table... ";
+    print "Adding 'element_id' column to media table... ";
     my @media_columns = @{$dbh->selectcol_arrayref('SHOW columns FROM media')};
     if (grep 'element_id' eq $_, @media_columns) {
         print "already exists (skipping)\n\n";
     } else {
-        $dbh->do('ALTER TABLE media ADD element_id mediumint unsigned NOT NULL');
+        $dbh->do('ALTER TABLE media ADD element_id int unsigned NOT NULL');
         print "DONE\n\n";
     }
     

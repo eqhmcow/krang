@@ -51,9 +51,8 @@ sub execute {
 
     if ($self->_object_exists()) { 
         if ($self->_object_checked_out()) {
-            info(sprintf("%s->execute(): Cannot run Schedule id '%i'.  %s id='%i' is checked out.",
-                __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id));
-            return;
+            die (sprintf("%s->execute(): %s ID='%i' is checked out.",
+                __PACKAGE__, ucfirst($self->object_type), $self->object_id));
         }
     } else {
         info(sprintf("%s->execute(): Cannot run schedule id '%i'. %s id='%i' cannot be found. Deleting scheduled job.", __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id));
@@ -116,6 +115,34 @@ sub _publish {
         }
     }
 
+}
+
+sub failure_subject {
+    my ($self, $error) = @_;
+    my $object = $self->{object};
+    my $type = ($object->isa(pkg('Media')) ? 'Media' : 'Story');
+    return "KRANG ALERT: $type ".$self->{object_id} . " not published";
+}
+
+sub failure_message {
+    my ($self, $error) = @_;
+    my $object = $self->{object};
+    my $type = ($object->isa(pkg('Media')) ? 'Media' : 'Story');
+    return "Krang $type ".$self->{object_id}." was not published due to the error below:\n\n$error";
+}
+
+sub success_subject {
+    my $self = shift;
+    my $object = $self->{object};
+    my $type = ($object->isa(pkg('Media')) ? 'Media' : 'Story');
+    return "KRANG ALERT: $type ".$self->{object_id} . " published";
+}
+
+sub success_message {
+    my $self = shift;
+    my $object = $self->{object};
+    my $type = ($object->isa(pkg('Media')) ? 'Media' : 'Story');
+    return $type." ".$self->{object_id}." has been successfully published";
 }
 
 =head1 See Also

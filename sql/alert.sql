@@ -10,6 +10,8 @@ CREATE TABLE alert (
     action varchar(255) default NULL,
     desk_id int(10) unsigned default NULL,
     category_id int(10) unsigned default NULL,
+    object_type varchar(255) default NULL,
+    object_id int unsigned default NULL,
     PRIMARY KEY (alert_id)
 ) TYPE=MyISAM;
 

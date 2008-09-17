@@ -20,7 +20,7 @@ use HTML::Template;
 use File::Spec::Functions qw(catdir);
 
 # constants 
-use constant FIELDS => qw( alert_id user_id action desk_id category_id );
+use constant FIELDS => qw( alert_id user_id action object_type object_id desk_id category_id custom_msg_subject custom_msg_body );
 use constant ACTIONS => qw( new save checkin checkout publish move );
 
 =head1 NAME
@@ -31,7 +31,15 @@ use constant ACTIONS => qw( new save checkin checkout publish move );
 =head1 SYNOPSIS
 
     use Krang::ClassLoader 'Alert';
-    
+
+    # add new alert scenario - user 1 will be notified with a custom message when story 14 is published
+    my $alert = pkg('Alert')->new(  user_id => '1',
+                                    action => 'publish',
+                                    object_type => 'story',
+                                    object_id => '13',
+                                    custom_msg_subject => 'THIRTEEN HAS GONE LIVE!',
+                                    custom_msg_body => 'Story 13 has gone live -- numerologically this does not bode well' );
+
     # add new alert scenario - user 1 will be notified when any new story is 
     # created in category 3 (or its descendants)
     my $alert = pkg('Alert')->new(  user_id => '1',
@@ -95,11 +103,29 @@ action - one of ( new save checkin checkout publish move )
 
 =item *
 
+object_type
+
+=item *
+
+object_id
+
+=item *
+
 category_id
 
 =item * 
 
 desk_id
+
+=item *
+
+custom_msg_subject - text scalar: overrides the default email message subject
+(replacing any instance of $USER with the user who triggered the action)
+
+=item *
+
+custom_msg_body - text scalar: overrides the default email message template
+(populating the same TMPL_VARs used by Krang's default template)
 
 =back
 
@@ -140,7 +166,7 @@ sub save {
         # get rid of alert_id 
         my @save_fields = grep {$_ ne 'alert_id'} FIELDS;
 
-        my $sql = 'UPDATE alert set '.join(', ',map { "$_ = ?" } @save_fields).' WHERE alert_id = = ?';
+        my $sql = 'UPDATE alert set '.join(', ',map { "$_ = ?" } @save_fields).' WHERE alert_id = ?';
         $dbh->do($sql, undef, (map { $self->{$_} } @save_fields),$alert_id);
 
     } else {
@@ -226,6 +252,8 @@ sub find {
                          action => 1,
                          desk_id => 1,
                          category_id => 1,
+                         object_type => 1,
+                         object_id => 1,
                          parent_categories => 1,
                          order_by => 1,
                          order_desc => 1,
@@ -244,6 +272,8 @@ not $valid_params{$param};
     croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
           "Only one can be present.")
       if $args{count} and $args{ids_only};
+    croak(__PACKAGE__ . "->find(): 'object_type' and 'object_id' must be specified together.")
+      unless (defined $args{object_type} == defined $args{object_id});
 
     # set defaults if need be
     my $order_by =  $args{'order_by'} ? $args{'order_by'} : 'alert_id';
@@ -259,6 +289,15 @@ not $valid_params{$param};
     }
 
     my $where_string = join ' and ', (map { "$_ = ? " } @where);
+
+    if ($args{'object_type'}) {
+        if ($args{'object_type'} eq 'NULL') {
+            $where_string .= ($where_string ? ' and ' : '') . ' object_type is NULL and object_id is NULL';
+        } else {
+            $where_string .= ($where_string ? ' and ' : '') . ' object_type = ? AND object_id = ?';
+            push @where, ('object_type', 'object_id');
+        }
+    }
 
     if ($args{'desk_id'}) {
         if ($args{'desk_id'} eq 'NULL') {
@@ -370,27 +409,42 @@ sub check_alert {
 
     my $history = $args{history};
     my $action = $history->action;
-    my $story = $args{story};
+    my $object      = $args{object};
+    my $object_type = $object && lc((split('::', ref $object))[-1]);
+    my $object_id   = $object && $object->{$object_type.'_id'};
     my $desk_id = $history->desk_id || undef;
-
-    my @cat_objects = $story->categories;
+    my @cat_objects = $object_type eq 'story' ? $object->categories : ($object->category);
     my @category_ids = map { $_->category_id } @cat_objects;
-
-    my %search_criteria = ( ids_only => 1, action => $action );
-
-    $search_criteria{desk_id} = $desk_id if $desk_id;
-    $search_criteria{category_id} = \@category_ids if @category_ids;
-    $search_criteria{parent_categories} = 1;
 
     croak(__PACKAGE__."->check_alert requires a valid pkg('History') object.") unless ( $history->isa('Krang::History') );
 
-    croak(__PACKAGE__."->check_alert requires a valid pkg('Story') object.") unless ( $story->isa('Krang::Story') );
+    croak(__PACKAGE__."->check_alert requires a valid pkg('Story') or pkg('Media') object.") unless ( $object->isa('Krang::Story') || $object->isa('Krang::Media'));
 
-    debug(__PACKAGE__."->check_alert() - checking for any alerts on action $action in categories @category_ids");
+    debug(__PACKAGE__."->check_alert() - checking for any alerts on action $action $object_type $object_id in categories @category_ids");
 
-    my @matched_alerts = pkg('Alert')->find( %search_criteria );  
+    # first get any object-specific alerts
+    my @matched_alerts = pkg('Alert')->find(ids_only    => 1,
+                                            action      => $action,
+                                            object_type => $object_type,
+                                            object_id   => $object_id);
+    # then add any category/desk-general alerts (when means object_type/id are NULL)
+    my %search_criteria = (ids_only    => 1, 
+                           action      => $action, 
+                           object_type => 'NULL', 
+                           object_id   => 'NULL');
+    if ($desk_id) {
+        $search_criteria{desk_id} = $desk_id;
+    }
+    if (@category_ids) {
+        $search_criteria{category_id} = \@category_ids;
+        $search_criteria{parent_categories} = 1;
+    }
+    if (my @general_alerts = pkg('Alert')->find(%search_criteria)) {
+        my %dupe_check = map { $_ => 1 } @matched_alerts;
+        push @matched_alerts, grep { !$dupe_check{$_} } @general_alerts;
+    }
 
-    debug(__PACKAGE__."->check_alert() - found alert_ids @matched_alerts for criteria (action $action in categories @category_ids).") if @matched_alerts;
+    debug(__PACKAGE__."->check_alert() - found alert_ids @matched_alerts for criteria (action $action $object_type $object_id in categories @category_ids).") if @matched_alerts;
 
     foreach my $alert_id ( @matched_alerts ) {
         my $time = localtime;
@@ -398,14 +452,14 @@ sub check_alert {
                                                 object_id => $alert_id,
                                                 action => 'send',
                                                 date => $time,
-                                                repeat      => 'never',
-                                                context     => [ user_id => $history->user_id, story_id => $story->story_id ]
+                                                repeat => 'never',
+                                                context => [ user_id => $history->user_id, object_type => $object_type, object_id => $object_id ]
                                             );   
         $schedule->save(); 
     }
 }
 
-=item Krang::Alert->send( alert_id => $alert_id, user_id => $user_id, story_id => $story_id )
+=item Krang::Alert->send( alert_id => $alert_id, user_id => $user_id, object_type => $object_type, object_id => $object_id )
 
 Sends an alert to email address.  Message sent is formatted by template at KrangRoot/templates/Alert/message.tmpl
 
@@ -417,7 +471,8 @@ sub send {
 
     my $alert_id = $args{alert_id} || croak(__PACKAGE__."->send() - you must specify an alert_id");
     my $user_id  = $args{user_id}  || croak(__PACKAGE__."->send() - you must specify a user_id"  );
-    my $story_id = $args{story_id} || croak(__PACKAGE__."->send() - you must specify a story_id" );
+    my $object_type = $args{object_type} || croak(__PACKAGE__."->send() - you must specify a object_type");
+    my $object_id = $args{object_id} || croak(__PACKAGE__."->send() - you must specify a object_id");
 
     my $alert = (pkg('Alert')->find(alert_id => $alert_id))[0];
 
@@ -434,22 +489,28 @@ sub send {
     croak("No valid pkg('User') object found with id $user_id")
       if not ($user && $user->isa('Krang::User'));
 
-    my $story = (pkg('Story')->find(story_id => $story_id))[0];
-
-    croak("No valid pkg('Story') object found with id $story_id")
-      if not ($story && $story->isa('Krang::Story'));
+    my $pkg = ucfirst($object_type);
+    my $object = (pkg($pkg)->find($object_type.'_id' => $object_id))[0];
+    croak("No valid pkg('$pkg') object found with id $object_id") 
+      if not ( $object && $object->isa("Krang::$pkg") );
 
     my $language = pkg('MyPref')->get('language', $alert->user_id) || DefaultLanguage || 'en';
 
     my $template = HTML::Template->new(path     => [catdir(KrangRoot, 'templates', 'Alert', $language),
                                                     catdir(KrangRoot, 'templates', 'Alert')],
-                                       filename => 'message.tmpl');
+                                       filename => 'message.tmpl',
+                                       die_on_bad_params => 0);
 
-    $template->param(story_id    => $story_id, 
-                     story_title => $story->title,
-                     first_name  => $user->first_name,
-                     last_name   => $user->last_name,
-                     action      => ucfirst(localize($alert->action)));
+    $template->param(object_type     => localize($object_type),
+                     object_id       => $object_id,
+                     object_title    => $object->title,
+                     object_url      => $object->url,
+                     object_specific => $alert->object_id, # set to 1 when alert is specific to this object
+                     first_name      => $user->first_name,
+                     last_name       => $user->last_name,
+                     action          => ucfirst(localize($alert->action)),
+                     story_id        => $object_type eq 'story' && $object_id,       # for backwards-compatability with addons that
+                     story_title     => $object_type eq 'story' && $object->title);  # may have overridden the message template
 
     $template->param(category => (pkg('Category')->find(category_id => $alert->category_id))[0]->url)
       if $alert->category_id;
@@ -461,19 +522,25 @@ sub send {
     # else use user email address 
     my $email_to = $ENV{KRANG_TEST_EMAIL};
     $email_to = $to_user->email if not defined $email_to;
-
-    if ($email_to) {
+    
+    if ($email_to) { 
         debug(__PACKAGE__."->send() - sending email to ".$email_to.": ".$template->output);
-
-        my $sender = Mail::Sender->new({smtp      => SMTPServer,
-                                        from      => FromAddress,
+        my $sender = Mail::Sender->new({smtp => SMTPServer, 
+                                        from => FromAddress,
                                         on_errors => 'die'});
-
-        $sender->MailMsg({to      => $email_to,
-                          subject => localize("Krang alert for action")." '".ucfirst(localize($alert->action))."'",
-                          msg     => $template->output});
+        my $subject;
+        if ($subject = $alert->custom_msg_subject) {
+            my $username = join(' ',$user->first_name, $user->last_name);
+            $subject =~ s/\$USER/$username/i;
+        } else {
+            $subject = localize("Krang alert for action")." '".localize($alert->action). ($alert->object_id ? ' '.localize($alert->object_type).' #'.$alert->object_id : '') . "'";
+        }
+        $sender->MailMsg({  to => $email_to, 
+                            subject => $subject,
+                            msg => $template->output,
+                         }); 
     } else {
-        info(__PACKAGE__."->send() - no email address found for user: alert not sent: ".$template->output);
+        info(__PACKAGE__."->send() - no email address found for user: alert not sent: ".$template->output);        
     }
 }
 
@@ -523,7 +590,11 @@ sub serialize_xml {
     $writer->dataElement( user_id => $self->{user_id} );
     $writer->dataElement( action => $self->{action} );
     $writer->dataElement( desk_id => $self->{desk_id} ) if $self->{desk_id};
+    $writer->dataElement( object_type => $self->{object_type} ) if $self->{object_type};
+    $writer->dataElement( object_id => $self->{object_id} ) if $self->{object_id};
     $writer->dataElement( category_id => $self->{category_id} ) if $self->{category_id};
+    $writer->dataElement( custom_msg_subject => $self->{custom_msg_subject} ) if $self->{custom_msg_subject};
+    $writer->dataElement( custom_msg_body    => $self->{custom_msg_body} ) if $self->{custom_msg_body};
      
     # add category to set if needed
     $set->add(object => (pkg('Category')->find( category_id => $self->{category_id} ))[0], from => $self) if $self->{category_id};
@@ -531,9 +602,21 @@ sub serialize_xml {
     # add user to set
     $set->add(object => (pkg('User')->find( user_id => $self->{user_id} ))[0],from => $self);
 
-    # add desk to set if needed
+    # add object to set (if this is an object-specific alert)
+    if ($self->{object_id}) {
+        if ($self->{object_type} eq 'story') {
+            $set->add(object => (pkg('Story')->find( story_id => $self->{object_id} ))[0], from => $self);
+        } elsif ($self->{object_type} eq 'media') {
+            $set->add(object => (pkg('Media')->find( media_id => $self->{object_id} ))[0], from => $self);
+        }
+    }
+
+    # add desk to set (if needed)
     $set->add(object => (pkg('Desk')->find( desk_id => $self->{desk_id} ))[0], from => $self) if $self->{desk_id};
  
+    # add category to set (if needed)
+    $set->add(object => (pkg('Category')->find( category_id => $self->{category_id} ))[0], from => $self) if $self->{category_id};
+
     # all done
     $writer->endTag('alert');
 }
@@ -561,6 +644,14 @@ sub deserialize_xml {
 			 user_id => $set->map_id(class => pkg('User'),
 						 id => $data->{user_id}));
 
+    if ($data->{object_id}) {
+        my $type = $data->{object_type};
+        my $object_pkg = ucfirst($type);
+        $search_params{object_type} = $type;
+        $search_params{object_id}   = $set->map_id(class => pkg($object_pkg),
+                                                   id    => $data->{object_id})
+    }
+
     $search_params{desk_id} = $set->map_id(class => pkg('Desk'),
 					   id => $data->{desk_id}) 
       if $data->{desk_id};
@@ -573,7 +664,9 @@ sub deserialize_xml {
     my $alert = (pkg('Alert')->find( %search_params ))[0] || '';
 
     if (not $alert) {
-        $alert = pkg('Alert')->new( %search_params );
+        $alert = pkg('Alert')->new( %search_params,
+                                    custom_msg_subject => $data->{custom_msg_subject},
+                                    custom_msg_body    => $data->{custom_msg_body});
         $alert->save;
     }
     

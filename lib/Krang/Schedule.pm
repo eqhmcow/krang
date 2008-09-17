@@ -55,6 +55,20 @@ use Krang::ClassLoader 'Cache';
         date        => $date
     );
 
+    # publish a story at a specific date, specifying a limit to the number of 
+    # attempts, a delay (in seconds) between each attempt, and the ID for a user
+    # who should be emailed after failure/success
+    $sched = pkg('Schedule')->new(
+        object_type => 'story',
+        object_id   => $story_id,
+        action      => 'publish',
+        date        => $date,
+        failure_max_tries => 4,    # try a maximum of 4 times before giving up
+        failure_delay_sec => 600,  # wait 10 minutes between each try
+        failure_notify_id => 2,    # if all 4 attempts fail, email user 2 to notify him/her
+        success_notify_id => 2,    # if any attempt succeeds, email user 2 to notify him/her
+    );
+
     # save the schedule entry to the database
     $sched->save();
 
@@ -79,6 +93,15 @@ use Krang::ClassLoader 'Cache';
         action      => 'publish',
         repeat      => 'daily',
         hour        => 12,
+        minute      => 0
+    );
+
+    # Create an entry to publish a story every hour on the hour.
+    $sched = pkg('Schedule')->new(
+        object_type => 'story',
+        object_id   => $story_id,
+        action      => 'publish',
+        repeat      => 'hourly',
         minute      => 0
     );
 
@@ -155,6 +178,10 @@ use constant SCHEDULE_RW => qw(
   priority
   expires
   inactive
+  failure_max_tries
+  failure_delay_sec
+  failure_notify_id
+  success_notify_id
 );
 
 # certain fields, when updated, require recalculation of
@@ -1053,7 +1080,7 @@ sub save {
     my @params =
       map { $context && $_ eq 'context' ? $self->{_frozen_context} : $self->{$_} } @save_fields;
 
-    # need user_id for updates
+    # need schedule_id for updates
     push @params, $id if $id;
 
     # croak if no rows are affected
@@ -1063,7 +1090,6 @@ sub save {
           . ($id ? "id '$id' " : '')
           . "to the DB.")
       unless $dbh->do($query, undef, @params);
-
     $self->{schedule_id} = $dbh->{mysql_insertid} unless $id;
 
     return $self;
@@ -1087,11 +1113,9 @@ sub serialize_xml {
         "xsi:noNamespaceSchemaLocation" => 'schedule.xsd'
     );
 
-    $writer->dataElement(schedule_id => $self->{schedule_id});
-    $writer->dataElement(object_type => $self->{object_type});
-    $writer->dataElement(object_id   => $self->{object_id});
-    $writer->dataElement(action      => $self->{action});
-    $writer->dataElement(repeat      => $self->{repeat});
+    foreach ('schedule_id', 'object_type', 'object_id', 'action','repeat') {
+        $writer->dataElement($_ => $self->{$_});
+    }
     my $next_run = $self->{next_run} || '';
     $next_run =~ s/\s/T/;
     $writer->dataElement(next_run => $next_run);
@@ -1118,9 +1142,10 @@ sub serialize_xml {
       if defined $self->{day_of_month};
     $writer->dataElement(day_interval => $self->{day_interval})
       if defined $self->{day_interval};
-
-    $writer->dataElement(priority => $self->{priority});
-    $writer->dataElement(inactive => $self->{inactive});
+    
+    foreach ('priority', 'inactive', 'failure_max_tries', 'failure_delay_sec', 'failure_notify_id', 'success_notify_id') {
+        $writer->dataElement($_ => $self->{$_});
+    }
 
     # context
     if (my $context = $self->{context}) {

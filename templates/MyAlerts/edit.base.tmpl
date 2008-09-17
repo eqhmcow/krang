@@ -6,6 +6,16 @@ Krang.onload( function() {
   Krang.Form.toggle_list_btn('current_alert_form', 'alert_delete_list');
 } );
 
+  add = function()
+  {
+    var object_id = document.add_alert_form.object_id.value;
+    if (object_id != '' && (object_id == 0 || isNaN(object_id))) {
+       alert( Krang.L10N.loc('Object ID must either be empty or a (non-zero) number.') );
+    } else {
+       Krang.Form.submit( 'add_alert_form', {}, { to_top: false });
+    }
+  }
+
 <tmpl_if alert_loop>
   delete_checked = function()
   {
@@ -42,12 +52,14 @@ Krang.onload( function() {
   <col>
   <col>
   <col>
+  <col>
   <col class="series">
   </colgroup>
 
   <thead>
   <tr>
   <th class="f"><tmpl_lang Action></th>
+  <th><tmpl_lang Object></th>
   <th><tmpl_lang Site/Category></th>
   <th><tmpl_lang Desk></th>
   <th class="series l"><input name="checkallbox" id="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'alert_delete_list')"></th>
@@ -57,6 +69,7 @@ Krang.onload( function() {
   <tbody><tmpl_loop alert_loop>
     <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
     <td class="f"><tmpl_var escape=html action></td>
+    <td><tmpl_if object_type><tmpl_var escape=html object_type> #<tmpl_var object_id><tmpl_else>Any</tmpl_if></td>
     <td><tmpl_if category><tmpl_var escape=html category><tmpl_else><tmpl_lang Any></tmpl_if></td>
     <td><tmpl_if desk><tmpl_var escape=html desk><tmpl_else><tmpl_lang Any></tmpl_if></td>
     <td class="series l"><input name="alert_delete_list" value="<tmpl_var escape=html alert_id>" type="checkbox" class="hilite-row"></td>
@@ -64,7 +77,7 @@ Krang.onload( function() {
   </tmpl_loop></tbody>
 
   <tr class="command-row">
-  <td class="f" colspan="3">&nbsp;</td>
+  <td class="f" colspan="4">&nbsp;</td>
   <td class="series l"><input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button" class="mini-list-btn"></td
   </tr>
 
@@ -97,8 +110,18 @@ Krang.onload( function() {
 <tbody class="half">
 
 <tr>
-<td class="f">*<tmpl_lang Action></td>
+<td class="f"><tmpl_lang Action></td>
 <td class="l"><tmpl_var action_selector></td>
+</tr>
+
+<tr>
+<td class="f">Object Type</td>
+<td class="l"><tmpl_var object_type_selector></td>
+</tr>
+
+<tr>
+<td class="f">Object ID</td>
+<td class="l"><tmpl_var object_id_selector></td>
 </tr>
 
 <tr>
@@ -116,7 +139,7 @@ Krang.onload( function() {
 </table></div>
 
 <div class="panel lame capped">
-<input value="<tmpl_lang Add Alert>" type="submit" class="west">
+<input value="<tmpl_lang Add Alert>" type="button" onclick="add()" class="west">
 </div>
 
 <tmpl_var category_chooser>

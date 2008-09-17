@@ -76,5 +76,57 @@ sub clean_entry {
     }
 }
 
+=over
+
+=item sub failure_subject() should return the email subject for a final-failure notification
+
+=back
+
+=cut
+
+sub failure_subject {
+    my ($self, $error) = @_;
+    return "KRANG ALERT: Schedule " . $self->schedule_id . " failed";
+}
+
+=over
+
+=item sub failure_message() should return the email body for a final-failure notification
+
+=back
+
+=cut
+
+sub failure_message {
+    my ($self, $error) = @_;
+    return "Schedule " . $self->schedule_id . " has failed and you are being notified because no further attempts will be made."
+}
+
+=over
+
+=item sub success_subject() should return the email subject for a success notification
+
+=back
+
+=cut
+
+sub success_subject {
+    my $self = shift;
+    return "KRANG ALERT: Schedule " . $self->schedule_id . " succeeded";
+}
+
+=over
+
+=item sub success_message() should return the email body for a success notification
+
+=back
+
+=cut
+
+sub success_message {
+    my $self = shift;
+    return "Schedule " . $self->schedule_id . " has succeeded";
+}
+
 1;
 

@@ -12,7 +12,7 @@ use Carp qw(croak);
 use Time::Piece;
 use Time::Seconds;
 
-use Krang::ClassLoader Conf => qw(KrangRoot instance instances SchedulerMaxChildren);
+use Krang::ClassLoader Conf => qw(KrangRoot instance instances SchedulerMaxChildren SchedulerDefaultFailureDelay SMTPServer FromAddress);
 use Krang::ClassLoader Log => qw/critical debug info reopen_log/;
 use Krang::ClassLoader 'Schedule';
 use Krang::ClassLoader DB => qw(dbh forget_all_dbhs);
@@ -182,7 +182,7 @@ Polls the schedule database for a given L<Krang::Conf> instance, looking for job
 
 If work to be done is found, child processes are allocated to take care of the tasks at hand.
 
-When a child process is spawned, it will C<execute()> all work in the order assigned.  When a task is completed, it is marked as complete, and updated if necessary.  Any jobs that fail will be trapped and skipped, and the work continnues.  When a child is finished, it will exit.
+When a child process is spawned, it will C<execute()> all work in the order assigned.  When a task is completed, it is marked as complete, and updated if necessary.  Any jobs that fail will be trapped and skipped, and the work continues.  When a child is finished, it will exit.
 
 When a child exits, C<scheduler_pass()> will clean up, removing its entry from the tables tracking work being done.
 
@@ -299,8 +299,39 @@ sub _child_work {
                           __PACKAGE__, $instance, $$, $t->schedule_id()));
             eval { $t->execute(); };
             if (my $err = $@) {
-                critical(sprintf("%s->_child_work('%s'): Child PID=%i encountered fatal error with Schedule ID=%i : %s",
-                                 __PACKAGE__, $instance, $$, $t->schedule_id(), $err));
+                # job failed, so, if it didn't delete the schedule object (which would prevent us from doing anything)..
+                if ($t && (my ($still_in_db) = (pkg('Schedule')->find(count => 1, schedule_id => $t->schedule_id)))) {
+                    chomp($err); $err = '"'.$err.'"';
+                    my $delay_btw_tries = $t->failure_delay_sec || SchedulerDefaultFailureDelay || 60;
+                    if (defined $t->failure_max_tries) {
+                        if ($t->failure_max_tries > 1) {
+                            # this job hasn't yet reached its maximum # of failures
+                            $t->{failure_max_tries}--;
+                            $t->{next_run} = (Time::Piece->new + $delay_btw_tries)->mysql_datetime;
+                            $t->save;
+                            critical(sprintf("%s->_child_work('%s'): PID %i encountered error below with Schedule %i - TRIES LEFT: %d (NEXT IN %d SEC)\n%s",
+                                             __PACKAGE__, $instance, $$, $t->schedule_id(), $t->failure_max_tries, $delay_btw_tries, $err));
+                        } else {
+                            # this job has reached its maximum # of failures
+                            critical(sprintf("%s->_child_work('%s'): PID %i encountered error below with Schedule %i - GIVING UP!\n%s",
+                                             __PACKAGE__, $instance, $$, $t->schedule_id(), $err));
+                            # since we're giving up, notify user if possible
+                            if ($t->failure_notify_id) {
+                                critical("WILL ATTEMPT TO NOTIFY USER ".$t->falure_notify_id." VIA EMAIL");
+                                _notify_user($t->failure_notify_id, $t->failure_subject($err), $t->failure_message($err));
+                            }
+                            $t->delete;
+                        } 
+                    } else {
+                        # this job has no maximum # of failures set, so we don't notify user; we're going to keep trying..
+                        $t->{next_run} = (Time::Piece->new + $delay_btw_tries)->mysql_datetime;
+                        $t->save;
+                        critical(sprintf("%s->_child_work('%s'): PID %i encountered error below with Schedule %i - WILL KEEP TRYING EVERY %d SEC\n%s",
+                                         __PACKAGE__, $instance, $$, $t->schedule_id(), $delay_btw_tries, $err));
+                    }
+                }
+            }  elsif ($t->success_notify_id) {
+                _notify_user($t->success_notify_id, $t->success_subject, $t->success_message);
             }
         }
     };
@@ -308,12 +339,24 @@ sub _child_work {
 
     # turn cache off
     Krang::Cache::stop();
+    
     die $err if $err;
 
     debug(sprintf("%s: Child PID=%i finished.  Exiting.", __PACKAGE__, $$));
 
     exit(0);
 
+}
+
+# helper function - passed a user_id, subject, and msg, send the user an email with the subject & message
+sub _notify_user {
+    my ($user_id, $subject, $msg) = @_;
+    if (my $user = (pkg('User')->find( user_id => $user_id ))[0]) {
+        if (my $email_to = $user->email) {
+            my $sender = Mail::Sender->new({smtp => SMTPServer, from => FromAddress, on_errors => 'die'});
+            $sender->MailMsg({ to => $email_to, subject => $subject, msg => $msg });
+        }
+    }
 }
 
 #
