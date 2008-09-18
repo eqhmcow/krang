@@ -2018,11 +2018,11 @@ sub delete {
 
     # delete schedules for this media
     $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
-        undef, 'media', $self->{media_id});
+             undef, 'media', $self->{media_id});
 
     # delete alerts for this media
-#    $dbh->do('DELETE FROM alert WHERE object_type = ? and object_id = ?',
-#      undef, 'media', $self->{media_id});
+    $dbh->do('DELETE FROM alert WHERE object_type = ? and object_id = ?',
+             undef, 'media', $self->{media_id});
 
     # remove from trash
     pkg('Trash')->remove(object => $self);
