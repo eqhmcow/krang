@@ -303,7 +303,7 @@ not $valid_params{$param};
         if ($args{'desk_id'} eq 'NULL') {
             $where_string ? ($where_string .= ' AND desk_id is NULL') : ($where_string = 'desk_id is NULL');
         } else {
-            $where_string ? ($where_string .= 'AND desk_id = '.$args{'desk_id'}) : ($where_string = 'desk_id = '.$args{'desk_id'});
+            $where_string ? ($where_string .= ' AND desk_id = '.$args{'desk_id'}) : ($where_string = 'desk_id = '.$args{'desk_id'});
         }
                                                                                 
     }
