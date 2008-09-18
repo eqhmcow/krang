@@ -7,8 +7,12 @@
                 <xs:element name="alert_id" type="xs:int"/>
                 <xs:element name="user_id" type="xs:int"/>
                 <xs:element name="action" type="xs:string"/>
+                <xs:element name="object_type" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                <xs:element name="object_id" type="xs:int" minOccurs="0" maxOccurs="1"/>
                 <xs:element name="desk_id" type="xs:int" minOccurs="0"/>
                 <xs:element name="category_id" type="xs:int" minOccurs="0"/>
+                <xs:element name="custom_msg_subject" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                <xs:element name="custom_msg_body" type="xs:string" minOccurs="0" maxOccurs="1"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
