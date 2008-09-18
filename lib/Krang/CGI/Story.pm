@@ -1920,9 +1920,10 @@ sub _do_find {
         }
 
         # Story class
+        my $media_class = pkg('ElementClass::Media')->element_class_name;
         my @classes = sort { lc localize($a->display_name) cmp lc localize($b->display_name) }
           map { pkg('ElementLibrary')->top_level(name => $_) }
-          grep { $_ ne 'category' } pkg('ElementLibrary')->top_levels;
+          grep { $_ ne 'category' && $_ ne $media_class } pkg('ElementLibrary')->top_levels;
         my %class_labels = map { $_->name => localize($_->display_name) } @classes;
         $tmpl_data{search_class_chooser} = scalar(
             $q->popup_menu(
