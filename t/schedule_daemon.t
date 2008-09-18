@@ -245,4 +245,3 @@ sleep 5;
 ($sched) = pkg('Schedule')->find(schedule_id => $sched->schedule_id);
 is ($sched, undef, "scheduled publish fails and gives up for good when max_tries = 1");
 $story->checkin;
-$story->delete;
