@@ -2253,7 +2253,11 @@ sub delete {
 
     # delete schedules for this story
     $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
-        undef, 'story', $self->{story_id});
+             undef, 'story', $self->{story_id});
+    
+    # delete alerts for this story
+    $dbh->do('DELETE FROM alert WHERE object_type = ? and object_id = ?', 
+             undef, 'story', $self->{story_id});
 
     add_history(
         object => $self,
