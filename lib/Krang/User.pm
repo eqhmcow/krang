@@ -40,7 +40,7 @@ Krang::User - a means to access information on users
   $user->last_name('last_name');
   $user->login( 'loginX' );
   $user->mobile_phone( $phone_number );
-  $user->password( $password );		# stores MD5 of $SALT, $password
+  $user->password( $password );		# stores MD5 of $self->SALT, $password
   $user->phone( $phone_number );
 
 
@@ -68,12 +68,12 @@ Krang::User - a means to access information on users
 Each user object corresponds to an authorized user of the system.  The degree
 of access a user is determined by the groups with which he is associated.
 
-N.B. - Passwords are MD5 digests of $SALT and the password string; the
+N.B. - Passwords are MD5 digests of $self->SALT and the password string; the
 original password string in not retrievable once it is passed but can only be
 calculated and compared i.e.:
 
   my $valid_password =
-    $user->{password} eq md5_hex($SALT, $password_string) ? 1 : 0;
+    $user->{password} eq md5_hex($self->SALT, $password_string) ? 1 : 0;
 
 =cut
 
@@ -110,46 +110,75 @@ use Krang::Cache;
 #
 # Package Variables
 ####################
-# Constants
-############
+
+# In Krang v3.04 we've converted package constants, lexicals & globals into 
+# methods so that subclasses need not copy them, and can extend them without 
+# needing to know what they contain, and so that non-over-ridden methods here 
+# can see their subclassed values.
+# 
+# This way, for instance, by adding a new field to USER_RW, a subclass 
+# need not override save(), find() and deserialize_xml() at all.
+# They can all see the new field name in their loops, and just work.
+
 # Read-only fields
-use constant USER_RO => qw(user_id user_uuid);
+sub USER_RO { 
+    return qw(
+     user_id 
+     user_uuid
+   );
+}
 
 # Read-write fields
-use constant USER_RW => qw(email
-			   first_name
-			   last_name
-			   login
-			   mobile_phone
-			   phone
-               hidden
-               password_changed
-               force_pw_change);
+sub USER_RW { 
+    return qw(
+     email
+     first_name
+     last_name
+     login
+     mobile_phone
+     phone
+     hidden
+     password_changed
+     force_pw_change
+   );
+}
 
 # user_user_group table fields
-use constant USER_USER_GROUP => qw(user_id
-			   	   group_id);
+sub USER_USER_GROUP {
+    return qw(
+     user_id
+     group_id
+   );
+}
 
 # valid short logins :)
-use constant SHORT_NAMES	=> qw(adam
-				      admin
-				      arobin
-				      matt
-				      sam);
+sub SHORT_NAMES	{
+    return qw(
+     adam
+     admin
+     arobin
+     matt
+     sam
+     krang
+   );
+}
 
-
-# Globals
-##########
-our $SALT = <<SALT;
+sub SALT {
+    return <<SALT;
 Dulce et decorum est pro patria mori
 --Horace
 SALT
+}
 
+sub user_args {
+    my $self = shift;
+    return map {$_ => 1} $self->USER_RW(), qw/group_ids password/;
+}
 
-# Lexicals
-###########
-my %user_args = map {$_ => 1} USER_RW, qw/group_ids password/;
-my %user_cols = map {$_ => 1} USER_RO, USER_RW, 'password';
+sub user_cols {
+    my $self = shift;
+    return $self->USER_RO(), $self->USER_RW(), 'password';
+}
 
 # Constructor/Accessor/Mutator setup
 use Krang::ClassLoader MethodMaker => new_with_init => 'new',
@@ -247,9 +276,8 @@ sub init {
 
     my $encrypted = delete $args{encrypted} || '';
 
-    for (keys %args) {
-        push @bad_args, $_ unless exists $user_args{$_};
-
+    for my $arg (keys %args) {
+        push @bad_args, $arg unless grep $arg eq $_, $self->user_args;
     }
     croak(__PACKAGE__ . "->init(): The following constructor args are " .
           "invalid: '" . join("', '", @bad_args) . "'") if @bad_args;
@@ -277,7 +305,7 @@ sub init {
 =item * $user_id = Krang::User->check_auth( $login, $password )
 
 Class method that retrieves the user object associated with $login and compares
-the value in the objects 'password' field with md5_hex( $SALT, $password ).
+the value in the objects 'password' field with md5_hex( $self->SALT, $password ).
 If it is successful, the 'user_id' is returned, otherwise '0' is returned.
 
 =cut
@@ -288,7 +316,7 @@ sub check_auth {
     my ($user) = pkg('User')->find(login => $login);
     return 0 unless $user;
 
-    return md5_hex($SALT, $password) eq $user->{password} ?
+    return md5_hex($self->SALT, $password) eq $user->{password} ?
       $user->{user_id} : 0;
 }
 
@@ -300,7 +328,7 @@ sub check_auth {
 sub check_pass {
     my ($user, $pass) = @_;
 
-    return md5_hex($SALT, $pass) eq $user->{password} ?
+    return md5_hex($user->SALT, $pass) eq $user->{password} ?
       $user->{user_id} : 0;
 }
 
@@ -518,7 +546,7 @@ characters must surround the sub-striqng).  The valid search fields are:
 
 =item * simple_search
 
-Seaches first_name, last_name and login for matching LIKE strings
+Searches first_name, last_name and login for matching LIKE strings
 
 =back
 
@@ -569,9 +597,9 @@ sub find {
     my $self = shift;
     my %args = @_;
     my ($fields, @params);
-    my %lookup_cols = %user_cols;
+    my @lookup_cols = $self->user_cols;
     my $where_clause = '';
-    $lookup_cols{group_ids} = 1;
+    push @lookup_cols, 'group_ids';
 
     # check the cache if we're looking for a single user    
     my $cache_worthy = (keys(%args) == 1 and exists $args{user_id}) ? 1 : 0;
@@ -606,7 +634,7 @@ sub find {
     } elsif ($ids_only) {
         $fields = 'u.user_id';
     } else {
-        $fields = join(", ", map {"u.$_"} keys %user_cols);
+        $fields = join(", ", map {"u.$_"} $self->user_cols);
     }
 
     # set up WHERE clause and @params, croak unless the args are in
@@ -620,8 +648,8 @@ sub find {
         ( my $lookup_field = $arg ) =~
           s/^(.+)_like$/($arg eq 'group' ? 'ug' : 'u'). $1/e;
 
-        push @invalid_cols, $arg unless exists $lookup_cols{$lookup_field} ||
-          $arg eq 'simple_search';
+        push @invalid_cols, $arg unless $arg eq 'simple_search'
+          or grep $lookup_field eq $_, @lookup_cols;
 
         my $and = defined $where_clause && $where_clause ne '' ? ' AND' : '';
 
@@ -728,7 +756,7 @@ sub find {
 =item * $md5_digest = Krang::User->password( $password, 1 )
 
 Method to get or set the password associated with a user object.  Returns
-Digest::MD5->md5( $SALT . $password_string ) as a getter. Stores the same
+Digest::MD5->md5( $self->SALT . $password_string ) as a getter. Stores the same
 in the DB as a setter. As a class method it returns an md5 digest of its
 argument. If a true argument is passed in after the first 'password' arg,
 the password is not encrypted (assumed to be already).
@@ -738,7 +766,7 @@ the password is not encrypted (assumed to be already).
 sub password {
     my $self = shift;
     return $self->{password} unless @_;
-    my $pass = $_[1] ? $_[0] : md5_hex($SALT, $_[0]);
+    my $pass = $_[1] ? $_[0] : md5_hex($self->SALT, $_[0]);
     if ((ref $self) && $pass) {
         # record that this password was updated
         my $old_pw = $self->{password};
@@ -792,8 +820,12 @@ croaks if its database query affects no rows in the database.
 
 sub save {
     my $self = shift;
+    
+    my %args = @_;
+    my $update_cache = exists $args{update_cache} ? $args{update_cache} : 1;
+
     my $id = $self->{user_id} || 0;
-    my @save_fields = grep {$_ ne 'user_id'} keys %user_cols;
+    my @save_fields = grep {$_ ne 'user_id'} $self->user_cols;
 
     # saving with the cache on is verboten
     if (Krang::Cache::active()) {
@@ -857,8 +889,11 @@ sub save {
     # lazy load Group so using User won't load element
     # sets, which is sometimes bad
     eval "require " . pkg('Group') or die $@;
-    pkg('Group')->add_user_permissions($self);
-    
+
+    # Update user permissions cache, unless the caller asked us not to...
+    debug "skipping pkg(Group)->add_user_permissions()\n" unless $update_cache;
+    pkg('Group')->add_user_permissions($self) if $update_cache;
+
     return $self;
 }
 

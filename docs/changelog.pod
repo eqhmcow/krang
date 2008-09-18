@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Replaced package constants, global and lexical variables in Krang::User with methods that 
+can be subclassed. [Dave Kaufman]
+
+=item *
+
 Gave the scheduler the ability to email users after succeeding with or giving up on a job. [Noam Weinstein]
 
 =item *
