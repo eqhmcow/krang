@@ -22,10 +22,10 @@
                 <xs:element name="day_of_month" type="xs:int" minOccurs="0"/>
                 <xs:element name="day_interval" type="xs:int" minOccurs="0"/>
                 <xs:element name="priority" type="xs:int" minOccurs="0"/>
-                <xs:element name="failure_max_tries" minOccurs="0"/>
-                <xs:element name="failure_delay_sec" minOccurs="0"/>
-                <xs:element name="failure_notify_id" minOccurs="0"/>
-                <xs:element name="success_notify_id" minOccurs="0"/>
+                <xs:element name="failure_max_tries" type="xs:int" minOccurs="0"/>
+                <xs:element name="failure_delay_sec" type="xs:int" minOccurs="0"/>
+                <xs:element name="failure_notify_id" type="xs:int" minOccurs="0"/>
+                <xs:element name="success_notify_id" type="xs:int" minOccurs="0"/>
                 <xs:complexType>
                     <xs:sequence>
                         <xs:element name="key" type="xs:string"/>
