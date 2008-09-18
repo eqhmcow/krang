@@ -130,12 +130,12 @@ sub load_query_data {
     # find the category_id for the containing object
     my $object = $element->object;
     my $category_id;
-    if ($object->isa('Krang::Story')) {
+    if ($object->isa('Krang::Story') || $object->isa('Krang::Media')) {
         $category_id = $object->category()->category_id();
     } elsif ($object->isa('Krang::Category')) { 
         $category_id = $object->category_id();
     } else {
-        croak("Expected a story or a category in element->object!");
+        croak("Expected a story, media object or category in element->object!");
     }
 
     my %media_types = pkg('Pref')->get('media_type');
