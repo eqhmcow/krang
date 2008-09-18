@@ -210,7 +210,7 @@ BEGIN {
                } keys %id
             ));
 
-        pod2usage(2) unless
+        pod2usage(2) unless @ARGV &&
           GetOptions(help       => \$help,
                      man        => \$man,
                      
@@ -292,7 +292,7 @@ foreach my $id_meth (grep { @{$id{$_}} } keys %id) {
 }
 
 # did we add anything?
-die "Nothing selected for export!  Did you mean to use --everything?\n"
+die "No objects found of the type(s) you've specified! Did you mean to use --everything?\n"
   unless $added;
 
 
