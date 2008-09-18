@@ -10,6 +10,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added DateTime and Time elements similar to those used for cover_date input. [Dave Kaufman]
+
+=item *
+
 Replaced package constants, global and lexical variables in Krang::User with methods that 
 can be subclassed. [Dave Kaufman]
 
