@@ -1144,7 +1144,7 @@ sub serialize_xml {
       if defined $self->{day_interval};
     
     foreach ('priority', 'inactive', 'failure_max_tries', 'failure_delay_sec', 'failure_notify_id', 'success_notify_id') {
-        $writer->dataElement($_ => $self->{$_});
+        $writer->dataElement($_ => $self->{$_}) if defined($self->{$_});
     }
 
     # context

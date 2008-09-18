@@ -329,9 +329,9 @@ not $valid_params{$param};
                 my %seen;
                 @all_cat_ids = grep { ++$seen{$_} == 1 } @all_cat_ids;
 
-                $where_string ? ($where_string .= ' AND ('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).' OR category_id is NULL)') : ($where_string = '('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).' OR category_id is NULL)');
+                $where_string .= ($where_string ? ' AND ' : '') . '('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).' OR category_id is NULL)';
             } else {
-                $where_string ? ($where_string .= ' AND ('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).')') : ($where_string = '('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).')');
+                $where_string .= ($where_string ? ' AND ' : '') . '('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).')';
             }
         } else {
             if ($args{'parent_categories'}) {
