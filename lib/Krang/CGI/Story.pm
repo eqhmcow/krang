@@ -871,7 +871,7 @@ sub replace_dupes {
     my $may_checkin_all = $admin_perms{may_checkin_all};
 
     foreach my $id (keys %dupes) {
-        my ($dupe_story) = Krang::Story->find(story_id => $id);
+        my ($dupe_story) = pkg('Story')->find(story_id => $id);
         if ($dupe_story->checked_out) {
 
             # if story is checked out to us, do nothing; otherwise...
