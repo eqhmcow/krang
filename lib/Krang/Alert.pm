@@ -25,7 +25,7 @@ use constant ACTIONS => qw( new save checkin checkout publish move );
 
 =head1 NAME
 
-    pkg('Alert') -  interface to specify pkg('Story') events to alert upon, 
+    pkg('Alert') -  interface to specify events to alert upon, 
                     schedule alerts, and mail out alerts.
 
 =head1 SYNOPSIS
@@ -77,7 +77,7 @@ use constant ACTIONS => qw( new save checkin checkout publish move );
 
 =head1 DESCRIPTION
 
-This class handles the storage of Krang::Story events to alert upon. It also checks Krang::History objects to see if an alert is matched.  If so, an alert mailing ( Krang::Alert->send() ) will be scheduled in Krang::Schedule. 
+This class handles the storage of events to alert upon. It also checks Krang::History objects to see if an alert is matched.  If so, an alert mailing ( Krang::Alert->send() ) will be scheduled in Krang::Schedule. 
 
 =head1 INTERFACE
 
@@ -398,7 +398,7 @@ not $valid_params{$param};
 
 Check to see if given criteria matches a set user alert.
 
-This method takes two arguments, a Krang::History object and a Krang::Story object. 
+This method takes two arguments, a Krang::History object and a Krang::Story or Krang::Media object. 
 
 =cut 
 
@@ -496,10 +496,32 @@ sub send {
 
     my $language = pkg('MyPref')->get('language', $alert->user_id) || DefaultLanguage || 'en';
 
-    my $template = HTML::Template->new(path     => [catdir(KrangRoot, 'templates', 'Alert', $language),
-                                                    catdir(KrangRoot, 'templates', 'Alert')],
-                                       filename => 'message.tmpl',
-                                       die_on_bad_params => 0);
+    # use template for Alert email - either custom or from addon or from Krang default
+    my $template;
+    if (my $msg_body = $alert->custom_msg_body) {
+        # this alert has a custom msg_body template (stored in the alert object)
+        $template = HTML::Template->new(scalarref => \$msg_body, die_on_bad_params => 0);
+    } else {
+        # this alert has no custom template - look in addons
+        my $tmpl_file;
+        foreach my $addon (pkg('AddOn')->find()) {
+            foreach my $tmpl_path (catdir(KrangRoot, 'addons', $addon->name, 'templates', 'Alert'),
+                                   catdir(KrangRoot, 'addons', $addon->name, 'templates', 'Alert', $language)) {
+                if (-e catfile($tmpl_path, 'message.tmpl')) {
+                    $tmpl_file = catfile($tmpl_path, 'message.tmpl');
+                }
+            }
+        }
+        if ($tmpl_file) {
+            # we found a template in an addon
+            $template = HTML::Template->new(filename => $tmpl_file, die_on_bad_params => 0);
+        } else {
+            # we'll use the default Krang template
+            $template = HTML::Template->new(path     => [catdir(KrangRoot, 'templates', 'Alert', $language),
+                                                         catdir(KrangRoot, 'templates', 'Alert')],
+                                            filename => 'message.tmpl', die_on_bad_params => 0);
+        }
+    }
 
     $template->param(object_type     => localize($object_type),
                      object_id       => $object_id,
