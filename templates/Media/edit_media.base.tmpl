@@ -205,7 +205,9 @@ Krang.onload( function() {
   <tmpl_var return_params>
   <tmpl_if is_root>
     <input value="<tmpl_lang View Log>" onclick="save_and_view_log()" type="button" class="button">
-    <input value="<tmpl_lang View Schedule>" onclick="save_and_edit_schedule()" type="button" class="button">
+    <tmpl_if may_view_schedule>
+      <input value="<tmpl_lang View Schedule>" onclick="save_and_edit_schedule()" type="button" class="button">
+    </tmpl_if>
   </tmpl_if>
 </p>
 
