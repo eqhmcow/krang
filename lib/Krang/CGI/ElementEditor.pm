@@ -629,7 +629,8 @@ sub find_story_link {
           date_chooser(query=>$query, name=>'publish_to', nochoice=>1);
 
         # Story class
-        my @classes = grep { $_ ne 'category' } 
+        my $media_class = pkg('ElementClass::Media')->element_class_name;
+        my @classes = grep { $_ ne 'category' && $_ ne $media_class } 
           pkg('ElementLibrary')->top_levels;
         my %class_labels = map {
             $_ => localize(pkg('ElementLibrary')->top_level(name => $_)->display_name)
