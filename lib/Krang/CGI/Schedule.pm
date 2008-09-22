@@ -325,7 +325,6 @@ sub list_all {
 sub list_all_row_handler {
     my ($self, $row, $schedule, $pager, $weekdays) = @_;
 
-    $row->{asset} = ucfirst($schedule->object_type) . ' ' . $schedule->object_id;
     $row->{asset} = localize(ucfirst($schedule->object_type)).' '.$schedule->object_id;
 
     my %context = $schedule->context  ? @{$schedule->context} : ();

@@ -1437,12 +1437,16 @@ sub clean_pasted_html {
     return $html;
 }
 
+=over
+
 =item my $html = $self->clean_xinha_whitespace($html);
 
 Strips leading/trailing/excess whitespace/<BR> tags from a block
 of Xinha-created HTML. (This is separate from clean_pasted_html only 
 because the Xinha bulk-edit needs to call this method for each paragraph 
 it processes rather than once for the entire block.)
+
+=back
 
 =cut
 
