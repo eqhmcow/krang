@@ -651,7 +651,7 @@ sub find_story_link {
     # always show only what should be seen
     $find_params{may_see} = 1;
 
-    # exclude this story when editing a story
+    # when editing a story, exclude it from story search
     if ($self->isa('Krang::CGI::Story') and $session{story}->story_id) {
         $find_params{exclude_story_ids} = [ $session{story}->story_id ];
     }
@@ -828,7 +828,7 @@ sub find_media_link {
     # always show only what should be seen
     $find{may_see} = 1;
 
-    # exclude this story when editing a story
+    # when editing a media object, exclude it from media search
     if ($self->isa('Krang::CGI::Media') and $session{media}->media_id) {
         $find{exclude_media_ids} = [ $session{media}->media_id ];
     }
