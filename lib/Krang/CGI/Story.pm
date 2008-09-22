@@ -602,6 +602,7 @@ sub edit {
     # permissions
     my %admin_perms = pkg('Group')->user_admin_permissions();
     $template->param(may_publish => $admin_perms{may_publish});
+    $template->param(may_edit_schedule => $admin_perms{admin_scheduler} || $admin_perms{admin_jobs});
 
     # get desks for checkin selector
     my $last_desk_id = $story->last_desk_id;

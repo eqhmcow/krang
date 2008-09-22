@@ -162,7 +162,9 @@ preview_and_stay = function() {
 
 <tmpl_if is_root><tmpl_if story_id><p class="cram east">
   <input value="<tmpl_lang View Log>" onclick="save_and_view_log()" type="button" class="button">
-  <input value="<tmpl_lang View Schedule>" onclick="save_and_edit_schedule()" type="button" class="button">
+  <tmpl_if may_edit_schedule>
+    <input value="<tmpl_lang View Schedule>" onclick="save_and_edit_schedule()" type="button" class="button">
+  </tmpl_if>
   <input name="returning_from_root" value="1" type="hidden">
 </p></tmpl_if></tmpl_if>
 

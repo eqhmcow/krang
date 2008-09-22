@@ -810,7 +810,7 @@ sub edit {
     # permissions
     my %admin_perms = pkg('Group')->user_admin_permissions();
     $t->param(may_publish       => $admin_perms{may_publish});
-    $t->param(may_view_schedule => $admin_perms{admin_scheduler} || $admin_perms{admin_jobs});
+    $t->param(may_edit_schedule => $admin_perms{admin_scheduler} || $admin_perms{admin_jobs});
 
     # Propagate messages, if we have any
     $t->param(%args) if (%args);
