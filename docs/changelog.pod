@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in krang_upload_templates that sets NO_ELEMENTLIBS to 1 even though it's
+necessary to instantiate the Category element when creating new categories. [Noam Weinstein]
+
+=item *
+
 Added DateTime and Time elements similar to those used for cover_date input. [Dave Kaufman]
 
 =item *
