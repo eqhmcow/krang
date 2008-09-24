@@ -10,8 +10,8 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-Fixed bug in krang_upload_templates that sets NO_ELEMENTLIBS to 1 even though it's
-necessary to instantiate the Category element when creating new categories. [Noam Weinstein]
+Fixed bug in krang_upload_templates and krang_rename_categories that sets NO_ELEMENTLIBS to 1 even 
+though it's necessary to instantiate the Category element when creating new categories. [Noam Weinstein]
 
 =item *
 
