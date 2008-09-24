@@ -18,8 +18,10 @@ sub per_instance {
     print "\n";
 
     # 1. add the 'language' preference
-    unless (my ($language_pref) = $dbh->selectrow_array('SELECT * FROM pref WHERE id = "language"')) {
-        print "Adding 'language' preference to pref table... ";
+    print "Adding 'language' preference to pref table... ";
+    if (my ($language_pref) = $dbh->selectrow_array('SELECT * FROM pref WHERE id = "language"')) {
+        print "already exists (skipping)\n\n";
+    } else {
         $dbh->do('REPLACE INTO pref (id, value) VALUES ("language", "en")');
         print "DONE\n\n";
     }
@@ -27,8 +29,10 @@ sub per_instance {
     # 2. add the new schedule options
     my @schedule_columns = @{$dbh->selectcol_arrayref('SHOW columns FROM schedule')};
     foreach my $new_col ('failure_max_tries', 'failure_delay_sec', 'failure_notify_id', 'success_notify_id') {
-        unless (grep { $_ eq $new_col } @schedule_columns) {
-            print "Adding '$new_col' column to schedule table... ";
+        print "Adding '$new_col' column to schedule table... ";
+        if (grep { $_ eq $new_col } @schedule_columns) {
+            print "already exists (skipping)\n\n";
+        } else {
             $dbh->do("ALTER TABLE schedule ADD $new_col int unsigned");
             print "DONE\n\n";
         }
@@ -39,8 +43,10 @@ sub per_instance {
     my %new_cols = (object_type        => 'varchar(255)', object_id => 'int unsigned',
                     custom_msg_subject => 'varchar(255)', custom_msg_body => 'text');
     foreach my $new_col (keys %new_cols) {
-        unless (grep { $_ eq $new_col } @alert_columns) {
-            print "Adding '$new_col' column to alert table... ";
+        print "Adding '$new_col' column to alert table... ";
+        if (grep { $_ eq $new_col } @alert_columns) {
+            print "already exists (skipping)\n\n";
+        } else {
             $dbh->do("ALTER TABLE alert ADD $new_col ".$new_cols{$new_col}." default NULL");
             print "DONE\n\n";
         }
@@ -48,8 +54,10 @@ sub per_instance {
 
     # 4. add the new alert index
     my $indexes = $dbh->selectall_arrayref('SHOW INDEX FROM alert');
-    unless (grep { $_->[2] eq 'object_type' } @$indexes) {
-        print "Making alerts indexable by object_type/id... ";
+    print "Making alerts indexable by object_type/id... ";
+    if (grep { $_->[2] eq 'object_type' } @$indexes) {
+        print "already done (skipping)\n\n";
+    } else {
         $dbh->do('ALTER TABLE alert ADD INDEX (object_type, object_id)');
         print "DONE\n\n";
     }
