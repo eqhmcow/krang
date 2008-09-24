@@ -91,6 +91,7 @@ sub add_elements_to_media {
         if (my $existing_class = pkg('ElementLibrary')->find_class(name => $class)) {
             if ($existing_class->isa('Krang::ElementClass::Media')) {
                 print "already created (skipping)\n";
+                last;
             } else {
                 print "no (already used)\n";
                 $class .= '_element';
