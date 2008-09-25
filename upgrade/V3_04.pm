@@ -28,26 +28,33 @@ sub per_instance {
     
     # 2. add the new schedule options
     my @schedule_columns = @{$dbh->selectcol_arrayref('SHOW columns FROM schedule')};
-    foreach my $new_col ('failure_max_tries', 'failure_delay_sec', 'failure_notify_id', 'success_notify_id') {
+    my %new_schedule_cols = ('inactive'          => 'bool not null default 0', 
+                             'failure_max_tries' => 'int unsigned', 
+                             'failure_delay_sec' => 'int unsigned',
+                             'failure_notify_id' => 'int unsigned', 
+                             'success_notify_id' => 'int unsigned');
+    foreach my $new_col (keys %new_schedule_cols) {
         print "Adding '$new_col' column to schedule table... ";
         if (grep { $_ eq $new_col } @schedule_columns) {
             print "already exists (skipping)\n\n";
         } else {
-            $dbh->do("ALTER TABLE schedule ADD $new_col int unsigned");
+            $dbh->do("ALTER TABLE schedule ADD $new_col ".$new_schedule_cols{$new_col});
             print "DONE\n\n";
         }
     }
 
     # 3. add the new alert columns
-    my @alert_columns = @{$dbh->selectcol_arrayref('SHOW columns FROM alert')};
-    my %new_cols = (object_type        => 'varchar(255)', object_id => 'int unsigned',
-                    custom_msg_subject => 'varchar(255)', custom_msg_body => 'text');
-    foreach my $new_col (keys %new_cols) {
+    my @alert_columns  = @{$dbh->selectcol_arrayref('SHOW columns FROM alert')};
+    my %new_alert_cols = (object_type        => 'varchar(255)', 
+                          object_id          => 'int unsigned',
+                          custom_msg_subject => 'varchar(255)', 
+                          custom_msg_body    => 'text');
+    foreach my $new_col (keys %new_alert_cols) {
         print "Adding '$new_col' column to alert table... ";
         if (grep { $_ eq $new_col } @alert_columns) {
             print "already exists (skipping)\n\n";
         } else {
-            $dbh->do("ALTER TABLE alert ADD $new_col ".$new_cols{$new_col}." default NULL");
+            $dbh->do("ALTER TABLE alert ADD $new_col ".$new_alert_cols{$new_col});
             print "DONE\n\n";
         }
     }
