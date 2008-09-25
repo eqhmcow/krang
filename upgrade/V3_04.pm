@@ -28,8 +28,7 @@ sub per_instance {
     
     # 2. add the new schedule options
     my @schedule_columns = @{$dbh->selectcol_arrayref('SHOW columns FROM schedule')};
-    my %new_schedule_cols = ('inactive'          => 'bool not null default 0', 
-                             'failure_max_tries' => 'int unsigned', 
+    my %new_schedule_cols = ('failure_max_tries' => 'int unsigned', 
                              'failure_delay_sec' => 'int unsigned',
                              'failure_notify_id' => 'int unsigned', 
                              'success_notify_id' => 'int unsigned');
