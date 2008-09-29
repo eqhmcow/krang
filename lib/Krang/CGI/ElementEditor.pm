@@ -1176,7 +1176,7 @@ sub bulk_save_xinha {
 
             # add new children
             for my $class (@bulk_edit_classes) {
-                if ($tag eq $class->bulk_edit_tag) {
+                if ($tag eq ($class->bulk_edit_tag || 'p')) {
                     $element->add_child(class => $class, data => $data);
                     next PIECE;
                 }
