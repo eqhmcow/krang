@@ -10,9 +10,8 @@
     Krang.Form.submit('edit', { rm: 'save_and_jump', jump_to: p });
   }
 </tmpl_if>
-</script>
 
-<tmpl_if bulk_edit><script type="text/javascript">
+<tmpl_if bulk_edit>
 
 <tmpl_if is_bulk_edit_standard>
   save_and_change_bulk_edit_sep = function() {
@@ -111,11 +110,10 @@
   }
 
   Krang.onload(xinha_init);
-</tmpl_if></script>
+</tmpl_if>
 
-<tmpl_else> <!-- END bulk edit -->
+<tmpl_else>
 
-<script type="text/javascript">
   find_media = function(p) {
     Krang.ElementEditor.run_save_hooks();
     Krang.Form.submit('edit', { rm: 'save_and_find_media_link', jump_to: p });
@@ -185,8 +183,8 @@
       Krang.Form.submit('edit', { rm: 'reorder' }, { to_top: false });
     }
   </tmpl_unless>
-</script>
 </tmpl_if>
+</script>
 
 <input name="path" value="<tmpl_var escape=html path>" type="hidden">
 <input name="jump_to" type="hidden">
