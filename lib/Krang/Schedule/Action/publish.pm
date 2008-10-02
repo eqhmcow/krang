@@ -128,7 +128,8 @@ sub failure_message {
     my ($self, $error) = @_;
     my $object = $self->{object};
     my $type = ($object->isa(pkg('Media')) ? 'Media' : 'Story');
-    return "Krang $type ".$self->{object_id}." was not published due to the error below:\n\n$error";
+    return sprintf("Krang %s %d (%s) was not published due to the error below:\n\n",
+                   $type, $self->{object_id}, $object->url, $error);
 }
 
 sub success_subject {
@@ -142,7 +143,8 @@ sub success_message {
     my $self = shift;
     my $object = $self->{object};
     my $type = ($object->isa(pkg('Media')) ? 'Media' : 'Story');
-    return $type." ".$self->{object_id}." has been successfully published";
+    return sprintf("Krang %s %d (%s) has been successfully published",
+                   $type, $self->{object_id}, $object->url);
 }
 
 =head1 See Also
