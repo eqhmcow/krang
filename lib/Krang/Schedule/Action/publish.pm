@@ -128,7 +128,7 @@ sub failure_message {
     my ($self, $error) = @_;
     my $object = $self->{object};
     my $type = ($object->isa(pkg('Media')) ? 'Media' : 'Story');
-    return sprintf("Krang %s %d (%s) was not published due to the error below:\n\n",
+    return sprintf("Krang %s %d (%s) was not published due to the error below:\n\n%s",
                    $type, $self->{object_id}, $object->url, $error);
 }
 
