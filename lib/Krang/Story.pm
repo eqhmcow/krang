@@ -2933,9 +2933,9 @@ sub untrash {
     my $dbh = dbh();
     $dbh->do(
         'UPDATE story
-              SET trashed = ?
+              SET trashed = 0
               WHERE story_id = ?', undef,
-        0,                         $self->{story_id}
+        $self->{story_id}
     );
 
     # remove from trash

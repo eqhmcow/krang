@@ -17,7 +17,7 @@ use Time::Piece;
 use Time::Piece::MySQL;
 use Mail::Sender;
 use HTML::Template;
-use File::Spec::Functions qw(catdir);
+use File::Spec::Functions qw(catdir catfile);
 
 # constants 
 use constant FIELDS => qw( alert_id user_id action object_type object_id desk_id category_id custom_msg_subject custom_msg_body );
