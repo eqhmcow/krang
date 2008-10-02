@@ -317,7 +317,7 @@ sub _child_work {
                                              __PACKAGE__, $instance, $$, $t->schedule_id(), $err));
                             # since we're giving up, notify user if possible
                             if ($t->failure_notify_id) {
-                                critical("WILL ATTEMPT TO NOTIFY USER ".$t->falure_notify_id." VIA EMAIL");
+                                critical("WILL ATTEMPT TO NOTIFY USER ".$t->failure_notify_id." VIA EMAIL");
                                 _notify_user($t->failure_notify_id, $t->failure_subject($err), $t->failure_message($err));
                             }
                             $t->delete;
