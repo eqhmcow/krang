@@ -323,7 +323,7 @@ sub delete {
     my $q           = $self->query();
     my $template_id = $q->param('template_id');
 
-    eval { pkg('Template')->trash() };
+    eval { pkg('Template')->trash(template_id => $template_id) };
     if ($@) {
         if (ref $@ && $@->isa('Krang::Template::Checkout')) {
             critical("Unable to delete template id '$template_id': $@");
