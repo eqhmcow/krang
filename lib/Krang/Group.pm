@@ -1455,7 +1455,7 @@ sub user_admin_permissions {
     # Now that we have the table of admin_perm access levels, return results
     return $admin_perm_access{$admin_perm} if ($admin_perm);
 
-    # Return whole table if no desk specified
+    # Return whole table if no specific permission specified
     return %admin_perm_access;
 }
 
