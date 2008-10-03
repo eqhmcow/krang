@@ -355,6 +355,16 @@ Schulze]
 Fixed long standing bug where Edit button is present when viewing an
 old Story version. [Bodo Schulze]
 
+=item *
+
+Added copy functionality to Category admin screen. [Bodo Schulze]
+
+=item *
+
+Added Trash and Retired functionality to Story, Media and
+Template. [Bodo Schulze]
+
+
 =back
 
 
