@@ -20,7 +20,9 @@ document.onkeypress = debug_catcher;
 <!--:Krang::Navigation-->
 
 <!-- Attach the trashbin -->
-<div><h2 class="trash"><span><a href="trash.pl" class="nav_link"><tmpl_lang Trash></a></span></div>
+<tmpl_unless hide_trashbin>
+  <div><h2 class="trash"><span><a href="trash.pl" class="nav_link"><tmpl_lang Trash></a></span></div>
+</tmpl_unless>
 
 <script type="text/javascript">
 new Krang.Navigation();
