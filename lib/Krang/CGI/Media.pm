@@ -936,7 +936,7 @@ sub save_stay_edit {
 
 =item delete
 
-Delete the media object specified by CGI form 
+Trashes the media object specified by CGI form 
 parameter 'media_id'.  Redirect user to Workspace.
 
 =cut
@@ -968,7 +968,7 @@ sub delete {
 
 =item delete_selected
 
-Delete the media objects which have been selected (checked)
+Trashes the media objects which have been selected (checked)
 from the find mode list view.  This mode expects selected 
 media objects to be specified in the CGI param 
 'krang_pager_rows_checked'.

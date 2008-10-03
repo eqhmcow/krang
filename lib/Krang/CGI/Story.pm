@@ -1683,8 +1683,7 @@ sub delete_categories {
 
 =item delete
 
-Deletes the story permanently from the database.  Expects a story in
-the session.
+Moves a story into the trash. Expects a story in the session.
 
 =cut
 
@@ -2076,7 +2075,7 @@ sub list_active {
 
 =item delete_selected
 
-Delete all the stories which were checked on the find screen.
+Trash all stories which were checked on the find screen.
 
 =cut
 

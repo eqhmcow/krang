@@ -311,7 +311,7 @@ sub checkout_and_edit {
 
 =item delete
 
-Deletes a template object from the 'Edit' screen.  The user is sent back to the
+Trashes a template object from the 'Edit' screen.  The user is sent back to the
 'search' mode afterwards.
 
 The mode expects the query parameter 'template_id'.
@@ -323,7 +323,7 @@ sub delete {
     my $q           = $self->query();
     my $template_id = $q->param('template_id');
 
-    eval { pkg('Template')->delete($template_id) };
+    eval { pkg('Template')->trash() };
     if ($@) {
         if (ref $@ && $@->isa('Krang::Template::Checkout')) {
             critical("Unable to delete template id '$template_id': $@");
@@ -340,9 +340,9 @@ sub delete {
 
 =item delete_selected
 
-Deletes template objects selected from the 'search' screen and returns to
+Trashes template objects selected from the 'search' screen and returns to
 'search'.  If the object associated with a particular template_id cannot be
-deleted, the user is returned to 'search' screen with an error message.
+trashed, the user is returned to 'search' screen with an error message.
 
 This mode expects the 'krang_pager_rows_checked' query param to contain the ids
 of the objects to be deleted.  If none are passed, the user is returned to
