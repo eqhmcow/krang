@@ -20,7 +20,7 @@
                 <xs:element name="filename" type="xs:string"/>
                 <xs:element name="path" type="xs:string">
                     <xs:annotation>
-                        <xs:documentation>must name a file inside the kds retire</xs:documentation>
+                        <xs:documentation>must name a file inside the kds archive</xs:documentation>
                     </xs:annotation>
                 </xs:element>
                 <xs:element name="category_id" type="xs:int"/>
