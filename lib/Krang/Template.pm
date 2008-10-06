@@ -462,11 +462,11 @@ sub delete {
     # checkout the template
     ($self) = pkg('Template')->find(template_id => $id) unless ref $self;
 
-    # Throw exception unless we have edit access
-    Krang::Template::NoEditAccess->throw(
-        message     => "Not allowed to delete this template",
-        template_id => $id
-    ) unless ($self->may_edit);
+    # Is user allowed to delete objects from the trashbin?
+    Krang::Template::NoDeleteAccess->throw(
+        message  => "Not allowed to delete templates",
+        template_id => $self->template_id
+    ) unless pkg('Group')->user_admin_permissions('admin_delete');
 
     # Check out first
     $self->checkout;

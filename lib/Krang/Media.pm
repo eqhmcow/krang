@@ -1988,11 +1988,11 @@ sub delete {
 
     croak("No media_id specified for delete!") if not $self->{media_id};
 
-    # Is user allowed to otherwise edit this object?
-    Krang::Media::NoEditAccess->throw(
-        message  => "Not allowed to edit media",
-        media_id => $self->{media_id}
-    ) unless ($self->may_edit);
+    # Is user allowed to delete objects from the trashbin?
+    Krang::Media::NoDeleteAccess->throw(
+        message  => "Not allowed to delete media",
+        media_id => $self->media_id
+    ) unless pkg('Group')->user_admin_permissions('admin_delete');
 
     my $dbh  = dbh;
     my $root = KrangRoot;
