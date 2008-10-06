@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item * 
+
+Separated the two perl classes in lib/Krang/FTP/FileHandle.pm into their own 
+files so that either can be more easily suclassed in an addon, without having to 
+override all the code in both unnecessarily [David Kaufman]
+
 =item *
 
 Fixed bug in krang_upload_templates and krang_rename_categories that sets NO_ELEMENTLIBS to 1 even 
@@ -15,12 +21,12 @@ though it's necessary to instantiate the Category element when creating new cate
 
 =item *
 
-Added DateTime and Time elements similar to those used for cover_date input. [Dave Kaufman]
+Added DateTime and Time elements similar to those used for cover_date input. [David Kaufman]
 
 =item *
 
 Replaced package constants, global and lexical variables in Krang::User with methods that 
-can be subclassed. [Dave Kaufman]
+can be subclassed. [David Kaufman]
 
 =item *
 
