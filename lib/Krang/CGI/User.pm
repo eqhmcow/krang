@@ -623,7 +623,7 @@ sub get_user_params {
     # only show groups we are allowed to manage
     my %find_params = ();
     if (pkg('Group')->user_admin_permissions('admin_users_limited')) {
-           $find_params{group_ids} = [ pkg('User')->current_user_group_ids ];
+       $find_params{group_ids} = [ pkg('User')->current_user_group_ids ];
     }
 
     # build hash of Krang::Group permission groups...
