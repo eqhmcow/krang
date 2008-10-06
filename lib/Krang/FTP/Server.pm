@@ -112,7 +112,7 @@ sub pre_configuration_hook {
   my $self = shift;
 
   # add to version info
-  $self->{version_string} .= " pkg('FTP::Server')";
+  $self->{version_string} .= ' - ' . __PACKAGE__;
   
 }
 
