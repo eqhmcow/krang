@@ -22,7 +22,7 @@ Krang::Upgrade - superclass for Krang upgrade modules
 
 =head1 SYNOPSIS
 
-  use base 'Krang::Upgrade';
+  use Krang::ClassLoader base => 'Upgrade';
 
 
 =head1 DESCRIPTION
@@ -39,7 +39,7 @@ To use this module, there are three things you have to do:
 
 =over 4
 
-=item use base 'Krang::Upgrade';
+=item use Krang::ClassLoader base => 'Upgrade';
 
 This causes your upgrade module (e.g., "V1_23.pm") to inherit
 certain basic functionality.  Specifically, an C<upgrade()>

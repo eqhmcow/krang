@@ -17,7 +17,7 @@ Krang::ElementClass::TopLevel - base class for top-level element classes
 =head1 SYNOPSIS
 
   package ElementSet::article;
-  use base 'Krang::ElementClass::TopLevel';
+  use Krang::ClassLoader base => 'ElementClass::TopLevel'; 
 
   # override new() to setup element class parameters
   sub new { 

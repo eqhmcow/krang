@@ -39,7 +39,7 @@ Krang::ElementClass - base class for Krang element classes
 =head1 SYNOPSIS
 
   package ElementSet::element_name;
-  use base 'Krang::ElementClass';
+  use Krang::ClassLoader base => 'ElementClass';
 
   # override new() to setup element class parameters
   sub new { 

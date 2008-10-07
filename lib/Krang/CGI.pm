@@ -24,7 +24,7 @@ Krang::CGI - Krang base class for CGI modules
 =head1 SYNOPSIS
 
   package Krang::CGI::SomeSuch;
-  use base 'Krang::CGI';
+  use Krang::ClassLoader base => 'CGI';
 
   sub setup {
     my $self = shift;

@@ -39,7 +39,7 @@ Krang::ElementClass::Storable - parent class for elements with complex data
 
 =head1 SYNOPSIS
 
-  use base 'Krang::ElementClass::Storable';
+  use Krang::ClassLoader base => 'ElementClass::Storable';
 
 =head1 DESCRIPTION
 

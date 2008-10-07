@@ -20,7 +20,7 @@ Krang::ElementClass::Cover - cover element base class
 =head1 SYNOPSIS
 
   package my::Cover;
-  use base 'Krang::ElementClass::Cover';
+  use Krang::ClassLoader base => 'ElementClass::Cover';
 
 =head1 DESCRIPTION
 
