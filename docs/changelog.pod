@@ -10,6 +10,17 @@ This document contains a list of changes for each release of Krang.
 
 =item * 
 
+Removed Image-Info-1.15.tar.gz from src/ and replaced it with 
+Image-Size-3.1.1.tar.gz to fix bugs in Krang::Media's width() and height() 
+methods in which, for certain valid JPEG images, these methods returned undef 
+(and for others, retunred an arraref!)  According to its own POD docs, 
+Image::Info is "deprecated, and should not be used", "has numerous bugs", is 
+only minimally maintained, and recommends the use of Image::Size to replace 
+these functions.  Krang now appears to return correct width and height vaules 
+for all JPEG's tested. [David Kaufman]
+
+=item * 
+
 Separated the two perl classes in lib/Krang/FTP/FileHandle.pm into their own 
 files so that either can be more easily suclassed in an addon, without having to 
 override all the code in both unnecessarily [David Kaufman]
