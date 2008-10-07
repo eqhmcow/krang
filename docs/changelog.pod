@@ -13,16 +13,16 @@ This document contains a list of changes for each release of Krang.
 Removed Image-Info-1.15.tar.gz from src/ and replaced it with 
 Image-Size-3.1.1.tar.gz to fix bugs in Krang::Media's width() and height() 
 methods in which, for certain valid JPEG images, these methods returned undef 
-(and for others, retunred an arraref!)  According to its own POD docs, 
+(and for others, returned an arrayref!)  According to its own POD docs, 
 Image::Info is "deprecated, and should not be used", "has numerous bugs", is 
 only minimally maintained, and recommends the use of Image::Size to replace 
-these functions.  Krang now appears to return correct width and height vaules 
+these functions.  Krang now appears to return correct width and height values 
 for all JPEG's tested. [David Kaufman]
 
 =item * 
 
 Separated the two perl classes in lib/Krang/FTP/FileHandle.pm into their own 
-files so that either can be more easily suclassed in an addon, without having to 
+files so that either can be more easily subclassed in an addon, without having to 
 override all the code in both unnecessarily [David Kaufman]
 
 =item *
@@ -298,7 +298,7 @@ better handling of UTF8. [Michael Peters]
 
 =item * 
 
-Added new Image Transformation UI to allow basic image editting 
+Added new Image Transformation UI to allow basic image editing 
 (scaling, rotating and flipping). [Michael Peters]
 
 =item *
@@ -743,7 +743,7 @@ warnings when trying to get an empty publish context. [Bodo Schulze]
 
 =item *
 
-Added C<test_categorylink()> to F<t/publish.t> (implicitely tests
+Added C<test_categorylink()> to F<t/publish.t> (implicitly tests
 C<Krang::URL::real_url()>). [Bodo Schulze]
 
 =item *
@@ -848,7 +848,7 @@ to 'Current Version'. [Bodo Schulze]
 =item *
 
 Backport to trunk of Michael Peters' Ajax branch revision 3699,
-removing warning in C<view()> of L<Krang::CGI::Story> occuring when story
+removing warning in C<view()> of L<Krang::CGI::Story> occurring when story
 version is C<undef>. [Bodo Schulze]
 
 =item *
@@ -971,7 +971,7 @@ searched caused an ISE when returning to the advanced search.  [Sam]
 =item *
 
 Fixed bug where use of URL search on Find Template would result in
-incorrect substituition of % for non-alphanumeric characters. [Sam]
+incorrect substitution of % for non-alphanumeric characters. [Sam]
 
 =item *
 
@@ -990,7 +990,7 @@ Fixed media bulk upload to ignore MacOSX fluff in upload archives
 
 =item *
 
-Fixed bug in New Template where it was imposible to clear the category
+Fixed bug in New Template where it was impossible to clear the category
 selector after making a selection and clicking Save.  [Sam]
 
 =item *
@@ -1077,9 +1077,9 @@ extend Krang::DataSet and include new objects in KDS files.  [Sam]
 
 =item *
 
-Implemented a system of univerally-unique identfiers (UUIDs) for Krang
+Implemented a system of universally-unique identifiers (UUIDs) for Krang
 objects with keys that may change (ex. stories may change their URL).
-This allows updates between machines to propogate these changes
+This allows updates between machines to propagate these changes
 correctly when objects are moved with krang_export and krang_import.
 [Sam]
 
@@ -1404,7 +1404,7 @@ compliant. [Bodo Schulze]
 
 =item * 
 
-Added enforcement of permissions at the application and run-mode leve
+Added enforcement of permissions at the application and run-mode level
 rather than just at the UI level. [Michael Peters]
 
 =item *
@@ -1518,7 +1518,7 @@ Added checkbox to groups manager to allow "admin_lists" to be set.  [Jesse Erlba
 
 =item *
 
-Fixed Kang::Navigation bug where Desks were not being displayed in proper order.
+Fixed Krang::Navigation bug where Desks were not being displayed in proper order.
 [Aaron Dancygier]
 
 =item *
@@ -1529,7 +1529,7 @@ from the UI.
 
 =item *
 
-Fixed ISE when viewing media files from the Scheduler UE.
+Fixed ISE when viewing media files from the Scheduler UI.
 [Michael Peters]
 
 =back
@@ -1572,7 +1572,7 @@ was converting db_version to float, instead of as just a string. [Aaron Dancygie
 
 Removed previous patch (v1.22) to bin/krang_upgrade.  Patch checked an upgrade 
 directory in each addon directory for upgrade scripts to run. This is already 
-supported in bin/krang_addon_installer.  In effect everytime you upgraded krang 
+supported in bin/krang_addon_installer.  In effect every time you upgraded krang 
 it would re-apply addon upgrade scripts. [Aaron Dancygier]
 
 =back
@@ -1608,7 +1608,7 @@ content. [Sam]
 
 Fixed a flaw in Krang::Handler that allowed access to any file via the
 root handler.  Now only image files and the two Krang CSS files are
-accessable without logging-in. [Sam]
+accessible without logging-in. [Sam]
 
 =item *
 
@@ -1776,7 +1776,7 @@ implements an execute() method. [Aaron Dancygier]
 
 =item *
 
-Added conditonal Scheduler link in left nav bar under admin section 
+Added conditional Scheduler link in left nav bar under admin section 
 This is for non story or media related administrative scheduler addons.
 Link points to new admin scheduler screen.
 Allows you to use scheduler addons in place of external scripts run
@@ -1860,7 +1860,7 @@ installed with the old system.)
 =item * Add-ons may register new links in the left-navigation area.
 
 =item * Add-ons may selectively override core Krang classes via
-inheritence and the use of the C<conf/class.conf> configuration file.
+inheritance and the use of the C<conf/class.conf> configuration file.
 
 =item * Add-ons may include SQL source for new tables which will be
 included in the databases built by C<krang_createdb>.
@@ -1953,8 +1953,8 @@ ES3 and ES4. [Jesse Erlbaum]
 =item *
 
 Added a new Krang::ElementClass method, mark_form_invalid().  This
-method may be overriden to alter how Krang marks element form fields
-invalid.  The default behvior, wrapping the field in a span set to the
+method may be overridden to alter how Krang marks element form fields
+invalid.  The default behavior, wrapping the field in a span set to the
 "invalid" class remains. [Sam]
 
 =item *
@@ -2150,7 +2150,7 @@ Upgraded DBD-mysql to 2.9004.  [Peter]
 =item *
 
 Bugfix to L<Krang::Dataset> - now xml files are validated based on
-thier apperance in the index.xml file, as opposed to using File::Find
+their appearance in the index.xml file, as opposed to using File::Find
 in the xml dir. [Matt]
 
 =item *
@@ -2768,7 +2768,7 @@ when the default() method is called and not when new() is called.
 
 =item *
 
-Made Krang::Sotry::find(published=>1) work with stories that had a published 
+Made Krang::Story::find(published=>1) work with stories that had a published 
 version of 1/0 instead of NOT NULL / NULL.
 
 =item *
@@ -2782,7 +2782,7 @@ Added a workaround for a very strange seg-fault bug.  [Sam]
 
 =item *
 
-Fixed bug where aftrer upgrading to v1.018 old users don't show up in
+Fixed bug where after upgrading to v1.018 old users don't show up in
 the User Admin list screen. [Sam]
 
 =item *
@@ -2811,7 +2811,7 @@ properly.  Media objects are now marked properly when previewed. [Peter]
 
 =item *
 
-Replaced Archive::Tar in Krag::DataSet->new with the system 'tar' for a 50x 
+Replaced Archive::Tar in Krang::DataSet->new with the system 'tar' for a 50x 
 speedup in untaring. [Rudy]
 
 =item *
@@ -2836,7 +2836,7 @@ and Active list screens. [Sam]
 
 =item *
 
-Fixed a bug in Krang::Group which caused root-category permisssions to
+Fixed a bug in Krang::Group which caused root-category permissions to
 be randomized during rebuild_category_cache().  [Sam]
 
 =item *
@@ -3101,7 +3101,7 @@ ball and run with it.  [Peter]
 =item *
 
 Fixed site editor to check that URLs don't have paths attached to them
-and that paths are obsolute. [Sam]
+and that paths are absolute. [Sam]
 
 =item *
 
@@ -3151,7 +3151,7 @@ This can now be overridden on a platform-by-platform basis. [Peter]
 =item *
 
 Created Krang::Platform->find_bin().  Use of this sub now needs to be
-propegated throughout krang_install along with Krang::Platform and its
+propagated throughout krang_install along with Krang::Platform and its
 derivatives - it searches $PATH for the full path for the executable
 you're trying to run. [Peter]
 
@@ -3213,7 +3213,7 @@ Updated porting.pod with steps that might really work. [Sam]
 
 =item *
 
-Fixed a bug where an error occuring during preview triggered a
+Fixed a bug where an error occurring during preview triggered a
 Krang::Cache error which corrupted the display. [Sam]
 
 =item *
