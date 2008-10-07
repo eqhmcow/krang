@@ -9,14 +9,37 @@ use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Log => qw(debug info critical);
 use Time::Piece;
 
-#use Krang::ClassLoader DB => qw(dbh);
-#use Krang::ClassLoader 'Conf';
-#use Net::FTPServer::FileHandle;
-#use Krang::ClassLoader 'FTP::DirHandle';
-#use IO::Scalar;
-#use IO::File;
-#use Time::Piece::MySQL;
+=head1 NAME
+    
+Krang::FTP::FileHandle::Handle - IO::Handle class for Krang::FTP::FileHandle
 
+=head1 SYNOPSIS
+
+See usage in Krang::FTP::FileHandle
+
+=head1 DESCRIPTION
+
+This class provides a filehandle interface to a media/template object, is based 
+on IO::Handle and is used interbnally by L<Krang::FTP::FileHandle>.
+
+=head1 INTERFACE
+
+Overrides IO::Handle methods syswrite and close().
+
+Takes a media/template object and type as arguments.
+
+
+=head2 METHODS
+
+=over
+
+=item Krang::FTP::FileHandle::Handle->new($object, $type)
+
+Creates a new Krang::FTP::FileHandle::Handle object.  Takes 4 required 
+arguments: the Krang::Media or Krang::Template object, and the $type ("media" 
+or "template") of the represented object.
+
+=cut
 
 sub new {
     my $class = shift;
@@ -92,6 +115,8 @@ Net:FTPServer::FileHandle
 L<Krang::FTP::Server>
 
 L<Krang::FTP::DirHandle>
+
+L<Krang::FTP::FileHandle>
 
 =cut
 

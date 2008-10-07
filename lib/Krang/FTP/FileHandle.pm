@@ -241,6 +241,18 @@ sub can_write  {
 
 =back
 
+=head1 SEE ALSO
+
+Net:FTPServer::FileHandle
+
+L<Krang::FTP::Server>
+
+L<Krang::FTP::DirHandle>
+
+L<Krang::FTP::FileHandle::Handle>
+
+=cut
+
 =cut
 
 1;
