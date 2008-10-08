@@ -295,6 +295,16 @@ sub access_handler ($$) {
         safari    => 1.3,
         konqueror => 1,
     );
+
+    my %engine_of = (
+        netscape  => 'Gecko',
+        mozilla   => 'Gecko',
+        firefox   => 'Gecko',
+        ie        => 'IE',
+        safari    => 'WebKit',
+        konqueror => 'WebKit',
+    );
+
     my $bd = HTTP::BrowserDetect->new($r->header_in('User-Agent'));
     foreach my $browser (keys %allow_browsers) {
         if( $bd->$browser ) {
@@ -306,6 +316,7 @@ sub access_handler ($$) {
                 or
                 ( $bd->major == $major && $bd->minor >= $minor )
             ) {
+                $r->cgi_env("KRANG_BROWSER_ENGINE" => $engine_of{$browser});
                 return OK;
             }
         }
