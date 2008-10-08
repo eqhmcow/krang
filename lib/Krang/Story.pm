@@ -2229,7 +2229,7 @@ sub delete {
     }
     $self->checkout;
 
-    # Is user allowed to otherwise edit this object?
+    # Is user allowed to delete objects from the trashbin?
     Krang::Story::NoDeleteAccess->throw(
         message  => "Not allowed to delete story",
         story_id => $self->story_id
