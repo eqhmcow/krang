@@ -126,9 +126,10 @@ existing stories or categories.  Defaults to 0.
 
 =item bulk_edit
 
-If set to 1 or the string 'standard' then this element will be
+If set to 1 or to the string 'textarea' then this element will be
 available for bulk_editing in one big textarea.  Classes marked for
-bulk editing must not have a max value set.
+bulk editing must not have a max value set. See
+L<Krang::BulkEdit::Textarea>.
 
 If set to 'xinha', the textarea will be replaced with a Xinha
 editor. See also 'bulk_edit_tag'.
@@ -141,10 +142,22 @@ the 'bulk_edit_tag' to identify the data's elementclass.
 
 =item bulk_edit_tag
 
-If 'bulk_edit' is set to 'xinha', this attribute might be set to the
-HTML header tags 'h1' .. 'h6' or to the paragraph tag 'p'.  Besides of
-formatting the element's data when displayed in Xinha, this tag marks
-the data as belonging to its elementclass.
+If 'bulk_edit' is set to 'xinha', this attribute might be set to any
+B<allowed> block-level HTMLElement, including
+
+  p, ul, ol, h1, h2, h3, h4, h5, h6, hr, table, address, blockquote pre
+
+For a discussion of what is B<allowed> see the documentation for the
+class method C<html_scrubber> in L<Krang::BulkEdit::Xinha::Config>.
+
+Besides of formatting the element's data when displayed in Xinha, this
+tag marks the data as belonging to its elementclass. Block elements
+that do not have their own elementclass will be put in an elementclass
+having the bulk_edit_tag 'p'. If no such class exists, a class having
+its 'name' attribute set to 'paragraph' will be used. If none is
+found, Krang croaks.
+
+See L<Krang::BulkEdit::Xinha>.
 
 =item required
 
@@ -323,8 +336,8 @@ sub param_names { $_[2]->xpath(); }
 =item C<< @data = $class->bulk_edit_data(element => $element) >>
 
 Return an array of text blocks suitable for bulk editing.  This method
-must work for all classes that set bulk_edit to 1.  The default
-implementation just returns $element->data.
+must work for all classes that set bulk_edit to 1 or to 'textarea'.
+The default implementation just returns $element->data.
 
 =cut
 
