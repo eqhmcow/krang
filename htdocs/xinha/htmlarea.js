@@ -687,6 +687,7 @@ HTMLArea.prototype._createToolbar1 = function (editor, toolbar, tb_objects) {
     if (options) {
       el = document.createElement("select");
       el.title = tooltip;
+      el.name = 'formatblock';
       var obj = {
         name	: txt, // field name
         element : el,	// the UI element (SELECT)
@@ -3868,8 +3869,8 @@ HTMLArea.checkSupportedBrowser = function() {
       return false;
     }
     if (navigator.productSub < 20030210) {
-      alert("Mozilla < 1.3 Beta is not supported!\n" +
-            "I'll try, though, but it might not work.");
+//      alert("Mozilla < 1.3 Beta is not supported!\n" +
+//            "I'll try, though, but it might not work.");
     }
   }
   return HTMLArea.is_gecko || HTMLArea.is_ie;
