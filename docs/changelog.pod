@@ -8,50 +8,93 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Refactored bulk edit in its own classes.  The legacy textarea-based
+bulk editing is in L<Krang::BulkEdit::Textarea>.  Xinha-based bulk
+editing is provided by L<Krang::BulkEdit::Xinha>. This module largely
+use parsing instead of regexes to sanitize/scrub the HTML coming from
+Xinha. Xinha's toolbar and the set of allowed block-level is
+configurable via subclassing L<Krang::BulkEdit::Xinha::Config>.  This
+module also allows to configure whether paragraphs should be split on
+BR tags. [Bodo Schulze]
+
+=item *
+
+Pass the browser engine name to the environment via
+KRANG_BROWSER_ENGINE. This enables clients to dispatch to
+Krang::Markup::SomeBrowserEngine methods. [Bodo Schulze]
+
+=item *
+
+Added modules to filter incoming/outgoing HTML markup according to
+what different browser engines' markup commands can handle in WYSIWYG
+areas.  The base class L<Krang::Markup> is subclassed by
+L<Krang::Markup::Gecko>, L<Krang::Markup::IE> and
+L<Krang::Markup::WebKit>. [Bodo Schulze]
+
+=item *
+
+Upgraded L<HTML::Parser> to version 3.56. [Bodo Schulze]
+
 =item * 
 
-Removed Image-Info-1.15.tar.gz from src/ and replaced it with 
-Image-Size-3.1.1.tar.gz to fix bugs in Krang::Media's width() and height() 
-methods in which, for certain valid JPEG images, these methods returned undef 
-(and for others, returned an arrayref!)  According to its own POD docs, 
-Image::Info is "deprecated, and should not be used", "has numerous bugs", is 
-only minimally maintained, and recommends the use of Image::Size to replace 
-these functions.  Krang now appears to return correct width and height values 
-for all JPEG's tested. [David Kaufman]
+Removed Image-Info-1.15.tar.gz from src/ and replaced it with
+Image-Size-3.1.1.tar.gz to fix bugs in L<Krang::Media>'s width() and
+height() methods in which, for certain valid JPEG images, these
+methods returned undef (and for others, returned an arrayref!)
+According to its own POD docs, L<Image::Info> is "deprecated, and
+should not be used", "has numerous bugs", is only minimally
+maintained, and recommends the use of L<Image::Size> to replace these
+functions.  Krang now appears to return correct width and height
+values for all JPEG's tested. [David Kaufman]
 
 =item * 
 
-Separated the two perl classes in lib/Krang/FTP/FileHandle.pm into their own 
-files so that either can be more easily subclassed in an addon, without having to 
-override all the code in both unnecessarily [David Kaufman]
+Separated the two perl classes in lib/Krang/FTP/FileHandle.pm into
+their own files so that either can be more easily subclassed in an
+addon, without having to override all the code in both unnecessarily
+[David Kaufman]
 
 =item *
 
-Fixed bug in krang_upload_templates and krang_rename_categories that sets NO_ELEMENTLIBS to 1 even 
-though it's necessary to instantiate the Category element when creating new categories. [Noam Weinstein]
+Corresponding to the behavior of L<Krang::Story>'s delete(), made Made
+L<Krang::Media>'s delete() and L<Krang::Template>'s delete() throw a
+Krang::*::NoDeleteAccess exception if the user has no admin_delete
+permission. [Bodo Schulze]
 
 =item *
 
-Added DateTime and Time elements similar to those used for cover_date input. [David Kaufman]
+Fixed bug in krang_upload_templates and krang_rename_categories that
+sets NO_ELEMENTLIBS to 1 even though it's necessary to instantiate the
+Category element when creating new categories. [Noam Weinstein]
 
 =item *
 
-Replaced package constants, global and lexical variables in Krang::User with methods that 
-can be subclassed. [David Kaufman]
+Added DateTime and Time elements similar to those used for cover_date
+input. [David Kaufman]
 
 =item *
 
-Gave the scheduler the ability to email users after succeeding with or giving up on a job. [Noam Weinstein]
+Replaced package constants, global and lexical variables in
+L<Krang::User> with methods that can be subclassed. [David Kaufman]
 
 =item *
 
-Made schedule failure more configurable on the API level, adding the ability to specify how many times 
-a particular job is attempted and how long the daemon waits between attempts. [Noam Weinstein]
+Gave the scheduler the ability to email users after succeeding with or
+giving up on a job. [Noam Weinstein]
 
 =item *
 
-Added ability to create object-specific alerts that are triggered only for particular story
-or media objects. Enhanced MyAlerts UI to allow users to control these. [Noam Weinstein]
+Made schedule failure more configurable on the API level, adding the
+ability to specify how many times a particular job is attempted and
+how long the daemon waits between attempts. [Noam Weinstein]
+
+=item *
+
+Added ability to create object-specific alerts that are triggered only
+for particular story or media objects. Enhanced MyAlerts UI to allow
+users to control these. [Noam Weinstein]
 
 =item *
 
@@ -104,14 +147,15 @@ object. [Noam Weinstein]
 
 On all Find screens, enable/disable the (green) list buttons according
 to the checked status of the list's row checkboxes.  Also
-enable/disable the element editor's Delete button according to
-the elements' delete checkbox status. [Bodo Schulze]
+enable/disable the element editor's Delete button according to the
+elements' delete checkbox status. [Bodo Schulze]
 
 =item *
 
-Made 'Revert' button for the edit screens of Stories, Media, and Templates 
-write to disk (after error-checking), added text clarifying what the new
-version number means, updated related tests and docs. [Noam Weinstein]
+Made 'Revert' button for the edit screens of Stories, Media, and
+Templates write to disk (after error-checking), added text clarifying
+what the new version number means, updated related tests and
+docs. [Noam Weinstein]
 
 =item *
 
@@ -131,13 +175,14 @@ screens. [Bodo Schulze]
 
 Make and remove symlinks (for now only calendar and help files) when
 (un-)installing language distributions. Remove localized templates
-when uninstalling a language dist. Also passed Krang::Localization
+when uninstalling a language dist. Also passed L<Krang::Localization>
 through perltidy. [Bodo Schulze]
 
 =item * 
 
-Added 'force-checkin' option to krang_upload_templates and krang_upload_media.
-(In the past objects checked out to other users were skipped). [Noam Weinstein]
+Added 'force-checkin' option to krang_upload_templates and
+krang_upload_media.  (In the past objects checked out to other users
+were skipped). [Noam Weinstein]
 
 =item *
 
@@ -168,7 +213,7 @@ help systems. [Bodo Schulze]
 Added C<t/dict/words.ascii> (to generate filenames and the like) and
 C<t/dict/words.latin1>, a mixture of English, French, German, Italian,
 Portuguese and Spanish words for content generation.  Also made all
-tests use Krang::Test::Content's get_word() method to generate UTF-8
+tests use L<Krang::Test::Content>'s get_word() method to generate UTF-8
 content if the Charset directive says so.
 
 =item *
@@ -239,7 +284,7 @@ a single template per top-level story type. [Noam Weinstein]
 
 =item *
 
-Added C<forget_all_dbhs()> method to C<Krang::DB> to help in the situation
+Added C<forget_all_dbhs()> method to L<Krang::DB> to help in the situation
 where you fork a process and don't want the child to use the parent's handles.
 [Michael Peters] 
 
@@ -285,7 +330,7 @@ Fixed some minor bugs with the new Image Transformation. [Michael Peters]
 
 =item *
 
-Upgraded our JSON modules to use the latest JSON::XS. This gives us speed and
+Upgraded our JSON modules to use the latest L<JSON::XS>. This gives us speed and
 better handling of UTF8. [Michael Peters]
 
 =back
@@ -303,7 +348,7 @@ Added new Image Transformation UI to allow basic image editing
 
 =item *
 
-Added API to Krang::HTMLPager to make it possible to control the
+Added API to L<Krang::HTMLPager> to make it possible to control the
 display of columns and/or list controls from within row
 handlers. [Bodo Schulze]
 
@@ -342,7 +387,7 @@ Add Fedora 8 as a platform for building. [Michael Peters]
 
 =item *
 
-Added C<Krang::Schedule::Action::archive> to allow scheduled archiving
+Added L<Krang::Schedule::Action::archive> to allow scheduled archiving
 of stories and media. [Bodo Schulze]
 
 =item *
@@ -363,7 +408,7 @@ to Site's Edit & View screens. [Noam Weinstein]
 =item *
 
 Fixed bug #32 along with a related bug in
-C<Krang::Publisher->unpublish_story()> where after deleting a story
+L<Krang::Publisher>->unpublish_story()> where after deleting a story
 its preview path would not be deleted even if it is empty. [Bodo
 Schulze]
 
@@ -435,7 +480,7 @@ the oldest ones. [Noam Weinstein]
 
 =item *
 
-In Krang::ElementClass::XinhaEditor fixed caching of
+In L<Krang::ElementClass::XinhaEditor> fixed caching of
 htmlarea.js. [Bodo Schulze]
 
 =item *
@@ -461,7 +506,7 @@ are any table rows. [Bodo Schulze]
 
 =item *
 
-Fixed JS function name in Krang::ElementClass::MediaLink. [Bodo
+Fixed JS function name in L<Krang::ElementClass::MediaLink>. [Bodo
 Schulze]
 
 =item *
@@ -470,7 +515,7 @@ Fixed a bug when trying to import/export UTF-8 data. [Michael Peters]
 
 =item *
 
-Added inheritable/overridable methods to Krang::Handler, login_uri()
+Added inheritable/overridable methods to L<Krang::Handler>, login_uri()
 and unprotected_uri().  [Jesse Erlbaum]
 
 =item *
@@ -545,7 +590,7 @@ and midnight hour was misunderstood during conversion. [Noam Weinstein]
 
 =item *
 
-Made C<Krang::ElementClass::XinhaEditor> work again. [Bodo Schulze]
+Made L<Krang::ElementClass::XinhaEditor> work again. [Bodo Schulze]
 
 =item *
 
