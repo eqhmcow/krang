@@ -79,11 +79,16 @@ required parameters.  When it returns the template will contain all
 necessary parameters to display the element editor.
 
 This method will show the bulk edit interface if the CGI param
-'bulk_edit' is set true.
+'bulk_edit' is set.
 
 The bulk edit screen's standard edit area is a big textarea
 field. This is triggered by setting an elementclasse's 'bulk_edit'
-property to the legacy value '1' or to 'standard'.
+property to the legacy value '1' or better to 'textarea'. See
+<Krang::BulkEdit::Textarea>.
+
+Another possibility is to use the Xinha editor for bulk editing. Set
+the elementclass's 'bulk_edit' property to 'xinha' if you wish this
+behavior. See L<Krang::BulkEdit::Xinha>
 
 =item $self->element_view(template => $template, element  => $element)
 
@@ -171,6 +176,8 @@ use Krang::ClassLoader Log => qw(debug assert affirm ASSERT);
 use Krang::ClassLoader Message => qw(add_message get_messages add_alert);
 use Krang::ClassLoader Widget => qw(category_chooser date_chooser decode_date);
 use Krang::ClassLoader Localization => qw(localize);
+use Krang::ClassLoader 'BulkEdit::Textarea';
+use Krang::ClassLoader 'BulkEdit::Xinha';
 
 use File::Spec::Functions qw(catdir);
 
@@ -353,9 +360,9 @@ sub element_edit {
     if (@bulk_edit) {
         my @values  = map { $_->name } @bulk_edit;
         my %labels  = map { ($_->name, localize($_->display_name)) } @bulk_edit;
-        my @global  = grep { $_->bulk_edit ne '1' and $_->bulk_edit ne 'standard' } @bulk_edit;
+        my @global  = grep { $_->bulk_edit ne '1' and $_->bulk_edit ne 'textarea' } @bulk_edit;
         if (scalar(@global) > 1) {
-            my $global = join('__!__', map { $_->name } @global);
+            my $global = join($self->concat_string, map { $_->name } @global);
             push @values, $global;
             $labels{$global} = localize('All WYSIWYG Elements');
         }
@@ -385,140 +392,26 @@ sub element_bulk_edit {
     # find the element being edited using path
     my $element = $self->_find_element($root, $path);
 
-    # bulk_edit: standard bulk edit or wysiwyg-based?
-    my @names = split(/__!__/, $query->param('bulk_edit_child'));
+    # bulk_edit: in textarea or WYSIWYG editor
+    my $at_boundary = "\\". $self->concat_string();
+    my @names = split(/$at_boundary/, $query->param('bulk_edit_child'));
     my $bulk_edit = $element->class->child($names[0])->bulk_edit;
-    $bulk_edit = 'standard' if $bulk_edit == 1;
+    $bulk_edit = 'textarea' if $bulk_edit eq '1';
 
     # pass the bulk_edit type around
     $template->param(bulk_edit => $bulk_edit,
                      "is_bulk_edit_$bulk_edit" => 1);
 
-    # and dispatch to type-specific edit method
-    $self->bulk_edit_dispatch(
-        bulk_edit      => $bulk_edit,
-        element        => $element,
-        template       => $template,
-        element_names  => \@names,
+    # dispatch to bulk edit class
+    pkg("BulkEdit::".ucfirst($bulk_edit))->edit(
+        element_editor  => $self,
+        element         => $element,
+        child_names     => \@names,
+        template        => $template,
     );
+
+    return 1;
 }
-
-#
-# Dispatcher for various bulk edit types:
-# 'standard' : the legacy behavior using one big textarea field
-# 'xinha'    : using the Xinha editor
-#
-sub bulk_edit_dispatch {
-    my ($self, %args) = @_;
-
-    $args{bulk_edit} eq 'standard' and $self->bulk_edit_standard(%args);
-    $args{bulk_edit} eq 'xinha'    and $self->bulk_edit_xinha(%args);
-}
-
-#
-# This method is the workhorse for the legacy 'standard' bulk edit
-#
-sub bulk_edit_standard {
-    my ($self, %args) = @_;
-    my $query    = $self->query();
-    my $template = $args{template};
-    my $element  = $args{element};
-
-    # get list of existing elements to be bulk edited
-    my $name = $query->param('bulk_edit_child');
-
-    my @children = grep { $_->name eq $name } $element->children;
-
-    my $sep = $query->param('bulk_edit_sep');
-    $sep = (defined $sep and length $sep) ? $sep : "__TWO_NEWLINE__";
-
-    $template->param(bulk_edit_sep_selector => scalar
-                     $query->radio_group(-name     => 'new_bulk_edit_sep',
-                                         -values   => [ "__TWO_NEWLINE__",
-                                                      "<p>",
-                                                      "<br>" ],
-                                         -labels   => { "__TWO_NEWLINE__" =>
-                                                      localize("One Blank Line") },
-                                         -default  => $sep,
-                                         -override => 1,
-                                         -class    => 'radio',
-                                        ),
-                     bulk_edit_sep => $sep);
-
-    $template->param(bulk_data => join(($sep eq "__TWO_NEWLINE__" ? 
-                                        "\n\n" : "\n" . $sep . "\n"), 
-                                       grep { defined } 
-                                       map { $_->bulk_edit_data } @children),
-                     bulk_edit_word_count => 1);
-
-    # crumbs let the user jump up the tree
-    my @crumbs = $self->_make_crumbs(element => $element);
-    push @crumbs, { name => localize($element->class->child($name)->display_name) };
-    $template->param(crumbs => \@crumbs) unless @crumbs == 1;
-
-    # Done button label
-    $template->param(bulk_done_with_this_element => localize('Done Bulk Editing '.$element->class->child($name)->display_name));
-}
-
-sub bulk_edit_xinha {
-    my ($self, %args) = @_;
-    my $query = $self->query();
-    my $template = $args{template};
-    my $path    = $query->param('path') || '/';
-
-    # find the root element, loading from the session or the DB
-    my $root = $args{element};
-    croak("Unable to load element from session.") 
-      unless defined $root;
-
-    # find the child elements being edited using path
-    my $element = $self->_find_element($root, $path);
-    my %names = map {$_ => 1} @{$args{element_names}};
-    my @children = grep { $names{$_->name} } $element->children;
-
-    # put the configured html tag around them
-    my $full_text = '';
-    foreach my $child (@children) {
-        my $tag  = $child->class->bulk_edit_tag;
-        my $text = $child->data;
-        next unless $text;
-        if ($tag) {
-            $text = "<$tag>$text</$tag>";
-        } else {
-            $text = "<p>$text</p>";
-        }
-        $full_text .= $text;
-    }
-
-    # make formatblock selector, using the elementclass's display_name
-    my %formatblock = (p => localize('Paragraph'));
-    for my $class (grep {$_->bulk_edit} $element->class->children) {
-        my $tag = $class->bulk_edit_tag;
-        if ($tag) {
-            $formatblock{$tag} = localize($class->display_name);
-        }
-    }
-    # format as JavaScript object litteral
-    my $formatblock = join(',', map { "'$formatblock{$_}' : '$_'" }
-                               sort { $a cmp $b }
-                               keys %formatblock);
-
-    # add first '--format--' element to selector
-    $formatblock = "'&mdash; " . localize('format') . " &mdash;' : '', " . $formatblock;
-
-    # xinha-specific tmpl-var
-    my $serverbase = ($ENV{SERVER_PROTOCOL} =~ /^HTTP\//) ? "http://" : "https://" ;
-    $serverbase .= $ENV{HTTP_HOST} . '/';
-
-    # fill template
-    $template->param(
-        bulk_data   => $full_text,
-        formatblock => $formatblock,
-        serverbase  => $serverbase,
-        bulk_done_with_this_element => localize('Done Bulk Editing '.$element->display_name),
-    );
-}
-
 
 sub find_story_link {
     my ($self, %args) = @_;
@@ -1055,139 +948,22 @@ sub _find_element {
 
 sub element_bulk_save {
     my ($self, %args) = @_;
-    my $query = $self->query();
 
-    $self->bulk_save_dispatch(
-        bulk_edit => ($query->param('bulk_edit') || 'standard'),
-        %args,
-    );
-
-    # success
-    return 1;
-}
-
-#
-# Dispatcher for various bulk save types:
-# 'standard' : the legacy behavior using one big textarea field
-# 'xinha'    : using the Xinha editor
-#
-sub bulk_save_dispatch {
-    my ($self, %args) = @_;
-
-    $args{bulk_edit} eq 'standard' and $self->bulk_save_standard(%args);
-    $args{bulk_edit} eq 'xinha'    and $self->bulk_save_xinha(%args);
-}
-
-#
-# This method is the workhorse for the legacy 'standard' bulk saving
-#
-sub bulk_save_standard {
-    my ($self, %args) = @_;
     my $query   = $self->query;
     my $path    = $query->param('path') || '/';
     my $root    = $args{element};
     my $element = $self->_find_element($root, $path);
 
-    my $sep = $query->param('bulk_edit_sep');
-    $sep = ($sep eq "__TWO_NEWLINE__") ? "\r?\n[ \t]*\r?\n" : "\r?\n?[ \t]*${sep}[ \t]*\r?\n?";
-    my $data = $query->param('bulk_data');
-    my $name = $query->param('bulk_edit_child');
-    my @children = grep { $_->name eq $name } $element->children;
-    my @data     = split(/$sep/, $data);
+    my $type = ucfirst($query->param('bulk_edit')) || 'Textarea';
 
-    # filter data through class's bulk_edit_filter
-    @data = $element->class->child($name)->bulk_edit_filter(data => \@data);
+    pkg("BulkEdit::$type")->save(
+        element_editor => $self,
+        element        => $element,
+    );
 
-    # match up one to one as possible
-    while(@children and @data) {
-        my $child = shift @children;
-        my $data  = shift @data;
-        $child->data($data);
-    }
-
-    # left over data, create new children
-    if (@data) {
-        $element->add_child(class => $name,
-                            data  => $_)
-          for @data;
-    }
-
-    # left over children, remove them from this element
-    elsif (@children) { 
-        $element->remove_children(@children);
-    }
-
-    add_message('saved_bulk',
-                name => localize($element->class->child($name)->display_name));
+    # success
+    return 1;
 }
-
-sub bulk_save_xinha {
-    my ($self, %args) = @_;
-    my $query   = $self->query();
-    my $path    = $query->param('path') || '/';
-
-    my $root    = $args{element};
-    my $element = $self->_find_element($root, $path);
-    my $data    = $query->param('bulk_data');
-    my $class   = $query->param('bulk_edit_child') || 'paragraph';
-
-    # strip unwanted HTML that may have been pasted in
-    $data = $self->clean_pasted_html($data);
-
-    # make sure there are paragraph tags separating lists...
-    $data =~ s/((?!p( \/)?>\s*)<[uo]l?>)/<p \/>$1/igs;
-    $data =~ s/(<\/[uo]l?>)(?!<\/?p)/$1<p \/>/igs;
-
-    # ...and headers
-    $data =~ s/((?!p( \/)?>\s*)<hl?\d>)/<p \/>$1/igs;
-    $data =~ s/(<\/hl?\d>)(?!<\/?p)/$1<p \/>/igs;
-
-    # then split the remaining data using paragraph tags
-    my @data = split(/<\/?p\s?\/?>/i, $data);
-
-    # remove old children
-    my %names = map {$_ => 1} split(/__!__/, $query->param('bulk_edit_child'));
-    $element->remove_children(grep { $names{$_->name} } $element->children);
-
-    # our bulk edit classes
-    my @bulk_edit_classes = grep { $_->bulk_edit } $element->class->children;
-
-    # add new children
-    for my $paragraph (@data) {
-
-        # split each <p>-separated chunk on BRs
-        # unless we've got a OL, UL or H*, PRE or ADDRESS
-        my @pieces = $paragraph =~ /^ \s* (?:<[uo]l>)
-                                        | (?:<hl?\d>)
-                                   /ix
-                   ? ($paragraph)
-                   : split(/<br[^>]*>/i, $paragraph);
-
-      PIECE: foreach my $data (@pieces) {
-            $data = $self->clean_xinha_whitespace($data);
-            next if ($data =~ /^\s*$/); # skip empty paragraphs
-
-            # only P, H* are supported
-            my $tag = 'p';
-            if ($data =~ s!^<(hl?\d)>(.*)</\1>$!$2!) {
-                $tag = $1;
-                $tag =~ s/l//;
-            }
-
-            # add new children
-            for my $class (@bulk_edit_classes) {
-                if ($tag eq ($class->bulk_edit_tag || 'p')) {
-                    $element->add_child(class => $class, data => $data);
-                    next PIECE;
-                }
-            }
-        }
-    }
-
-    # and keep user informed
-    add_message('saved_bulk', name => $element->display_name);
-}
-
 
 sub element_save {
     my ($self, %args) = @_;
@@ -1405,63 +1181,6 @@ sub _make_crumbs {
     return @crumbs;
 }
 
-sub clean_pasted_html {
-    my ($self, $html) = @_;
-    return '' unless $html;
-
-    # convert safari-specific bold/italic <span>s into normal HTML tags (and strip other <span>s)
-    while ($html =~ /<span\s*([^>]*)>(([^<]|<(?!span))*?)<\/span>/si) {
-        # regexp is tricky since we need to make sure we have matching open/close tags!
-        my ($attributes, $content) = ($1, $2);
-        my $bold     = ($attributes =~ /font\-weight: bold/si);
-        my $italic   = ($attributes =~ /font\-style: italic/si);
-        my $new_html = ($bold ? '<strong>' : '')  . ($italic ? '<em>' : '') . $content .
-                       ($bold ? '</strong>' : '') . ($italic ? '</em>' : '');
-        # now we're ready to replace span with our modified block
-        $html =~ s/<span\s*([^>]*)>(([^<]|<(?!span))*?)<\/span>/$new_html/si;
-    }
-
-    # remove javascript code
-    $html =~ s/<script\s.*?<\/script>//isg;
-
-    # strip everything except known tags
-    $html =~ s/<\/?(?=\w)(?!(a[^>]*|p|br|b|i|em|u|strong|ul|ol|li|hr[^>]*|hl?\d+)[\s\/]*>)[^>]*>//isg;
-    # simplify horizontal rules (remove styling so CSS can take care of it)
-    $html =~ s/<hr [^\/>]+?\/>/<hr \/>/isg;
-
-    # remove javascript event handlers (which may be present in Anchor tags)
-    $html =~ s/on(abort|blur|change|click|dblclick|dragdrop|error|focus|keydown|keypress|keyup|load|mouse(down|move|out|over|up)|move|reset|resize|select|submit|unload)=([\"\']).*?\3//igs;
-
-    # remove html comments
-    $html =~ s/<!\-\-.*?\-\->//sg;
-    
-    return $html;
-}
-
-=over
-
-=item my $html = $self->clean_xinha_whitespace($html);
-
-Strips leading/trailing/excess whitespace/<BR> tags from a block
-of Xinha-created HTML. (This is separate from clean_pasted_html only 
-because the Xinha bulk-edit needs to call this method for each paragraph 
-it processes rather than once for the entire block.)
-
-=back
-
-=cut
-
-sub clean_xinha_whitespace {
-    my ($self, $html) = @_;
-    
-    $html =~ s/<([^>]+)>\s*<\/\1>//gs;   # remove tags w/o content inside
-    $html =~ s/(\s|&nbsp;)+/ /gs;        # remove excess whitespace 
-    $html =~ s/^(\s*<\/?br[^>]*>)+//gsi; # remove leading BR tags
-    $html =~ s/(<\/?br[^>]*>\s*)+$//gsi; # remove trailing BR tags
-    $html =~ s/^\s+//sg;                 # remove leading whitespace
-    $html =~ s/\s+$//sg;                 # remove trailing whitespace
-
-    return $html;
-}
+sub concat_string { '|' }
 
 1;

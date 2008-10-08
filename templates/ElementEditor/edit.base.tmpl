@@ -13,7 +13,7 @@
 
 <tmpl_if bulk_edit>
 
-<tmpl_if is_bulk_edit_standard>
+<tmpl_if is_bulk_edit_textarea>
   save_and_change_bulk_edit_sep = function() {
       Krang.ElementEditor.run_save_hooks();
       Krang.Form.submit('edit', { rm: 'save_and_change_bulk_edit_sep' });
@@ -94,16 +94,7 @@
           })
               });
 
-      xinha_editors["bulk_data"].config.toolbar = [
-          [ "formatblock", "bold", "italic", "underline", "separator",
-            "insertorderedlist", "insertunorderedlist", "separator", 
-            "inserthorizontalrule", "createlink", "separator", 
-            "subscript", "superscript", "separator", 
-            "copy", "cut", "paste", "separator",
-            "htmlmode", "separator", 
-            "undo", "redo" ]
-      ];
-
+      xinha_editors["bulk_data"].config.toolbar     = [ <tmpl_var toolbar>     ];
       xinha_editors["bulk_data"].config.formatblock = { <tmpl_var formatblock> };
 
       HTMLArea.startEditors(xinha_editors);
@@ -234,14 +225,14 @@
   <td id="bulk_edit_chars"></td>
   </tr>
 
-  </tbody>
-
-  </table>
-
   <script type="text/javascript">
   setTimeout( update_bulk_edit_counts, 1000 );  //:should trigger onload(db2)
   </script>
   </tmpl_if>
+
+  </tbody>
+
+  </table>
 
 <tmpl_else><tmpl_unless child_loop>
 
