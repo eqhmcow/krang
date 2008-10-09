@@ -53,8 +53,8 @@ sub per_instance {
 
     # add admin permission 'admin_delete' and give it to admin and editor group
     $dbh->do('Alter TABLE group_permission ADD COLUMN admin_delete BOOL NOT NULL DEFAULT 0');
-    $dbh->do('Update group_permission SET admin_delete = 1 WHERE name = "Admin");
-    $dbh->do('Update group_permission SET admin_delete = 1 WHERE name = "Edit");
+    $dbh->do('Update group_permission SET admin_delete = 1 WHERE name = "Admin"');
+    $dbh->do('Update group_permission SET admin_delete = 1 WHERE name = "Edit"');
 
     # add 'inactive' flag to schedule table
     $dbh->do('Alter TABLE schedule ADD COLUMN inactive BOOL NOT NULL DEFAULT 0');
