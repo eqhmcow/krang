@@ -67,7 +67,11 @@
 
 .htmlarea .toolbar select,
 .htmlarea .toolbar select:hover,
-.htmlarea .toolbar select:active { background: FieldFace; color: ButtonText; }
+.htmlarea .toolbar select:active {
+  background: FieldFace;
+  color:      ButtonText;
+  width:      auto !important;
+}
 
 .htmlarea iframe
 {
