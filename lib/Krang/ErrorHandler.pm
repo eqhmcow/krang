@@ -12,7 +12,7 @@ Exception::Class::Base->Trace(1);
 BEGIN {
     $SIG{__DIE__} = sub {
         my $in_eval = 0;
-        for(my $stack = 1; my $sub = (CORE::caller($stack))[3]; $stack++) {
+        for (my $stack = 1 ; my $sub = (CORE::caller($stack))[3] ; $stack++) {
             $in_eval = 1 if $sub =~ /^\(eval\)/;
         }
         return if $in_eval;

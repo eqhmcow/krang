@@ -6,8 +6,8 @@ use warnings;
 use Exporter;
 use File::Temp qw(tempdir tempfile);
 use File::Path qw(mkpath rmtree);
-use File::Spec::Functions qw(catdir catfile splitpath 
-                             file_name_is_absolute rel2abs);
+use File::Spec::Functions qw(catdir catfile splitpath
+  file_name_is_absolute rel2abs);
 use File::Copy qw(copy);
 use File::Find qw(find);
 use Krang::ClassLoader Conf => qw(KrangRoot);
@@ -28,29 +28,26 @@ use IO::Zlib;
 use IPC::Run qw(run);
 
 # setup exceptions
-use Exception::Class 
-  'Krang::DataSet::ValidationFailed' => 
-    { fields => [ 'errors' ] },
-  'Krang::DataSet::InvalidFile' => 
-    { fields => [ 'file', 'err' ] },
-  'Krang::DataSet::InvalidArchive' => 
-    { fields => [ 'file', 'err' ] },
-  'Krang::DataSet::DeserializationFailed' => 
-    { fields => [] },
-  'Krang::DataSet::ImportRejected' => 
-    { fields => [ 'set' ] },
+use Exception::Class
+  'Krang::DataSet::ValidationFailed'      => {fields => ['errors']},
+  'Krang::DataSet::InvalidFile'           => {fields => ['file', 'err']},
+  'Krang::DataSet::InvalidArchive'        => {fields => ['file', 'err']},
+  'Krang::DataSet::DeserializationFailed' => {fields => []},
+  'Krang::DataSet::ImportRejected'        => {fields => ['set']},
   ;
 
 # allow methods to be exported for the BricLoader Classes
-our @ISA = qw(Exporter);
+our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw(write _write_index _validate _validate_file);
 
 # base list of classes - addons can declare more with DataSetClasses
 # in krang_addon.conf
-our @CLASSES = (pkg('Desk'),      pkg('User'),  pkg('Contrib'), pkg('Site'),
-                pkg('Category'),  pkg('Alert'), pkg('Group'),   pkg('Media'),
-                pkg('Template'),  pkg('Story'), pkg('Schedule'),
-                pkg('ListGroup'), pkg('List'),  pkg('ListItem'));
+our @CLASSES = (
+    pkg('Desk'),     pkg('User'),  pkg('Contrib'),  pkg('Site'),
+    pkg('Category'), pkg('Alert'), pkg('Group'),    pkg('Media'),
+    pkg('Template'), pkg('Story'), pkg('Schedule'), pkg('ListGroup'),
+    pkg('List'),     pkg('ListItem')
+);
 
 sub classes {
     my @classes = @CLASSES;
@@ -179,23 +176,21 @@ sub new {
     my $self = bless({}, $pkg);
 
     # create a temp directory to hold in-progress archive
-    $self->{dir} = tempdir( DIR => catdir(KrangRoot, 'tmp'));
+    $self->{dir} = tempdir(DIR => catdir(KrangRoot, 'tmp'));
 
     # have an add_callback?  else, use an empty sub
-    $self->{add_callback} = $args{add_callback} ? 
-      $args{add_callback} : sub {};
+    $self->{add_callback} = $args{add_callback} ? $args{add_callback} : sub { };
 
     # have an import_callback?  else, use an empty sub
-    $self->{import_callback} = $args{import_callback} ? 
-      $args{import_callback} : sub {};
+    $self->{import_callback} = $args{import_callback} ? $args{import_callback} : sub { };
 
     # turn off dependencies?
     $self->{skip_dependencies} = $args{skip_dependencies};
 
     if (my $path = $args{path}) {
         croak("Path '$path' does not in .kds or .kds.gz")
-          unless $path =~ /\.kds$/ or 
-                 $path =~ /\.kds\.gz/;
+          unless $path =~ /\.kds$/
+              or $path =~ /\.kds\.gz/;
         croak("Unable to find kds archive '$path'")
           unless -e $path;
 
@@ -203,18 +198,18 @@ sub new {
         my $old_dir = fastcwd;
         chdir($self->{dir}) or die "Unable to chdir to $self->{dir}: $!";
 
-	my $z = "";
-	$z = "z" if $path =~ /\.gz$/;
-	my $result = system("tar -x${z}f ". 
-	  (file_name_is_absolute($path) ? $path : rel2abs($path)));
-	
+        my $z = "";
+        $z = "z" if $path =~ /\.gz$/;
+        my $result =
+          system("tar -x${z}f " . (file_name_is_absolute($path) ? $path : rel2abs($path)));
+
         chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
-        
+
         croak("Unable to open kds archive '$path': $?") if ($result);
 
         # load the index
         $self->_load_index;
-                        
+
         # checks that the index is complete
         $self->_check_index;
     } else {
@@ -228,7 +223,6 @@ sub DESTROY {
     my $self = shift;
     rmtree(delete $self->{dir}) if $self->{dir};
 }
-
 
 # runs each file in the kds through a validating parser, matching up
 # documents with schemata in /schema
@@ -244,22 +238,26 @@ sub _validate {
 
     # validate the files
     my %invalid;
-    find(sub { 
-             return unless /\.xml$/;
-             my ($ok, $err) = $validator->validate(path => $_);
-             $invalid{$_} = $err unless ($ok);
-         }, $self->{dir});
+    find(
+        sub {
+            return unless /\.xml$/;
+            my ($ok, $err) = $validator->validate(path => $_);
+            $invalid{$_} = $err unless ($ok);
+        },
+        $self->{dir}
+    );
 
     # get back
     chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
 
-    # cough up error, if we got one    
-    Krang::DataSet::ValidationFailed->throw(errors => \%invalid,
-                                            message =>
-           join("\n",
-                map { "File '$_' failed validation: \n$invalid{$_}\n" }
-                keys %invalid))
-        if %invalid;
+    # cough up error, if we got one
+    Krang::DataSet::ValidationFailed->throw(
+        errors  => \%invalid,
+        message => join(
+            "\n", map { "File '$_' failed validation: \n$invalid{$_}\n" }
+              keys %invalid
+        )
+    ) if %invalid;
 }
 
 sub _validate_file {
@@ -271,9 +269,10 @@ sub _validate_file {
     my ($ok, $err) = $validator->validate(path => $path);
 
     # cough up error, if we got one
-    Krang::DataSet::ValidationFailed->throw(errors => $err,
-                                            message =>
-                "File '$path' failed validation: \n$err\n") if $err;
+    Krang::DataSet::ValidationFailed->throw(
+        errors  => $err,
+        message => "File '$path' failed validation: \n$err\n"
+    ) if $err;
 
 }
 
@@ -305,8 +304,8 @@ sub add {
     my $from   = $args{from};
     my $file   = $args{file};
     my $path   = $args{path};
-    
-    # in skip_dependencies mode, we only add primary 
+
+    # in skip_dependencies mode, we only add primary
     # objects and - for media objects - their files
     return if ($self->{skip_dependencies} && $from && !$file);
 
@@ -318,7 +317,7 @@ sub add {
 
         # notify add_callback
         $self->{add_callback}->(%args);
-        
+
         # serialize it
         my ($file) = ($class->id_meth =~ /(.*)_id$/);
         $file = lc($file) . '_' . $id . '.xml';
@@ -328,29 +327,29 @@ sub add {
 
         # register mapping before calling serialize_xml to break cycles
         $self->{objects}{$class}{$id}{xml} = $file;
-        
+
         my $writer = pkg('XML')->writer(fh => $fh);
         $writer->xmlDecl();
         $object->serialize_xml(writer => $writer, set => $self);
         $writer->end();
         close($fh);
-        
+
         if (ASSERT) {
             assert(-e $path, "XML file created");
             assert(-s $path, "XML file has stuff in it");
         }
-        
+
     } elsif ($file and $path and $from) {
         my $full_path = catfile($self->{dir}, $path);
         mkpath((splitpath($full_path))[1]);
         copy($file, $full_path)
           or croak("Unable to copy file '$file' to '$full_path' : $!");
-        
+
         # register file with caller
         my ($from_class, $from_id) = $self->_obj2id($from);
         $self->{objects}{$from_class}{$from_id}{files} ||= [];
         push(@{$self->{objects}{$from_class}{$from_id}{files}}, $path);
-     } else {
+    } else {
         croak("Missing required object or file/path params");
     }
 }
@@ -380,7 +379,7 @@ sub list {
     my @result;
     foreach my $class (keys %{$self->{objects}}) {
         foreach my $id (keys %{$self->{objects}{$class}}) {
-            push @result, [ $class, $id ];
+            push @result, [$class, $id];
         }
     }
     return @result;
@@ -399,9 +398,9 @@ is found to contain errors.  See EXCEPTIONS below for details.
 
 sub write {
     my ($self, %args) = @_;
-    my $path     = $args{path};
+    my $path = $args{path};
     my $compress = $args{compress} || 0;
-    
+
     croak("Missing required path arg.") unless $path;
     if ($compress) {
         croak("Path does not end in .kds.gz") unless $path =~ /\.kds\.gz$/;
@@ -419,6 +418,7 @@ sub write {
     eval { $self->_write_index; };
 
     if ($@) {
+
         # gotta get back, regardless of errors
         my $err = $@;
         chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
@@ -426,36 +426,44 @@ sub write {
     }
 
     # build list of files to tar in segments of X number of files each, as
-    # defined in $to_tar_at_a_time 
-    my (%files_to_tar,$segment);
+    # defined in $to_tar_at_a_time
+    my (%files_to_tar, $segment);
     my $count = 0;
+
     # tar can only accept a certain number of files to be passed in at a time
-    # a limit imposed by the OS; here set the limit to a conservative figure 
+    # a limit imposed by the OS; here set the limit to a conservative figure
     my $to_tar_at_a_time = 100;
-    find({ wanted => sub { return unless -f;
-                           s!^$self->{dir}/!!;
-                           if ($count % $to_tar_at_a_time == 0) {
-                               $segment = 'segment' . $count;
-  			   }
-                           push(@{$files_to_tar{$segment}},$_);
-     			   $count++;
-                       },
-           no_chdir => 1 },
-         $self->{dir});
+    find(
+        {
+            wanted => sub {
+                return unless -f;
+                s!^$self->{dir}/!!;
+                if ($count % $to_tar_at_a_time == 0) {
+                    $segment = 'segment' . $count;
+                }
+                push(@{$files_to_tar{$segment}}, $_);
+                $count++;
+            },
+            no_chdir => 1
+        },
+        $self->{dir}
+    );
 
     # give current user read,write,execute permissions for tar cmd further below
     chmod(0700, $path);
- 
+
     foreach my $file_list (keys %files_to_tar) {
+
         # use tar with -r option to be able to append files, to get around
         # "Argument list too long" problem when used with the -c option and
         # passed a large number of files
         my $cmd = ["tar", "rf", $path, @{$files_to_tar{$file_list}}];
 
         debug("Running @$cmd");
-        my $rc = run($cmd, \my($in, $out, $err));
+        my $rc = run($cmd, \my ($in, $out, $err));
 
         if (!$rc) {
+
             # gotta get back, regardless of errors
             chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
             die "Unable to add files to archive '$path': $err";
@@ -465,20 +473,21 @@ sub write {
 
     # we're done adding files to tar, let's compress it if compression is on
     if ($compress) {
-        open(FILE, $path) or 
-          die "Error compressing: Cannot open tar archive '$path'";
+        open(FILE, $path)
+          or die "Error compressing: Cannot open tar archive '$path'";
         my (undef, $tmpfilename) = tempfile(DIR => catdir(KrangRoot, 'tmp'));
 
-        my $fh = IO::Zlib->new($tmpfilename, "wb9") or
-          die "IO::Zlib can't open $tmpfilename ($!)";
+        my $fh = IO::Zlib->new($tmpfilename, "wb9")
+          or die "IO::Zlib can't open $tmpfilename ($!)";
 
-        while(<FILE>) {
+        while (<FILE>) {
             print $fh "$_";
         }
         $fh->close;
         close(FILE);
 
-        copy ($tmpfilename, $path) or die ("Error compressing: Can't copy $tmpfilename to '$path' ($!)");
+        copy($tmpfilename, $path)
+          or die("Error compressing: Can't copy $tmpfilename to '$path' ($!)");
     }
 
     chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
@@ -489,7 +498,6 @@ sub write {
     $self->_validate if ASSERT;
 }
 
-
 # write out the index XML
 sub _write_index {
     my $self = shift;
@@ -498,17 +506,17 @@ sub _write_index {
     croak("Unable to write index for empty dataset!")
       unless keys %{$self->{objects}};
 
-    open(my $fh, '>','index.xml') or
-      croak("Unable to open index.xml: $!");
+    open(my $fh, '>', 'index.xml')
+      or croak("Unable to open index.xml: $!");
     my $writer = pkg('XML')->writer(fh => $fh);
 
     # open up index document
     $writer->xmlDecl();
-    $writer->startTag('index',
-                      "xmlns:xsi" => 
-                        "http://www.w3.org/2001/XMLSchema-instance",
-                      "xsi:noNamespaceSchemaLocation" =>
-                        'index.xsd');
+    $writer->startTag(
+        'index',
+        "xmlns:xsi"                     => "http://www.w3.org/2001/XMLSchema-instance",
+        "xsi:noNamespaceSchemaLocation" => 'index.xsd'
+    );
 
     # add Krang version
     $writer->dataElement(version => $Krang::VERSION);
@@ -538,8 +546,8 @@ sub _load_index {
     my $self = shift;
 
     # read in index
-    open(my $index, '<', catfile($self->{dir}, 'index.xml')) or
-      croak("Unable to open $self->{dir}/index.xml: $!");
+    open(my $index, '<', catfile($self->{dir}, 'index.xml'))
+      or croak("Unable to open $self->{dir}/index.xml: $!");
     my $xml = join('', <$index>);
     close $index or die $!;
 
@@ -549,19 +557,20 @@ sub _load_index {
     foreach my $class_rec (@{$data->{class}}) {
         my $class = $class_rec->{name};
         foreach my $object (@{$class_rec->{object}}) {
-            $index{$class}{$object->{id}[0]} = { xml => $object->{xml}[0],
-                                                 ($object->{file} ?
-                                                  (files => $object->{file}) :
-                                                  ()),
-                                               };
-            croak("index.xml refers to file '$object->{xml}[0]' which is ".
-                  "not in the archive.")
+            $index{$class}{$object->{id}[0]} = {
+                xml => $object->{xml}[0],
+                (
+                    $object->{file}
+                    ? (files => $object->{file})
+                    : ()
+                ),
+            };
+            croak("index.xml refers to file '$object->{xml}[0]' which is " . "not in the archive.")
               unless -e catfile($self->{dir}, $object->{xml}[0]);
         }
     }
     $self->{objects} = \%index;
 }
-
 
 # check the index
 sub _check_index {
@@ -571,15 +580,14 @@ sub _check_index {
         foreach my $id (keys %{$self->{objects}{$class}}) {
             my $path = catfile($self->{dir}, $self->{objects}{$class}{$id}{xml});
             Krang::DataSet::InvalidArchive->throw(
-                 message => "Data set 'index.xml' refers to a file '".
-                 $self->{objects}{$class}{$id}{xml} . 
-                 "' which does not exist.")
-                unless -e $path;
+                    message => "Data set 'index.xml' refers to a file '"
+                  . $self->{objects}{$class}{$id}{xml}
+                  . "' which does not exist.")
+              unless -e $path;
             $self->_validate_file($path);
         }
-    }    
+    }
 }
-
 
 =item C<< $set->import_all(...) >>
 
@@ -644,7 +652,9 @@ sub import_all {
     foreach my $class (keys %{$self->{skip_classes}}) {
         next if $class eq 'Krang::Category';
         next if $class eq 'Krang::Site';
-        croak("Found unexpected value in skip_classes list: $class.  Only Krang::Category and Krang::Site are supported.");
+        croak(
+            "Found unexpected value in skip_classes list: $class.  Only Krang::Category and Krang::Site are supported."
+        );
     }
 
     my @failed;
@@ -652,23 +662,33 @@ sub import_all {
     # process classes in an order least likely to cause backrefs
     foreach my $class ($self->classes) {
         foreach my $id (keys %{$objects->{$class} || {}}) {
+
             # might have already loaded through a call to map_id
             next if $self->{done}{$class}{$id};
 
             # get the ID and store it in 'done'
             eval {
-                my $import_id = $self->map_id(class   => $class,
-                                              id      => $id,
-					      primary => 1); # a primary object: not a dependency
+                my $import_id = $self->map_id(
+                    class   => $class,
+                    id      => $id,
+                    primary => 1
+                );    # a primary object: not a dependency
                 $self->{done}{$class}{$id} = $import_id;
             };
 
             # did it fail?
-            if ($@ and ref $@ and 
-                $@->isa('Krang::DataSet::DeserializationFailed')) {
-                push(@failed, { class   => $class, 
-                                id      => $id, 
-                                message => $@->message });
+            if (    $@
+                and ref $@
+                and $@->isa('Krang::DataSet::DeserializationFailed'))
+            {
+                push(
+                    @failed,
+                    {
+                        class   => $class,
+                        id      => $id,
+                        message => $@->message
+                    }
+                );
             } elsif ($@) {
                 die $@;
             }
@@ -680,9 +700,7 @@ sub import_all {
 
     # did any imports fail?
     if (@failed) {
-        Krang::DataSet::ImportRejected->throw(
-             message => join("\n", map { $_->{message} } @failed)
-                                             );
+        Krang::DataSet::ImportRejected->throw(message => join("\n", map { $_->{message} } @failed));
     }
 }
 
@@ -699,8 +717,8 @@ been deserialized.
 =cut
 
 sub map_id {
-    my ($self, %arg) = @_;
-    my ($class, $id) = @arg{qw(class id)};
+    my ($self,  %arg) = @_;
+    my ($class, $id)  = @arg{qw(class id)};
     croak("Missing required 'class' and 'id' params.")
       unless $class and $id;
     croak("Called map_id outside of an import run!")
@@ -711,14 +729,14 @@ sub map_id {
 
     # a dependency we're not going to update?
     return $id if ($self->{skip_dependencies} and (not $arg{primary}));
-    
+
     # deserialize
     my $object = $self->_deserialize($class, $id);
     my ($new_class, $new_id) = $self->_obj2id($object);
 
     # trigger the callback
     $self->{import_callback}->(object => $object);
-    
+
     # finished
     $self->{done}{$class}{$id} = $new_id;
     return $new_id;
@@ -728,24 +746,26 @@ sub _deserialize {
     my ($self, $class, $id) = @_;
 
     # check that we've got a $class with $id
-    croak("Can't find XML file for $class with ID $id!") 
+    croak("Can't find XML file for $class with ID $id!")
       unless $self->{objects}{$class}{$id}{xml};
 
     my $file = catfile($self->{dir}, $self->{objects}{$class}{$id}{xml});
     open(XML, '<', $file) or croak("Unable to open '$file': $!");
-    my $xml = join('',<XML>);
+    my $xml = join('', <XML>);
     close(XML) or croak("Unable to close '$file': $!");
     croak("Unable to load XML from $file") unless $xml;
 
     # are we skipping this class?
     my $skip = $self->{skip_classes}{$class};
 
-    my $obj = $class->deserialize_xml(xml          => $xml,
-                                      set          => $self,
-                                      no_update    => $self->{no_update},
-                                      no_uuid      => $self->{no_uuid},
-                                      uuid_only    => $self->{uuid_only},
-                                      skip_update  => $skip);
+    my $obj = $class->deserialize_xml(
+        xml         => $xml,
+        set         => $self,
+        no_update   => $self->{no_update},
+        no_uuid     => $self->{no_uuid},
+        uuid_only   => $self->{uuid_only},
+        skip_update => $skip
+    );
     croak("Call to $class->deserialize failed!")
       unless $obj;
     croak("Call to $class->deserialize didn't return a $class object!")
@@ -769,11 +789,13 @@ sub register_id {
     my ($self, %arg) = @_;
     my ($class, $id, $import_id) = @arg{qw(class id import_id)};
     croak("Missing required 'class', 'id' and 'import_id' params.")
-      unless $class and $id and $import_id;
+      unless $class
+          and $id
+          and $import_id;
     croak("Called map_id outside of an import run!")
       unless $self->{in_import};
 
-    $self->{done}{$class}{$id} = $import_id;   
+    $self->{done}{$class}{$id} = $import_id;
 }
 
 =item C<< $full_path = $set->map_file(class => $class, id => $id) >>
@@ -795,7 +817,6 @@ sub map_file {
       unless -e $full_path;
     return $full_path;
 }
-
 
 =back
 
@@ -891,4 +912,5 @@ by the media object:
 =back
 
 =cut
+
 1;

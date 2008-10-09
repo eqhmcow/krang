@@ -55,15 +55,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -90,6 +93,7 @@ use Cwd qw(getcwd);
 use File::Spec::Functions qw(catdir);
 our ($help, $man, $addon, $version);
 our $verbose;
+
 BEGIN {
     $verbose = 0;
     pod2usage(2)
@@ -113,6 +117,7 @@ BEGIN {
 }
 
 use Krang::ClassLoader Conf => qw(KrangRoot);
+
 # use first instance if one isn't set.  AddOns are installation wide anyway.
 BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 use Krang::ClassLoader 'Script';

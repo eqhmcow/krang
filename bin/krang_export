@@ -136,15 +136,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -170,97 +173,105 @@ use Krang::ClassLoader 'DataSet';
 
 # process args and open the output file before dropping privs
 # process args and open the output file before dropping privs
-our ($help, $man, $compress, $overwrite, $output, $verbose, 
-     %all, %all_shortcut, %id, %classes, $file, $set,
-     $skip_dependencies);
-BEGIN { 
+our ($help, $man, $compress, $overwrite, $output, $verbose, %all, %all_shortcut, %id, %classes,
+    $file, $set, $skip_dependencies);
+
+BEGIN {
     eval {
         %classes = map { ($_, 0) } pkg('DataSet')->classes;
 
-        $output = 'export.kds';
-        $verbose = 0;
-        %all_shortcut = (stories    => pkg('Story')->id_meth,
-                         media      => pkg('Media')->id_meth,
-                         templates  => pkg('Template')->id_meth,
-                         contribs   => pkg('Contrib')->id_meth,
-                         categories => pkg('Category')->id_meth,
-                         sites      => pkg('Site')->id_meth,
-                         users      => pkg('User')->id_meth,
-                         groups     => pkg('Group')->id_meth,
-                         alerts     => pkg('Alert')->id_meth,
-                         list_items => pkg('ListItem')->id_meth);
+        $output       = 'export.kds';
+        $verbose      = 0;
+        %all_shortcut = (
+            stories    => pkg('Story')->id_meth,
+            media      => pkg('Media')->id_meth,
+            templates  => pkg('Template')->id_meth,
+            contribs   => pkg('Contrib')->id_meth,
+            categories => pkg('Category')->id_meth,
+            sites      => pkg('Site')->id_meth,
+            users      => pkg('User')->id_meth,
+            groups     => pkg('Group')->id_meth,
+            alerts     => pkg('Alert')->id_meth,
+            list_items => pkg('ListItem')->id_meth
+        );
         %all =
-          map { ($_, pkg('DataSet')->id_meth_to_class($_)) }
-          pkg('DataSet')->id_meths;
+          map { ($_, pkg('DataSet')->id_meth_to_class($_)) } pkg('DataSet')->id_meths;
         %id = map { ($_, []) } pkg('DataSet')->id_meths;
 
         # setup complex options
         my %get_opts = (
             everything => sub { $classes{$_} = 1 for keys %classes },
 
-            (map { ($_, sub { $classes{$all{$all_shortcut{$_[0]}}} = 1 }) }
-               keys %all_shortcut
+            (
+                map {
+                    ($_, sub { $classes{$all{$all_shortcut{$_[0]}}} = 1 })
+                  }
+                  keys %all_shortcut
             ),
             'all=s' => sub {
                 die "Unknown type $_[1].\n" unless exists $all{"$_[1]_id"};
                 $classes{$all{"$_[1]_id"}} = 1;
             },
-            (map {
-                 ("$_=i", $id{$_})
-               } keys %id
-            ));
+            (
+                map {
+                    ("$_=i", $id{$_})
+                  } keys %id
+            )
+        );
 
-        pod2usage(2) unless @ARGV &&
-          GetOptions(help       => \$help,
-                     man        => \$man,
-                     
-                     'verbose+' => \$verbose,
-                     'compress' => \$compress,
-                     'overwrite'=> \$overwrite,
-		     'skip_dependencies' => \$skip_dependencies,
-                     
-                     'output=s' => \$output,                     
-                     
-                     %get_opts
-                    );
-        pod2usage(1)             if $help;
+        pod2usage(2)
+          unless @ARGV
+              && GetOptions(
+                  help => \$help,
+                  man  => \$man,
+
+                  'verbose+'          => \$verbose,
+                  'compress'          => \$compress,
+                  'overwrite'         => \$overwrite,
+                  'skip_dependencies' => \$skip_dependencies,
+
+                  'output=s' => \$output,
+
+                  %get_opts
+              );
+        pod2usage(1) if $help;
         pod2usage(-verbose => 2) if $man;
-        pod2usage("Unrecognized options to krang_export: '" . 
-                  join(' ', @ARGV) . "'\n")
+        pod2usage("Unrecognized options to krang_export: '" . join(' ', @ARGV) . "'\n")
           if @ARGV;
-	
+
         # figure out target filename
         $file = $output;
-        
+
         # validate filename
         die "Output filename must end in .kds\n"
           if not $compress and $file !~ /\.kds$/;
         die "Output filename must end in .kds.gz\n"
           if $compress and $file !~ /\.kds.gz$/;
-        die "File '$file' exists!  ".
-          "Use --overwrite if you want to replace it.\n"
-            if -e $file and not $overwrite;
-        
+        die "File '$file' exists!  " . "Use --overwrite if you want to replace it.\n"
+          if -e $file and not $overwrite;
+
         # open up an output filehandle before using Krang::Script and switching
         # privs
-        open(OUTPUT, '>', $file) 
+        open(OUTPUT, '>', $file)
           or die "Unable to open '$file' for output: $!\n";
     };
 
     # output errors without the BEGIN compilation failed message
-    if ($@) { 
+    if ($@) {
         warn $@;
         exit(1);
     }
 }
 
-use Krang::ClassLoader 'Script'; # load again to su if needed
+use Krang::ClassLoader 'Script';    # load again to su if needed
 use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Temp qw(tempfile);
 
 # open up the data set
-$set = pkg('DataSet')->new($verbose ? (add_callback => \&add_callback) : (),
-			   skip_dependencies => $skip_dependencies || 0);
+$set = pkg('DataSet')->new(
+    $verbose ? (add_callback => \&add_callback) : (),
+    skip_dependencies => $skip_dependencies || 0
+);
 
 # keep a count of things added
 my $added = 0;
@@ -268,10 +279,10 @@ my $added = 0;
 # add all objects for a type?
 foreach my $class (grep { $classes{$_} } keys %classes) {
     my $id_meth = $class->id_meth;
-    
+
     # loop through all objects, 10 at a time
     my $count = $class->find(count => 1);
-    for(my $x = 0; $x < $count; $x += 10) {
+    for (my $x = 0 ; $x < $count ; $x += 10) {
         my @objects = $class->find(limit => 10, offset => $x);
         for my $object (@objects) {
             $set->add(object => $object);
@@ -295,20 +306,20 @@ foreach my $id_meth (grep { @{$id{$_}} } keys %id) {
 die "No objects found of the type(s) you've specified! Did you mean to use --everything?\n"
   unless $added;
 
-
 print STDERR "Packing $file...\n" if $verbose;
 
 # write file to a temp location and copy down the OUTPUT pipe.  This
 # is necessary if $file can't be written to by KrangUser
-my (undef, $temp) = tempfile(DIR    => catdir(KrangRoot, 'tmp'),
-                             SUFFIX => '.kds' . ($compress ? '.gz' : ''), 
-                            );
+my (undef, $temp) = tempfile(
+    DIR => catdir(KrangRoot, 'tmp'),
+    SUFFIX => '.kds' . ($compress ? '.gz' : ''),
+);
 $set->write(path => $temp, compress => $compress);
 
 # do a buffered copy from TEMP to OUTPUT
 open(TEMP, '<', $temp) or die "Unable to open '$temp': $!\n";
 my $buffer = "";
-while(read(TEMP, $buffer, 10240)) {
+while (read(TEMP, $buffer, 10240)) {
     print OUTPUT $buffer;
 }
 close TEMP;
@@ -324,12 +335,12 @@ system("tar " . ($compress ? 'z' : '') . "tvf $file")
 exit(0);
 
 sub add_callback {
-    my $object = $_[1];
-    my $class = ref $object;
+    my $object  = $_[1];
+    my $class   = ref $object;
     my $id_meth = $class->id_meth;
     my ($type) = $id_meth =~ /(.*)_id$/;
     $type =~ s!_! !g;
-    
+
     print STDERR "Adding $type " . $object->$id_meth . " to $file...\n";
-    warn $@ if $@
+    warn $@ if $@;
 }

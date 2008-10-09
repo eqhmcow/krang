@@ -48,22 +48,22 @@ our %CONFIG = (
         row  => 'search_page_size',
     },
     use_autocomplete => {
-        type  => 'scalar',
-        row   => 'use_autocomplete',
+        type => 'scalar',
+        row  => 'use_autocomplete',
     },
     message_timeout => {
-        type  => 'scalar',
-        row   => 'message_timeout',
+        type => 'scalar',
+        row  => 'message_timeout',
     },
     syntax_highlighting => {
         type => 'scalar',
-        row => 'syntax_highlighting',
+        row  => 'syntax_highlighting',
     },
     language => {
         type => 'scalar',
         row  => 'language',
     },
-    config   => {
+    config => {
         type => 'scalar',
         row  => 'config',
     },
@@ -107,21 +107,24 @@ sub get {
     $user_id ||= $ENV{REMOTE_USER};
 
     if ($conf->{type} eq 'scalar') {
+
         # handle scalar pref
-        my ($value) = $dbh->selectrow_array(
-                              'SELECT value FROM my_pref WHERE id = ? and user_id = ?',
-                                            undef, $conf->{row}, $user_id);
+        my ($value) =
+          $dbh->selectrow_array('SELECT value FROM my_pref WHERE id = ? and user_id = ?',
+            undef, $conf->{row}, $user_id);
         return defined $value ? $value : pkg('Pref')->get($conf->{row});
     } elsif ($conf->{type} eq 'list') {
+
         # handle list pref
         my $result = $dbh->selectall_arrayref(
-                              "SELECT $conf->{id_field}, $conf->{name_field}
-                               FROM   $conf->{table} where user_id = ?", undef, $user_id);
+            "SELECT $conf->{id_field}, $conf->{name_field}
+                               FROM   $conf->{table} where user_id = ?", undef, $user_id
+        );
         return unless $result and @$result;
         return map { @$_ } @$result;
     }
-    
-    croak("Unknown my_pref type '$conf->{type}'");    
+
+    croak("Unknown my_pref type '$conf->{type}'");
 }
 
 =item Krang::MyPref->set(scalar_pref => 'value');
@@ -139,23 +142,25 @@ being removed from the table.
 
 sub set {
     my ($pkg, $name, @args) = @_;
-    my $conf = $CONFIG{$name};
-    my $dbh  = dbh();
+    my $conf    = $CONFIG{$name};
+    my $dbh     = dbh();
     my $user_id = $ENV{REMOTE_USER};
     croak("Invalid pref '$name' does not exist in %Krang::MyPref::CONFIG")
       unless $conf;
 
     if ($conf->{type} eq 'scalar') {
-        $dbh->do('REPLACE INTO my_pref (id, value, user_id) VALUES (?,?,?)', undef, 
-                 $conf->{row}, $args[0], $user_id);
+        $dbh->do('REPLACE INTO my_pref (id, value, user_id) VALUES (?,?,?)',
+            undef, $conf->{row}, $args[0], $user_id);
     } elsif ($conf->{type} eq 'list') {
         $dbh->do("DELETE FROM $conf->{table}");
-        while(@args) {
-            my $id = shift @args;
+        while (@args) {
+            my $id   = shift @args;
             my $name = shift @args;
-            $dbh->do("INSERT INTO $conf->{table} 
+            $dbh->do(
+                "INSERT INTO $conf->{table} 
                         ($conf->{id_field}, $conf->{name_field}, user_id)
-                      VALUES (?, ?, ?)", undef, $id, $name, $user_id);
+                      VALUES (?, ?, ?)", undef, $id, $name, $user_id
+            );
         }
     } else {
         croak("Unknown my_pref type '$conf->{type}'");

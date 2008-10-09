@@ -33,7 +33,7 @@ in the DB to a version understood by Gecko's WYSIWYG commands.
 =cut
 
 sub db2browser_map {
-    return ('strong' => 'b', 'em' => 'i' );
+    return ('strong' => 'b', 'em' => 'i');
 }
 
 =item pkg('Markup::Gecko')->browser2db_map()
@@ -110,7 +110,7 @@ sub _replace_tags {
     $t->elementify;
 
     # replace tags
-    while(my $element = $t->look_down("_tag" => $regexp)) {
+    while (my $element = $t->look_down("_tag" => $regexp)) {
         $element->tag($map->{$element->tag});
     }
 

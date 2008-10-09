@@ -48,7 +48,7 @@ and category_id. Type must correspond with media or template. If not supplied th
 
 sub new {
     my $class       = shift;
-    my $ftps        = shift;       # FTP server object.
+    my $ftps        = shift;          # FTP server object.
     my $pathname    = shift || "/";
     my $instance    = shift;
     my $type        = shift;
@@ -57,10 +57,10 @@ sub new {
     # create object
     my $self = Net::FTPServer::DirHandle->new($ftps, $pathname);
     bless $self, $class;
-  
-    # set category id, default to dummy value.  
+
+    # set category id, default to dummy value.
     $self->{category_id} = $category_id;
-  
+
     # set instance
     $self->{instance} = $instance;
 
@@ -85,97 +85,91 @@ sub get {
     my $self        = shift;
     my $filename    = shift;
     my $category_id = $self->{category_id};
-    my $type = $self->{type} || '';
-    my $instance = $self->{instance};
- 
+    my $type        = $self->{type} || '';
+    my $instance    = $self->{instance};
+
     if (not $instance) {
         foreach my $inst (@{$self->{ftps}{auth_instances}}) {
             if ($filename eq $inst) {
                 pkg('Conf')->instance($inst);
                 my $session_id = pkg('Session')->create();
-                my $user_id = ${$self->{ftps}{user_objects}}{$inst}->user_id;
+                my $user_id    = ${$self->{ftps}{user_objects}}{$inst}->user_id;
                 $self->{ftps}{user_obj} = ${$self->{ftps}{user_objects}}{$inst};
                 $ENV{REMOTE_USER} = $user_id;
-    
+
                 # arrange for it to be deleted at process end
                 eval "END { pkg('Session')->delete() }";
-               
-                return pkg('FTP::DirHandle')->new(  $self->{ftps},
-                                                    $self->pathname . $filename . "/", 
-                                                    $filename 
-                                                ); 
+
+                return pkg('FTP::DirHandle')
+                  ->new($self->{ftps}, $self->pathname . $filename . "/", $filename);
             }
         }
-            # return undef if filname doesn't match a authorized instance
-            return undef;
+
+        # return undef if filname doesn't match a authorized instance
+        return undef;
 
     } elsif ($type) {
         if ($type eq 'media') {
+
             # look for media with name = $filename in spec'd cat
-            my @media = pkg('Media')->find( filename => $filename,
-                                            category_id => $category_id,
-                                            may_see => 1 );
-        
+            my @media = pkg('Media')->find(
+                filename    => $filename,
+                category_id => $category_id,
+                may_see     => 1
+            );
+
             if (@media) {
-                return pkg('FTP::FileHandle')->new( $self->{ftps},
-                                                    $media[0],
-                                                    $type,
-                                                    $category_id
-                                                    ); 
-            }         
+                return pkg('FTP::FileHandle')->new($self->{ftps}, $media[0], $type, $category_id);
+            }
         } elsif ($type eq 'template') {
+
             # look for template with name = $filename in spec'd cat
             my $cid = $category_id || undef;
-            my @template = pkg('Template')->find( filename => $filename,
-                                                  category_id => $cid,
-                                                  may_see => 1
-                                                  );
+            my @template = pkg('Template')->find(
+                filename    => $filename,
+                category_id => $cid,
+                may_see     => 1
+            );
 
             if (@template) {
-                return pkg('FTP::FileHandle')->new( $self->{ftps},
-                                                    $template[0],
-                                                    $type,
-                                                    $category_id
-                                                    );
+                return pkg('FTP::FileHandle')
+                  ->new($self->{ftps}, $template[0], $type, $category_id);
             }
-        } 
-    } elsif ( (not $type) && (($filename eq 'template') || ($filename eq 'media')) ) {
-    # $type is not defined, and they are asking for template or media
-    # they want to see sites (top level cats) under template or media
-        $type = $filename;
-        return pkg('FTP::DirHandle')->new( $self->{ftps},
-                                            $self->pathname . $filename . "/",
-                                            $instance,
-                                            $type,
-                                            $category_id
-                                           );
-    }
-   
-    if (not $category_id) { 
-        my @categories = pkg('Category')->find( url => $filename.'/',
-                                                may_see => 1 );
+        }
+    } elsif ((not $type) && (($filename eq 'template') || ($filename eq 'media'))) {
 
-        return pkg('FTP::DirHandle')->new( $self->{ftps},
-                                           $self->pathname . $filename . "/",
-                                           $instance,
-                                           $type,
-                                           $categories[0]->category_id,
-                                          ) if $categories[0];
+        # $type is not defined, and they are asking for template or media
+        # they want to see sites (top level cats) under template or media
+        $type = $filename;
+        return pkg('FTP::DirHandle')
+          ->new($self->{ftps}, $self->pathname . $filename . "/", $instance, $type, $category_id);
+    }
+
+    if (not $category_id) {
+        my @categories = pkg('Category')->find(
+            url     => $filename . '/',
+            may_see => 1
+        );
+
+        return pkg('FTP::DirHandle')->new(
+            $self->{ftps}, $self->pathname . $filename . "/",
+            $instance, $type, $categories[0]->category_id,
+        ) if $categories[0];
     } else {
-        my @categories = pkg('Category')->find( dir => $filename,
-                                                parent_id => $category_id,
-                                                may_see => 1  );
-        return pkg('FTP::DirHandle')->new( $self->{ftps},
-                                           $self->pathname . $filename . "/",
-                                           $instance,
-                                           $type,
-                                           $categories[0]->category_id,
-                                          ) if $categories[0];
+        my @categories = pkg('Category')->find(
+            dir       => $filename,
+            parent_id => $category_id,
+            may_see   => 1
+        );
+        return pkg('FTP::DirHandle')->new(
+            $self->{ftps}, $self->pathname . $filename . "/",
+            $instance, $type, $categories[0]->category_id,
+        ) if $categories[0];
     }
 
     # if no matching media/template or dir
     return undef;
-}   
+}
 
 =item open($filename, $mode)
 
@@ -193,77 +187,71 @@ sub open {
     my $category_id = $self->{category_id};
     my $type        = $self->{type};
     my $instance    = $self->{instance};
-    
+
     # get file extension
     my ($name, $file_type) = split(/\./, $filename);
 
-    debug(__PACKAGE__."::open($filename, $mode)\n"); 
+    debug(__PACKAGE__ . "::open($filename, $mode)\n");
 
     if ((not $instance) || (($type eq 'media') and (not $category_id))) {
         return undef;
     }
-    
+
     if ($type eq 'media') {
+
         # look for media with name = $filename in spec'd cat
-        my @media = pkg('Media')->find( filename => $filename,
-                                        category_id => $category_id,
-                                      );
+        my @media = pkg('Media')->find(
+            filename    => $filename,
+            category_id => $category_id,
+        );
 
         if ($media[0]) {
             return undef if not $media[0]->may_edit;
 
-            return pkg('FTP::FileHandle')->new( $self->{ftps},
-                                                $media[0],
-                                                $type,
-                                                $category_id
-                                                )->open($mode);
+            return pkg('FTP::FileHandle')->new($self->{ftps}, $media[0], $type, $category_id)
+              ->open($mode);
         } else {
             my %media_type = pkg('Pref')->get('media_type');
             my @media_type = keys %media_type;
 
-            my $new_m = pkg('Media')->new ( filename => $filename,
-                                            title => $filename,
-                                            category_id => $category_id,
-                                            media_type_id => $media_type[0]
-                                          );
+            my $new_m = pkg('Media')->new(
+                filename      => $filename,
+                title         => $filename,
+                category_id   => $category_id,
+                media_type_id => $media_type[0]
+            );
 
-            return pkg('FTP::FileHandle')->new(     $self->{ftps},
-                                                    $new_m,
-                                                    $type,
-                                                    $category_id
-                                                    )->open($mode);  
+            return pkg('FTP::FileHandle')->new($self->{ftps}, $new_m, $type, $category_id)
+              ->open($mode);
         }
     } elsif ($type eq 'template') {
         if ($file_type eq 'tmpl') {
+
             # look for template with name = $filename in spec'd cat
-            my @template = pkg('Template')->find(   filename => $filename,
-                                                    category_id => $category_id,
-                                                 );
+            my @template = pkg('Template')->find(
+                filename    => $filename,
+                category_id => $category_id,
+            );
 
             if ($template[0]) {
                 return undef if not $template[0]->may_edit;
 
-                return pkg('FTP::FileHandle')->new( $self->{ftps},
-                                                    $template[0],
-                                                    $type,
-                                                    $category_id
-                                                    )->open($mode);
-            } else { # else this must be a new template, create it
-                my $new_t = pkg('Template')->new(   category_id => $category_id,
-                                                    filename => $filename,
-                                                    content => '',
-                                                 );
+                return pkg('FTP::FileHandle')->new($self->{ftps}, $template[0], $type, $category_id)
+                  ->open($mode);
+            } else {    # else this must be a new template, create it
+                my $new_t = pkg('Template')->new(
+                    category_id => $category_id,
+                    filename    => $filename,
+                    content     => '',
+                );
 
-                return pkg('FTP::FileHandle')->new( $self->{ftps},
-                                                    $new_t,
-                                                    $type,
-                                                    $category_id
-                                                    )->open($mode);
+                return pkg('FTP::FileHandle')->new($self->{ftps}, $new_t, $type, $category_id)
+                  ->open($mode);
             }
         }
     }
 
-    return undef; 
+    return undef;
 }
 
 =item list($wildcard)
@@ -287,7 +275,7 @@ sub list {
     my $ftps        = $self->{ftps};
 
     my @results;
-    
+
     # translate wildcard to like
     my $like;
     if ($wildcard and $wildcard ne '*') {
@@ -296,95 +284,98 @@ sub list {
     $like = '%' if not $like;
 
     if (not $instance) {
-   
+
         foreach my $inst (@{$self->{ftps}{auth_instances}}) {
-            push @results, [$inst, pkg('FTP::DirHandle')->new( $self->{ftps}, "/$inst", $inst ) ];
+            push @results, [$inst, pkg('FTP::DirHandle')->new($self->{ftps}, "/$inst", $inst)];
         }
         return \@results;
-    
-    } elsif (not $type) { # if no $type, return 'media' and 'template'
+
+    } elsif (not $type) {    # if no $type, return 'media' and 'template'
         my %asset_perms = pkg('Group')->user_asset_permissions();
-        push (@results, ['media', pkg('FTP::DirHandle')->new( $self->{ftps}, "/$instance/media", 'media') ]) if ($asset_perms{media} ne 'hide');    
-         push (@results, ['template', pkg('FTP::DirHandle')->new( $self->{ftps}, "/$instance/template", 'template')]) if ($asset_perms{template} ne 'hide');
+        push(@results,
+            ['media', pkg('FTP::DirHandle')->new($self->{ftps}, "/$instance/media", 'media')])
+          if ($asset_perms{media} ne 'hide');
+        push(
+            @results,
+            [
+                'template',
+                pkg('FTP::DirHandle')->new($self->{ftps}, "/$instance/template", 'template')
+            ]
+        ) if ($asset_perms{template} ne 'hide');
         return \@results;
-    
-    } elsif ( not $category_id ) { # if category not defined, return top level cats
-        my @categories = pkg('Category')->find( url_like => $like, order_by => 'url', parent_id => undef, may_see => 1 );
-        
-        foreach my $cat ( @categories ) {
-            my $dirh = pkg('FTP::DirHandle')->new( $self->{ftps},
-                                                   "/$instance/$type/" . $cat->url() ,
-                                                    $instance,
-                                                    $type,
-                                                    $cat->category_id() );
+
+    } elsif (not $category_id) {    # if category not defined, return top level cats
+        my @categories =
+          pkg('Category')
+          ->find(url_like => $like, order_by => 'url', parent_id => undef, may_see => 1);
+
+        foreach my $cat (@categories) {
+            my $dirh = pkg('FTP::DirHandle')->new($self->{ftps}, "/$instance/$type/" . $cat->url(),
+                $instance, $type, $cat->category_id());
             my $url = $cat->url;
             chop $url;
-            push @results, [ $url, $dirh ];
+            push @results, [$url, $dirh];
         }
 
         if ($type eq 'template') {
             my %asset_perms = pkg('Group')->user_asset_permissions();
 
             unless ($asset_perms{template} eq 'hide') {
-                my @template = pkg('Template')->find( filename_like => $like,
-                                                      category_id => undef,
-                                                      may_see => 1,
-                                                      order_by => 'filename',
-                                                    );
+                my @template = pkg('Template')->find(
+                    filename_like => $like,
+                    category_id   => undef,
+                    may_see       => 1,
+                    order_by      => 'filename',
+                );
                 foreach my $template (@template) {
-                    my $fileh = pkg('FTP::FileHandle')->new($self->{ftps},
-                                                            $template,
-                                                            $type,
-                                                            $category_id );
-                    push @results, [ $template->filename, $fileh ];
+                    my $fileh =
+                      pkg('FTP::FileHandle')->new($self->{ftps}, $template, $type, $category_id);
+                    push @results, [$template->filename, $fileh];
                 }
             }
         }
 
         return \@results;
-    } 
-    
+    }
+
     # get subdirectories.
-    my @categories = pkg('Category')->find( parent_id => $category_id, may_see => 1  );   
-    
+    my @categories = pkg('Category')->find(parent_id => $category_id, may_see => 1);
+
     # create dirhandles
     foreach my $cat (@categories) {
-        my $dirh = pkg('FTP::DirHandle')->new(  $self->{ftps},
-                                                $self->pathname."/".$cat->dir,
-                                                $instance,
-                                                $type,
-                                                $cat->category_id );
-        push @results, [ $cat->dir, $dirh ];
+        my $dirh = pkg('FTP::DirHandle')->new($self->{ftps}, $self->pathname . "/" . $cat->dir,
+            $instance, $type, $cat->category_id);
+        push @results, [$cat->dir, $dirh];
     }
-  
-    if ( $category_id ) { 
-        # get templates or media 
+
+    if ($category_id) {
+
+        # get templates or media
         if ($type eq 'media') {
-            my @media = pkg('Media')->find( filename_like => $like,
-                                            category_id => $category_id,
-                                            may_see => 1 );
+            my @media = pkg('Media')->find(
+                filename_like => $like,
+                category_id   => $category_id,
+                may_see       => 1
+            );
             foreach my $media (@media) {
-                my $fileh = pkg('FTP::FileHandle')->new(    $self->{ftps},
-                                                            $media,
-                                                            $type,
-                                                            $category_id );
-                push @results, [ $media->filename, $fileh ];
+                my $fileh = pkg('FTP::FileHandle')->new($self->{ftps}, $media, $type, $category_id);
+                push @results, [$media->filename, $fileh];
             }
         } else {
-            my @template = pkg('Template')->find(   filename_like => $like,
-                                                    category_id => $category_id,
-                                                    may_see => 1 );
+            my @template = pkg('Template')->find(
+                filename_like => $like,
+                category_id   => $category_id,
+                may_see       => 1
+            );
             foreach my $template (@template) {
-                my $fileh = pkg('FTP::FileHandle')->new(    $self->{ftps},
-                                                            $template,
-                                                            $type,
-                                                            $category_id );
-                push @results, [ $template->filename, $fileh ];
+                my $fileh =
+                  pkg('FTP::FileHandle')->new($self->{ftps}, $template, $type, $category_id);
+                push @results, [$template->filename, $fileh];
             }
         }
     }
-    
-    return \@results; 
+
+    return \@results;
 }
 
 =item list_status($wildcard)
@@ -396,15 +387,15 @@ the object.  See the status() method below for details.
 =cut
 
 sub list_status {
-  my $self = shift;
-  my $wildcard = shift;
+    my $self     = shift;
+    my $wildcard = shift;
 
-  my $list = $self->list($wildcard);
-  foreach my $row (@$list) {
-    $row->[3] = [ $row->[1]->status ];
-  }
+    my $list = $self->list($wildcard);
+    foreach my $row (@$list) {
+        $row->[3] = [$row->[1]->status];
+    }
 
-  return $list;
+    return $list;
 }
 
 =item parent()
@@ -415,40 +406,40 @@ For the root dir it returns itself.
 =cut
 
 sub parent {
-    my $self = shift;
+    my $self        = shift;
     my $category_id = $self->{category_id};
-    my $type = $self->{type};
-    my $instance = $self->{instance};
+    my $type        = $self->{type};
+    my $instance    = $self->{instance};
     my $dirh;
 
     return $self if $self->is_root;
 
-    $dirh = $self->SUPER::parent;    
+    $dirh = $self->SUPER::parent;
 
     if ($category_id) {
 
-       $dirh->{type} = $type;
-       $dirh->{instance} = $instance;
+        $dirh->{type}     = $type;
+        $dirh->{instance} = $instance;
 
         # get parent category_id for category
         my @cats;
-        @cats = pkg('Category')->find( category_id => $category_id, may_see => 1 );
- 
+        @cats = pkg('Category')->find(category_id => $category_id, may_see => 1);
+
         if ($cats[0]) {
             if (my $parent_cat = $cats[0]->parent) {
+
                 # get a new directory handle and change category_id to parent's
                 $dirh->{category_id} = $parent_cat->category_id();
             } else {
                 $dirh->{category_id} = undef;
             }
-        } 
+        }
     } elsif ($type) {
-        $dirh->{type} = '';
+        $dirh->{type}     = '';
         $dirh->{instance} = $instance;
-    } 
- 
- 
-    return bless $dirh, ref $self; 
+    }
+
+    return bless $dirh, ref $self;
 }
 
 =item status()
@@ -476,12 +467,13 @@ In this case all of these values are fixed for all categories: ( 'd',
 sub status {
     my $self        = shift;
     my $category_id = $self->{category_id} || '';
-    my $type = $self->{type} || '';
-    my $instance = $self->{instance} || '';
+    my $type        = $self->{type} || '';
+    my $instance    = $self->{instance} || '';
 
-    debug(__PACKAGE__."::status() : instance = $instance  : type = $type : category = $category_id \n");
+    debug(__PACKAGE__
+          . "::status() : instance = $instance  : type = $type : category = $category_id \n");
 
-    return ( 'd', 0777, 2, "nobody", "nobody", 0, 0 );
+    return ('d', 0777, 2, "nobody", "nobody", 0, 0);
 }
 
 =item move()
@@ -500,8 +492,9 @@ sub move {
     my $login = $user->login;
 
     # Die if user doesn't have permission
-    if (! $self->_can_manage_categories_via_ftp()) {
-        $self->{error} = "User $login does not have admin permission to managed categories via FTP.";
+    if (!$self->_can_manage_categories_via_ftp()) {
+        $self->{error} =
+          "User $login does not have admin permission to managed categories via FTP.";
         warn(__PACKAGE__ . "::move() - ERROR: " . $self->{error});
         return -1;
     }
@@ -509,8 +502,8 @@ sub move {
     # Get current category object so we can modify it
     my $category_id = $self->{category_id};
     my ($curr_category) = Krang::Category->find(category_id => $category_id);
-    
-    # Create new url from current one. 
+
+    # Create new url from current one.
     # Replace bar in /foo/bar/ with new_dir to get /foo/new_dir/.
     my $new_url = $curr_category->url;
     $new_url =~ s/[^\/]+\/$//;
@@ -519,25 +512,32 @@ sub move {
     # Find dupes
     my $dup_category;
     if (($dup_category) = Krang::Category->find(url => $new_url)) {
-        $self->{error} = "User $login failed to rename category '".$curr_category->url."' to duplicate category '$new_url'";
+        $self->{error} =
+            "User $login failed to rename category '"
+          . $curr_category->url
+          . "' to duplicate category '$new_url'";
         warn(__PACKAGE__ . "::move() - ERROR: " . $self->{error});
         return -1;
     }
 
     # Set current category's dir property to new directory name
-    my $old_cat = $curr_category->url; # save for logging
+    my $old_cat = $curr_category->url;    # save for logging
     $curr_category->{dir} = $new_dir;
 
     # Try to save current category and bomb on failure
     eval { $curr_category->save() };
-    if ($@) {                                            
+    if ($@) {
+
         # bomb on any exceptions
         warn(__PACKAGE__ . "::move() - ERROR: $@");
         $self->{error} = $@;
         return -1;
     }
 
-    info(__PACKAGE__ . "::move() - User $login renamed category '$old_cat' to '" . $curr_category->url . "'");
+    info(   __PACKAGE__
+          . "::move() - User $login renamed category '$old_cat' to '"
+          . $curr_category->url
+          . "'");
     return 1;
 }
 
@@ -550,20 +550,21 @@ FTP, or if the category deletion or save throws an exception.
 =cut
 
 sub delete {
-    my $self = shift; 
+    my $self = shift;
 
     # Get user login for logging purposes
     my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
     my $login = $user->login;
 
     # Die if user doesn't have permission
-    if (! $self->_can_manage_categories_via_ftp()) {
-        $self->{error} = "User $login does not have admin permission to managed categories via FTP.";
+    if (!$self->_can_manage_categories_via_ftp()) {
+        $self->{error} =
+          "User $login does not have admin permission to managed categories via FTP.";
         warn(__PACKAGE__ . "::delete() - ERROR: " . $self->{error});
         return -1;
     }
 
-    my $category_id = $self->{category_id}; # Get category object to delete it
+    my $category_id = $self->{category_id};    # Get category object to delete it
 
     # We need this category object to log deletes
     my ($curr_category) = Krang::Category->find(category_id => $category_id);
@@ -572,24 +573,31 @@ sub delete {
     eval { $curr_category->delete() };
 
     # User can't delete root categories via FTP
-    if ($@ and ref $@ and $@->isa('Krang::Category::RootDeletion')) 
-    {
-        $self->{error} = "User $login failed to delete category ".$curr_category->url." because it's a root category. Root categories cannot be deleted via FTP.";
-        warn(__PACKAGE__. "::delete() - ERROR: " . $self->{error});
+    if ($@ and ref $@ and $@->isa('Krang::Category::RootDeletion')) {
+        $self->{error} =
+            "User $login failed to delete category "
+          . $curr_category->url
+          . " because it's a root category. Root categories cannot be deleted via FTP.";
+        warn(__PACKAGE__ . "::delete() - ERROR: " . $self->{error});
         return -1;
     }
-    # This category has dependents and can't be deleted 
-    elsif ($@ and ref $@ and $@->isa('Krang::Category::Dependent')) 
-    {
+
+    # This category has dependents and can't be deleted
+    elsif ($@ and ref $@ and $@->isa('Krang::Category::Dependent')) {
         my $dep = $@->dependents;
-        $self->{error} = "User $login failed to delete category ".$curr_category->url." because it has dependents. .";
-        warn(__PACKAGE__. "::delete() - ERROR: " . $self->{error});
-        return -1
-    } 
+        $self->{error} =
+            "User $login failed to delete category "
+          . $curr_category->url
+          . " because it has dependents. .";
+        warn(__PACKAGE__ . "::delete() - ERROR: " . $self->{error});
+        return -1;
+    }
+
     # Unknown exception. Fatal.
     elsif ($@) {
-        $self->{error} = "Unknown exception '$@' while attempting to delete category '". $curr_category->url . "': $@";
-        warn(__PACKAGE__. "::delete() - ERROR: " . $self->{error});
+        $self->{error} = "Unknown exception '$@' while attempting to delete category '"
+          . $curr_category->url . "': $@";
+        warn(__PACKAGE__ . "::delete() - ERROR: " . $self->{error});
         return -1;
     }
 
@@ -615,47 +623,46 @@ sub mkdir {
     my $login = $user->login;
 
     # Die if user doesn't have permission
-    if (! $self->_can_manage_categories_via_ftp()) {
-        $self->{error} = "User $login does not have admin permission to managed categories via FTP.";
+    if (!$self->_can_manage_categories_via_ftp()) {
+        $self->{error} =
+          "User $login does not have admin permission to managed categories via FTP.";
         warn(__PACKAGE__ . "::mkdir() - ERROR: " . $self->{error});
         return -1;
     }
 
-    my $category_id = $self->{category_id}; # We'll need this to create a child cat
+    my $category_id = $self->{category_id};    # We'll need this to create a child cat
 
     # We need this category object to log duplicates and creates
     my ($curr_category) = Krang::Category->find(category_id => $category_id);
 
-
     # Create new category and bomb if that fails.
     my $new_category;
-    eval { $new_category = Krang::Category->new( parent_id => $category_id,
-                                                 dir       => $dirname ) };
+    eval { $new_category = Krang::Category->new(parent_id => $category_id, dir => $dirname) };
 
     if ($@ and ref($@) and $@->isa('Krang::Category::NoEditAccess')) {
-        warn(__PACKAGE__."::mkdir - ERROR: User $login not allowed to add category to category '$category_id'");
+        warn(__PACKAGE__
+              . "::mkdir - ERROR: User $login not allowed to add category to category '$category_id'"
+        );
         $self->{error} = $@;
         return -1;
-    } 
-    elsif ($@) { 
-         warn(__PACKAGE__ . "::mkdir() - ERROR: $@"); 
-         $self->{error} = $@;
-         return -1;
-    } # bomb on any exceptions
+    } elsif ($@) {
+        warn(__PACKAGE__ . "::mkdir() - ERROR: $@");
+        $self->{error} = $@;
+        return -1;
+    }    # bomb on any exceptions
 
     # Save the new category and bomb if that fails.
     eval { $new_category->save(); };
 
     if ($@ and ref($@) and $@->isa('Krang::Category::DuplicateURL')) {
-        warn(__PACKAGE__."::mkdir() - ERROR: Duplicate url '" . $curr_category->url . "'"); 
+        warn(__PACKAGE__ . "::mkdir() - ERROR: Duplicate url '" . $curr_category->url . "'");
         $self->{error} = $@;
         return -1;
-    }
-    elsif ($@) { 
-        warn(__PACKAGE__ . "::mkdir() - ERROR: $@"); 
+    } elsif ($@) {
+        warn(__PACKAGE__ . "::mkdir() - ERROR: $@");
         $self->{error} = $@;
         return -1;
-    } # bomb on any exceptions
+    }    # bomb on any exceptions
 
     info(__PACKAGE__ . "::mkdir() - User $login created category '" . $new_category->url . "'");
 
@@ -687,9 +694,9 @@ FTP.  This permission applies to the mkdir() and move() operations.
 =cut
 
 sub _can_manage_categories_via_ftp {
-    my $self = shift;
-    my %admin_perms = pkg('Group')->user_admin_permissions();
-    my $can_admin_categories = $admin_perms{'admin_categories'} || 0;
+    my $self                     = shift;
+    my %admin_perms              = pkg('Group')->user_admin_permissions();
+    my $can_admin_categories     = $admin_perms{'admin_categories'} || 0;
     my $can_admin_categories_ftp = $admin_perms{'admin_categories_ftp'} || 0;
     return ($can_admin_categories && $can_admin_categories_ftp);
 }
@@ -706,7 +713,6 @@ L<Krang::FTP::FileHandle>
 
 =cut 
 
-sub dir {return shift};
-
+sub dir { return shift }
 
 1;

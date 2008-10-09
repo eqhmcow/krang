@@ -42,39 +42,43 @@ or "template") of the represented object.
 =cut
 
 sub new {
-    my $class = shift;
+    my $class  = shift;
     my $object = shift;
-    my $type = shift;
- 
-    my $self = bless { object => $object, type => $type, buffer => '' }, $class;
+    my $type   = shift;
+
+    my $self = bless {object => $object, type => $type, buffer => ''}, $class;
 
     return $self;
 }
 
 sub syswrite {
     my $self = shift;
-    my ($data,$length,$offset) = @_;
+    my ($data, $length, $offset) = @_;
     $self->{buffer} .= $data;
 
     return $length;
 }
 
 sub close {
-    my $self = shift;
+    my $self   = shift;
     my $object = $self->{object};
-    my $type = $self->{type};
- 
-    if ($type eq 'media') { 
+    my $type   = $self->{type};
+
+    if ($type eq 'media') {
+
         # checkout and version media if not a new media
-        if  ($object->media_id) {
+        if ($object->media_id) {
             $object->checkout();
         }
-    
+
         my $filename = $object->filename();
 
-        $object->upload_file( filename => $filename, filehandle => (new IO::Scalar \$self->{buffer}) );
-    } else { # if template
-        if  ($object->template_id) {
+        $object->upload_file(
+            filename   => $filename,
+            filehandle => (new IO::Scalar \$self->{buffer})
+        );
+    } else {    # if template
+        if ($object->template_id) {
             $object->checkout();
         }
 
@@ -94,19 +98,18 @@ sub close {
     }
 
     return 1;
-    
+
 }
 
 # Override IO::File->print so each line is saved to the internal buffer
 # and ultimately saved when close() is called. This makes ASCII transfers
-# work because Net::FTPServer calls file->print on this handle for each 
+# work because Net::FTPServer calls file->print on this handle for each
 # line, and if we don't override print, this will be fatal.
 sub print {
-  my $self = shift;
-  my $string2print = shift;
-  $self->{buffer} .= $string2print; # add string to buffer
+    my $self         = shift;
+    my $string2print = shift;
+    $self->{buffer} .= $string2print;    # add string to buffer
 }
-
 
 =head1 SEE ALSO
 

@@ -109,11 +109,11 @@ displayed by the server.
 =cut
 
 sub pre_configuration_hook {
-  my $self = shift;
+    my $self = shift;
 
-  # add to version info
-  $self->{version_string} .= ' - ' . __PACKAGE__;
-  
+    # add to version info
+    $self->{version_string} .= ' - ' . __PACKAGE__;
+
 }
 
 =item post_accept_hook()
@@ -125,16 +125,17 @@ change to uid/gid to KrangUser/KrangGroup.
 =cut
 
 sub post_accept_hook {
+
     # get current uid/gid
     my $uid = $>;
-    my %gid = map { ($_ => 1) } split( ' ', $) );
+    my %gid = map { ($_ => 1) } split(' ', $));
 
     # extract desired uid/gid
     my @uid_data = getpwnam(KrangUser);
     croak("Unable to find user for KrangUser '" . KrangUser . "'.")
       unless @uid_data;
     my $krang_uid = $uid_data[2];
-    my @gid_data = getgrnam(KrangGroup);
+    my @gid_data  = getgrnam(KrangGroup);
     croak("Unable to find user for KrangGroup '" . KrangGroup . "'.")
       unless @gid_data;
     my $krang_gid = $gid_data[2];
@@ -142,21 +143,29 @@ sub post_accept_hook {
     # become KrangUser/KrangGroup if necessary
     if ($gid{$krang_gid}) {
         eval { $) = $krang_gid; };
-        die("Unable to become KrangGroup '" . KrangGroup . "' : $@\n" . 
-            "Maybe you need to start this process as root.\n")
+        die(    "Unable to become KrangGroup '"
+              . KrangGroup
+              . "' : $@\n"
+              . "Maybe you need to start this process as root.\n")
           if $@;
-        die("Failed to become KrangGroup '" . KrangGroup . "' : $!.\n" .
-            "Maybe you need to start this process as root.\n")
+        die(    "Failed to become KrangGroup '"
+              . KrangGroup
+              . "' : $!.\n"
+              . "Maybe you need to start this process as root.\n")
           unless $) == $krang_gid;
     }
 
     if ($uid != $krang_uid) {
         eval { $> = $krang_uid; };
-        die("Unable to become KrangUser '" . KrangUser . "' : $@\n" .
-            "Maybe you need to start this process as root.\n")
+        die(    "Unable to become KrangUser '"
+              . KrangUser
+              . "' : $@\n"
+              . "Maybe you need to start this process as root.\n")
           if $@;
-        die("Failed to become KrangUser '" . KrangUser . "' : $!\n" .
-            "Maybe you need to start this process as root.\n")
+        die(    "Failed to become KrangUser '"
+              . KrangUser
+              . "' : $!\n"
+              . "Maybe you need to start this process as root.\n")
           unless $> == $krang_uid;
     }
 }
@@ -172,17 +181,17 @@ $self->{user_obj}. Returns -1 on login failure or 0 on success.
 =cut
 
 sub authentication_hook {
-    my $self = shift;
-    my $user = shift;
-    my $pass = shift;
+    my $self         = shift;
+    my $user         = shift;
+    my $pass         = shift;
     my $user_is_anon = shift;
     my @auth_instances;
     my %user_objects;
     my $login_found;
 
     # log this attempt to login
-    info(__PACKAGE__." Login attempt- Username:$user.");
- 
+    info(__PACKAGE__ . " Login attempt- Username:$user.");
+
     # disallow anonymous access.
     return -1 if $user_is_anon;
 
@@ -193,26 +202,26 @@ sub authentication_hook {
         pkg('Conf')->instance($instance);
 
         # get user object
-        my @user_object = pkg('User')->find( login => $user ); 
+        my @user_object = pkg('User')->find(login => $user);
 
         next if not $user_object[0];
 
         $user_objects{$instance} = $user_object[0];
 
-        debug(__PACKAGE__." User object found for login $user in instance $instance.");
- 
+        debug(__PACKAGE__ . " User object found for login $user in instance $instance.");
+
         # return failure if authentication fails.
-        my $login_ok = pkg('User')->check_auth($user,$pass);
+        my $login_ok = pkg('User')->check_auth($user, $pass);
 
         if ($login_ok) {
             push @auth_instances, $instance;
             $login_found = 1;
-        }        
+        }
     }
 
     if (not $login_found) {
-            info(__PACKAGE__." login/password denied for user $user.");
-            return -1;
+        info(__PACKAGE__ . " login/password denied for user $user.");
+        return -1;
     }
 
     # undefine instance until they choose one at top level
@@ -220,11 +229,11 @@ sub authentication_hook {
 
     # set accepted instances
     $self->{auth_instances} = \@auth_instances;
-    $self->{user_objects} = \%user_objects;
+    $self->{user_objects}   = \%user_objects;
 
     # successful login.
-    info(__PACKAGE__." login/password accepted for user $user, instances: @auth_instances.");
-     
+    info(__PACKAGE__ . " login/password accepted for user $user, instances: @auth_instances.");
+
     return 0;
 }
 
@@ -236,8 +245,8 @@ directory.  This method just calls Krang::FTP::DirHandle->new().
 =cut
 
 sub root_directory_hook {
-  my $self = shift;
-  return pkg('FTP::DirHandle')->new($self);
+    my $self = shift;
+    return pkg('FTP::DirHandle')->new($self);
 }
 
 =item system_error_hook()
@@ -251,10 +260,10 @@ it never really gets called!)
 =cut
 
 sub system_error_hook {
-  my $self = shift;
-  return delete $self->{error}
-    if exists $self->{error};
-  return "Unknown error occurred.";
+    my $self = shift;
+    return delete $self->{error}
+      if exists $self->{error};
+    return "Unknown error occurred.";
 }
 
 1;

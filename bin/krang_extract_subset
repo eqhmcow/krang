@@ -139,15 +139,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -172,25 +175,25 @@ use Pod::Usage;
 # process args and open the output file before dropping privs
 our ($help, $man, $output, $verbose, $file, $compress, $set, %id);
 
-BEGIN { 
+BEGIN {
     eval {
-        $output = 'extract_subset.kds';
+        $output  = 'extract_subset.kds';
         $verbose = 0;
 
-        %id  = map { ($_, [])} qw( site_id );
+        %id = map { ($_, []) } qw( site_id );
 
-        pod2usage(2) unless
-          GetOptions(help        => \$help,
-                     man         => \$man,
-                     'verbose+'  => \$verbose,
-                     'compress'  => \$compress,
-                     'output=s'  => \$output,
-                     (map { ("$_=i", $id{$_})  } keys %id),
-                    );
-        pod2usage(1)             if $help;
+        pod2usage(2)
+          unless GetOptions(
+            help       => \$help,
+            man        => \$man,
+            'verbose+' => \$verbose,
+            'compress' => \$compress,
+            'output=s' => \$output,
+            (map { ("$_=i", $id{$_}) } keys %id),
+          );
+        pod2usage(1) if $help;
         pod2usage(-verbose => 2) if $man;
-        pod2usage("Unrecognized options to krang_extract_subset: '" . 
-                  join(' ', @ARGV) . "'\n")
+        pod2usage("Unrecognized options to krang_extract_subset: '" . join(' ', @ARGV) . "'\n")
           if @ARGV;
 
         pod2usage(1) unless $id{site_id};
@@ -204,12 +207,11 @@ BEGIN {
     };
 
     # output errors without the BEGIN compilation failed message
-    if ($@) { 
+    if ($@) {
         warn $@;
         exit(1);
     }
 }
-
 
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'DataSet';
@@ -223,10 +225,8 @@ use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Temp qw(tempfile);
 use Data::Dumper;
 
-
-my %all = map { ($_, 0) } qw(stories media templates contribs categories 
-                             sites users groups alerts list_items );
-
+my %all = map { ($_, 0) } qw(stories media templates contribs categories
+  sites users groups alerts list_items );
 
 my %checked_stories;
 my %checked_media;
@@ -234,8 +234,7 @@ my %checked_media;
 my %stats;
 
 # open up the data set
-$set = pkg('DataSet')->new($verbose ? 
-                           (add_callback => \&add_callback) : ());
+$set = pkg('DataSet')->new($verbose ? (add_callback => \&add_callback) : ());
 
 # find the proper site(s).
 my @sites = pkg('Site')->find(site_id => $id{site_id});
@@ -264,11 +263,9 @@ foreach my $id (@cat_ids) {
     }
 }
 
-
 # add media.
 my $limit  = 50;
 my $offset = 0;
-
 
 foreach my $m (pkg('Media')->find(site_id => $id{site_id})) {
     $set->add(object => $m);
@@ -277,8 +274,8 @@ foreach my $m (pkg('Media')->find(site_id => $id{site_id})) {
     $stats{media}++;
 }
 
-
 $offset = 0;
+
 # add stories - this is where things get a little complicated.
 foreach my $s (pkg('Story')->find(site_id => $id{site_id})) {
 
@@ -289,20 +286,22 @@ foreach my $s (pkg('Story')->find(site_id => $id{site_id})) {
     $stats{story}++;
 }
 
-
-print sprintf("Subset completed.\n\nsites:\t\t%6i\ncategories:\t%6i\nstories:\t%6i\nmedia:\t\t%6i\n\nWriting to disk....\n\n", $stats{site}, $stats{cats}, $stats{story}, $stats{media});
+print sprintf(
+    "Subset completed.\n\nsites:\t\t%6i\ncategories:\t%6i\nstories:\t%6i\nmedia:\t\t%6i\n\nWriting to disk....\n\n",
+    $stats{site}, $stats{cats}, $stats{story}, $stats{media});
 
 # write file to a temp location and copy down the OUTPUT pipe.  This
 # is necessary if $file can't be written to by KrangUser
-my (undef, $temp) = tempfile(DIR    => catdir(KrangRoot, 'tmp'),
-                             SUFFIX => '.kds' . ($compress ? '.gz' : ''), 
-                            );
+my (undef, $temp) = tempfile(
+    DIR => catdir(KrangRoot, 'tmp'),
+    SUFFIX => '.kds' . ($compress ? '.gz' : ''),
+);
 $set->write(path => $temp, compress => $compress);
 
 # do a buffered copy from TEMP to OUTPUT
 open(TEMP, '<', $temp) or die "Unable to open '$temp': $!\n";
 my $buffer = "";
-while(read(TEMP, $buffer, 10240)) {
+while (read(TEMP, $buffer, 10240)) {
     print OUTPUT $buffer;
 }
 close TEMP;
@@ -318,9 +317,9 @@ exit(0);
 # also nullify any links to stories/media that are not in the sites.
 #
 sub sanitize_story {
-    my %args  = @_;
+    my %args = @_;
 
-    my $story      = $args{story};
+    my $story = $args{story};
     my %good_sites = map { $_ => 1 } @{$args{site_id}};
 
     print STDERR sprintf("Examining Story ID=%i\n", $story->story_id)
@@ -332,12 +331,12 @@ sub sanitize_story {
         if ($good_sites{$cat->site_id}) {
             push @final_cats, $cat;
         } else {
-            print STDERR sprintf("Story ID=%i - removing category='%s'\n",
-                                 $story->story_id, $cat->url) if ($verbose);
+            print STDERR
+              sprintf("Story ID=%i - removing category='%s'\n", $story->story_id, $cat->url)
+              if ($verbose);
         }
     }
     $story->categories(@final_cats);
-
 
     # iterate over the elements of the story - looking for
     # storylink/medialink elements.
@@ -363,13 +362,14 @@ sub sanitize_story {
 sub scrub_children {
     my %args = @_;
 
-    my $element    = $args{element};
+    my $element = $args{element};
     my %good_sites = map { $_ => 1 } @{$args{site_id}};
 
     foreach my $child ($element->children) {
+
         # check to confirm story has a cat in the site.
         if ($child->class->isa('Krang::ElementClass::StoryLink')) {
-            my $s  = $child->data();
+            my $s = $child->data();
 
             next unless defined($s);
 
@@ -382,10 +382,12 @@ sub scrub_children {
                     last;
                 }
             }
+
             # if the story isn't part of the sites, nix it.
             $child->data(undef) unless $ok;
 
         }
+
         # check media objects to see if they are in the site.
         elsif ($child->class->isa('Krang::ElementClass::MediaLink')) {
             my $m = $child->data();
@@ -395,6 +397,7 @@ sub scrub_children {
             # remove the connection if the media object is in the right site.
             $child->data(undef) unless ($good_sites{$m->category->site_id});
         }
+
         # recurse further.
         elsif ($child->children) {
             scrub_children(element => $child, site_id => $args{site_id});
@@ -402,13 +405,12 @@ sub scrub_children {
     }
 }
 
-
 sub add_callback {
     my $object = $_[1];
-    my $class = ref $object;
+    my $class  = ref $object;
     my ($type) = $class =~ /^Krang::(.*)$/;
     my $id_meth = lc($type) . "_id";
-    $id_meth = 'list_item_id' if ($id_meth eq 'listitem_id');
+    $id_meth = 'list_item_id'  if ($id_meth eq 'listitem_id');
     $id_meth = 'list_group_id' if ($id_meth eq 'listgroup_id');
 
     print STDERR "Adding $type " . $object->$id_meth . " to $file...\n";
@@ -416,6 +418,4 @@ sub add_callback {
 
 # keep a count of things added
 my $added = 0;
-
-
 

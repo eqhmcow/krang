@@ -8,9 +8,8 @@ use Config::ApacheFormat;
 use Carp qw(croak);
 
 require Exporter;
-our @ISA = qw(Exporter);
+our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw(pkg);
-
 
 =head1 NAME
 
@@ -76,16 +75,16 @@ sub reload_configuration {
 sub load_configuration {
     my $pkg = shift;
 
-    my $root = $ENV{KRANG_ROOT} 
-     or croak("KRANG_ROOT must be defined before loading Krang::ClassFactory");
+    my $root = $ENV{KRANG_ROOT}
+      or croak("KRANG_ROOT must be defined before loading Krang::ClassFactory");
 
     # using Krang::Addon would be easier but this module shouldn't
     # load any Krang:: modules since that will prevent them from being
     # overridden in addons via class.conf
     opendir(my $dir, catdir($root, 'addons'));
-    while(my $addon = readdir($dir)) {
+    while (my $addon = readdir($dir)) {
         next if $addon eq '.' or $addon eq '..' or $addon eq 'CVS' or $addon eq '.cvsignore';
-        my $conf  = catfile($root, 'addons', $addon, 'conf', 'class.conf');
+        my $conf = catfile($root, 'addons', $addon, 'conf', 'class.conf');
         if (-e $conf) {
             $pkg->load_file($conf);
         }
@@ -94,8 +93,7 @@ sub load_configuration {
 
 sub load_file {
     my ($pkg, $file) = @_;
-    my $conf = Config::ApacheFormat->new(
-                 hash_directives => ['setclass']);
+    my $conf = Config::ApacheFormat->new(hash_directives => ['setclass']);
     eval { $conf->read($file) };
     croak("Unable to load class configuration file $file: $@") if $@;
 
@@ -105,8 +103,6 @@ sub load_file {
     }
 }
 
-
 BEGIN { __PACKAGE__->load_configuration() }
-
 
 1;

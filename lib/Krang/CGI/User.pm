@@ -20,19 +20,17 @@ web application module Krang::CGI::User...
 
 =cut
 
-
 use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-
 
 use Krang::ClassLoader base => qw/CGI/;
 
 use Carp qw(verbose croak);
 use Krang::ClassLoader 'History';
 use Krang::ClassLoader 'HTMLPager';
-use Krang::ClassLoader Log => qw/critical debug info/;
-use Krang::ClassLoader Widget => qw/autocomplete_values/;
+use Krang::ClassLoader Log     => qw/critical debug info/;
+use Krang::ClassLoader Widget  => qw/autocomplete_values/;
 use Krang::ClassLoader Message => qw(add_message add_alert get_alerts clear_alerts);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
@@ -41,11 +39,13 @@ use Krang::ClassLoader 'PasswordHandler';
 use Krang::ClassLoader Localization => qw(localize);
 
 # query fields to delete
-use constant DELETE_FIELDS => (pkg('User')->USER_RW, 
-                               qw(confirm_password
-                                  new_password
-                                  password
-                                  current_group_ids));
+use constant DELETE_FIELDS => (
+    pkg('User')->USER_RW,
+    qw(confirm_password
+      new_password
+      password
+      current_group_ids)
+);
 
 ##############################
 #####  OVERRIDE METHODS  #####
@@ -56,26 +56,28 @@ sub setup {
 
     $self->start_mode('search');
 
-    $self->run_modes([qw/
-		add
-		cancel_add
-		save_add
-		save_stay_add
-		delete
-		delete_selected
-		edit
-		cancel_edit
-		save_edit
-		save_stay_edit
-		search
-        autocomplete
-	/]);
+    $self->run_modes(
+        [
+            qw/
+              add
+              cancel_add
+              save_add
+              save_stay_add
+              delete
+              delete_selected
+              edit
+              cancel_edit
+              save_edit
+              save_stay_edit
+              search
+              autocomplete
+              /
+        ]
+    );
 
     $self->tmpl_path('User/');
 
 }
-
-
 
 ##############################
 #####  RUN-MODE METHODS  #####
@@ -98,12 +100,14 @@ to the system.
 =cut
 
 sub add {
-    my $self = shift;
+    my $self        = shift;
     my %ui_messages = @_;
-    my $q = $self->query();
-    my $t = $self->load_tmpl("edit_view.tmpl", 
-                             associate         => $q, 
-                             die_on_bad_params => 0);
+    my $q           = $self->query();
+    my $t           = $self->load_tmpl(
+        "edit_view.tmpl",
+        associate         => $q,
+        die_on_bad_params => 0
+    );
 
     $t->param(add_mode => 1);
     $t->param(%ui_messages) if %ui_messages;
@@ -121,7 +125,6 @@ sub add {
     return $t->output();
 }
 
-
 =item * cancel_add
 
 Cancels edit of user object on "Add User" screen and returns to 'search' run
@@ -138,7 +141,6 @@ sub cancel_add {
 
     return $self->search();
 }
-
 
 =item * save_add
 
@@ -164,6 +166,7 @@ sub save_add {
     my $q = $self->query();
 
     my %errors = $self->validate_user();
+
     # Return to edit screen if there are errors
     return $self->add(%errors) if %errors;
 
@@ -174,8 +177,7 @@ sub save_add {
     # now validate the password
     my $valid = pkg('PasswordHandler')->check_pw(
         $q->param('new_password'),
-        $user->login,
-        $q->param('email'),
+        $user->login, $q->param('email'),
         $q->param('first_name'),
         $q->param('last_name'),
     );
@@ -186,7 +188,7 @@ sub save_add {
 
     %errors = $self->update_user($user);
     return $self->access_forbidden if $errors{'tampered_gids'};
-    return $self->edit(%errors) if %errors;
+    return $self->edit(%errors)    if %errors;
 
     $q->delete(DELETE_FIELDS);
 
@@ -194,7 +196,6 @@ sub save_add {
 
     return $self->search();
 }
-
 
 =item * save_stay_add
 
@@ -222,8 +223,7 @@ sub save_stay_add {
     # now validate the password
     my $valid = pkg('PasswordHandler')->check_pw(
         $q->param('new_password'),
-        $user->login,
-        $q->param('email'),
+        $user->login, $q->param('email'),
         $q->param('first_name'),
         $q->param('last_name'),
     );
@@ -234,18 +234,17 @@ sub save_stay_add {
 
     %errors = $self->update_user($user);
     return $self->access_forbidden if $errors{'tampered_gids'};
-    return $self->add(%errors) if %errors;
+    return $self->add(%errors)     if %errors;
 
     # preserve, set vals for 'edit' run mode
     $q->delete(DELETE_FIELDS);
     $q->param(user_id => $user->user_id());
-    $q->param(rm => 'edit');
+    $q->param(rm      => 'edit');
 
     add_message('message_user_saved');
 
     return $self->edit();
 }
-
 
 =item * delete
 
@@ -258,7 +257,7 @@ It expects a 'user_id' query param.
 sub delete {
     my $self = shift;
 
-    my $q = $self->query();
+    my $q       = $self->query();
     my $user_id = $q->param('user_id');
     return $self->search() unless $user_id;
 
@@ -271,16 +270,18 @@ sub delete {
         return $self->edit;
     }
 
-    eval {pkg('User')->delete($user_id);};
+    eval { pkg('User')->delete($user_id); };
 
     if ($@) {
         if (ref $@ && $@->isa('Krang::User::Dependency')) {
-            critical("Unable to delete user '$user_id': objects are " .
-                     "checked out by this user.");
+            critical(
+                "Unable to delete user '$user_id': objects are " . "checked out by this user.");
             my ($user) = pkg('User')->find(user_id => $user_id);
-            add_alert('error_deletion_failure',
-                        login => $user->login,
-                        user_id => $user->user_id,);
+            add_alert(
+                'error_deletion_failure',
+                login   => $user->login,
+                user_id => $user->user_id,
+            );
             return $self->search();
         } else {
             croak($@);
@@ -297,7 +298,6 @@ sub delete {
 
     return $self->search();
 }
-
 
 =item * delete_selected
 
@@ -367,7 +367,6 @@ sub delete_selected {
     return $suicide ? $self->_redirect_to_login() : $self->search();
 }
 
-
 =item * edit
 
 Display a screen allowing the end-user to edit the User object selected from
@@ -382,22 +381,24 @@ fields, so errant values are preserved for correction.
 =cut
 
 sub edit {
-    my $self = shift;
+    my $self        = shift;
     my %ui_messages = @_;
-    my $q = $self->query();
-    my $user_id = $q->param('user_id');
-    my $user = $session{EDIT_USER};
+    my $q           = $self->query();
+    my $user_id     = $q->param('user_id');
+    my $user        = $session{EDIT_USER};
 
     if ($user_id) {
         ($user) = pkg('User')->find(user_id => $user_id);
         $session{EDIT_USER} = $user;
     }
-    croak(__PACKAGE__ . "->edit(): No pkg('User') object found matching " .
-          "user_id '$user_id'") unless defined $user;
+    croak(__PACKAGE__ . "->edit(): No pkg('User') object found matching " . "user_id '$user_id'")
+      unless defined $user;
 
-    my $t = $self->load_tmpl("edit_view.tmpl",
-                             associate         => $q,
-                             die_on_bad_params => 0);
+    my $t = $self->load_tmpl(
+        "edit_view.tmpl",
+        associate         => $q,
+        die_on_bad_params => 0
+    );
 
     $t->param(%ui_messages) if %ui_messages;
 
@@ -407,7 +408,6 @@ sub edit {
 
     return $t->output();
 }
-
 
 =item * cancel_edit
 
@@ -425,7 +425,6 @@ sub cancel_edit {
 
     return $self->search();
 }
-
 
 =item * save_edit
 
@@ -457,7 +456,7 @@ sub save_edit {
     croak("Can't retrieve EDIT_USER from session") unless $user;
 
     # now validate the password
-    if( $q->param('new_password') ) {
+    if ($q->param('new_password')) {
         my $valid = pkg('PasswordHandler')->check_pw(
             $q->param('new_password'),
             $user->login,
@@ -473,7 +472,7 @@ sub save_edit {
 
     %errors = $self->update_user($user);
     return $self->access_forbidden if $errors{'tampered_gids'};
-    return $self->edit(%errors) if %errors;
+    return $self->edit(%errors)    if %errors;
 
     $q->delete(DELETE_FIELDS);
 
@@ -481,7 +480,6 @@ sub save_edit {
 
     return $self->search();
 }
-
 
 =item * save_stay_edit
 
@@ -507,7 +505,7 @@ sub save_stay_edit {
     croak("Can't retrieve EDIT_USER from session") unless $user;
 
     # now validate the password
-    if( $q->param('new_password') ) {
+    if ($q->param('new_password')) {
         my $valid = pkg('PasswordHandler')->check_pw(
             $q->param('new_password'),
             $user->login,
@@ -523,18 +521,17 @@ sub save_stay_edit {
 
     %errors = $self->update_user($user);
     return $self->access_forbidden if $errors{'tampered_gids'};
-    return $self->edit(%errors) if %errors;
+    return $self->edit(%errors)    if %errors;
 
     # preserve, set vals for 'edit' run mode
     $q->delete(DELETE_FIELDS);
     $q->param(user_id => $user->user_id());
-    $q->param(rm => 'edit');
+    $q->param(rm      => 'edit');
 
     add_message('message_user_saved');
 
     return $self->edit();
 }
-
 
 =item * search
 
@@ -550,55 +547,47 @@ sub search {
 
     my $q = $self->query();
 
-    my $t = $self->load_tmpl("list_view.tmpl",
-                             associate => $q,
-                             loop_context_vars => 1);
+    my $t = $self->load_tmpl(
+        "list_view.tmpl",
+        associate         => $q,
+        loop_context_vars => 1
+    );
 
     # simple search
     my $search_filter = $q->param('search_filter');
-    if(! defined $search_filter ) {
+    if (!defined $search_filter) {
         $search_filter = $session{KRANG_PERSIST}{pkg('User')}{search_filter}
-            || '';
+          || '';
     }
 
     # setup pager
-    my $pager = pkg('HTMLPager')->new(cgi_query => $q,
-                                      persist_vars => {
-                                                       rm => 'search',
-                                                       search_filter =>
-                                                       $search_filter,
-                                                      },
-                                      use_module => pkg('User'),
-                                      find_params =>
-                                      {simple_search => $search_filter,
-                                       hidden        => 0,
-                                      },
-                                      columns => [
-                                                  'login',
-                                                  'first',
-                                                  'last',
-                                                  'command_column',
-                                                  'checkbox_column',
-                                                 ],
-                                      column_labels => {login => 'User Name',
-                                                        first => 'First Name',
-                                                        last => 'Last Name',
-                                                       },
-                                      columns_sortable =>
-                                      [qw(login last first)],
-                                      columns_sort_map => {
-                                                           first =>
-                                                           'first_name',
-                                                           last => 'last_name',
-                                                          },
-                                      command_column_commands =>
-                                      [qw(edit_user)],
-                                      command_column_labels =>
-                                      {edit_user => 'Edit'},
-                                      row_handler => sub { $self->search_row_handler(@_) },
-                                      id_handler =>
-                                      sub {return $_[0]->user_id},
-                                     );
+    my $pager = pkg('HTMLPager')->new(
+        cgi_query    => $q,
+        persist_vars => {
+            rm            => 'search',
+            search_filter => $search_filter,
+        },
+        use_module  => pkg('User'),
+        find_params => {
+            simple_search => $search_filter,
+            hidden        => 0,
+        },
+        columns       => ['login', 'first', 'last', 'command_column', 'checkbox_column',],
+        column_labels => {
+            login => 'User Name',
+            first => 'First Name',
+            last  => 'Last Name',
+        },
+        columns_sortable => [qw(login last first)],
+        columns_sort_map => {
+            first => 'first_name',
+            last  => 'last_name',
+        },
+        command_column_commands => [qw(edit_user)],
+        command_column_labels   => {edit_user => 'Edit'},
+        row_handler             => sub { $self->search_row_handler(@_) },
+        id_handler              => sub { return $_[0]->user_id },
+    );
 
     # get pager output
     $t->param(
@@ -612,40 +601,40 @@ sub search {
     return $t->output();
 }
 
-
 # Construct param hashref to be used for edit template output
 sub get_user_params {
     my $self = shift;
     my $user = shift;
-    my $q = $self->query();
+    my $q    = $self->query();
     my %user_tmpl;
 
     # only show groups we are allowed to manage
     my %find_params = ();
     if (pkg('Group')->user_admin_permissions('admin_users_limited')) {
-       $find_params{group_ids} = [ pkg('User')->current_user_group_ids ];
+        $find_params{group_ids} = [pkg('User')->current_user_group_ids];
     }
 
     # build hash of Krang::Group permission groups...
-    my %user_groups = map {$_->group_id => $_->name} pkg('Group')->find(%find_params);
+    my %user_groups = map { $_->group_id => $_->name } pkg('Group')->find(%find_params);
 
     # make group_ids multi-select
-    my @cgids = $q->param('errors') ? $q->param('current_group_ids')
-                                    : grep { $user_groups{$_} } $user->group_ids;
-    my %cgids = map {$_, 1} 
-        sort { lc $user_groups{$a} cmp lc $user_groups{$b} } @cgids;
-    my @pgids = grep {not exists $cgids{$_}} 
-        sort { lc $user_groups{$a} cmp lc $user_groups{$b} } keys %user_groups;
-    push @{$user_tmpl{possible_group_ids}},
-      {id => $_, name => $user_groups{$_}} for @pgids;
-    push @{$user_tmpl{current_group_ids}},
-      {id => $_, name => $user_groups{$_}} for @cgids;
+    my @cgids =
+        $q->param('errors')
+      ? $q->param('current_group_ids')
+      : grep { $user_groups{$_} } $user->group_ids;
+    my %cgids = map { $_, 1 }
+      sort { lc $user_groups{$a} cmp lc $user_groups{$b} } @cgids;
+    my @pgids = grep { not exists $cgids{$_} }
+      sort { lc $user_groups{$a} cmp lc $user_groups{$b} } keys %user_groups;
+    push @{$user_tmpl{possible_group_ids}}, {id => $_, name => $user_groups{$_}} for @pgids;
+    push @{$user_tmpl{current_group_ids}},  {id => $_, name => $user_groups{$_}} for @cgids;
 
     # loop through User fields
     if ($q->param('errors')) {
         $user_tmpl{$_} = $q->param($_) for pkg('User')->USER_RW;
         $q->delete('errors');
-    } else {
+    }
+    else {
         $user_tmpl{$_} = $user->$_ for pkg('User')->USER_RW;
     }
 
@@ -653,15 +642,14 @@ sub get_user_params {
     return \%user_tmpl;
 }
 
-
 # Update the user object with the values in the CGI query
 sub update_user {
     my $self = shift;
     my $user = shift;
-    my $q = $self->query();
+    my $q    = $self->query();
 
     # overwrite object fields
-    $user->$_( $q->param($_) ? $q->param($_) : undef )
+    $user->$_($q->param($_) ? $q->param($_) : undef)
       for grep { $_ ne 'hidden' and $_ ne 'password_changed' and $_ ne 'force_pw_change' }
       pkg('User')->USER_RW;
 
@@ -670,20 +658,21 @@ sub update_user {
     $user->password($pass) unless $pass eq '';
 
     # handle group ids
-    my %preserve_gids   = (); # groups the current user may not handle
-    my %may_manage_gids = map {$_ => 1} pkg('User')->current_user_group_ids;
-    my %incoming_gids   = map {$_ => 1} $q->param('current_group_ids');
-    my @target_user_gids        = $user->group_ids;
+    my %preserve_gids = ();    # groups the current user may not handle
+    my %may_manage_gids  = map { $_ => 1 } pkg('User')->current_user_group_ids;
+    my %incoming_gids    = map { $_ => 1 } $q->param('current_group_ids');
+    my @target_user_gids = $user->group_ids;
 
     # be careful when having limited user management perms
     if (pkg('Group')->user_admin_permissions('admin_users_limited')) {
-	# preserve groups the current user is not allowed to handle
-	%preserve_gids = map {$_ => 1 }
-	                 grep { not $may_manage_gids{$_} } @target_user_gids;
 
-	# prevent current user from tampering current_group_ids param
-	return ('tampered_gids' => 1)
-	  if grep { not $may_manage_gids{$_} } keys %incoming_gids;
+        # preserve groups the current user is not allowed to handle
+        %preserve_gids = map { $_ => 1 }
+          grep { not $may_manage_gids{$_} } @target_user_gids;
+
+        # prevent current user from tampering current_group_ids param
+        return ('tampered_gids' => 1)
+          if grep { not $may_manage_gids{$_} } keys %incoming_gids;
     }
 
     # combine the incoming and the preserved gids
@@ -696,14 +685,14 @@ sub update_user {
     }
 
     # attempt to save
-    eval {$user->save()};
+    eval { $user->save() };
 
     # Did we get a duplicate exception
     if ($@) {
         my %errors;
         if (ref $@ && $@->isa('Krang::User::Duplicate')) {
             my %dupes = %{$@->duplicates};
-            for my $v(values %dupes) {
+            for my $v (values %dupes) {
                 for (@$v) {
                     my $error = "duplicate_" . $_;
                     $errors{$error} = 1;
@@ -714,8 +703,10 @@ sub update_user {
             return %errors;
         } elsif (ref $@ && $@->isa('Krang::User::InvalidGroup')) {
             my $ids = $@->group_id;
-            my $error = (defined $ids && ref $ids) ? 'error_invalid_group_id' :
-              'error_null_group';
+            my $error =
+              (defined $ids && ref $ids)
+              ? 'error_invalid_group_id'
+              : 'error_null_group';
             $errors{$error} = 1;
             $q->param('errors', 1);
             add_alert($error);
@@ -727,6 +718,7 @@ sub update_user {
             add_alert($error);
             return %errors;
         } else {
+
             # it's somebody else's problem :)
             croak($@);
         }
@@ -735,13 +727,12 @@ sub update_user {
     return ();
 }
 
-
 # Ensure the validity of parameters passed while attempting to save or update
 # the user object
 # * Enforces the login length requirement (at present 3 characters).
 sub validate_user {
     my $self = shift;
-    my $q = $self->query();
+    my $q    = $self->query();
     my %errors;
 
     # login, first, and last cannot be empty; email must be empty or valid
@@ -757,18 +748,17 @@ sub validate_user {
             # check login length
             if ($_ eq 'login') {
                 $errors{"error_login_length"} = 1
-                  unless (length($val) >= 6 ||
-                          grep $val eq $_, pkg('User')->SHORT_NAMES);
+                  unless (length($val) >= 6 || grep $val eq $_, pkg('User')->SHORT_NAMES);
             }
         }
     }
 
-    my ($mode, $pass, $cpass) = map {$q->param($_)}
-      qw/rm new_password confirm_password/;
+    my ($mode, $pass, $cpass) = map { $q->param($_) } qw/rm new_password confirm_password/;
 
     # only check if this is a first time save or if either of the password
     # fields contain a value...
     if ((not $q->param('user_id')) || $pass || $cpass) {
+
         # validate new_password and confirm_password
         if ($pass eq '') {
             $errors{error_null_password} = 1 if $mode =~ /add/;
@@ -792,8 +782,6 @@ sub validate_user {
     return %errors;
 }
 
-
-
 ##############################
 #####  PRIVATE METHODS   #####
 ##############################
@@ -806,7 +794,6 @@ sub search_row_handler {
     $row->{last}  = $q->escapeHTML($user->last_name);
     $row->{first} = $q->escapeHTML($user->first_name);
 }
-
 
 sub autocomplete {
     my $self = shift;
@@ -863,8 +850,6 @@ Instead of failing to delete a user if he has assets checked out, we should
 check all of his assets in and then perform the deletion.
 
 =cut
-
-
 
 my $quip = <<END;
 I do not feel obliged to believe that the same God who has endowed us

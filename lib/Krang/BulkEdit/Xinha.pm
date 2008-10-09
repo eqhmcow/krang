@@ -122,7 +122,7 @@ sub edit {
     my $element  = $arg{element};
 
     # get children to put in Xinha
-    my %names = map {$_ => 1} @{$arg{child_names}};
+    my %names = map { $_ => 1 } @{$arg{child_names}};
     my @children = grep { $names{$_->name} } $element->children;
 
     # put the configured html tag around them
@@ -140,11 +140,13 @@ sub edit {
     }
 
     # make formatblock selector, using the elementclass's display_name
-    my ($display_name_for, $formatblock) = $pkg->make_formatblock(element     => $element,
-                                                                  child_names => \%names);
+    my ($display_name_for, $formatblock) = $pkg->make_formatblock(
+        element     => $element,
+        child_names => \%names
+    );
 
     # xinha-specific tmpl-var
-    my $serverbase = ($ENV{SERVER_PROTOCOL} =~ /^HTTP\//) ? "http://" : "https://" ;
+    my $serverbase = ($ENV{SERVER_PROTOCOL} =~ /^HTTP\//) ? "http://" : "https://";
     $serverbase .= $ENV{HTTP_HOST} . '/';
 
     # make sure the browser finds markup his WYSIWYG commands can handle
@@ -153,20 +155,21 @@ sub edit {
     # crumbs let the user jump up the tree
     my @crumbs = $editor->_make_crumbs(element => $element);
     my @display_names = values %$display_name_for;
-    my ($curr_loc) = (scalar(@display_names) == 1)
+    my ($curr_loc) =
+      (scalar(@display_names) == 1)
       ? $display_names[0]
       : localize("All WYSIWYG Elements");
-    push @crumbs, { name => $curr_loc };
+    push @crumbs, {name => $curr_loc};
 
     # fill template
     $template->param(
-        bulk_data   => $html,
-        formatblock => $formatblock,
-        serverbase  => $serverbase,
-        crumbs      => \@crumbs,
-        bulk_done_with_this_element => localize('Done Bulk Editing '.$curr_loc),
-        toolbar     => pkg("BulkEdit::Xinha::Config")->xinha_toolbar(
-                           include_formatblock => $formatblock),
+        bulk_data                   => $html,
+        formatblock                 => $formatblock,
+        serverbase                  => $serverbase,
+        crumbs                      => \@crumbs,
+        bulk_done_with_this_element => localize('Done Bulk Editing ' . $curr_loc),
+        toolbar =>
+          pkg("BulkEdit::Xinha::Config")->xinha_toolbar(include_formatblock => $formatblock),
     );
 }
 
@@ -190,14 +193,14 @@ sub save {
     my $query   = $editor->query;
 
     # filter and sanitize the incoming HTML
-    my $html = $pkg->scrub(
-        html => pkg("Markup::$ENV{KRANG_BROWSER_ENGINE}")->browser2db(
-        html => $query->param('bulk_data'))
-    );
+    my $html =
+      $pkg->scrub(html =>
+          pkg("Markup::$ENV{KRANG_BROWSER_ENGINE}")->browser2db(html => $query->param('bulk_data'))
+      );
 
     # remove old children
-    my $at_boundary = "\\". pkg('CGI::ElementEditor')->concat_string();
-    my %names = map {$_ => 1} split(/$at_boundary/, $query->param('bulk_edit_child'));
+    my $at_boundary = "\\" . pkg('CGI::ElementEditor')->concat_string();
+    my %names = map { $_ => 1 } split(/$at_boundary/, $query->param('bulk_edit_child'));
     $element->remove_children(grep { $names{$_->name} } $element->children);
 
     # which block elements *may* be distributed across elementclasses?
@@ -223,9 +226,9 @@ sub save {
         next unless $block->as_text() or $tag eq 'hr';
 
         $pkg->add_element(
-            tag    => $tag,
-            parent => $element,
-            block  => $block,
+            tag              => $tag,
+            parent           => $element,
+            block            => $block,
             elementclass_for => $elementclass_for,
             elementclass_re  => $elementclass_re
         );
@@ -235,9 +238,11 @@ sub save {
     $tree->delete();
 
     # and keep user informed
-    add_message('saved_bulk',
-                name        => $element->display_name,
-                from_module => 'Krang::CGI::ElementEditor');
+    add_message(
+        'saved_bulk',
+        name        => $element->display_name,
+        from_module => 'Krang::CGI::ElementEditor'
+    );
 }
 
 ###################
@@ -256,8 +261,9 @@ sub add_element {
 
     # consider BR inside P as paragraph limit?
     if ($tag eq 'p' && pkg('BulkEdit::Xinha::Config')->split_p_on_br()) {
-        @html = $pkg->split_block_on_br(block => $block)
+        @html = $pkg->split_block_on_br(block => $block);
     } else {
+
         # see HTML::Element for those args
         my $html = $block->as_HTML('<>&', undef, {});
 
@@ -273,16 +279,17 @@ sub add_element {
 
     # add elements
     for my $html (@html) {
+
         # remove left over junk
         pkg("Markup::$ENV{KRANG_BROWSER_ENGINE}")->remove_junk(\$html);
 
         # make a new Krang element for this tag's content
         $arg{parent}->add_child(
-           class => ($arg{elementclass_for}->{$tag} || $arg{elementclass_for}->{p}),
-           data  => $html,
+            class => ($arg{elementclass_for}->{$tag} || $arg{elementclass_for}->{p}),
+            data => $html,
         );
 
-        debug("Making element for HTML tag '".$tag."' with data: $html");
+        debug("Making element for HTML tag '" . $tag . "' with data: $html");
     }
 }
 
@@ -336,7 +343,7 @@ sub make_formatblock {
     );
 
     my %display_name_for = ();
-    for my $class (grep {lc($_->bulk_edit) eq 'xinha' && $child_named->{$_->name} } @children) {
+    for my $class (grep { lc($_->bulk_edit) eq 'xinha' && $child_named->{$_->name} } @children) {
         my $tag = $class->bulk_edit_tag;
         if ($tag) {
             $display_name_for{$tag} = localize($class->display_name);
@@ -345,11 +352,13 @@ sub make_formatblock {
 
     # look for a default Krang element name'd "paragraph"
     if ($child_named->{paragraph} && not($display_name_for{p})) {
+
         # no child class has a 'bulk_edit_tag => p'
         my ($default) = grep { lc($_->name) eq 'paragraph' } @children;
 
-        croak(__PACKAGE__ . "::->save() - No elementclass having either 'bulk_edit_tag => p' or 'name => paragraph' found. Can't make 'Paragraph' entry in Xinha's formatblock selector.")
-          unless $default;
+        croak(__PACKAGE__
+              . "::->save() - No elementclass having either 'bulk_edit_tag => p' or 'name => paragraph' found. Can't make 'Paragraph' entry in Xinha's formatblock selector."
+        ) unless $default;
 
         debug("Adding default 'Paragraph' to Xinha's formatblock selector");
 
@@ -358,10 +367,11 @@ sub make_formatblock {
 
     # format as JavaScript object litteral (element order matters in this case,
     # so don't use JSON::Any to convert a Perl Hash into a JavaScript litteral!
-    my $formatblock = join(',', map { "'$display_name_for{$_}' : '$_'" }
-                           sort { $a cmp $b }
-                           grep { $allowed_in_formatblock{$_} }
-                           keys %display_name_for);
+    my $formatblock = join(',',
+        map    { "'$display_name_for{$_}' : '$_'" }
+          sort { $a cmp $b }
+          grep { $allowed_in_formatblock{$_} }
+          keys %display_name_for);
 
     # add first '--format--' element to selector
     $formatblock = "'&mdash; " . localize('format') . " &mdash;' : '', " . $formatblock
@@ -377,14 +387,15 @@ sub tag2class_map {
     my $element = $arg{element};
 
     my @bulk_edit_classes = grep { lc($_->bulk_edit) eq 'xinha' } $element->class->children;
-    my %class_for = map  { $_->bulk_edit_tag => $_    }
-                    grep { defined($_->bulk_edit_tag) }  @bulk_edit_classes;
+    my %class_for = map { $_->bulk_edit_tag => $_ }
+      grep { defined($_->bulk_edit_tag) } @bulk_edit_classes;
 
     # make sure we have our default 'paragraph' class
     unless ($class_for{p}) {
         my ($default) = grep { lc($_->name) eq 'paragraph' } @bulk_edit_classes;
-        croak(__PACKAGE__ . "::->save() - No elementclass having 'bulk_edit_tag => p' found. Don't know where to put HTML coming from bulk edit in Xinha.")
-          unless $default;
+        croak(__PACKAGE__
+              . "::->save() - No elementclass having 'bulk_edit_tag => p' found. Don't know where to put HTML coming from bulk edit in Xinha."
+        ) unless $default;
         $class_for{p} = $default;
     }
 
@@ -395,13 +406,13 @@ sub make_html_tree {
     my ($pkg, %arg) = @_;
 
     my $tree = HTML::TreeBuilder->new(
-        implicit_body_p_tag => 1, # wrap inline nodes with P if outside of block-level elements
-        p_strict            => 1, # add closing P tag before all block-level elements
+        implicit_body_p_tag => 1,    # wrap inline nodes with P if outside of block-level elements
+        p_strict            => 1,    # add closing P tag before all block-level elements
     );
 
     $tree->parse($arg{html});
     $tree->eof;
-    $tree->elementify(); # change $tree's class to HTML::Element
+    $tree->elementify();             # change $tree's class to HTML::Element
 
     return $tree;
 }
@@ -410,27 +421,27 @@ sub split_block_on_br {
     my ($pkg, %arg) = @_;
     my $block = $arg{block};
 
-    my @html  = (); # return acc
-    my @nodes = $block->content_list(); # a list of nodes being children of $block
+    my @html  = ();                        # return acc
+    my @nodes = $block->content_list();    # a list of nodes being children of $block
 
     my $html = '';
     while (@nodes) {
         my $node = shift(@nodes);
 
-        if (ref($node)) { # element node
-            if ($node->tag eq 'br') { # split here
+        if (ref($node)) {                  # element node
+            if ($node->tag eq 'br') {      # split here
                 push(@html, $html);
                 $html = '';
             } else {
                 $html .= $node->as_HTML('<>&', undef, {});
             }
-        } else { # text node
+        } else {    # text node
             $html .= $node;
         }
     }
 
     # filter empty pieces
-    return grep {$_} @html, $html;
+    return grep { $_ } @html, $html;
 }
 
 =back

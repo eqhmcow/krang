@@ -158,7 +158,7 @@ eval { $story->contribs($contrib); };
 like($@, qr/invalid/);
 $contrib->selected_contrib_type(1);
 $story->contribs($contrib);
-is($story->contribs,                  1);
+is($story->contribs, 1);
 is(($story->contribs)[0]->contrib_id, $contrib->contrib_id);
 
 test_urls($creator);
@@ -264,7 +264,7 @@ SKIP: {
 }
 
 # contribs made it?
-is($story2->contribs,                  1);
+is($story2->contribs, 1);
 is(($story2->contribs)[0]->contrib_id, $contrib->contrib_id);
 
 # schedules?
@@ -399,15 +399,15 @@ SKIP: {
     $v->title("Bar");
 
     $v->save();
-    is($v->version, 2,     'Is version 2');
+    is($v->version, 2, 'Is version 2');
     is($v->title(), "Bar", 'Title eq "Bar"');
     $v->element->child('deck')->data('Version 3 Deck');
     is($v->element->child('deck')->data, 'Version 3 Deck');
 
     $v->revert(1);
-    is($v->version, 3);
+    is($v->version,                      3);
     is($v->element->child('deck')->data, 'Version 1 Deck');
-    is($v->title(), "Foo");
+    is($v->title(),                      "Foo");
 
     $v->revert(2);
     is($v->title(), "Bar");
@@ -464,7 +464,7 @@ SKIP: {
     $v2->save();
     my @para = $page2->match('paragraph');
     is(scalar(@para), 2);
-    is($v2->version,  2);
+    is($v2->version, 2);
 
     # now create version 3, deleting the v1 paragraph
     my ($v3) = pkg('Story')->find(story_id => $v->story_id);
@@ -584,7 +584,7 @@ my @result = pkg('Story')->find(
     category_id => $cat[8]->category_id,
     ids_only    => 1
 );
-is(@result,    1);
+is(@result, 1);
 is($result[0], $find[1]->story_id);
 
 # find by primary category
@@ -597,7 +597,7 @@ is(@result, 0);
     primary_category_id => $cat[6]->category_id,
     ids_only            => 1
 );
-is(@result,    1);
+is(@result, 1);
 is($result[0], $find[1]->story_id);
 
 # find by site
@@ -621,7 +621,7 @@ ok((grep { $_ == $find[1]->story_id } @result));
     url      => $find[1]->url,
     ids_only => 1
 );
-is(@result,    1);
+is(@result, 1);
 is($result[0], $find[1]->story_id);
 
 @result = pkg('Story')->find(
@@ -634,7 +634,7 @@ is(@result, 0);
     primary_url_like => $find[1]->category->url . '%',
     ids_only         => 1
 );
-is(@result,    1);
+is(@result, 1);
 is($result[0], $find[1]->story_id);
 
 # find by simple search
@@ -642,14 +642,14 @@ is($result[0], $find[1]->story_id);
     simple_search => $find[1]->url,
     ids_only      => 1
 );
-is(@result,    1);
+is(@result, 1);
 is($result[0], $find[1]->story_id);
 
 @result = pkg('Story')->find(
     simple_search => $find[1]->url . " " . $find[1]->story_id,
     ids_only      => 1
 );
-is(@result,    1);
+is(@result, 1);
 is($result[0], $find[1]->story_id);
 
 @result = pkg('Story')->find(
@@ -697,7 +697,7 @@ ok(@result);
     contrib_simple => 'matt',
     ids_only       => 1
 );
-is(@result,    1);
+is(@result, 1);
 is($result[0], $find[1]->story_id);
 
 # find by element_index
@@ -706,7 +706,7 @@ SKIP: {
       unless (InstanceElementSet eq 'TestSet1');
 
     @result = pkg('Story')->find(element_index => [deck => "1 three three three"]);
-    is(@result,              1);
+    is(@result, 1);
     is($result[0]->story_id, $find[2]->story_id);
 
     @result = pkg('Story')->find(element_index_like => [deck => "%deek%"]);
@@ -723,7 +723,7 @@ SKIP: {
     is($result[0]->story_id, $find[1]->story_id);
 
     @result = pkg('Story')->find(element_index_like => [deck => "%one deek%"]);
-    is(@result,              1);
+    is(@result, 1);
     is($result[0]->story_id, $find[0]->story_id);
 
     @result = pkg('Story')->find(element_index_like => [deck => "%feck%"]);
@@ -733,15 +733,15 @@ SKIP: {
     is(@result, 3);
 
     @result = pkg('Story')->find(element_index => [fancy_keyword => 'one']);
-    is(@result,              1);
+    is(@result, 1);
     is($result[0]->story_id, $find[0]->story_id);
 
     @result = pkg('Story')->find(element_index => [fancy_keyword => 'two']);
-    is(@result,              1);
+    is(@result, 1);
     is($result[0]->story_id, $find[1]->story_id);
 
     @result = pkg('Story')->find(element_index => [fancy_keyword => 'three']);
-    is(@result,              1);
+    is(@result, 1);
     is($result[0]->story_id, $find[2]->story_id);
 
     # find by full-text search - a one word phrase
@@ -756,7 +756,7 @@ SKIP: {
     @result = pkg('Story')->find(full_text_string => '"two 2"');
     is(@result, 0);
 
-    # find by full-text search - a two-word phrase that does exist 
+    # find by full-text search - a two-word phrase that does exist
     @result = pkg('Story')->find(full_text_string => '"2 two"');
     is(@result, 1);
 
@@ -1104,7 +1104,7 @@ is($change->url, 'storyzest.com/test_0/change');
         local $ENV{REMOTE_USER} = $user_id;
 
         $story->checkout;
-        is($story->checked_out,    1,        'Story checked out');
+        is($story->checked_out, 1, 'Story checked out');
         is($story->checked_out_by, $user_id, 'Story checked out by restricted user');
         $story->checkin;
 
@@ -1233,7 +1233,7 @@ sub test_story_desk_id_fields {
     # test desk_id and last_desk_id with Krang::Story->checkout()
     my $last_desk_id = $story->desk_id;
     $story->checkout;
-    is($story->desk_id,      undef,         'Checked it out (desk_id is undef)');
+    is($story->desk_id, undef, 'Checked it out (desk_id is undef)');
     is($story->last_desk_id, $last_desk_id, 'Checked it out (last_desk_id is set)');
 
     # test it all again
@@ -1248,7 +1248,7 @@ sub test_story_desk_id_fields {
         "Moved it to desk '" . $desks[0]->name . "' (checking last_desk_id)");
     $last_desk_id = $story->desk_id;
     $story->checkout;
-    is($story->desk_id,      undef,         'Checked it out (desk_id is undef)');
+    is($story->desk_id, undef, 'Checked it out (desk_id is undef)');
     is($story->last_desk_id, $last_desk_id, 'Checked it out (last_desk_id is set)');
 
     $story->delete();
@@ -1339,8 +1339,8 @@ sub create_media {
                 color => Imager::Color->new(map { int(rand(255)) } 1 .. 3),
                 xmin => (int(rand($x - ($x / 2))) + 1),
                 ymin => (int(rand($y - ($y / 2))) + 1),
-                xmax => (int(rand($x * 2)) + 1),
-                ymax => (int(rand($y * 2)) + 1),
+                xmax   => (int(rand($x * 2)) + 1),
+                ymax   => (int(rand($y * 2)) + 1),
                 filled => 1
             );
         } else {

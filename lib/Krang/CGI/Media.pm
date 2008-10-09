@@ -42,12 +42,13 @@ use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader History => qw(add_history);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Localization => qw(localize);
-use Krang::ClassLoader Log  => qw(debug info critical);
+use Krang::ClassLoader Log          => qw(debug info critical);
 use Krang::ClassLoader 'Media';
 use Krang::ClassLoader Message => qw(add_message add_alert clear_messages);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
+use Krang::ClassLoader Widget =>
+  qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
 
 use Carp qw(croak);
 use File::Temp qw(tempdir);
@@ -612,9 +613,9 @@ sub list_active {
     # Set up output
     my $template = $self->load_tmpl('list_active.tmpl', associate => $q);
     $template->param(
-        pager_html            => $pager_tmpl->output,
-        row_count             => $pager->row_count,
-        may_checkin_all       => $may_checkin_all,
+        pager_html      => $pager_tmpl->output,
+        row_count       => $pager->row_count,
+        may_checkin_all => $may_checkin_all,
     );
     return $template->output;
 }
@@ -799,8 +800,14 @@ sub edit {
     }
     die("Can't find media object with media_id '$media_id'") unless (ref($m));
 
-    my $t = $self->load_tmpl('edit_media.tmpl', associate => $q, loop_context_vars => 1, die_on_bad_params => 0);
-    $self->query->param(rm => 'edit'); # so the return param for rm is 'edit' even after a 'save_stay_edit', etc.
+    my $t = $self->load_tmpl(
+        'edit_media.tmpl',
+        associate         => $q,
+        loop_context_vars => 1,
+        die_on_bad_params => 0
+    );
+    $self->query->param(rm => 'edit')
+      ;    # so the return param for rm is 'edit' even after a 'save_stay_edit', etc.
     my $media_tmpl_data = $self->make_media_tmpl_data($m);
     $t->param($media_tmpl_data);
 
@@ -809,7 +816,7 @@ sub edit {
 
     # permissions
     my %admin_perms = pkg('Group')->user_admin_permissions();
-    $t->param(may_publish       => $admin_perms{may_publish});
+    $t->param(may_publish => $admin_perms{may_publish});
     $t->param(may_edit_schedule => $admin_perms{admin_scheduler} || $admin_perms{admin_jobs});
 
     # Propagate messages, if we have any
@@ -843,8 +850,8 @@ sub save_edit {
     return $output if $output;
 
     # Save object to database
-    my $m = $session{media};
-    my %save_errors = ( $self->do_save_media($m) );
+    my $m           = $session{media};
+    my %save_errors = ($self->do_save_media($m));
     return $self->edit(%save_errors) if (%save_errors);
 
     # Publish to preview
@@ -879,7 +886,7 @@ sub checkin_edit {
     return $output if $output;
 
     # Save object to database
-    my $m = $session{media};
+    my $m           = $session{media};
     my %save_errors = ($self->do_save_media($m));
     return $self->edit(%save_errors) if (%save_errors);
 
@@ -912,7 +919,7 @@ sub save_stay_edit {
     return $output if $output;
 
     # Save object to database
-    my $m = $session{media};
+    my $m           = $session{media};
     my %save_errors = ($self->do_save_media($m));
     return $self->edit(%save_errors) if (%save_errors);
 
@@ -950,9 +957,11 @@ sub delete {
     # Check the session.  Is this media stashed there?  (Clean, if so.)
     my $m = $session{media} || 0;
     if (ref($m) && (($m->media_id() || '') eq $media_id)) {
+
         # Clear from session
         delete($session{media});
     } else {
+
         # Otherwise find it by media_id
         my $m = pkg('Media')->find(media_id => $media_id);
     }
@@ -1056,8 +1065,8 @@ sub save_and_publish {
     return $output if $output;
 
     # Save object to database
-    my $m = $session{media};
-    my %save_errors = ( $self->do_save_media($m) );
+    my $m           = $session{media};
+    my %save_errors = ($self->do_save_media($m));
     return $self->edit(%save_errors) if (%save_errors);
 
     # publish should also send to preview
@@ -1113,7 +1122,7 @@ sub save_and_view_log {
     return $output if $output;
 
     # Redirect to history screen
-    my $id = $session{media}->media_id;
+    my $id        = $session{media}->media_id;
     my $return_rm = 'edit';
     my $url =
         "history.pl?history_return_script=media.pl"
@@ -1213,7 +1222,7 @@ sub view_version {
     die("Invalid selected version '$selected_version'")
       unless ($selected_version and $selected_version =~ /^\d+$/);
 
-    # Update media object in session 
+    # Update media object in session
     my $output = $self->_save();
     return $output if $output;
 
@@ -1242,15 +1251,19 @@ sub revert_version {
     $q->param(reverted_to_version => $selected_version);
 
     # Perform revert & display result
-    my $m = $session{media};
+    my $m                  = $session{media};
     my $pre_revert_version = $m->version;
-    my $result = $m->revert($selected_version);
+    my $result             = $m->revert($selected_version);
     if ($result->isa('Krang::Media')) {
-	add_message("message_revert_version", new_version => $m->version, old_version => $selected_version);
+        add_message(
+            "message_revert_version",
+            new_version => $m->version,
+            old_version => $selected_version
+        );
     } else {
-	my %save_errors = ( $self->do_save_media($m) );
-	add_alert("message_revert_version_no_save", old_version => $selected_version);
-	return $self->edit(%save_errors);
+        my %save_errors = ($self->do_save_media($m));
+        add_alert("message_revert_version_no_save", old_version => $selected_version);
+        return $self->edit(%save_errors);
     }
 
     # Redirect to edit mode
@@ -1309,7 +1322,6 @@ sub checkout_selected {
 
 }
 
-
 # ELEMENT-EDITOR-SPECIFIC RUNMODES
 
 =item save_and_jump
@@ -1320,14 +1332,14 @@ an element within the media.
 =cut
 
 sub save_and_jump {
-    my $self = shift;
+    my $self   = shift;
     my $output = $self->_save();
     return $output if $output;
 
     my $query = $self->query;
     my $jump_to = $query->param('jump_to') || croak("Missing jump_to on save_and_jump!");
-    
-    $query->param(path => $jump_to);
+
+    $query->param(path      => $jump_to);
     $query->param(bulk_edit => 0);
     return $self->edit();
 }
@@ -1340,7 +1352,7 @@ Krang::ElementEditor::add to add a new element.
 =cut
 
 sub save_and_add {
-    my $self = shift;
+    my $self   = shift;
     my $output = $self->_save();
     return $output if $output;
 
@@ -1355,7 +1367,7 @@ the bulk edit mode.
 =cut
 
 sub save_and_bulk_edit {
-    my $self = shift;
+    my $self   = shift;
     my $output = $self->_save();
     return $output if $output;
 
@@ -1370,7 +1382,7 @@ Saves and changes the bulk edit separator, returning to edit.
 =cut
 
 sub save_and_change_bulk_edit_sep {
-    my $self = shift;
+    my $self   = shift;
     my $output = $self->_save();
     return $output if $output;
 
@@ -1380,7 +1392,6 @@ sub save_and_change_bulk_edit_sep {
     return $self->edit();
 }
 
-
 =item save_and_leave_bulk_edit
 
 This mode saves the current element data to the session and goes to
@@ -1389,14 +1400,13 @@ the edit mode.
 =cut
 
 sub save_and_leave_bulk_edit {
-    my $self = shift;
+    my $self   = shift;
     my $output = $self->_save();
     return $output if $output;
 
     $self->query->param(bulk_edit => 0);
     return $self->edit();
 }
-
 
 =item save_and_find_story_link
 
@@ -1406,13 +1416,13 @@ the find_story_link mode in Krang::CGI::ElementEditor.
 =cut
 
 sub save_and_find_story_link {
-    my $self = shift;
+    my $self   = shift;
     my $output = $self->_save();
     return $output if $output;
 
     my $query = $self->query;
     my $jump_to = $query->param('jump_to') || croak("Missing jump_to on save_and_find_story_link!");
-    
+
     $query->param(path => $jump_to);
     return $self->find_story_link();
 }
@@ -1425,13 +1435,13 @@ the find_media_link mode in Krang::CGI::ElementEditor.
 =cut
 
 sub save_and_find_media_link {
-    my $self = shift;
+    my $self   = shift;
     my $output = $self->_save();
     return $output if $output;
 
     my $query = $self->query;
     my $jump_to = $query->param('jump_to') || croak("Missing jump_to on save_and_find_media_link!");
-    
+
     $query->param(path => $jump_to);
     return $self->find_media_link();
 }
@@ -1444,18 +1454,17 @@ edit the parent of this element.
 =cut
 
 sub save_and_go_up {
-    my $self = shift;
+    my $self   = shift;
     my $output = $self->_save();
     return $output if $output;
 
     my $query = $self->query;
-    my $path = $query->param('path'); 
+    my $path  = $query->param('path');
     $path =~ s!/[^/]+$!!;
 
     $query->param(path => $path);
     return $self->edit();
 }
-
 
 #############################
 #####  PRIVATE METHODS  #####
@@ -1468,7 +1477,7 @@ sub _save {
     my $query = $self->query;
 
     # run element editor save and return to edit on errors
-    my $m = $session{media} || croak ("Unable to load media from session!");
+    my $m = $session{media} || croak("Unable to load media from session!");
     $self->element_save(element => $m->element) || return $self->edit;
 
     # if we're saving in the root then save the media data
@@ -1507,17 +1516,21 @@ sub validate_media {
         my %types = pkg('Pref')->get('media_type');
         my $type  = $types{$media_type_id};
         unless ('html include javascript stylesheet text' =~ /\b$type\b/i) {
+
             # binary types require upload
             push(@errors, 'error_media_file');
         } elsif (!@errors) {
+
             # text types allow auto-creation
             my $filename = $media->title;
-            $filename =~ s/[^\w\s\.\-]//g;  # clean invalid chars
-            $filename =~ s/(^\s+|\s+$)+//g; # clean excess whitespace
-            $filename =~ s/[\s\-\_]+/_/g;   # use underscores btw words
-            open (my $filehandle);
-            $media->upload_file(filehandle => $filehandle,
-                                filename => $filename);        
+            $filename =~ s/[^\w\s\.\-]//g;     # clean invalid chars
+            $filename =~ s/(^\s+|\s+$)+//g;    # clean excess whitespace
+            $filename =~ s/[\s\-\_]+/_/g;      # use underscores btw words
+            open(my $filehandle);
+            $media->upload_file(
+                filehandle => $filehandle,
+                filename   => $filename
+            );
             add_message('empty_file_created', filename => $filename);
 
             # Remember that a file was created (affects dupe-URL error)
@@ -1567,7 +1580,7 @@ sub list_active_row_handler {
     $row->{title} = $q->escapeHTML($media->title);
 
     # commands column
-    $row->{commands_column} = 
+    $row->{commands_column} =
         '<input value="'
       . localize('View Detail')
       . qq|" onclick="view_media('|
@@ -1615,7 +1628,7 @@ sub update_media {
     # Make sure object hasn't been modified elsewhere
     if (my $id = $m->media_id) {
         if (my ($media_in_db) = pkg('Media')->find(media_id => $id)) {
-            if (  !$media_in_db->checked_out
+            if (   !$media_in_db->checked_out
                 || $media_in_db->checked_out_by ne $ENV{REMOTE_USER}
                 || $media_in_db->version > $m->version)
             {
@@ -1665,7 +1678,8 @@ sub update_media {
 
             next;
         }
-	# Handle direct text-file editing
+
+        # Handle direct text-file editing
         if ($mf eq 'text_content') {
             my $text = $q->param('text_content') || next;
 
@@ -1674,8 +1688,8 @@ sub update_media {
 
             # Put the file in the Media object
             $m->store_temp_file(
-                content   => $text,
-                filename  => $m->filename,
+                content  => $text,
+                filename => $m->filename,
             );
 
             next;
@@ -1729,8 +1743,8 @@ sub make_media_tmpl_data {
         $tmpl_data{media_version_chooser} = $media_version_chooser;
     }
 
-    my $extension     = $m->file_path =~ /\.([^\.]+)$/ ? $1 : '';
-    if($m->is_text) {
+    my $extension = $m->file_path =~ /\.([^\.]+)$/ ? $1 : '';
+    if ($m->is_text) {
         $tmpl_data{is_text} = 1;
 
         # populate template with the file's contents
@@ -1741,7 +1755,7 @@ sub make_media_tmpl_data {
         $tmpl_data{text_content} = $text_content;
 
         # populate template with the syntax-highlighting "language"
-        my $text_type     = 'html';                                     # the default
+        my $text_type     = 'html';    # the default
         my %extension_map = (
             js  => 'javascript',
             css => 'css',
@@ -1750,14 +1764,15 @@ sub make_media_tmpl_data {
         );
         $text_type = $extension_map{$extension} if $extension_map{$extension};
         debug("CodePress text type: $text_type");
-        $tmpl_data{text_type} = $text_type;
+        $tmpl_data{text_type}     = $text_type;
         $tmpl_data{use_codepress} = pkg('MyPref')->get('syntax_highlighting');
 
-    } elsif( $m->is_image ) {
+    } elsif ($m->is_image) {
         $tmpl_data{is_image} = 1;
+
         # can we transform it with Imager?
         $extension = lc($extension);
-        $extension = 'jpeg' if $extension eq 'jpg'; # Imager doesn't recognize "jpg"
+        $extension = 'jpeg' if $extension eq 'jpg';    # Imager doesn't recognize "jpg"
         $tmpl_data{can_transform_image} = $Imager::formats{$extension};
     }
 
@@ -1879,8 +1894,8 @@ sub make_media_view_tmpl_data {
         );
         push(@contribs, \%contrib_row);
     }
-    $tmpl_data{contribs}      = \@contribs;
-    $tmpl_data{return_script} = $q->param('return_script');
+    $tmpl_data{contribs}       = \@contribs;
+    $tmpl_data{return_script}  = $q->param('return_script');
     $tmpl_data{return_runmode} = $q->param('return_runmode');
 
     # Display creation_date
@@ -1897,7 +1912,7 @@ sub make_media_view_tmpl_data {
     );
 
     foreach my $mf (@m_fields) {
-       $tmpl_data{$mf} = $m->$mf();
+        $tmpl_data{$mf} = $m->$mf();
     }
 
     # CodePress tmppl_vars: is_text, text_content & text_type
@@ -1922,7 +1937,7 @@ sub make_media_view_tmpl_data {
         );
         $text_type = $extension_map{$extension} if $extension_map{$extension};
         debug("CodePress text type: $text_type");
-        $tmpl_data{text_type} = $text_type;
+        $tmpl_data{text_type}     = $text_type;
         $tmpl_data{use_codepress} = pkg('MyPref')->get('syntax_highlighting');
     }
 
@@ -2087,7 +2102,8 @@ sub find_media_row_handler {
 
     # creation_date
     my $tp = $media->creation_date();
-    $row->{creation_date} = (ref($tp)) ? $tp->strftime(localize('%m/%d/%Y %I:%M %p')) : localize('[n/a]');
+    $row->{creation_date} =
+      (ref($tp)) ? $tp->strftime(localize('%m/%d/%Y %I:%M %p')) : localize('[n/a]');
 
     # pub_status
     $row->{pub_status} = $media->published() ? '<b>' . localize('P') . '</b>' : '&nbsp;';
@@ -2115,7 +2131,7 @@ sub find_media_row_handler {
         if ($media->retired) {
             $row->{commands_column} .= ' '
               . qq|<input value="|
-              . localize('Unretire') 
+              . localize('Unretire')
               . qq|" onclick="unretire_media('|
               . $media->media_id
               . qq|')" type="button" class="button">|
@@ -2125,9 +2141,11 @@ sub find_media_row_handler {
         } else {
             $pager->column_display(status => 1);
             if ($media->checked_out) {
-                $row->{status} = localize('Live') . '<br />'
-                  . localize('Checked out by')
-                  . '<b>' . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login . '</b>';
+                $row->{status} =
+                    localize('Live') 
+                  . '<br />'
+                  . localize('Checked out by') . '<b>'
+                  . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login . '</b>';
             } else {
                 $row->{status} = localize('Live');
             }
@@ -2159,7 +2177,8 @@ sub find_media_row_handler {
               . qq|')" type="button" class="button">|
               if $may_edit_and_retire;
             if ($media->checked_out) {
-                $row->{status} = localize('Checked out by') . " <b>"
+                $row->{status} =
+                  localize('Checked out by') . " <b>"
                   . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login . '</b>';
             } else {
                 $row->{status} = '&nbsp;';
@@ -2187,7 +2206,8 @@ sub do_save_media {
     if ($@) {
         if (ref($@) and $@->isa('Krang::Media::DuplicateURL')) {
             if ($self->query->param('created_empty_file')) {
-                $m->filename(''); clear_messages;
+                $m->filename('');
+                clear_messages;
                 add_alert('duplicate_url_without_file');
             } else {
                 add_alert('duplicate_url');
@@ -2287,6 +2307,7 @@ sub unretire {
                 url      => $media->url
             );
         } elsif ($@->isa('Krang::Media::NoEditAccess')) {
+
             # param tampering
             # or perhaps a permission change
             add_alert('access_denied_on_unretire', id => $media_id, url => $media->url);
@@ -2317,8 +2338,9 @@ sub transform_image {
     my $apply_trans = $q->param('apply_transform');
     my ($imager, $url);
 
-    if($apply_trans) {
+    if ($apply_trans) {
         $imager = $self->_do_apply_transform($m, $q);
+
         # change the file_path into a relative url
         $url = abs2rel($session{image_transform_tmp_file}, KrangRoot);
 
@@ -2344,6 +2366,7 @@ sub transform_image {
 sub _do_apply_transform {
     my ($self, $media, $query) = @_;
     my $imager = Imager->new();
+
     # do our work on a temp file
     my $tmp_dir = tempdir(CLEANUP => 0, DIR => catdir(KrangRoot, 'tmp'));
     my $file_path = catfile($tmp_dir, $media->filename);
@@ -2355,9 +2378,9 @@ sub _do_apply_transform {
     $imager->open(file => $file_path) or croak $imager->errstr();
 
     # RESIZE
-    my $new_width = $query->param('new_width');
+    my $new_width  = $query->param('new_width');
     my $new_height = $query->param('new_height');
-    if($new_width || $new_height ) {
+    if ($new_width || $new_height) {
         add_message('image_scaled', width => $new_width, height => $new_height);
         $imager = $imager->scale(xpixels => $new_width, ypixels => $new_height);
         $session{image_transform_actions}->{resize} = 1;
@@ -2365,7 +2388,7 @@ sub _do_apply_transform {
 
     # CROP
     my %crop = map { $_ => $query->param("crop_$_") } qw(x y width height);
-    if($crop{x} || $crop{y} || $crop{width} || $crop{width}) {
+    if ($crop{x} || $crop{y} || $crop{width} || $crop{width}) {
         $imager = $imager->crop(
             left   => $crop{x},
             top    => $crop{y},
@@ -2377,7 +2400,7 @@ sub _do_apply_transform {
     }
 
     # ROTATE
-    if(my $direction = $query->param('rotate_direction')) {
+    if (my $direction = $query->param('rotate_direction')) {
         my $degress = $direction eq 'r' ? 90 : -90;
         $imager = $imager->rotate(degrees => $degress);
         add_message("image_rotated_$direction");
@@ -2385,7 +2408,7 @@ sub _do_apply_transform {
     }
 
     # FLIP
-    if(my $direction = $query->param('flip_direction')) {
+    if (my $direction = $query->param('flip_direction')) {
         $imager->flip(dir => $direction);
         add_message("image_flipped_$direction");
         $session{image_transform_actions}->{flip} = 1;
@@ -2397,8 +2420,8 @@ sub _do_apply_transform {
 }
 
 sub save_image_transform {
-    my $self = shift;
-    my $m = $session{media};
+    my $self   = shift;
+    my $m      = $session{media};
     my $imager = $self->_do_apply_transform($m, $self->query);
 
     # save changes
@@ -2425,7 +2448,7 @@ sub _clear_image_transform_session {
     my $self = shift;
 
     # clear the tmp file
-    if(my $file = $session{image_transform_tmp_file} ) {
+    if (my $file = $session{image_transform_tmp_file}) {
         unlink $file if -e $file;
         delete $session{image_transform_tmp_file};
     }
@@ -2433,7 +2456,6 @@ sub _clear_image_transform_session {
     # clear any history actions
     delete $session{image_transform_actions};
 }
-
 
 1;
 

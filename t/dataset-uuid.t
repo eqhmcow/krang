@@ -28,35 +28,43 @@ foreach my $instance (pkg('Conf')->instances) {
 }
 
 # create a site and category for dummy story
-my $site = pkg('Site')->new(preview_url  => 'storytest.preview.com',
-                            url          => 'storytest.com',
-                            publish_path => '/tmp/storytest_publish',
-                            preview_path => '/tmp/storytest_preview');
+my $site = pkg('Site')->new(
+    preview_url  => 'storytest.preview.com',
+    url          => 'storytest.com',
+    publish_path => '/tmp/storytest_publish',
+    preview_path => '/tmp/storytest_preview'
+);
 $site->save();
 END { $site->delete() }
 my ($category) = pkg('Category')->find(site_id => $site->site_id());
 
-my $sub_cat = pkg('Category')->new(dir       => 'foo',
-                                   parent_id => $category->category_id,
-                                   site_id   => $site->site_id);
+my $sub_cat = pkg('Category')->new(
+    dir       => 'foo',
+    parent_id => $category->category_id,
+    site_id   => $site->site_id
+);
 $sub_cat->save();
 
 END {
     (pkg('Category')->find(category_id => $sub_cat->category_id))[0]->delete;
 }
 
-my $site2 = pkg('Site')->new(preview_url  => 'storytest2.preview.com',
-                             url          => 'storytest2.com',
-                             publish_path => '/tmp/storytest_publish2',
-                             preview_path => '/tmp/storytest_preview2');
+my $site2 = pkg('Site')->new(
+    preview_url  => 'storytest2.preview.com',
+    url          => 'storytest2.com',
+    publish_path => '/tmp/storytest_publish2',
+    preview_path => '/tmp/storytest_preview2'
+);
 $site2->save();
 END { $site2->delete() }
 my ($category2) = pkg('Category')->find(site_id => $site2->site_id());
 
-my $site3 = pkg('Site')->new(preview_url  => 'storytest3.preview.com',
-                             url          => 'storytest3.com',
-                             publish_path => '/tmp/storytest_publish3',
-                             preview_path => '/tmp/storytest_preview3');
+my $site3 = pkg('Site')->new(
+    preview_url  => 'storytest3.preview.com',
+    url          => 'storytest3.com',
+    publish_path => '/tmp/storytest_publish3',
+    preview_path => '/tmp/storytest_preview3'
+);
 $site3->save();
 END { $site3->delete() }
 my ($category3) = pkg('Category')->find(site_id => $site3->site_id());
@@ -64,10 +72,12 @@ my ($category3) = pkg('Category')->find(site_id => $site3->site_id());
 # create a new story
 my $story;
 eval {
-    $story = pkg('Story')->new(categories => [$category],
-                               title      => "Test",
-                               slug       => "test",
-                               class      => "article");
+    $story = pkg('Story')->new(
+        categories => [$category],
+        title      => "Test",
+        slug       => "test",
+        class      => "article"
+    );
 };
 
 # Was story creation successful?
@@ -76,8 +86,7 @@ if ($@) {
 
         # Story type "article" doesn't exist in this set.  Exit test now.
       SKIP: {
-            skip(
-"Unable to find top-level element named 'article' in element lib");
+            skip("Unable to find top-level element named 'article' in element lib");
         }
         exit(0);
     } else {
@@ -92,8 +101,10 @@ END { (pkg('Story')->find(story_id => $story->story_id))[0]->delete() }
 
 # create a test media object
 my $media = pkg('Media')->new(
-          title => 'test media object', category_id => $category->category_id,
-          media_type_id => 1);
+    title         => 'test media object',
+    category_id   => $category->category_id,
+    media_type_id => 1
+);
 my $filepath = catfile(KrangRoot, 't', 'media', 'krang.jpg');
 my $fh = new FileHandle $filepath;
 $media->upload_file(filename => 'krang.jpg', filehandle => $fh);
@@ -102,9 +113,10 @@ END { (pkg('Media')->find(media_id => $media->media_id))[0]->delete() }
 
 # create a test template
 my $template = pkg('Template')->new(
-                                   category => $category,
-                                   content => '<blink><tmpl_var bob></blink>',
-                                   filename => 'bob.tmpl');
+    category => $category,
+    content  => '<blink><tmpl_var bob></blink>',
+    filename => 'bob.tmpl'
+);
 $template->save();
 END { $template->delete() }
 
@@ -114,16 +126,15 @@ $group->save;
 END { $group->delete }
 
 # create a test user
-my $user = pkg('User')->new(login    => 'testing',
-                            password => 'dataset!');
+my $user = pkg('User')->new(
+    login    => 'testing',
+    password => 'dataset!'
+);
 $user->group_ids_push($group->group_id);
 $user->save();
-END { 
-    dbh()->do(
-        'DELETE FROM old_password WHERE user_id = ?', 
-        {}, 
-        $user->user_id
-    );
+
+END {
+    dbh()->do('DELETE FROM old_password WHERE user_id = ?', {}, $user->user_id);
     $user->delete;
 }
 
@@ -196,23 +207,19 @@ END { unlink($path) if ($path and -e $path) }
     my ($found2) = pkg('Media')->find(media_id => $media->media_id);
     is($found2->url, $old_media_url);
 
-    my ($found3) =
-      pkg('Template')->find(template_id => $template->template_id);
+    my ($found3) = pkg('Template')->find(template_id => $template->template_id);
     is($found3->url, $old_template_url);
 
     my ($found_site) = pkg('Site')->find(site_id => $site3->site_id);
     is($found_site->url, $old_site_url, "Site reverted to old URL");
 
-    my ($found_cat) =
-      pkg('Category')->find(category_id => $sub_cat->category_id);
+    my ($found_cat) = pkg('Category')->find(category_id => $sub_cat->category_id);
     is($found_cat->url, $old_cat_url, "Category reverted to old URL");
 
-    my ($found_user) =
-      pkg('User')->find(user_id => $user->user_id);
+    my ($found_user) = pkg('User')->find(user_id => $user->user_id);
     is($found_user->login, $old_login, "User reverted to old login");
 
-    my ($found_group) =
-      pkg('Group')->find(group_id => $group->group_id);
+    my ($found_group) = pkg('Group')->find(group_id => $group->group_id);
     is($found_group->name, $old_name, "Group reverted to old name");
 }
 
@@ -249,9 +256,11 @@ END { unlink($path) if ($path and -e $path) }
     my $new_url = $s->url;
     isnt($old_url, $new_url, "URL changed");
 
-    dbh()->do('UPDATE story SET story_uuid = ? WHERE story_id = ?',
-              undef, '98DBE9EE-684A-11DB-8805-80D0EC6873C7', $story->story_id
-             );
+    dbh()->do(
+        'UPDATE story SET story_uuid = ? WHERE story_id = ?',
+        undef, '98DBE9EE-684A-11DB-8805-80D0EC6873C7',
+        $story->story_id
+    );
 
     eval { pkg('DataSet')->new(path => $path)->import_all(uuid_only => 1); };
     ok($@);

@@ -291,8 +291,10 @@ sub init {
     $self->{media_uuid} = pkg('UUID')->new;
 
     # initialize the element
-    $self->{element} = pkg('Element')->new(class  => pkg('ElementClass::Media')->element_class_name, 
-                                           object => $self);
+    $self->{element} = pkg('Element')->new(
+        class  => pkg('ElementClass::Media')->element_class_name,
+        object => $self
+    );
 
     # finish the object
     $self->hash_init(%args);
@@ -529,11 +531,11 @@ simply pass the C<filepath> argument instead.
 =cut
 
 sub upload_file {
-    my $self     = shift;
-    my %args     = @_;
-    my $root     = KrangRoot;
+    my $self = shift;
+    my %args = @_;
+    my $root = KrangRoot;
     my ($path, $name, $handle, $tmpdir) = @_;
-    if($path = $args{'filepath'}) {
+    if ($path = $args{'filepath'}) {
         ($name, $tmpdir) = fileparse($path);
     } else {
         $name = $args{'filename'}
@@ -559,7 +561,7 @@ sub upload_file {
     $self->{tempdir}  = $tmpdir;
 
     # blow the URL cache if the filename has changed
-    if($self->filename && $self->filename ne $name) {
+    if ($self->filename && $self->filename ne $name) {
         undef $self->{url_cache};
     }
     $self->{filename} = $name;
@@ -723,7 +725,7 @@ sub element {
     ($self->{element}) = pkg('Element')->load(
         element_id => $self->{element_id},
         object     => $self
-     );
+    );
 
     return $self->{element};
 }
@@ -797,10 +799,10 @@ sub save {
     # if this is not a new media object
     if (defined $self->{media_id}) {
         $media_id = $self->{media_id};
-	
-	# find last-saved filename (in case we're renaming)
-	my ($last_saved_object) = pkg('Media')->find(media_id => $self->media_id);
-	my $last_saved_filename = $last_saved_object->filename;
+
+        # find last-saved filename (in case we're renaming)
+        my ($last_saved_object) = pkg('Media')->find(media_id => $self->media_id);
+        my $last_saved_filename = $last_saved_object->filename;
 
         # get rid of media_id
         my @save_fields = grep { ($_ ne 'media_id') && ($_ ne 'creation_date') } FIELDS;
@@ -819,39 +821,40 @@ sub save {
         # reformat
         $self->{publish_date} = $old_pub_date if $old_pub_date;
 
-	# this file exists, new media was uploaded. copy to new position
-	if ($self->{tempfile}) {
-	   my $old_path = delete $self->{tempfile};
-           my $new_path = $self->file_path;
-	   mkpath((splitpath($new_path))[1]);     
-	   move($old_path,$new_path) || croak("Cannot move to $new_path");
-           rmtree(delete $self->{tempdir});	
-	} elsif (not $args{keep_version}) {
+        # this file exists, new media was uploaded. copy to new position
+        if ($self->{tempfile}) {
+            my $old_path = delete $self->{tempfile};
+            my $new_path = $self->file_path;
+            mkpath((splitpath($new_path))[1]);
+            move($old_path, $new_path) || croak("Cannot move to $new_path");
+            rmtree(delete $self->{tempdir});
+        } elsif (not $args{keep_version}) {
+
             # there's no new file, so create hard link to old version
 
             # first find old path by reverting version number & filename and calling file_path()
-            my $new_filename = $self->filename; 
+            my $new_filename = $self->filename;
             $self->{version}--;
             $self->{filename} = $last_saved_filename;
-	    my $old_path = $self->file_path;
+            my $old_path = $self->file_path;
 
-            # next determine new file path 
+            # next determine new file path
             $self->{version}++;
             $self->{filename} = $new_filename;
-	    my $new_path = $self->file_path;
+            my $new_path = $self->file_path;
 
             # then create the new path, and link it to the old one
-            mkpath((splitpath($new_path))[1]);     
-	    link $old_path, $new_path or
-              croak("Unable to create link $old_path to $new_path");	
+            mkpath((splitpath($new_path))[1]);
+            link $old_path, $new_path
+              or croak("Unable to create link $old_path to $new_path");
 
             # if name changed, record that in history table
-	    # (note that the 'rename' action corresponds to renaming an 
-	    # existing file via a link; uploading (or editing to create) 
-	    # a new file with a new name does not log a 'rename')
-            add_history( object => $self, action => 'rename' )
+            # (note that the 'rename' action corresponds to renaming an
+            # existing file via a link; uploading (or editing to create)
+            # a new file with a new name does not log a 'rename')
+            add_history(object => $self, action => 'rename')
               if ($new_filename ne $last_saved_filename);
-	}
+        }
     } else {
         croak('You must upload a file using upload_file() before saving media object!')
           unless $self->{tempfile};
@@ -1094,42 +1097,42 @@ sub find {
     my @media_object;
 
     my %valid_params = (
-        media_id          => 1,
-        media_uuid        => 1,
-        version           => 1,
-        title             => 1,
-        title_like        => 1,
-        alt_tag           => 1,
-        alt_tag_like      => 1,
-        url               => 1,
-        url_like          => 1,
-        category_id       => 1,
-        below_category_id => 1,
-        site_id           => 1,
-        media_type_id     => 1,
-        contrib_id        => 1,
-        filename          => 1,
-        filename_like     => 1,
-        simple_search     => 1,
-        no_attributes     => 1,
-        order_by          => 1,
-        order_desc        => 1,
-        published         => 1,
-        checked_out       => 1,
-        checked_out_by    => 1,
-        limit             => 1,
-        offset            => 1,
-        count             => 1,
-        creation_date     => 1,
-        ids_only          => 1,
-        may_see           => 1,
-        may_edit          => 1,
-        mime_type         => 1,
-        mime_type_like    => 1,
-        include_live      => 1,
-        include_retired   => 1,
-        include_trashed   => 1,
-        exclude_media_ids => 1,
+        media_id           => 1,
+        media_uuid         => 1,
+        version            => 1,
+        title              => 1,
+        title_like         => 1,
+        alt_tag            => 1,
+        alt_tag_like       => 1,
+        url                => 1,
+        url_like           => 1,
+        category_id        => 1,
+        below_category_id  => 1,
+        site_id            => 1,
+        media_type_id      => 1,
+        contrib_id         => 1,
+        filename           => 1,
+        filename_like      => 1,
+        simple_search      => 1,
+        no_attributes      => 1,
+        order_by           => 1,
+        order_desc         => 1,
+        published          => 1,
+        checked_out        => 1,
+        checked_out_by     => 1,
+        limit              => 1,
+        offset             => 1,
+        count              => 1,
+        creation_date      => 1,
+        ids_only           => 1,
+        may_see            => 1,
+        may_edit           => 1,
+        mime_type          => 1,
+        mime_type_like     => 1,
+        include_live       => 1,
+        include_retired    => 1,
+        include_trashed    => 1,
+        exclude_media_ids  => 1,
         element_index_like => 1
     );
 
@@ -1208,7 +1211,7 @@ sub find {
     # add media_id(s) if needed
     if ($args{media_id}) {
         if (ref $args{media_id} eq 'ARRAY') {
-            if( scalar(@{$args{media_id}}) > 0 ) {
+            if (scalar(@{$args{media_id}}) > 0) {
                 $where_string .= " and " if $where_string;
                 $where_string .= "("
                   . join(" OR ", map { " media.media_id = " . $dbh->quote($_) } @{$args{media_id}})
@@ -1252,7 +1255,7 @@ sub find {
         $where_string .= ' and ' if $where_string;
         $where_string .= "(media.category_id = category.category_id) AND ";
         if (ref $args{site_id} eq 'ARRAY') {
-            if( scalar(@{$args{site_id}}) > 0 ) {
+            if (scalar(@{$args{site_id}}) > 0) {
                 $where_string .= 'category.site_id IN (' . join(',', @{$args{site_id}}) . ')';
             }
         } else {
@@ -1345,7 +1348,7 @@ sub find {
         $where_string .= ' and ' if $where_string;
         $where_string .= 'element.class = ? ';
         $where_string .= 'and element_index.value LIKE ?';
-        push(@where, $element_index->[0], '%'.$element_index->[1].'%');
+        push(@where, $element_index->[0], '%' . $element_index->[1] . '%');
     }
 
     if ($args{'simple_search'}) {
@@ -1471,9 +1474,10 @@ sub find {
             }
 
             # add contrib ids to object
-            my $sth2 = $dbh->prepare(
+            my $sth2 =
+              $dbh->prepare(
                 'select contrib_id, contrib_type_id from media_contrib where media_id = ? order by ord'
-            );
+              );
             $sth2->execute($row->{media_id});
             $obj->{contrib_ids} = [];
             while (my ($contrib_id, $contrib_type_id) = $sth2->fetchrow_array()) {
@@ -1525,17 +1529,18 @@ sub revert {
     my $filepath = catfile($path, $self->{filename});
     copy($old_filepath, $filepath);
     $self->{tempfile} = $filepath;
-    $self->{tempdir} = $path; 
-    
+    $self->{tempdir}  = $path;
+
     # attempt disk-write
     eval { $self->save };
     return $@ if $@;
 
-    add_history(    object => $self,
-                    action => 'revert',
-                );
+    add_history(
+        object => $self,
+        action => 'revert',
+    );
 
-    return $self; 
+    return $self;
 }
 
 sub _load_version {
@@ -2018,11 +2023,11 @@ sub delete {
 
     # delete schedules for this media
     $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
-             undef, 'media', $self->{media_id});
+        undef, 'media', $self->{media_id});
 
     # delete alerts for this media
     $dbh->do('DELETE FROM alert WHERE object_type = ? and object_id = ?',
-             undef, 'media', $self->{media_id});
+        undef, 'media', $self->{media_id});
 
     # remove from trash
     pkg('Trash')->remove(object => $self);
@@ -2032,7 +2037,6 @@ sub delete {
         action => 'delete',
     );
 }
-
 
 =item * C<< @linked_stories = $media->linked_stories >>
 
@@ -2053,7 +2057,7 @@ sub linked_stories {
     foreach_element {
         if (    $_->class->isa('Krang::ElementClass::StoryLink')
             and $story = $_->data)
-          {
+        {
             $story_links{$story->story_id} = $story;
         }
     }
@@ -2082,7 +2086,7 @@ sub linked_media {
     foreach_element {
         if (    $_->class->isa('Krang::ElementClass::MediaLink')
             and $media = $_->data)
-          {
+        {
             $media_links{$media->media_id} = $media;
         }
     }
@@ -2163,8 +2167,10 @@ sub serialize_xml {
     }
 
     # serialize elements
-    $self->element->serialize_xml(writer => $writer,
-                                  set    => $set);
+    $self->element->serialize_xml(
+        writer => $writer,
+        set    => $set
+    );
 
     # all done
     $writer->endTag('media');
@@ -2322,7 +2328,7 @@ sub deserialize_xml {
         id        => $data->{media_id},
         import_id => $media->media_id,
     );
-    
+
     # deserialize elements for update
     my $element = pkg('Element')->deserialize_xml(
         data      => $data->{element}[0],
@@ -2627,7 +2633,7 @@ sub clone {
 
     # clone the element tree
     $copy->{element} = $self->element->clone();
-    $copy->{element}{element_id} = undef; # this will be set on save()
+    $copy->{element}{element_id} = undef;    # this will be set on save()
 
     # redefine
     $copy->{media_id}          = undef;
@@ -2679,7 +2685,7 @@ Returns true if this media object appears to be an image.
 
 sub is_image {
     my $self = shift;
-    return $self->filename && $self->mime_type && $self->mime_type =~ /^image\//
+    return $self->filename && $self->mime_type && $self->mime_type =~ /^image\//;
 }
 
 =back

@@ -57,9 +57,11 @@ sub writer {
         croak("Missing fh or string arg.");
     }
 
-    return pkg('XML::Writer')->new(OUTPUT      => $fh,
-                            DATA_MODE   => 1,
-                            DATA_INDENT => 4);
+    return pkg('XML::Writer')->new(
+        OUTPUT      => $fh,
+        DATA_MODE   => 1,
+        DATA_INDENT => 4
+    );
 }
 
 =item C<< $data = Krang::XML->simple(xml => $xml) >>
@@ -75,12 +77,11 @@ sub simple {
     my $xml = delete $args{xml};
     $args{keyattr} ||= [];
 
-    return XMLin($xml, %args)
+    return XMLin($xml, %args);
 }
 
 =back
 
 =cut
-
 
 1;

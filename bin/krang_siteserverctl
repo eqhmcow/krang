@@ -47,15 +47,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -79,8 +82,7 @@ use Krang::ClassLoader 'File';
 
 # the httpd command
 my $apache_bin = rel2abs(catfile(KrangRoot, APACHE_ROOT, APACHE_BIN));
-my $httpd = $apache_bin . ' -f ' . 
-  rel2abs(catfile(KrangRoot, "tmp", "siteserver.conf"));
+my $httpd = $apache_bin . ' -f ' . rel2abs(catfile(KrangRoot, "tmp", "siteserver.conf"));
 
 # get status from the pid file
 my $pid_file = catfile(KrangRoot, "tmp", "siteserver.pid");
@@ -128,6 +130,7 @@ if ($command eq 'stop') {
 }
 
 if ($command eq 'restart') {
+
     # stop
     if ($running) {
         if (kill 15, $pid) {
@@ -170,7 +173,7 @@ if ($command eq 'restart') {
 usage();
 
 sub usage {
-  print <<END;
+    print <<END;
 usage: krang_previectl (start|stop|restart|debug)
 
 start      - start httpd
@@ -179,7 +182,7 @@ restart    - restart httpd if running
 
 END
 
-  exit;
+    exit;
 }
 
 sub write_conf {
@@ -190,23 +193,29 @@ sub write_conf {
 
     # create the httpd.conf by processing it as a template, using conf
     # directives as params
-    my $template = HTML::Template->new(filename => $file,
-                                       global_vars => 1,
-                                       die_on_bad_params => 0,
-                                      );
+    my $template = HTML::Template->new(
+        filename          => $file,
+        global_vars       => 1,
+        die_on_bad_params => 0,
+    );
 
     my $apache_root = rel2abs(catdir(KrangRoot, APACHE_ROOT));
     $template->param(ApacheRoot => $apache_root);
 
-    $template->param((map { ($_, pkg('Conf')->get($_)) }
-                      (qw(KrangUser KrangGroup 
-                          SiteServerAddr SiteServerPort
-                          HostName
-                         ))),
-                     KrangRoot => rel2abs(pkg('Conf')->get("KrangRoot")));
-    
+    $template->param(
+        (
+            map { ($_, pkg('Conf')->get($_)) } (
+                qw(KrangUser KrangGroup
+                  SiteServerAddr SiteServerPort
+                  HostName
+                  )
+            )
+        ),
+        KrangRoot => rel2abs(pkg('Conf')->get("KrangRoot"))
+    );
+
     # write out the config
-    open(CONF, '>' . catfile(KrangRoot, "tmp", "siteserver.conf")) 
+    open(CONF, '>' . catfile(KrangRoot, "tmp", "siteserver.conf"))
       or die "Unable to open " . catfile(KrangRoot, "tmp", "siteserver.conf") . ": $!";
     print CONF $template->output();
     close CONF;
@@ -214,15 +223,16 @@ sub write_conf {
 
 # make sure logs get created with the right ownership when running as root
 sub setup_logs {
+
     # only worry if we're root
     return if $< != 0 or $> != 0;
-    
-    foreach my $log (qw(siteserver_access_log siteserver_error_log krang.log)){
+
+    foreach my $log (qw(siteserver_access_log siteserver_error_log krang.log)) {
         my $file = catfile(KrangRoot, 'logs', $log);
         next if -e $file;
 
         # create the file and chown it to KrangUser:KrangGroup
         system("touch", $file);
-        system("chown",  KrangUser . ":" . KrangGroup, $file);
+        system("chown", KrangUser . ":" . KrangGroup, $file);
     }
 }

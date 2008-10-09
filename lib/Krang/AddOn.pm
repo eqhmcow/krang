@@ -151,10 +151,9 @@ use Cwd qw(fastcwd);
 
 use Krang::ClassLoader 'File';
 
-use Krang::ClassLoader MethodMaker => 
-  new_with_init => 'new',
-  new_hash_init => 'hash_init',
-  get_set => [ qw(name version conf EnableAdminSchedulerActions EnableObjectSchedulerActions) ];
+use Krang::ClassLoader MethodMaker => new_with_init => 'new',
+  new_hash_init                    => 'hash_init',
+  get_set => [qw(name version conf EnableAdminSchedulerActions EnableObjectSchedulerActions)];
 
 sub init {
     my $self = shift;
@@ -170,16 +169,16 @@ sub init {
 # trigger registered handlers
 sub call_handler {
     my ($pkg, $name, @args) = @_;
-    
+
     # turn NavigationHandler into navigation_handler
-    (my $method_name = $name) =~ 
-      s!^([A-Z][a-z]+)([A-Z][a-z]+)!lc($1) . "_" . lc($2)!e;
-    
+    (my $method_name = $name) =~ s!^([A-Z][a-z]+)([A-Z][a-z]+)!lc($1) . "_" . lc($2)!e;
+
     # mix in navigation from add-ons with NavigationHandlers
     foreach my $addon (pkg('AddOn')->find()) {
         my $handler = $addon->conf->get($name) or next;
         eval "require $handler";
-        croak("Failed to load $name handler class $handler for the " . $addon->name . " addon: $@") if $@;
+        croak("Failed to load $name handler class $handler for the " . $addon->name . " addon: $@")
+          if $@;
         $handler->$method_name(@args);
     }
 
@@ -193,14 +192,15 @@ sub uninstall {
 
     # make sure no other addons are depending on this one
     eval {
-        foreach my $addon (ref($self)->find()) {
+        foreach my $addon (ref($self)->find())
+        {
             next if $addon->name eq $self->{name};
-            my $conf = $addon->conf;        
+            my $conf = $addon->conf;
             if (my %req = $conf->get('requireaddons')) {
-                die "Cannot uninstall the $self->{name} addon while ".
-                  "$addon->{name} is installed.  $addon->{name} depends " .
-                    "on $self->{name}.\n"
-                      if $req{$self->{name}};
+                die "Cannot uninstall the $self->{name} addon while "
+                  . "$addon->{name} is installed.  $addon->{name} depends "
+                  . "on $self->{name}.\n"
+                  if $req{$self->{name}};
             }
         }
     };
@@ -210,11 +210,12 @@ sub uninstall {
     }
 
     my $dir = catdir(KrangRoot, 'addons', $self->name);
-    
+
     # run the uninstall script if one is set
     if ($self->conf->get('uninstallscript')) {
-        system("KRANG_ROOT=" . KrangRoot . " $^X " .
-               catfile($dir, $self->conf->get('uninstallscript')))
+        system( "KRANG_ROOT="
+              . KrangRoot . " $^X "
+              . catfile($dir, $self->conf->get('uninstallscript')))
           and die "\n\nUninstall script failed, won't uninstall!\n";
     }
 
@@ -226,6 +227,7 @@ sub uninstall {
 # find caches addons in @ADDONS until _flush_cache is called
 our @ADDONS;
 our $PERL_BIN = $^X;
+
 sub find {
     my ($pkg, %arg) = @_;
     my $dir = catdir(KrangRoot, 'addons');
@@ -236,22 +238,21 @@ sub find {
         closedir($dh);
 
         foreach my $addon (@files) {
-            my $conf = $pkg->_addon_conf(catfile($dir, $addon, 
-                                                 'krang_addon.conf'));
+            my $conf = $pkg->_addon_conf(catfile($dir, $addon, 'krang_addon.conf'));
 
-            push @ADDONS, $pkg->new(
-                name    => $addon,
-                version => $conf->get('version'),
-                conf    => $conf,
-                EnableAdminSchedulerActions => $conf->get('EnableAdminSchedulerActions') || '',
+            push @ADDONS,
+              $pkg->new(
+                name                         => $addon,
+                version                      => $conf->get('version'),
+                conf                         => $conf,
+                EnableAdminSchedulerActions  => $conf->get('EnableAdminSchedulerActions') || '',
                 EnableObjectSchedulerActions => $conf->get('EnableObjectSchedulerActions') || ''
-            );
+              );
         }
 
         # sort by priority in reverse order
-        @ADDONS = sort { ($b->conf->get('priority') || 0)  
-                           <=>
-                         ($a->conf->get('priority') || 0) } @ADDONS;
+        @ADDONS =
+          sort { ($b->conf->get('priority') || 0) <=> ($a->conf->get('priority') || 0) } @ADDONS;
     }
 
     if ($arg{name}) {
@@ -279,37 +280,42 @@ sub install {
     my $conf = $pkg->_read_conf(%args);
     $args{conf} = $conf;
 
-
     # make sure that this is a positive upgrade, if the addon is already
     # installed
     my ($old) = pkg('AddOn')->find(name => $conf->get('name'));
     $args{old} = $old;
-    if ($old and $pkg->_compare_versions($old->version, '>=', $conf->get('version')) and not $force) {
-        die "Unable to install version " . $conf->get('version') . " of " . 
-          $conf->get('name') . ", version " . $old->version . 
-           " is already installed!\n";
+    if ($old and $pkg->_compare_versions($old->version, '>=', $conf->get('version')) and not $force)
+    {
+        die "Unable to install version "
+          . $conf->get('version') . " of "
+          . $conf->get('name')
+          . ", version "
+          . $old->version
+          . " is already installed!\n";
     }
 
     # handle requirekrang
     if ($conf->get('requirekrang')) {
-        die "This addon required Krang version " . $conf->get('requirekrang') . " or greater, but this is only $Krang::VERSION.\n"
+        die "This addon required Krang version "
+          . $conf->get('requirekrang')
+          . " or greater, but this is only $Krang::VERSION.\n"
           if $conf->get('requirekrang') > $Krang::VERSION;
     }
 
     # handle requireaddons
     if ($conf->get('requireaddons')) {
         my @addons = $conf->get('requireaddons');
-        while(@addons) {
+        while (@addons) {
             my ($req_name, $req_ver) = (shift(@addons), shift(@addons));
-            $req_ver ||= 0; # if the add-on didn't specify a version
+            $req_ver ||= 0;    # if the add-on didn't specify a version
             my ($req) = pkg('AddOn')->find(name => $req_name);
-            die "This addon requires the '$req_name' addon, ".
-              "which is not installed!\n"
-                unless $req;
-            die "This addon requires the '$req_name' addon version '$req_ver' ".
-              "or greater, but only version '" . $req->version . 
-                "' is installed.\n"
-                  if $pkg->_compare_versions($req_ver, '>', $req->version);
+            die "This addon requires the '$req_name' addon, " . "which is not installed!\n"
+              unless $req;
+            die "This addon requires the '$req_name' addon version '$req_ver' "
+              . "or greater, but only version '"
+              . $req->version
+              . "' is installed.\n"
+              if $pkg->_compare_versions($req_ver, '>', $req->version);
         }
     }
 
@@ -320,8 +326,7 @@ sub install {
     $pkg->_copy_files(%args, files => \@files);
 
     # run krang_addon_build to build src/ files
-    system(catfile(KrangRoot, 'bin', 'krang_addon_build') . " " .
-           $conf->get('name')) 
+    system(catfile(KrangRoot, 'bin', 'krang_addon_build') . " " . $conf->get('name'))
       and die "Unable to build with krang_addon_build: $!";
 
     # installing a new addon means that @INC needs updating, reload
@@ -336,8 +341,7 @@ sub install {
     $pkg->upgrade(%args, old_version => $old->version) if $old;
 
     # run the post install script if required
-    system("KRANG_ROOT=" . KrangRoot . " $^X " . 
-           $conf->get('postinstallscript'))
+    system("KRANG_ROOT=" . KrangRoot . " $^X " . $conf->get('postinstallscript'))
       if $conf->get('postinstallscript');
 
     # all done, return home if possible
@@ -350,11 +354,11 @@ sub install {
 
 # do upgrades if necessary
 sub upgrade {
-    my ($pkg, %args) = @_;
+    my ($pkg,     %args)        = @_;
     my ($verbose, $old_version) = @args{qw(verbose old_version)};
 
     return unless -d 'upgrade';
-    
+
     # get list of potential upgrades
     opendir(UDIR, 'upgrade') or die $!;
     my @mod = grep {
@@ -364,12 +368,12 @@ sub upgrade {
       sort readdir(UDIR);
     closedir(UDIR);
 
-    print STDERR "Found " . scalar(@mod) . " applicable upgrade modules: " .
-      join(", ", @mod) . "\n"
-        if $verbose;
+    print STDERR "Found " . scalar(@mod) . " applicable upgrade modules: " . join(", ", @mod) . "\n"
+      if $verbose;
 
     # Run upgrade modules
     foreach my $mod (@mod) {
+
         # Get package name by trimming off ".pm"
         my $package = $mod;
         $package =~ s/\.pm$//;
@@ -382,21 +386,23 @@ sub upgrade {
 # figure out which files to copy
 sub _list_files {
     my ($pkg, %args) = @_;
-    my ($source, $verbose, $force, $conf) = 
-      @args{('src', 'verbose', 'force', 'conf')};
+    my ($source, $verbose, $force, $conf) = @args{('src', 'verbose', 'force', 'conf')};
 
     my %exclude;
     my @files;
-    
+
     if ($conf->get('Files')) {
         @files = $conf->get('Files');
     } else {
-        File::Find::find({ wanted => 
-                           sub { push(@files, canonpath($_)) if -f $_ },
-                           no_chdir => 1 },
-                         '.');
+        File::Find::find(
+            {
+                wanted => sub { push(@files, canonpath($_)) if -f $_ },
+                no_chdir => 1
+            },
+            '.'
+        );
     }
-    
+
     # add exclusions from ExcludeFiles
     if ($conf->get('ExcludeFiles')) {
         $exclude{$_} = 1 for $conf->get('ExcludeFiles');
@@ -408,42 +414,43 @@ sub _list_files {
 
     return @files;
 }
-    
+
 sub _copy_files {
     my ($pkg, %args) = @_;
-    my ($source, $verbose, $force, $conf, $files, $clean) = 
+    my ($source, $verbose, $force, $conf, $files, $clean) =
       @args{qw(src verbose force conf files clean)};
 
-    my $root = KrangRoot;
-    my $name = $conf->get('name');
+    my $root      = KrangRoot;
+    my $name      = $conf->get('name');
     my $addon_dir = catdir($root, 'addons', $name);
 
     # if we need to cleanup the old one first
-    rmtree($addon_dir) if( $clean );
+    rmtree($addon_dir) if ($clean);
 
     # copy the files, creating directories as necessary
     foreach my $file (@$files) {
+
         # fix shebang for addon .pl and .cgi scripts.
         if ($file =~ /\.(?:pl|cgi)$/) {
             open(SOURCE, $file) or die "Unable to open $file: $!";
             my $source = do { local $/; <SOURCE> };
 
-            $source =~ s/^#![\w\/\.]+(\s*.*)$/#!$PERL_BIN$1/m or
-                warn "Couldn't find shebang line in $file to replace!";
+            $source =~ s/^#![\w\/\.]+(\s*.*)$/#!$PERL_BIN$1/m
+              or warn "Couldn't find shebang line in $file to replace!";
 
             open(SOURCE, '>', $file) or die "Unable to write $file: $!";
             print SOURCE $source;
             close SOURCE;
         }
 
-        my @parts = splitdir($file);
-        my $dir   = @parts > 1 ? catdir(@parts[0 .. $#parts - 1]) : '';
+        my @parts      = splitdir($file);
+        my $dir        = @parts > 1 ? catdir(@parts[0 .. $#parts - 1]) : '';
         my $target_dir = catdir($addon_dir, $dir);
-        my $target = catfile($target_dir, $parts[-1]);
+        my $target     = catfile($target_dir, $parts[-1]);
         unless (-d $target_dir) {
             print STDERR "Making directory $target_dir...\n"
               if $verbose;
-            mkpath([$target_dir]) 
+            mkpath([$target_dir])
               or die "Unable to create directory '$target_dir': $!\n";
         }
 
@@ -457,19 +464,17 @@ sub _copy_files {
     }
 }
 
-
-
 # verify that krang_addon.conf exists, and read it
 sub _read_conf {
     my ($pkg, %args) = @_;
     my ($source, $verbose, $force) = @args{('src', 'verbose', 'force')};
-    
+
     croak("Source '$source' is missing required 'krang_addon.conf'.\n")
       unless -f 'krang_addon.conf';
-    
+
     my $conf = $pkg->_addon_conf('krang_addon.conf');
 
-    my $name = $conf->get('Name');
+    my $name    = $conf->get('Name');
     my $version = $conf->get('Version');
     die "krang_addon.conf is missing required Name directive.\n"
       unless defined $name;
@@ -478,31 +483,34 @@ sub _read_conf {
 
     print STDERR "Read krang_addon.conf: Name=$name Version=$version\n"
       if $verbose;
-    
+
     return $conf;
 }
 
 sub _addon_conf {
     my ($self, $file) = @_;
     my $conf = Config::ApacheFormat->new(
-                   valid_directives => [qw( name version files 
-                                            excludefiles requirekrang
-                                            requireaddons postinstallscript 
-                                            uninstallscript
-                                            navigationhandler
-                                            inithandler
-                                            preloadhandler
-                                            priority
-                                            EnableAdminSchedulerActions 
-                                            EnableObjectSchedulerActions 
-                                            AdminSchedulerActionList
-                                            ObjectSchedulerActionList
-                                            DataSetClasses
-                                          )],
-                   valid_blocks     => []);
+        valid_directives => [
+            qw( name version files
+              excludefiles requirekrang
+              requireaddons postinstallscript
+              uninstallscript
+              navigationhandler
+              inithandler
+              preloadhandler
+              priority
+              EnableAdminSchedulerActions
+              EnableObjectSchedulerActions
+              AdminSchedulerActionList
+              ObjectSchedulerActionList
+              DataSetClasses
+              )
+        ],
+        valid_blocks => []
+    );
     eval { $conf->read($file) };
     die "Unable to read $file: $@\n" if $@;
-    
+
     return $conf;
 }
 
@@ -520,16 +528,18 @@ sub _open_addon {
     my $ok = eval { $tar->read($source); 1 };
     croak("Unable to read addon archive '$source' : $@\n")
       if $@;
-    croak("Unable to read addon archive '$source' : ". Archive::Tar->error)
+    croak("Unable to read addon archive '$source' : " . Archive::Tar->error)
       if not $ok;
-    
+
     # extract in temp dir
-    my $dir = tempdir( DIR     => catdir(KrangRoot, 'tmp'),
-                       CLEANUP => 1 );
+    my $dir = tempdir(
+        DIR     => catdir(KrangRoot, 'tmp'),
+        CLEANUP => 1
+    );
     chdir($dir) or die "Unable to chdir to $dir: $!";
-    $tar->extract($tar->list_files) or
-      die("Unable to unpack archive '$source' : ". Archive::Tar->error);    
-    
+    $tar->extract($tar->list_files)
+      or die("Unable to unpack archive '$source' : " . Archive::Tar->error);
+
     # if there's just a single directory here then enter it
     opendir(DIR, $dir) or die $!;
     my @entries = grep { not /^\./ } readdir(DIR);
@@ -544,12 +554,12 @@ sub _compare_versions {
 
     # first make sure that they are the same length.. 1.2 vs 1.2.1
     my @first_nums = split(/\./, $first);
-    my @last_nums = split(/\./, $last);
-    while(@first_nums != @last_nums) {
-        if( @first_nums < @last_nums ) {
-            push(@first_nums, 0)                                    
+    my @last_nums  = split(/\./, $last);
+    while (@first_nums != @last_nums) {
+        if (@first_nums < @last_nums) {
+            push(@first_nums, 0);
         } else {
-            push(@last_nums, 0) 
+            push(@last_nums, 0);
         }
     }
 
@@ -558,7 +568,7 @@ sub _compare_versions {
     # name or we get a bare-word conflict
     my $version_class = 'version';
     $first = $version_class->new(join('.', @first_nums))->numify;
-    $last = $version_class->new(join('.', @last_nums))->numify;
+    $last  = $version_class->new(join('.', @last_nums))->numify;
     return eval "$first $op $last";
 }
 

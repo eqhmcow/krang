@@ -63,8 +63,8 @@ ok(pkg('Conf')->ApachePort);
 
 is(pkg('Conf')->get("DefaultLanguage"), "en", "Getting DefaultLanguage");
 is(pkg('Conf')->DefaultLanguage, "en", "DefaultLanguage");
-is_deeply( [pkg('Conf')->get("AvailableLanguages")], ['en', 'de'], "Getting AvailableLanguages");
-is_deeply( [pkg('Conf')->AvailableLanguages], ['en', 'de'], "AvailableLanguages");
+is_deeply([pkg('Conf')->get("AvailableLanguages")], ['en', 'de'], "Getting AvailableLanguages");
+is_deeply([pkg('Conf')->AvailableLanguages],        ['en', 'de'], "AvailableLanguages");
 
 pkg('Conf')->import(qw(KrangRoot InstanceDBName ApachePort));
 ok(KrangRoot());
@@ -82,7 +82,6 @@ is(pkg('Conf')->instance, "instance_two");
 ok(KrangRoot());
 is(pkg('Conf')->get("InstanceDBName"), "test2");
 is(InstanceDBName(), "test2");
-
 
 # make sure KrangUser and KrangGroup are checked - these tests aren't
 # working anymore because Krang::Conf is now doing a warn/exit instead

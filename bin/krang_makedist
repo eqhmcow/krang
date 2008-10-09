@@ -4,7 +4,6 @@ use strict;
 use Getopt::Long;
 use Pod::Usage;
 
-
 =head1 NAME
 
 krang_makedist - make a release of Krang
@@ -73,24 +72,24 @@ release.
 
 =cut
 
-
-
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
 use FindBin qw($RealBin);
 use Config;
 
-
 # Set up KRANG_ROOT and PERL5LIB
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 }
 
 use Krang;
@@ -104,34 +103,42 @@ use Cwd qw(cwd);
 
 my ($help, $man);
 my $with_language = '';
-pod2usage(2) unless
-  GetOptions(help  => \$help,
-             man   => \$man,
-             'with_language=s' => \$with_language,
-            );
-pod2usage(1)             if $help;
+pod2usage(2)
+  unless GetOptions(
+    help              => \$help,
+    man               => \$man,
+    'with_language=s' => \$with_language,
+  );
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
-pod2usage("Unrecognized options to krang_makedist: '".join(' ', @ARGV)."'\n")
+pod2usage("Unrecognized options to krang_makedist: '" . join(' ', @ARGV) . "'\n")
   if @ARGV;
 
 # make a temp directory to hold dist files
-my $temp = tempdir(DIR     => catdir($ENV{KRANG_ROOT}, 'tmp'),
-                   CLEANUP => 0);
+my $temp = tempdir(
+    DIR     => catdir($ENV{KRANG_ROOT}, 'tmp'),
+    CLEANUP => 0
+);
 
 # figure out name
 my $name;
 my $source_dist = 0;
 my $platform;
 if (-e catfile($ENV{KRANG_ROOT}, 'data', 'build.db')) {
+
     # get information for a binary distribution
     my %params = Krang::Platform->build_params();
-    $name = 'krang-' . $Krang::VERSION . '-' . $params{Platform} . 
-      '-perl' . $params{Perl} . '-' . $params{Arch};
+    $name =
+        'krang-'
+      . $Krang::VERSION . '-'
+      . $params{Platform} . '-perl'
+      . $params{Perl} . '-'
+      . $params{Arch};
     $name .= '-ssl' if $params{SSL};
     $platform = $params{Platform};
 } else {
     $source_dist = 1;
-    $name = 'krang-' . $Krang::VERSION . '-src';
+    $name        = 'krang-' . $Krang::VERSION . '-src';
 }
 
 # make sure it's not already taken
@@ -154,25 +161,30 @@ print "Computing exclude file list...\n";
 my $list_file = catfile($temp, 'list.txt');
 open(LIST, '>', $list_file) or die $!;
 
-find({ no_chdir => 1,
-       wanted => 
-         sub { 
-             # print "Considering $_...\n";
-             return unless 
-                       m!^$name/\./tmp/.!o or            # skip tmp contents
-                       m!^$name/\./bench!o or            # skip bench
-                       m!^$name/\./conf/krang.conf$!o or # skip krang.conf
-                       m!/CVS! or                    # skip all CVS dirs
-                       m!\.cvsignore! or             # skip all CVS dirs
-                       m!/\.svn! or                  # skip all SVN dirs
-                       m!~$! or                      # skip Emacs droppings
-                       m!#! or                       # skip Emacs droppings
-                       m!krang-[^/]+\.tar\.gz! or    # skip Krang distribs
-                       m!$excluded_lang_re!;         # skip lexicons
+find(
+    {
+        no_chdir => 1,
+        wanted   => sub {
 
-             # print "Excluding $_.\n";
-             print LIST "$_\n";
-         } }, "$name/.");
+            # print "Considering $_...\n";
+            return
+              unless m!^$name/\./tmp/.!o or    # skip tmp contents
+                  m!^$name/\./bench!o            or    # skip bench
+                  m!^$name/\./conf/krang.conf$!o or    # skip krang.conf
+                  m!/CVS!                        or    # skip all CVS dirs
+                  m!\.cvsignore!                 or    # skip all CVS dirs
+                  m!/\.svn!                      or    # skip all SVN dirs
+                  m!~$!                          or    # skip Emacs droppings
+                  m!#!                           or    # skip Emacs droppings
+                  m!krang-[^/]+\.tar\.gz!        or    # skip Krang distribs
+                  m!$excluded_lang_re!;                # skip lexicons
+
+            # print "Excluding $_.\n";
+            print LIST "$_\n";
+          }
+    },
+    "$name/."
+);
 
 close LIST;
 
@@ -180,9 +192,12 @@ close LIST;
 system("pod2text --loose $ENV{KRANG_ROOT}/docs/ops_install.pod > $ENV{KRANG_ROOT}/INSTALL");
 
 # copy platform README if available
-if ($platform and 
-    -e "$ENV{KRANG_ROOT}/platform/$platform/README.$platform"){
-    system("cp $ENV{KRANG_ROOT}/platform/$platform/README.$platform $ENV{KRANG_ROOT}/README.$platform");
+if ($platform
+    and -e "$ENV{KRANG_ROOT}/platform/$platform/README.$platform")
+{
+    system(
+        "cp $ENV{KRANG_ROOT}/platform/$platform/README.$platform $ENV{KRANG_ROOT}/README.$platform"
+    );
 } elsif (not $platform) {
     system("cp $ENV{KRANG_ROOT}/platform/*/README.* $ENV{KRANG_ROOT}/");
 }
@@ -195,9 +210,9 @@ system("tar czf $dist_file -X $list_file $name/./*") == 0
 
 # remove INSTALL and platform README
 unlink("$ENV{KRANG_ROOT}/INSTALL") or die $!;
-unlink("$ENV{KRANG_ROOT}/README.$platform") 
+unlink("$ENV{KRANG_ROOT}/README.$platform")
   if $platform and -e "$ENV{KRANG_ROOT}/README.$platform";
-unlink("rm $ENV{KRANG_ROOT}/README.*") 
+unlink("rm $ENV{KRANG_ROOT}/README.*")
   if not $platform;
 
 # remove link
@@ -206,6 +221,7 @@ unlink($name) or die $!;
 print "\n\nDistribution complete in $name.tar.gz\n";
 
 sub get_excluded_lang_re {
+
     # placeholder to make the exclude file matching happy
     my $placeholder = 'make-the-exclude-file-matching-happy';
 
@@ -213,15 +229,15 @@ sub get_excluded_lang_re {
 
     # default to exclude all lexicons, but include lang/bin/*
     my %exclude_lang = ();
-    @exclude_lang{ grep { -d && $_ !~ m[bin$] } pkg('File')->find_glob('lang/*') } = ();
+    @exclude_lang{grep { -d && $_ !~ m[bin$] } pkg('File')->find_glob('lang/*')} = ();
 
     # maybe include some lexicon(s)
     my $krang_root = KrangRoot;
     if ($with_language) {
-	my @include_lang = map { catdir($krang_root, 'lang', $_ ) }
-                           split(/\s*,\s*/, $with_language);
+        my @include_lang = map { catdir($krang_root, 'lang', $_) }
+          split(/\s*,\s*/, $with_language);
 
-	delete @exclude_lang{ @include_lang };
+        delete @exclude_lang{@include_lang};
     }
 
     # build regexp

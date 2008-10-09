@@ -35,7 +35,7 @@ Returns the Krang version number.
 
 =cut
 
-sub version { $Krang::VERSION };
+sub version { $Krang::VERSION }
 
 =item product_name
 
@@ -43,7 +43,7 @@ Returns the literal string 'Krang'.
 
 =cut
 
-sub product_name { 'Krang' };
+sub product_name { 'Krang' }
 
 =item install_id
 
@@ -57,24 +57,20 @@ URL of static assets to improve browser caching.
 =cut
 
 {
-my $_ID;
-sub install_id {
-    if( !$_ID ) {
-        my $pkg = shift;
-        my $sep = '=:=';
-        my @addons = pkg('AddOn')->find();
-        my $ident = join(
-            $sep,
-            $Krang::VERSION,
-            $pkg->version,
-            $pkg->product_name,
-            ( map { $_->name, $_->version } @addons ),
-            Skin(),
-        );
-        $_ID = md5_hex($ident);
+    my $_ID;
+
+    sub install_id {
+        if (!$_ID) {
+            my $pkg    = shift;
+            my $sep    = '=:=';
+            my @addons = pkg('AddOn')->find();
+            my $ident  = join($sep,
+                $Krang::VERSION, $pkg->version, $pkg->product_name,
+                (map { $_->name, $_->version } @addons), Skin(),);
+            $_ID = md5_hex($ident);
+        }
+        return $_ID;
     }
-    return $_ID;
-}
 }
 
 =back

@@ -82,7 +82,7 @@ instance is active and change that url to
 
 sub get {
     my ($self, $url, @other_args) = @_;
-    if($url !~ /^http/ && $url =~ /^(\w+\.pl)/) {
+    if ($url !~ /^http/ && $url =~ /^(\w+\.pl)/) {
         $url = $self->script_url($url);
     }
 
@@ -93,9 +93,10 @@ sub get {
 
 sub _make_request {
     my ($self, $request, @other_args) = @_;
+
     # change the request to have the window_id
     my $uri = $request->uri;
-    eval { $uri = $uri->as_string }; # turn it into a string if it's an object
+    eval { $uri = $uri->as_string };    # turn it into a string if it's an object
     $request->uri($self->_set_window_id($uri));
     return $self->SUPER::_make_request($request, @other_args);
 }
@@ -103,7 +104,7 @@ sub _make_request {
 # add the window_id of 1 to the urls
 sub _set_window_id {
     my ($self, $url) = @_;
-    if( $url !~ /window_id=\d/ ) {
+    if ($url !~ /window_id=\d/) {
         $url .= $url =~ /\?/ ? '&' : '?';
         $url .= "window_id=1";
     }
@@ -128,7 +129,7 @@ will be, you can pass a regular expression instead.
 sub contains_message {
     my ($self, $key, $class, %args) = @_;
     my $text = $self->_get_message_text($key, $class, \%args);
-    if(!defined $text) {
+    if (!defined $text) {
         carp "No such message '$key' in class '$class'";
     }
 
@@ -137,7 +138,7 @@ sub contains_message {
     # content_contains()
     {
         local $Test::Builder::Level = $Test::Builder::Level + 1;
-        if(ref $text eq 'Regexp') {
+        if (ref $text eq 'Regexp') {
             $self->content_like($text, "contains message $key");
         } else {
             $self->content_contains($text, "contains message $key");
@@ -151,7 +152,7 @@ sub _get_message_text {
 
     foreach my $k (keys %$args) {
         my $val = $args->{$k};
-        if(ref $val eq 'Regexp') {
+        if (ref $val eq 'Regexp') {
             $msg_vars{$k}   = "__Regexp__${k}__";
             $regex_vars{$k} = $val;
         } else {
@@ -161,7 +162,7 @@ sub _get_message_text {
 
     # get the actual text from Krang::Message
     my $text = get_message_text($key, $class, %msg_vars);
-    if($text) {
+    if ($text) {
 
         # since the messages are JS encoded in the template, we need to
         # do the same here
@@ -172,7 +173,7 @@ sub _get_message_text {
         $text =~ s/\r/\\r/g;
 
         # now replace our regexp markers with the real thing
-        if(%regex_vars) {
+        if (%regex_vars) {
             $text = quotemeta($text);
             foreach my $k (keys %regex_vars) {
                 $text =~ /(.*)(__Regexp__${k}__)(.*)/;
@@ -196,7 +197,7 @@ by passing in extra C<%args>.
 sub lacks_message {
     my ($self, $key, $class, %args) = @_;
     my $text = $self->_get_message_text($key, $class, \%args);
-    if(!defined $text) {
+    if (!defined $text) {
         carp "No such message '$key' in class '$class'";
     }
 
@@ -205,7 +206,7 @@ sub lacks_message {
     # content_contains()
     {
         local $Test::Builder::Level = $Test::Builder::Level + 1;
-        if(ref $text eq 'Regexp') {
+        if (ref $text eq 'Regexp') {
             $self->content_unlike($text, "contains message $key");
         } else {
             $self->content_lacks($text, "contains message $key");
@@ -291,11 +292,11 @@ sub _do_login {
     );
 
     # should get a redirect
-    if($self->status == 302) {
+    if ($self->status == 302) {
 
         # try to request env.pl, which will only work if the login succeeded
         $self->get('env.pl');
-        if($self->status == 200 && $self->content =~ /REMOTE_USER/) {
+        if ($self->status == 200 && $self->content =~ /REMOTE_USER/) {
             $ok = 1;
         }
     }
@@ -343,15 +344,15 @@ sub script_url {
 
     my $uri = URI->new();
     $uri->scheme(EnableSSL ? 'https' : 'http');
-    $uri->host(HostName . ':' . (EnableSSL ? SSLApachePort: ApachePort));
+    $uri->host(HostName . ':' . (EnableSSL ? SSLApachePort : ApachePort));
 
     # pull off any query params from the path
     my $params = '';
-    if( $path =~ /\?/ ) {
+    if ($path =~ /\?/) {
         $path =~ s/\?(.*)$//;
         $params = '?' . ($1 || '');
     }
-    
+
     # if we have a script add it to the instance, else use the instance
     my $instance = pkg('Conf')->instance();
     $path = $path ? "$instance/$path" : $instance;

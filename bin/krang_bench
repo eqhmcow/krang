@@ -50,15 +50,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -79,12 +82,13 @@ END
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Conf => qw(KrangRoot);
 
-        
 my ($help, $man);
-pod2usage(2) unless
-  GetOptions(help => \$help,
-             man  => \$man);
-pod2usage(1)             if $help;
+pod2usage(2)
+  unless GetOptions(
+    help => \$help,
+    man  => \$man
+  );
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 # open the benchmark file and find offests for all benchmark sets.
@@ -93,7 +97,7 @@ pod2usage(-verbose => 2) if $man;
 my %bench_off;
 my @sets;
 open(BENCH, catfile(KrangRoot, 'bench.out'));
-while(<BENCH>) {
+while (<BENCH>) {
     next unless /^!/;
     my ($name) = /!\t(.*)/;
     $bench_off{$name} = tell(BENCH);
@@ -112,7 +116,7 @@ if (@ARGV == 0) {
     $set1 = $ARGV[0];
     $set2 = $sets[-1];
 } elsif (@ARGV == 2) {
-    $set1 = $ARGV[0];    
+    $set1 = $ARGV[0];
     $set2 = $ARGV[1];
 } else {
     print "Wrong number of arguments!\n";
@@ -130,23 +134,25 @@ my %data;
 
 # load from set
 seek(BENCH, $bench_off{$set1}, 0) or die $!;
-while(<BENCH>) {
+while (<BENCH>) {
     last unless /^-/;
     chomp;
-    my (undef, $module, $name, $count, $time) = split(/\t/,$_,5); 
-    $data{$module}{$name} = [ $count / $time ];
+    my (undef, $module, $name, $count, $time) = split(/\t/, $_, 5);
+    $data{$module}{$name} = [$count / $time];
 }
 
 # load to set
 seek(BENCH, $bench_off{$set2}, 0) or die $!;
-while(<BENCH>) {
+while (<BENCH>) {
     last unless /^-/;
     chomp;
-    my (undef, $module, $name, $count, $time) = split(/\t/,$_,5); 
+    my (undef, $module, $name, $count, $time) = split(/\t/, $_, 5);
     if (exists($data{$module}{$name})) {
+
         # add to reading
         $data{$module}{$name}[1] = $count / $time;
     } else {
+
         # missing in from set
         $data{$module}{$name}[0] = undef;
         $data{$module}{$name}[1] = $count / $time;
@@ -173,11 +179,11 @@ print <<END;
 END
 
 # print data, and collect total info
-my $total = 0;
+my $total        = 0;
 my $total_points = 0;
-foreach my $module ( sort keys %data ) {
+foreach my $module (sort keys %data) {
     my $first = 1;
-    foreach my $name ( sort keys %{$data{$module}} ) {
+    foreach my $name (sort keys %{$data{$module}}) {
         my ($run1, $run2) = @{$data{$module}{$name}};
         my $change;
         if (defined $run1 and defined $run2) {
@@ -213,7 +219,7 @@ if ($total >= 0) {
 } else {
     $total = sprintf("- %2d%%", -($total / $total_points));
 }
-printf (<<END, $total);
+printf(<<END, $total);
 
                                                             Average Change
  -------------------------------------------------------------------------

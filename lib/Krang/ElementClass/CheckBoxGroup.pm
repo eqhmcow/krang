@@ -4,35 +4,36 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader base => 'ElementClass';
-use Krang::ClassLoader Log => qw(debug info);
+use Krang::ClassLoader Log  => qw(debug info);
 use Krang::ClassLoader 'ListGroup';
 use Krang::ClassLoader 'List';
 use Krang::ClassLoader 'ListItem';
 use Carp qw(croak);
 
-use Krang::ClassLoader MethodMaker => 
-  get_set => [ qw( values labels defaults list_group columns ) ];
+use Krang::ClassLoader MethodMaker => get_set => [qw( values labels defaults list_group columns )];
 
 sub new {
-    my $pkg = shift;
-    my %args = ( values     => [],
-                 labels     => {},
-		 list_group => '',
-		 columns    => 1,
-		 defaults   => [],
-                 @_
-               );
+    my $pkg  = shift;
+    my %args = (
+        values     => [],
+        labels     => {},
+        list_group => '',
+        columns    => 1,
+        defaults   => [],
+        @_
+    );
     return $pkg->SUPER::new(%args);
 }
 
 sub input_form {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
-    my ($param)  = $self->param_names(element=>$element);
+    my ($param) = $self->param_names(element => $element);
     my $defaults = $element->data || $self->defaults || [];
 
     my $values = $self->values || [];
     my $labels = $self->labels || {};
+
     # if it's code, then call it to get the values
     $values = $values->($self, %arg) if ref $values eq 'CODE';
     $labels = $labels->($self, %arg) if ref $labels eq 'CODE';
@@ -43,34 +44,34 @@ sub input_form {
     # 3) use the first list in the group;
     # 4) and get the items for that list;
     if (my $group_name = $self->list_group) {
-	    ($values, $labels) = $self->_get_list_data($group_name);
+        ($values, $labels) = $self->_get_list_data($group_name);
     }
 
     # Set up clickable (in IE) checkbox labels
     my @click_labels = ();
-    my %attributes = ();
+    my %attributes   = ();
     foreach my $v (@$values) {
-        $attributes{$v} = {id=>$v};
+        $attributes{$v} = {id => $v};
         my $l = $labels->{$v};
 
         # ucfirst each word if we don't have a label
-        $l = join " ", 
-          map { ucfirst($_) } 
-            split /_/, $v
-              unless defined $l;
+        $l = join " ", map { ucfirst($_) }
+          split /_/, $v
+          unless defined $l;
 
-        my $label = sprintf( '<label for="%s">%s</label>', 
-                             $query->escapeHTML($v), 
-                             $query->escapeHTML($l) );
+        my $label =
+          sprintf('<label for="%s">%s</label>', $query->escapeHTML($v), $query->escapeHTML($l));
 
         push(@click_labels, $label);
     }
 
-    my @check_boxes = $query->checkbox_group( -name       => $param,
-                                              -values     => $values,
-                                              -attributes => \%attributes,
-                                              -nolabels   => 1,
-                                              -default    => $defaults );
+    my @check_boxes = $query->checkbox_group(
+        -name       => $param,
+        -values     => $values,
+        -attributes => \%attributes,
+        -nolabels   => 1,
+        -default    => $defaults
+    );
 
     # Build checkbox UI
     my $html = "";
@@ -81,10 +82,14 @@ sub input_form {
     $html .= "<table border=0 cellpadding=0 cellspacing=0>\n<tr>\n";
 
     my $rows = int(0.99 + scalar(@check_boxes) / $columns);
-    foreach my $row (0..$rows-1) {
-        foreach my $column (0..$columns-1) {
+    foreach my $row (0 .. $rows - 1) {
+        foreach my $column (0 .. $columns - 1) {
             my $offset = $row + ($rows * $column);
-            $html .= "    <td valign='top'><nobr>". $check_boxes[$offset] . $click_labels[$offset] ."</nobr></td>\n"
+            $html .=
+                "    <td valign='top'><nobr>"
+              . $check_boxes[$offset]
+              . $click_labels[$offset]
+              . "</nobr></td>\n"
               unless (($offset) >= scalar(@check_boxes));
         }
         $html .= "</tr>\n<tr>\n";
@@ -96,39 +101,40 @@ sub input_form {
 
 sub _get_list_data {
     my ($self, $group_name) = @_;
-    my ($lg) = pkg('ListGroup')->find(name=>$group_name);
-    my @lists = pkg('List')->find(list_group_id=>$lg->list_group_id);
+    my ($lg) = pkg('ListGroup')->find(name => $group_name);
+    my @lists = pkg('List')->find(list_group_id => $lg->list_group_id);
 
     # for now just use the first list found
     my @values;
     my %labels;
     if (scalar @lists > 0) {
-	# BTW: ListItem docs are incorrect in the example shown;
-	# It says you can use "list" when it should be "list_id";
-	my @items = pkg('ListItem')->find(list_id=>$lists[0]->list_id);
-	foreach my $item (@items) {
-	    push(@values, $item->list_item_id);
-	    $labels{$item->list_item_id} = $item->data;
-	}
+
+        # BTW: ListItem docs are incorrect in the example shown;
+        # It says you can use "list" when it should be "list_id";
+        my @items = pkg('ListItem')->find(list_id => $lists[0]->list_id);
+        foreach my $item (@items) {
+            push(@values, $item->list_item_id);
+            $labels{$item->list_item_id} = $item->data;
+        }
     }
     return (\@values, \%labels);
 }
 
 sub view_data {
     my ($self, %arg) = @_;
-    my $sep  = ", ";
+    my $sep    = ", ";
     my $labels = $self->labels;
     if (my $group_name = $self->list_group) {
-	(undef, $labels) = $self->_get_list_data($group_name);
+        (undef, $labels) = $self->_get_list_data($group_name);
     }
     my $data = $arg{element}->data || [];
-    return join($sep, map{ $labels->{$_} } @$data);
+    return join($sep, map { $labels->{$_} } @$data);
 }
 
 sub load_query_data {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
-    my ($param) = $self->param_names(element=>$element);
+    my ($param) = $self->param_names(element => $element);
 
     # Always use arrayref to avoid issues with
     # "@vals=$query->param('foo')" vs "$val=$query->param('foo')".
@@ -141,19 +147,18 @@ sub load_query_data {
 sub freeze_data {
     my ($self, %arg) = @_;
     my $element = $arg{element};
-    my $data    = $element->data || [];
+    my $data = $element->data || [];
     return join("|", @$data);
 }
 
 sub thaw_data {
-    my ($self, %arg) = @_;
+    my ($self,    %arg)  = @_;
     my ($element, $text) = @arg{qw(element data)};
     $text ||= "";
 
     # Convert "XXX|YYY|ZZZ" to [XXX, YYY, ZZZ]
-    return $element->data([ split(/\|/, $text) ]);
+    return $element->data([split(/\|/, $text)]);
 }
-
 
 # do the normal XML serialization, but also include the linked list_item
 # object in the dataset
@@ -163,26 +168,28 @@ sub freeze_data_xml {
 
     # add list item object, IF we're in list_group mode
     if (my $lg_name = $self->list_group) {
-        my $rlist_item_ids = $element->data;
-        my @real_element_data = ();  # Delete items which don't have ListItems anymore
+        my $rlist_item_ids    = $element->data;
+        my @real_element_data = ();               # Delete items which don't have ListItems anymore
         foreach my $list_item_id (@$rlist_item_ids) {
-            my ($li) = pkg('ListItem')->find(list_item_id=>$list_item_id);
+            my ($li) = pkg('ListItem')->find(list_item_id => $list_item_id);
             unless ($li) {
-                info ("Can't find list item for list_item_id '$list_item_id'.  Dropping it from KDS.");
+                info("Can't find list item for list_item_id '$list_item_id'.  Dropping it from KDS."
+                );
                 next;
             }
             my $element_id = $element->element_id();
-            debug ("Adding list_item_id '$list_item_id' associated with element_id '$element_id' to KDS");
+            debug(
+                "Adding list_item_id '$list_item_id' associated with element_id '$element_id' to KDS"
+            );
             $set->add(object => $li, from => $element->object);
-           push(@real_element_data, $list_item_id);  # Only valid list_item_ids
+            push(@real_element_data, $list_item_id);    # Only valid list_item_ids
         }
-       $element->data(\@real_element_data);
+        $element->data(\@real_element_data);
     }
 
     # Write XML for this element
     $self->SUPER::freeze_data_xml(%arg);
 }
-
 
 # translate the incoming list_item_id into a real ID
 sub thaw_data_xml {
@@ -199,15 +206,16 @@ sub thaw_data_xml {
     # Expect an arrayref of IDs.  Map these to new IDs.  Set as arrayref in data()
     my @element_data = ();
     foreach my $list_item_id (@{$element->data}) {
-        my $real_list_item_id = $set->map_id( class => pkg('ListItem'),
-                                              id    => $list_item_id );
-        debug ("Mapping list_item_id $list_item_id => $real_list_item_id");
+        my $real_list_item_id = $set->map_id(
+            class => pkg('ListItem'),
+            id    => $list_item_id
+        );
+        debug("Mapping list_item_id $list_item_id => $real_list_item_id");
         push(@element_data, $real_list_item_id);
     }
 
     $element->data(\@element_data);
 }
-
 
 sub template_data {
     my ($self, %arg) = @_;
@@ -219,14 +227,11 @@ sub template_data {
     # Ripped from ListGroup
     my @chosen;
     foreach my $e (@{$element->data}) {
-        my $i = (pkg('ListItem')->find( list_item_id => $e ))[0] || '';
+        my $i = (pkg('ListItem')->find(list_item_id => $e))[0] || '';
         push(@chosen, $i->data) if $i;
     }
     return join(', ', @chosen);
 }
-
-
-
 
 =head1 NAME
 

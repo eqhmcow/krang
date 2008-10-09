@@ -221,27 +221,29 @@ for my $p ($creator->publish_paths(story => $trashed_story)) {
 }
 
 ($trashed_story) = pkg('Story')->find(story_id => $trashed_story->story_id);
-is($trashed_story->retired,
-    1, "previously published story has been retired (still exists in database)");
+is($trashed_story->retired, 1,
+    "previously published story has been retired (still exists in database)");
 
 # test configurable schedule failure
 my $story = $creator->create_story();
 $story->checkout;
-$sched = pkg('Schedule')->new(action            => 'publish',
-                                 object_id         => $story->story_id(),
-                                 object_type       => 'story',
-                                 repeat            => 'never',
-                                 date              => $now + 2, # to leave time for initial is() below!
-                                 failure_max_tries => 2,
-                                 failure_delay_sec => 3,
-                                );
+$sched = pkg('Schedule')->new(
+    action            => 'publish',
+    object_id         => $story->story_id(),
+    object_type       => 'story',
+    repeat            => 'never',
+    date              => $now + 2,             # to leave time for initial is() below!
+    failure_max_tries => 2,
+    failure_delay_sec => 3,
+);
 $sched->save();
 ($sched) = pkg('Schedule')->find(schedule_id => $sched->schedule_id);
-is ($sched->failure_max_tries, 2, "scheduled publish successfully saved with max_tries = 2");
+is($sched->failure_max_tries, 2, "scheduled publish successfully saved with max_tries = 2");
 sleep 5;
 ($sched) = pkg('Schedule')->find(schedule_id => $sched->schedule_id);
-is ($sched->failure_max_tries, 1, "scheduled publish fails due to checked-out story and decrements max_tries to 1");
+is($sched->failure_max_tries, 1,
+    "scheduled publish fails due to checked-out story and decrements max_tries to 1");
 sleep 5;
 ($sched) = pkg('Schedule')->find(schedule_id => $sched->schedule_id);
-is ($sched, undef, "scheduled publish fails and gives up for good when max_tries = 1");
+is($sched, undef, "scheduled publish fails and gives up for good when max_tries = 1");
 $story->checkin;

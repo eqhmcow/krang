@@ -46,8 +46,9 @@ sub import {
 
     my $pkg;
     if ($class eq 'base') {
+
         # decode super-class instead
-        $pkg     = 'base';
+        $pkg = 'base';
         $args[0] = pkg($args[0]);
     } else {
         $pkg = pkg($class);

@@ -6,9 +6,10 @@ use warnings;
 # declare prototypes
 sub foreach_element (&@);
 our (@ISA, @EXPORT_OK);
+
 BEGIN {
     require Exporter;
-    our @ISA = qw(Exporter);
+    our @ISA       = qw(Exporter);
     our @EXPORT_OK = qw(foreach_element);
 }
 
@@ -136,18 +137,17 @@ the first C<save()>.
 
 =cut
 
-use Krang::ClassLoader MethodMaker => 
-  new_with_init => 'new',
-  new_hash_init => 'hash_init',    
-  get_set       => [ qw( element_id ) ];
+use Krang::ClassLoader MethodMaker => new_with_init => 'new',
+  new_hash_init                    => 'hash_init',
+  get_set                          => [qw( element_id )];
 
 sub id_meth { 'element_id' }
 
 # initialize a new object, creating children as required by the class
 # unless no_expand is passed in
 sub init {
-    my $self = shift;
-    my %args = @_;
+    my $self      = shift;
+    my %args      = @_;
     my $no_expand = delete $args{no_expand};
 
     # make sure we've got a class
@@ -160,15 +160,15 @@ sub init {
     # delay loading data since it needs a fully initialized object to
     # call class->check_data
     my $have_data = exists $args{data};
-    my $data = delete $args{data};
+    my $data      = delete $args{data};
 
     # finish the object
     $self->hash_init(%args);
 
     # make sure we've got an object if this is a top_level
     croak("Krang::Element->new() called without object parameter!")
-      if $self->class->isa('Krang::ElementClass::TopLevel') and
-        not $self->object;
+      if $self->class->isa('Krang::ElementClass::TopLevel')
+          and not $self->object;
 
     # setup data, using default value if set
     $self->data($have_data ? $data : $self->{class}->default);
@@ -181,6 +181,7 @@ sub init {
         foreach my $child_class ($self->{class}->children()) {
             $min = $child_class->min;
             if ($min > 0) {
+
                 # add children of this class up to the minimum
                 $self->add_child(class => $child_class) for (1 .. $min);
             }
@@ -206,7 +207,7 @@ sub class {
     my ($self, $val) = @_;
 
     # it's an element class object, store it
-    return $self->{class} = $val 
+    return $self->{class} = $val
       if ref $val and UNIVERSAL::isa($val, "Krang::ElementClass");
 
     # it's an element name, fetch it from the library
@@ -232,12 +233,11 @@ sub data {
         # thaw out lazy loaded data and return that
         $self->thaw_data(data => delete $self->{_lazy_data});
         return $self->{data};
-    }    
+    }
     $self->check_data(data => $data);
     delete $self->{_lazy_data};
     return $self->{data} = $data;
 }
-
 
 =item C<< $object = $element->object() >>
 
@@ -249,13 +249,12 @@ a Krang::Story, a Krang::Category, or a Krang::Media object.
 sub object {
     my $self = shift;
     return $self->root->object(@_) if $self->parent;
-    return $self->{object} unless @_;    
+    return $self->{object} unless @_;
     $self->{object} = shift;
-    
+
     # make sure not to create a circular reference
     weaken($self->{object});
 }
-
 
 =item C<< $object = $element->story() >>
 
@@ -264,10 +263,11 @@ $element->object->isa('Krang::Story') and croaks otherwise.
 
 =cut
 
-sub story { 
-    my $self = shift;
+sub story {
+    my $self   = shift;
     my $object = $self->object;
-    croak("Expected a pkg('Story') in element->object for $self->{element_id}, but didn't find one!")
+    croak(
+        "Expected a pkg('Story') in element->object for $self->{element_id}, but didn't find one!")
       unless $object and $object->isa('Krang::Story');
     return $object;
 }
@@ -279,10 +279,11 @@ $element->object->isa('Krang::Media') and croaks otherwise.
 
 =cut
 
-sub media { 
-    my $self = shift;
+sub media {
+    my $self   = shift;
     my $object = $self->object;
-    croak("Expected a pkg('Media') in element->object for $self->{element_id}, but didn't find one!")
+    croak(
+        "Expected a pkg('Media') in element->object for $self->{element_id}, but didn't find one!")
       unless $object and $object->isa('Krang::Media');
     return $object;
 }
@@ -294,8 +295,8 @@ $element->object->isa('Krang::Category') and croaks otherwise.
 
 =cut
 
-sub category { 
-    my $self = shift;
+sub category {
+    my $self   = shift;
     my $object = $self->object;
     croak("Expected a pkg('Category') in element->object, but didn't find one!")
       unless $object and $object->isa('Krang::Category');
@@ -342,10 +343,11 @@ C<< reorder_children() >>.
 
 =cut
 
-sub children { 
+sub children {
     my $self = shift;
-    croak("Illegal attempt to set children with children()!  Use add_child(), remove_children() or reorder_children() instead.")
-      if @_;
+    croak(
+        "Illegal attempt to set children with children()!  Use add_child(), remove_children() or reorder_children() instead."
+    ) if @_;
     return @{$self->{children}};
 }
 
@@ -375,11 +377,12 @@ Returns the newly created child object.
 =cut
 
 sub add_child {
-    my $self = shift;
-    my %arg  = @_;
+    my $self     = shift;
+    my %arg      = @_;
     my $children = $self->{children};
 
     unless (ref $arg{class}) {
+
         # lookup the child class in our class
         $arg{class} = $self->{class}->child($arg{class});
     }
@@ -392,8 +395,7 @@ sub add_child {
         for (@$children) {
             $count++ if $_->class->name eq $name;
         }
-        croak("Unable to add another '$name' to '" .
-              $self->name . "' - max allowed is $max")
+        croak("Unable to add another '$name' to '" . $self->name . "' - max allowed is $max")
           if $count > $max;
     }
 
@@ -454,13 +456,12 @@ objects.  You may not leave out any existing children in the list.
 =cut
 
 sub reorder_children {
-    my $self = shift;
+    my $self     = shift;
     my $children = $self->{children};
 
     # make sure list is unique
     my %seen;
-    croak("reorder_children called with list containing duplicates: " . 
-          join(',', @_))
+    croak("reorder_children called with list containing duplicates: " . join(',', @_))
       if grep { ++$seen{$_} != 1 } @_;
 
     # check size
@@ -517,45 +518,55 @@ called on top-level elements.
 
 sub save {
     my $self = shift;
-    my $dbh = dbh;
+    my $dbh  = dbh;
 
     # check top-levelitude
     croak("Unable to save() non-top-level element.")
       unless $self->{class}->isa('Krang::ElementClass::TopLevel');
-    
+
     # saving with the cache on is verboten
     if (Krang::Cache::active()) {
-        croak("Cannot save elements while cache is on!  This cache was started at " . join(', ', @{$Krang::Cache::CACHE_STACK[-1]}) . ".");
+        croak(  "Cannot save elements while cache is on!  This cache was started at "
+              . join(', ', @{$Krang::Cache::CACHE_STACK[-1]})
+              . ".");
     }
-
 
     # call the save hook
     $self->{class}->save_hook(element => $self);
 
     if (defined $self->{element_id}) {
+
         # update data
-        $dbh->do('UPDATE element SET data = ? WHERE element_id = ?', undef,
-                 $self->freeze_data(), $self->{element_id});
+        $dbh->do('UPDATE element SET data = ? WHERE element_id = ?',
+            undef, $self->freeze_data(), $self->{element_id});
 
         # loop through kids, calling _update_children()
         my @element_ids = $self->_update_children($self->{element_id});
 
         # remove deleted children, defined as elements with this
         # root_id but not in the list of elements just updated
-        $dbh->do('DELETE FROM element WHERE root_id = ? 
-                                            AND element_id NOT IN (' .
-                 join(',', ("?") x @element_ids) . ')',
-                 undef, $self->{element_id}, @element_ids);
+        $dbh->do(
+            'DELETE FROM element WHERE root_id = ? 
+                                            AND element_id NOT IN ('
+              . join(',', ("?") x @element_ids) . ')',
+            undef, $self->{element_id}, @element_ids
+        );
 
     } else {
+
         # create new root and get the element_id
-        $dbh->do('INSERT INTO element (class, data) VALUES (?,?)', undef,
-                 $self->{class}->name, $self->freeze_data());
+        $dbh->do(
+            'INSERT INTO element (class, data) VALUES (?,?)',
+            undef, $self->{class}->name,
+            $self->freeze_data()
+        );
         $self->{element_id} = $dbh->{mysql_insertid};
-        
+
         # update root_id (doesn't work in one statement)
-        $dbh->do('UPDATE element SET root_id = element_id 
-                  WHERE element_id = ?', undef, $self->{element_id});
+        $dbh->do(
+            'UPDATE element SET root_id = element_id 
+                  WHERE element_id = ?', undef, $self->{element_id}
+        );
 
         # loop through kids, calling _insert_children()
         $self->_insert_children($self->{element_id});
@@ -566,25 +577,30 @@ sub save {
 sub _insert_children {
     my ($self, $root_id) = @_;
     my $dbh = dbh;
-    
+
     # insert children, numbering in order and remembering IDs
     my $ord = 1;
-   
+
     foreach my $child (@{$self->{children}}) {
+
         # create a new element and get the ID
-        $dbh->do('INSERT INTO element (parent_id, root_id, class, data, ord)
+        $dbh->do(
+            'INSERT INTO element (parent_id, root_id, class, data, ord)
                   VALUES       (?,?,?,?,?)', undef,
-                 $self->{element_id}, $root_id, $child->{class}->name, 
-                 $child->freeze_data, $ord++);
+            $self->{element_id}, $root_id, $child->{class}->name,
+            $child->freeze_data, $ord++
+        );
         $child->{element_id} = $dbh->{mysql_insertid};
 
         # insert index data if needed
         if ($child->{class}->indexed) {
             foreach my $index_data ($child->index_data) {
                 next unless defined $index_data;
-                $dbh->do('INSERT INTO element_index (element_id, value) 
-                          VALUES (?,?)', undef, 
-                         $child->{element_id}, $index_data);
+                $dbh->do(
+                    'INSERT INTO element_index (element_id, value) 
+                          VALUES (?,?)',  undef,
+                    $child->{element_id}, $index_data
+                );
             }
         }
 
@@ -598,53 +614,58 @@ sub _insert_children {
 sub _update_children {
     my ($self, $root_id) = @_;
     my $dbh = dbh;
-    
+
     # insert children, numbering in order and remembering IDs
-    my $ord = 1;
+    my $ord         = 1;
     my @element_ids = ($self->{element_id});
-   
+
     foreach my $child (@{$self->{children}}) {
         if ($child->{element_id}) {
+
             # pre-existing child, replace (allows for reverting where
             # the element ID might be gone from the tree)
             $dbh->do(
-                 'REPLACE INTO element (element_id, parent_id, root_id, 
+                'REPLACE INTO element (element_id, parent_id, root_id, 
                                         class, data, ord)
                   VALUES       (?,?,?,?,?,?)', undef,
-                     $child->{element_id}, $self->{element_id}, $root_id, 
-                     $child->{class}->name, $child->freeze_data, $ord++);
+                $child->{element_id},  $self->{element_id}, $root_id,
+                $child->{class}->name, $child->freeze_data, $ord++
+            );
 
             # clear index data if needed
-            $dbh->do('DELETE FROM element_index WHERE element_id = ?',
-                     undef, $child->{element_id})
+            $dbh->do('DELETE FROM element_index WHERE element_id = ?', undef, $child->{element_id})
               if $child->{class}->indexed;
 
         } else {
+
             # create a new element and get the ID
             $dbh->do(
-                 'INSERT INTO element (parent_id, root_id, class, data, ord)
+                'INSERT INTO element (parent_id, root_id, class, data, ord)
                   VALUES       (?,?,?,?,?)', undef,
-                     $self->{element_id}, $root_id, $child->{class}->name, 
-                     $child->freeze_data, $ord++);
+                $self->{element_id}, $root_id, $child->{class}->name,
+                $child->freeze_data, $ord++
+            );
             $child->{element_id} = $dbh->{mysql_insertid};
         }
-                    
+
         # insert index data if needed
         if ($child->{class}->indexed) {
             foreach my $index_data ($child->index_data) {
                 next unless defined $index_data;
-                $dbh->do('INSERT INTO element_index (element_id, value) 
-                              VALUES (?,?)', undef, 
-                         $child->{element_id}, $index_data);
+                $dbh->do(
+                    'INSERT INTO element_index (element_id, value) 
+                              VALUES (?,?)', undef,
+                    $child->{element_id},    $index_data
+                );
             }
         }
 
         # remember this element_id
         push(@element_ids, $child->{element_id});
-        
+
         # recurse, if needed
         push(@element_ids, $child->_update_children($root_id))
-             if @{$child->{children}};
+          if @{$child->{children}};
     }
 
     return @element_ids;
@@ -672,7 +693,7 @@ sub available_child_classes {
     foreach my $child ($self->children()) {
         my $name = $child->name;
         assert(exists($remain{$name})) if ASSERT;
-        delete $remain{$name} if --$remain{$name} == 0;
+        delete $remain{$name}          if --$remain{$name} == 0;
     }
 
     return grep { exists $remain{$_->name} and !$hidden{$_->name} } $self->{class}->children;
@@ -688,10 +709,9 @@ containing this element.
 =cut
 
 sub load {
-    my $pkg  = shift;
-    my %arg  = @_;
-    croak("Unrecognized load parameters: " .
-          join(', ', map { "$_ => '$arg{$_}'" } keys %arg))
+    my $pkg = shift;
+    my %arg = @_;
+    croak("Unrecognized load parameters: " . join(', ', map { "$_ => '$arg{$_}'" } keys %arg))
       unless $arg{element_id};
 
     my $dbh = dbh;
@@ -712,8 +732,7 @@ sub load {
 SQL
     croak("No element found matching id '$arg{element_id}'")
       unless $data and @$data;
-    
-    
+
     eval { $element = $pkg->_load_tree($data, $arg{object}) };
     croak("Unable to load element tree with id '$arg{element_id}':\n$@")
       if $@;
@@ -722,7 +741,7 @@ SQL
     Krang::Cache::set('Krang::Element' => $arg{element_id} => $element);
 
     return $element;
-} 
+}
 
 # loads a tree from an array of element arrays coming from a
 # selectall_arrayref on the element table, sorted by parent_id and
@@ -731,6 +750,7 @@ use constant ELEMENT_ID => 0;
 use constant PARENT_ID  => 1;
 use constant CLASS      => 2;
 use constant DATA       => 3;
+
 sub _load_tree {
     my ($pkg, $data, $object) = @_;
 
@@ -741,12 +761,13 @@ sub _load_tree {
 
     # start out with the root
     my %ehash;
-    $ehash{$root->[ELEMENT_ID]} =
-      pkg('Element')->new(element_id => $root->[ELEMENT_ID],
-                          class      => $root->[CLASS],
-                          object     => $object,
-                          no_expand  => 1,
-                         );
+    $ehash{$root->[ELEMENT_ID]} = pkg('Element')->new(
+        element_id => $root->[ELEMENT_ID],
+        class      => $root->[CLASS],
+        object     => $object,
+        no_expand  => 1,
+    );
+
     # deserialize data
     $ehash{$root->[ELEMENT_ID]}->thaw_data(data => $root->[DATA]);
 
@@ -756,42 +777,49 @@ sub _load_tree {
     my $row;
     while (@$data) {
         $row = shift @$data;
-        
+
         # skip children with unloaded parents, since they probably
         # failed to find an element class.  At some point we might
         # want to differentiate between this case and pure database
         # corruption.
         next unless exists $ehash{$row->[PARENT_ID]};
 
-        eval { 
-            $ehash{$row->[ELEMENT_ID]} = 
-              $ehash{$row->[PARENT_ID]}->add_child(class     => $row->[CLASS],
-                                                   element_id=> $row->[ELEMENT_ID],
-                                                   no_expand => 1
-                                                  );
+        eval {
+            $ehash{$row->[ELEMENT_ID]} = $ehash{$row->[PARENT_ID]}->add_child(
+                class      => $row->[CLASS],
+                element_id => $row->[ELEMENT_ID],
+                no_expand  => 1
+            );
 
             if ($ehash{$row->[ELEMENT_ID]}->lazy_loaded) {
+
                 # store data for later loading
                 $ehash{$row->[ELEMENT_ID]}->{_lazy_data} = $row->[DATA];
             } else {
                 $ehash{$row->[ELEMENT_ID]}->thaw_data(data => $row->[DATA]);
             }
-            
+
         };
         if ($@ and $@ =~ /No class named/) {
+
             # this is the result of a missing class definition,
             # issue a warning and move on
-            info("Unable to load data for element class '$row->[CLASS]' - there is no matching definition in this element set.");
+            info(
+                "Unable to load data for element class '$row->[CLASS]' - there is no matching definition in this element set."
+            );
             next;
         } elsif ($@ and $@ =~ /Unable to add another/) {
+
             # the incoming XML has too many of something.  Make this
             # non-fatal to ease the transition from one element schema
             # to another.
-            info("Unable to load data for element class '$row->[CLASS]' - unable to add another to parent element.");
+            info(
+                "Unable to load data for element class '$row->[CLASS]' - unable to add another to parent element."
+            );
             next;
         } elsif ($@) {
-            die $@; 
-        } 
+            die $@;
+        }
     }
 
     # all done
@@ -810,14 +838,14 @@ parent and then call C<save>.
 
 sub delete {
     my ($self, %args) = @_;
-    my $dbh  = dbh;
+    my $dbh = dbh;
 
     # check top-levelitude
     croak("Unable to delete() non-top-level element.")
       unless $self->{class}->isa('Krang::ElementClass::TopLevel');
 
-    # check for ID 
-    croak("Unable to delete() non-saved element.")    
+    # check for ID
+    croak("Unable to delete() non-saved element.")
       unless $self->{element_id};
 
     # call delete hook in the element class, unless it shouldn't run
@@ -827,11 +855,10 @@ sub delete {
 
     # delete all from the DB
     foreach_element {
-        $dbh->do('DELETE FROM element_index WHERE element_id = ?', 
-                 undef, $_->{element_id})
-    } $self;
-    $dbh->do('DELETE FROM element WHERE root_id = ?', undef, 
-             $self->{element_id});
+        $dbh->do('DELETE FROM element_index WHERE element_id = ?', undef, $_->{element_id});
+    }
+    $self;
+    $dbh->do('DELETE FROM element WHERE root_id = ?', undef, $self->{element_id});
 
     # clear the object
     %{$self} = () if ref $self;
@@ -855,7 +882,7 @@ sub clone {
     my $clone = bless({%$self}, ref($self));
 
     # clone children recursively
-    $clone->{children} = [ map { $_->clone } @{$self->{children}} ];
+    $clone->{children} = [map { $_->clone } @{$self->{children}}];
 
     # fix up parent pointers
     for (@{$clone->{children}}) {
@@ -925,15 +952,15 @@ syntax supported by match().
 =cut
 
 # generate match() and xpath()
-use Class::XPath   
-  get_name => 'name',         # get the node name with the 'name' method
-  get_parent => 'parent',     # get parent with the 'parent' method
-  get_root   => 'root',       # call get_root($node) to get the root
-  get_children => 'children', # get children with the 'kids' method
+use Class::XPath
+  get_name     => 'name',        # get the node name with the 'name' method
+  get_parent   => 'parent',      # get parent with the 'parent' method
+  get_root     => 'root',        # call get_root($node) to get the root
+  get_children => 'children',    # get children with the 'kids' method
 
-  get_attr_names => '_xpath_attr_names',  # get attr names
-  get_attr_value => '_xpath_attr_value', # get attr values
-  get_content    => 'data',   # get content from the 'data' method
+  get_attr_names => '_xpath_attr_names',    # get attr names
+  get_attr_value => '_xpath_attr_value',    # get attr values
+  get_content    => 'data',                 # get content from the 'data' method
   ;
 
 sub _xpath_attr_names {
@@ -944,7 +971,7 @@ sub _xpath_attr_names {
 sub _xpath_attr_value {
     my ($self, $attr) = @_;
     return $self->$attr() if $self->can($attr);
-    return undef;    
+    return undef;
 }
 
 =item C<< $element->serialize_xml(writer => $writer, set => $set) >>
@@ -954,15 +981,17 @@ Serialize as XML.  See Krang::DataSet for details.
 =cut
 
 sub serialize_xml {
-    my ($self, %arg) = @_;
+    my ($self,   %arg) = @_;
     my ($writer, $set) = @arg{qw(writer set)};
 
-    $writer->startTag('element');    
+    $writer->startTag('element');
     $writer->dataElement(class => $self->name());
     $self->freeze_data_xml(writer => $writer, set => $set);
     foreach my $child ($self->children) {
-        $child->serialize_xml(writer  => $writer,
-                              set     => $set);
+        $child->serialize_xml(
+            writer => $writer,
+            set    => $set
+        );
     }
     $writer->endTag('element');
 }
@@ -978,20 +1007,25 @@ pointing to the enclosing object.
 
 sub deserialize_xml {
     my ($pkg, %args) = @_;
-    my ($data, $set, $object) = 
-      @args{qw(data set object)};
+    my ($data, $set, $object) = @args{qw(data set object)};
 
     # create the root element
-    my $root = pkg('Element')->new(class     => $data->{class},
-                                   object    => $object,
-                                   no_expand => 1);
-    $root->thaw_data_xml(data => $data->{data},
-                         set  => $set);
+    my $root = pkg('Element')->new(
+        class     => $data->{class},
+        object    => $object,
+        no_expand => 1
+    );
+    $root->thaw_data_xml(
+        data => $data->{data},
+        set  => $set
+    );
 
     # recursively expand children
     if ($data->{element}) {
-        $root->_deserialize_xml_children(data   => $data,
-                                         set    => $set);
+        $root->_deserialize_xml_children(
+            data => $data,
+            set  => $set
+        );
     }
 
     return $root;
@@ -1000,41 +1034,54 @@ sub deserialize_xml {
 # recursively expand children from XML data
 sub _deserialize_xml_children {
     my ($self, %args) = @_;
-    my ($data, $set) =  @args{qw(data set)};
+    my ($data, $set)  = @args{qw(data set)};
 
     foreach my $child_data (@{$data->{element}}) {
-        eval { 
+        eval {
+
             # create child
-            $self->add_child(class     => $child_data->{class},
-                             no_expand => 1);
+            $self->add_child(
+                class     => $child_data->{class},
+                no_expand => 1
+            );
+
             # thaw child data
-            $self->{children}[-1]->thaw_data_xml(data => $child_data->{data},
-                                                 set  => $set);
+            $self->{children}[-1]->thaw_data_xml(
+                data => $child_data->{data},
+                set  => $set
+            );
         };
         if ($@ and $@ =~ /No class named/) {
+
             # this is the result of a missing class definition,
             # issue a warning and move on
-            info("Unable to load data for element class '$child_data->{class}' - there is no matching definition in this element set.");
+            info(
+                "Unable to load data for element class '$child_data->{class}' - there is no matching definition in this element set."
+            );
             next;
         } elsif ($@ and $@ =~ /Unable to add another/) {
+
             # the incoming XML has too many of something.  Make this
             # non-fatal to ease the transition from one element schema
             # to another.
-            info("Unable to load data for element class '$child_data->{class}' - unable to add another to parent element.");
+            info(
+                "Unable to load data for element class '$child_data->{class}' - unable to add another to parent element."
+            );
             next;
         } elsif ($@) {
-            die $@; 
+            die $@;
         } else {
+
             # recurse if needed
             if ($child_data->{element}) {
-                $self->{children}[-1]->_deserialize_xml_children(data => 
-                                                                 $child_data,
-                                                                 set  => $set);
+                $self->{children}[-1]->_deserialize_xml_children(
+                    data => $child_data,
+                    set  => $set
+                );
             }
         }
     }
 }
-
 
 # freeze element tree as a flattened array
 sub STORABLE_freeze {
@@ -1058,11 +1105,7 @@ sub STORABLE_freeze {
 # recursively freeze elements
 sub _freeze_tree {
     my ($self, $parent_at, $data) = @_;
-    push @$data, [ $self->{element_id},
-                   $parent_at,
-                   $self->name,
-                   $self->freeze_data, 
-                 ];          
+    push @$data, [$self->{element_id}, $parent_at, $self->name, $self->freeze_data,];
 
     $parent_at = $#$data;
     foreach my $child ($self->children) {
@@ -1070,7 +1113,6 @@ sub _freeze_tree {
     }
 }
 
-        
 # thaw the frozen element array
 sub STORABLE_thaw {
     my ($self, $cloning, $frozen) = @_;
@@ -1087,11 +1129,12 @@ sub STORABLE_thaw {
     croak("Unable to thaw element: $@") if $@;
 
     # thaw out the root
-    my $root =  pkg('Element')->new(element_id => $data[0][0],
-                                    class      => $data[0][2],
-                                    object     => $THAWING_OBJECT,
-                                    no_expand  => 1,
-                                   );
+    my $root = pkg('Element')->new(
+        element_id => $data[0][0],
+        class      => $data[0][2],
+        object     => $THAWING_OBJECT,
+        no_expand  => 1,
+    );
     $root->thaw_data(data => $data[0][3]);
 
     # copy into $self
@@ -1104,13 +1147,14 @@ sub STORABLE_thaw {
     # forward references and to be in the correct order for calls to
     # add_child()
     for my $i (1 .. $#data) {
+
         # all rows should have parent pointers
         assert(defined($data[$i][1])) if ASSERT;
-        my $element = 
-          $data[$data[$i][1]]->add_child(element_id => $data[$i][0],
-                                         class      => $data[$i][2],
-                                         no_expand => 1
-                                        );
+        my $element = $data[$data[$i][1]]->add_child(
+            element_id => $data[$i][0],
+            class      => $data[$i][2],
+            no_expand  => 1
+        );
         $element->thaw_data(data => $data[$i][3]);
         $data[$i] = $element;
     }
@@ -1144,56 +1188,61 @@ Which is equivalent to:
 =cut
 
 BEGIN {
-    no strict 'refs'; # needed for glob assign
-    
-    foreach my $attr (qw( name
-                          display_name
-                          min
-                          max
-                          bulk_edit
-                          required
-                          reorderable
-                          hidden
-                          allow_delete
-                          url_attributes
-                          pageable
-                          indexed
-                          lazy_loaded
-                        )) {
+    no strict 'refs';    # needed for glob assign
+
+    foreach my $attr (
+        qw( name
+        display_name
+        min
+        max
+        bulk_edit
+        required
+        reorderable
+        hidden
+        allow_delete
+        url_attributes
+        pageable
+        indexed
+        lazy_loaded
+        )
+      )
+    {
         *{"Krang::Element::$attr"} = sub { $_[0]->{class}->$attr() };
     }
-    
-    foreach my $meth (qw( input_form
-                          burn 
-                          validate
-                          validate_children
-                          load_query_data
-                          freeze_data 
-                          is_container
-                          thaw_data
-                          build_url
-                          param_names
-                          view_data
-                          bulk_edit_data
-                          bulk_edit_filter
-                          check_data
-                          default_schedules
-                          freeze_data_xml
-                          thaw_data_xml
-                          template_data
-                          publish
-                          fill_template
-                          index_data
-                          publish_check
-                          force_republish
-                          use_category_templates
-                          mark_form_invalid
-                        )) {
-        *{"Krang::Element::$meth"} = 
-          sub { 
-              my $self = shift;
-              $self->{class}->$meth(@_, element => $self) 
-          };
+
+    foreach my $meth (
+        qw( input_form
+        burn
+        validate
+        validate_children
+        load_query_data
+        freeze_data
+        is_container
+        thaw_data
+        build_url
+        param_names
+        view_data
+        bulk_edit_data
+        bulk_edit_filter
+        check_data
+        default_schedules
+        freeze_data_xml
+        thaw_data_xml
+        template_data
+        publish
+        fill_template
+        index_data
+        publish_check
+        force_republish
+        use_category_templates
+        mark_form_invalid
+        )
+      )
+    {
+        *{"Krang::Element::$meth"} = sub {
+            my $self = shift;
+            $self->{class}->$meth(@_, element => $self);
+        };
     }
 }
 

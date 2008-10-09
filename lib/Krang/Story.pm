@@ -15,8 +15,8 @@ use Krang::ClassLoader 'UUID';
 
 use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'Trash';
-use Carp           qw(croak);
-use Storable       qw(nfreeze thaw);
+use Carp qw(croak);
+use Storable qw(nfreeze thaw);
 use Time::Piece::MySQL;
 use File::Spec::Functions qw(catdir canonpath);
 
@@ -1223,7 +1223,8 @@ or bin/ scripts make calls to C<find()>!
             $like = ($key =~ s/_like$//) ? 1 : 0;
 
             # handle story_id => [1, 2, 3]
-            if ($key eq 'story_id' && ref($value) && ref($value) eq 'ARRAY' && scalar(@$value) > 0) {
+            if ($key eq 'story_id' && ref($value) && ref($value) eq 'ARRAY' && scalar(@$value) > 0)
+            {
 
                 # an array of IDs selects a list of stories by ID
                 push @where, 's.story_id IN (' . join(',', ("?") x @$value) . ')';
@@ -1232,7 +1233,11 @@ or bin/ scripts make calls to C<find()>!
             }
 
             # handle story_uuid => [1, 2, 3]
-            if ($key eq 'story_uuid' && ref($value) && ref($value) eq 'ARRAY' && scalar(@$value) > 0) {
+            if (   $key eq 'story_uuid'
+                && ref($value)
+                && ref($value) eq 'ARRAY'
+                && scalar(@$value) > 0)
+            {
 
                 # an array of IDs selects a list of stories by ID
                 push @where, 's.story_uuid IN (' . join(',', ("?") x @$value) . ')';
@@ -1291,7 +1296,7 @@ or bin/ scripts make calls to C<find()>!
                 }
                 next;
             }
-        
+
             # handle below_primary_category_id
             if ($key eq 'below_primary_category_id') {
                 $from{"story_category as sc"} = 1;
@@ -1341,7 +1346,7 @@ or bin/ scripts make calls to C<find()>!
                 }
                 next;
             }
-        
+
             # handle search by url
             if ($key eq 'url') {
                 $from{"story_category as sc"} = 1;
@@ -1390,7 +1395,7 @@ or bin/ scripts make calls to C<find()>!
                 }
                 next;
             }
-        
+
             # handle creator_simple
             if ($key eq 'creator_simple') {
                 $from{"history as h"} = 1;
@@ -1419,29 +1424,29 @@ or bin/ scripts make calls to C<find()>!
                 }
                 foreach my $phrase ($pkg->_search_text_to_phrases($value)) {
                     my $numeric = ($phrase =~ /^\d+$/) ? 1 : 0;
-                    if( !$numeric ) {
-                        $phrase =~ s/_/\\_/g; # escape any literal 
-                        $phrase =~ s/%/\\%/g; # SQL wildcard chars
+                    if (!$numeric) {
+                        $phrase =~ s/_/\\_/g;    # escape any literal
+                        $phrase =~ s/%/\\%/g;    # SQL wildcard chars
                     }
-                    my $where = join(' OR ', 
-                                     ($numeric ? 's.story_id = ?' : ()),
-                                     's.title LIKE ?', 
-                                     'sc.url LIKE ?');
-                    push(@param, ($numeric ? ($phrase) : ()), 
-                         "%${phrase}%", 
-                         "%${phrase}%");
+                    my $where = join(' OR ',
+                        ($numeric ? 's.story_id = ?' : ()),
+                        's.title LIKE ?',
+                        'sc.url LIKE ?');
+                    push(@param, ($numeric ? ($phrase) : ()), "%${phrase}%", "%${phrase}%");
                     if ($simple_full_text) {
                         if ($phrase =~ /^\s(.*)\s$/) {
+
                             # user wants full-word match: replace spaces w/ MySQL word boundaries
                             $where .= ' OR el.data RLIKE CONCAT( "[[:<:]]", ?, "[[:>:]]" )';
                             push(@param, $1);
                         } else {
-                            # user wants regular substring match 
+
+                            # user wants regular substring match
                             $where .= ' OR el.data LIKE ?';
                             push(@param, "%${phrase}%");
                         }
                     }
-                    push (@where, "($where)");
+                    push(@where, "($where)");
                 }
                 next;
             }
@@ -1469,7 +1474,7 @@ or bin/ scripts make calls to C<find()>!
                 }
                 next;
             }
-        
+
             # handle exclude_story_ids => [1, 2, 3]
             if ($key eq 'exclude_story_ids') {
                 if (@$value) {
@@ -1478,7 +1483,7 @@ or bin/ scripts make calls to C<find()>!
                 }
                 next;
             }
-        
+
             # handle published flag
             if ($key eq 'published') {
                 my $ps =
@@ -1522,22 +1527,24 @@ or bin/ scripts make calls to C<find()>!
             if ($key eq 'full_text_string') {
                 $from{"element as el"} = 1;
                 push(@where, 'el.root_id = s.element_id');
-                foreach my $phrase ($pkg->_search_text_to_phrases($value)){
+                foreach my $phrase ($pkg->_search_text_to_phrases($value)) {
                     $phrase =~ s/_/\\_/g;
                     $phrase =~ s/%/\\%/g;
                     if ($phrase =~ /^\s(.*)\s$/) {
+
                         # user wants full-word match: replace spaces w/ MySQL word boundaries
                         push(@where, '(el.data RLIKE CONCAT( "[[:<:]]", ?, "[[:>:]]" ))');
                         push(@param, $1);
                     } else {
-                        # user wants regular substring match 
+
+                        # user wants regular substring match
                         push(@where, '(el.data LIKE ?)');
                         push(@param, "%${phrase}%");
                     }
                 }
                 next;
             }
-            
+
             croak("Unknown find key '$key'");
         }
 
@@ -1565,7 +1572,7 @@ or bin/ scripts make calls to C<find()>!
         push(@where, 'sc_p.ord = 0');
 
         # include live/retired/trashed
-        unless ($args{story_id} or $args{story_uuid} ) {
+        unless ($args{story_id} or $args{story_uuid}) {
             if ($include_live) {
                 push(@where, 's.retired = 0')  unless $include_retired;
                 push(@where, 's.trashed  = 0') unless $include_trashed;
@@ -1704,23 +1711,24 @@ or bin/ scripts make calls to C<find()>!
     }
 }
 
-# this private helper method takes a search string and returns 
-# an array of phrases - e.g. ONE TWO THREE returns (ONE, TWO, 
+# this private helper method takes a search string and returns
+# an array of phrases - e.g. ONE TWO THREE returns (ONE, TWO,
 # THREE) whereas "ONE TWO" THREE returns (ONE TWO, THREE)
 sub _search_text_to_phrases {
     my ($pkg, $text) = @_;
     my @phrases;
+
     # first add any quoted text as multi-word phrase(s)
     while ($text =~ s/([\'\"])([^\1]*?)\1//) {
         my $phrase = $2;
         $phrase =~ s/\s+/ /;
         push @phrases, $phrase;
     }
+
     # then split remaining text into one-word phrases
-    push @phrases, (split/\s+/, $text);
+    push @phrases, (split /\s+/, $text);
     return @phrases;
 }
-
 
 =item C<< Krang::Story->transform_stories(%args) >>
 
@@ -2253,11 +2261,11 @@ sub delete {
 
     # delete schedules for this story
     $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
-             undef, 'story', $self->{story_id});
-    
+        undef, 'story', $self->{story_id});
+
     # delete alerts for this story
-    $dbh->do('DELETE FROM alert WHERE object_type = ? and object_id = ?', 
-             undef, 'story', $self->{story_id});
+    $dbh->do('DELETE FROM alert WHERE object_type = ? and object_id = ?',
+        undef, 'story', $self->{story_id});
 
     add_history(
         object => $self,
@@ -2935,7 +2943,7 @@ sub untrash {
         'UPDATE story
               SET trashed = ?
               WHERE story_id = ?', undef,
-        0, $self->{story_id}
+        0,                         $self->{story_id}
     );
 
     # remove from trash

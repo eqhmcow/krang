@@ -25,9 +25,9 @@ This application manages Krang's trashbin.
 
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Localization => qw(localize);
-use Krang::ClassLoader Log => qw(debug);
-use Krang::ClassLoader Message => qw(add_message add_alert);
-use Krang::ClassLoader Widget  => qw(format_url);
+use Krang::ClassLoader Log          => qw(debug);
+use Krang::ClassLoader Message      => qw(add_message add_alert);
+use Krang::ClassLoader Widget       => qw(format_url);
 
 use UNIVERSAL::moniker;
 use Carp qw(croak);
@@ -90,7 +90,7 @@ sub find {
         columns_sortable => [qw(id type title url date)],
         columns_hidden   => ['checkbox_column'],
         id_handler  => sub { $self->_id_handler(@_) },
-        row_handler => sub { $self->_row_handler(@_)},
+        row_handler => sub { $self->_row_handler(@_) },
     );
 
     # Run the pager
@@ -105,7 +105,7 @@ sub _row_handler {
 
     # do the clone
     $row->{$_} = $obj->{$_} for keys %$obj;
-    
+
     # fix problem with root level templates:
     # SQL query will return NULL for may_edit but these assets at the root
     # will only be subject to asset-level permissions, not category-level
@@ -116,7 +116,7 @@ sub _row_handler {
             $row->{may_edit} = 1;
         }
     }
-    
+
     # Uppercase story type
     $row->{class} = ucfirst($row->{class});
 
@@ -281,19 +281,25 @@ sub _register_msg {
         if (@restored) {
             add_alert(
                 'restored_with_some_exceptions',
-                restored_phrase =>
-                  (scalar(@restored) > 1 ? localize('These items have been')
-                                         : localize('This item has been')),
+                restored_phrase => (
+                    scalar(@restored) > 1 ? localize('These items have been')
+                    : localize('This item has been')
+                ),
                 restored_list => join('<br/>', @restored),
-                failed_phrase => (scalar(@failed) > 1 ? localize('These items')
-                                                      : localize('This item')),
+                failed_phrase => (
+                    scalar(@failed) > 1 ? localize('These items')
+                    : localize('This item')
+                ),
                 failed_list => join('<br/>', @failed),
             );
         } else {
             add_alert(
                 'restored_with_exceptions_only',
-                failed_phrase => (scalar(@failed) > 1 ? localize('These items')
-                                                      : localize('This item')),
+                failed_phrase => (
+                    scalar(@failed) > 1
+                    ? localize('These items')
+                    : localize('This item')
+                ),
                 failed_list => join '<br/>',
                 @failed,
             );
@@ -301,9 +307,11 @@ sub _register_msg {
     } else {
         add_message(
             'restored_without_exceptions',
-            restored_phrase =>
-              (scalar(@restored) > 1 ? localize('These items have been')
-                                     : localize('This item has been')),
+            restored_phrase => (
+                scalar(@restored) > 1
+                ? localize('These items have been')
+                : localize('This item has been')
+            ),
             restored_list => join '<br/>',
             @restored,
         );
@@ -327,7 +335,7 @@ sub _format_msg {
         return $msg;
     }
 
-    my $msg = ucfirst($type) . ' ' . $id . ' ' . $object->url;
+    my $msg     = ucfirst($type) . ' ' . $id . ' ' . $object->url;
     my $ex_type = $ex->moniker;
 
     # No restore permission
@@ -338,18 +346,24 @@ sub _format_msg {
     if ($ex_type eq 'duplicateurl') {
         if ($ex->can('categories') and $ex->categories) {
             my @cats = @{$ex->categories};
-            return
-                $msg 
-              . '<br/>(' . localize('URL conflict with') . ' <br/>'
+            return $msg 
+              . '<br/>('
+              . localize('URL conflict with')
+              . ' <br/>'
               . join('<br/>', map { "Category $_->{id} $_->{url}" } @cats) . ' )';
         } elsif ($ex->can('stories') and $ex->stories) {
             my @stories = @{$ex->stories};
-            return
-                $msg 
-              . '<br/>(' . localize('URL conflict with') . ' <br/>'
+            return $msg 
+              . '<br/>('
+              . localize('URL conflict with')
+              . ' <br/>'
               . join('<br/>', map { "Story $_->{id} $_->{url}" } @stories) . ' )';
         } elsif (my $id = $ex->$id_meth) {
-            return $msg . '<br/>(' . localize('URL conflict with') . ' ' . ucfirst($type) . ' ' . $id . ')';
+            return $msg 
+              . '<br/>('
+              . localize('URL conflict with') . ' '
+              . ucfirst($type) . ' '
+              . $id . ')';
         } else {
             return $msg . '<br/>(' . localize('URL conflict - no further information)');
         }

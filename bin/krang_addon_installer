@@ -57,17 +57,20 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
-    # load Krang::Conf 
+    # load Krang::Conf
     eval { require Krang::Conf };
     warn << "END" and exit(1) if $@;
 ######################################################################
@@ -88,24 +91,25 @@ use Pod::Usage;
 use Getopt::Long;
 our ($help, $man, $force, $clean, $source);
 our $verbose;
+
 BEGIN {
     $verbose = 0;
-    pod2usage(2) unless
-      GetOptions(help       => \$help,
-                 man        => \$man,
-                 'verbose+' => \$verbose,
-                 force      => \$force,
-                 clean      => \$clean,
-                );
-    pod2usage(1)             if $help;
+    pod2usage(2)
+      unless GetOptions(
+        help       => \$help,
+        man        => \$man,
+        'verbose+' => \$verbose,
+        force      => \$force,
+        clean      => \$clean,
+      );
+    pod2usage(1) if $help;
     pod2usage(-verbose => 2) if $man;
-    
+
     # get source arg
     if (@ARGV == 1) {
         $source = $ARGV[0];
     } else {
-        pod2usage("Bad arguments to krang_addon_installer: '" . 
-                  join(' ', @ARGV) . "'\n");
+        pod2usage("Bad arguments to krang_addon_installer: '" . join(' ', @ARGV) . "'\n");
     }
 }
 
@@ -118,10 +122,10 @@ BEGIN {
     } else {
         pod2usage("Unable to open source '$source', file does not exist.");
     }
-}        
-
+}
 
 use Krang::ClassLoader Conf => qw(KrangRoot);
+
 # use first instance if one isn't set.  AddOns are installation wide anyway.
 BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 use Krang::ClassLoader 'Script';
@@ -130,19 +134,22 @@ use File::Temp qw(tempdir tempfile);
 use Krang::ClassLoader 'AddOn';
 
 # copy source file into someplace it can be read
-my (undef, $tempfile) = tempfile(DIR => catdir(KrangRoot, 'tmp'),
-                               SUFFIX => 
-                               ($source =~ /\.gz$/ ? '.tar.gz' : '.tar'),
-                               CLEANUP => 1);
+my (undef, $tempfile) = tempfile(
+    DIR => catdir(KrangRoot, 'tmp'),
+    SUFFIX => ($source =~ /\.gz$/ ? '.tar.gz' : '.tar'),
+    CLEANUP => 1
+);
 copy(\*SOURCE, $tempfile)
   or die "Unable to copy '$source' to '$tempfile': $!";
 print STDERR "Copied '$source' to '$tempfile'.\n" if $verbose > 1;
 $source = $tempfile;
 
 # install the addon
-pkg('AddOn')->install(src     => $source, 
-                      verbose => $verbose, 
-                      force   => $force,
-                      clean   => $clean);
+pkg('AddOn')->install(
+    src     => $source,
+    verbose => $verbose,
+    force   => $force,
+    clean   => $clean
+);
 
 print "Installation complete.\n";

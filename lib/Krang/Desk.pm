@@ -4,15 +4,12 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
-use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader DB  => qw(dbh);
 use Krang::ClassLoader Log => qw(debug);
 use Krang::ClassLoader 'Group';
 use Krang::ClassLoader Localization => qw(localize);
 
-use Exception::Class
-    (
-    'Krang::Desk::Occupied'
-    );
+use Exception::Class ('Krang::Desk::Occupied');
 
 =head1 NAME
 
@@ -74,18 +71,17 @@ available slot in desk order.
 
 =cut
 
-use Krang::ClassLoader MethodMaker => 
-    new_with_init => 'new',
-    new_hash_init => 'hash_init',
-    get_set       => [ qw( name ord ) ],
-    get => [ qw( desk_id ) ];
+use Krang::ClassLoader MethodMaker => new_with_init => 'new',
+  new_hash_init                    => 'hash_init',
+  get_set                          => [qw( name ord )],
+  get                              => [qw( desk_id )];
 
 sub id_meth { 'desk_id' }
 
 sub init {
     my $self = shift;
     my %args = @_;
-    croak(__PACKAGE__."->new - 'name' is a required parameter") if not $args{'name'};
+    croak(__PACKAGE__ . "->new - 'name' is a required parameter") if not $args{'name'};
 
     # finish the object
     $self->hash_init(%args);
@@ -102,7 +98,7 @@ sub init {
 sub _insert {
     my $self = shift;
     my %args = @_;
-    my $dbh = dbh();
+    my $dbh  = dbh();
 
     # figure out how many desks there currently are
     my $sth = $dbh->prepare('SELECT count(*) from desk');
@@ -120,16 +116,16 @@ sub _insert {
             $args{order} = $count + 1;
         }
     } else {
-        $args{order} = $count + 1; 
+        $args{order} = $count + 1;
     }
-   
+
     $sth = $dbh->prepare('INSERT INTO desk (name, ord) values (?,?)');
     $sth->execute($args{'name'}, $args{order});
     $sth->finish;
 
-    $self->{desk_id} = $dbh->{mysql_insertid}; 
-    $self->{name} = $args{name};
-    $self->{ord} = $args{order};
+    $self->{desk_id} = $dbh->{mysql_insertid};
+    $self->{name}    = $args{name};
+    $self->{ord}     = $args{order};
 
 }
 
@@ -163,10 +159,10 @@ Reorder desks as specified.  Takes hash of desk_id => order pairs.
 sub reorder {
     my $self = shift;
     my %args = @_;
-    my $dbh = dbh();
+    my $dbh  = dbh();
 
     foreach my $desk_id (keys %args) {
-        $dbh->do('UPDATE desk set ord = ? where desk_id = ?', undef, $args{$desk_id}, $desk_id); 
+        $dbh->do('UPDATE desk set ord = ? where desk_id = ?', undef, $args{$desk_id}, $desk_id);
     }
 }
 
@@ -214,24 +210,28 @@ sub find {
     my $self = shift;
     my %args = @_;
 
-    my %valid_params = (    name => 1,
-                            order => 1,
-                            desk_id => 1,
-                            count => 1,
-                            ids_only => 1,
-                            order_by => 1,
-                            order_desc => 1,
-                            limit => 1,
-                            offset => 1,
-                        );
+    my %valid_params = (
+        name       => 1,
+        order      => 1,
+        desk_id    => 1,
+        count      => 1,
+        ids_only   => 1,
+        order_by   => 1,
+        order_desc => 1,
+        limit      => 1,
+        offset     => 1,
+    );
 
     # check for invalid params and croak if one is found
     foreach my $param (keys %args) {
-        croak (__PACKAGE__."->find() - Invalid parameter '$param' called.") if not $valid_params{$param};
+        croak(__PACKAGE__ . "->find() - Invalid parameter '$param' called.")
+          if not $valid_params{$param};
     }
 
-    croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
-          "Only one can be present.") if ($args{count} && $args{ids_only});
+    croak(  __PACKAGE__
+          . "->find(): 'count' and 'ids_only' were supplied. "
+          . "Only one can be present.")
+      if ($args{count} && $args{ids_only});
 
     my $order_by = $args{order_by} || 'ord';
     $order_by = 'ord' if ($order_by eq 'order');
@@ -280,7 +280,7 @@ sub find {
 
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
-    debug(__PACKAGE__."->find() - executing query '$query' with params '@where'");
+    debug(__PACKAGE__ . "->find() - executing query '$query' with params '@where'");
 
     $sth->execute(@where) || croak("Unable to execute statement $query");
 
@@ -295,7 +295,7 @@ sub find {
         } else {
             $obj = bless {%$row}, $self;
         }
-        push (@desk_object,$obj);
+        push(@desk_object, $obj);
     }
     $sth->finish();
     return @desk_object;
@@ -308,13 +308,13 @@ Delete a desk. Takes a desk_id as argument if called as class method.
 =cut
 
 sub delete {
-    my $self = shift;
+    my $self    = shift;
     my $desk_id = shift;
-    my $dbh = dbh;
+    my $dbh     = dbh;
 
     my $is_object = $desk_id ? 0 : 1;
     $desk_id = $self->{desk_id} if not $desk_id;
-    croak(__PACKAGE__."->delete - No desk_id specified.") if not $desk_id; 
+    croak(__PACKAGE__ . "->delete - No desk_id specified.") if not $desk_id;
 
     my @stories = pkg('Story')->find(desk_id => $desk_id);
 
@@ -333,17 +333,19 @@ sub delete {
         $order = $sth->fetchrow_array;
         $sth->finish;
     }
-   
-    # drop down the order of any desks higher than this one 
+
+    # drop down the order of any desks higher than this one
     my $sth = $dbh->prepare('UPDATE desk set ord = (ord - 1) where ord > ?');
     $sth->execute($order);
     $sth->finish;
 
     # Delete permissions for this desk
-    $is_object ? pkg('Group')->delete_desk_permissions($self) :  pkg('Group')->delete_desk_permissions((pkg('Desk')->find( desk_id => $desk_id ))[0]);
+    $is_object
+      ? pkg('Group')->delete_desk_permissions($self)
+      : pkg('Group')->delete_desk_permissions((pkg('Desk')->find(desk_id => $desk_id))[0]);
 
     # Delete any alerts associated with this desk
-    $_->delete foreach (pkg('Alert')->find( desk_id => $desk_id ));
+    $_->delete foreach (pkg('Alert')->find(desk_id => $desk_id));
 
     # fianlly, delete the desk
     $sth = $dbh->prepare('DELETE from desk where desk_id = ?');
@@ -358,20 +360,20 @@ Serialize as XML.  See Krang::DataSet for details.
 =cut
 
 sub serialize_xml {
-    my ($self, %args) = @_;
-    my ($writer, $set) = @args{qw(writer set)};
+    my ($self,   %args) = @_;
+    my ($writer, $set)  = @args{qw(writer set)};
     local $_;
 
     # open up <desk> linked to schema/desk.xsd
-    $writer->startTag('desk',
-                      "xmlns:xsi" =>
-                        "http://www.w3.org/2001/XMLSchema-instance",
-                      "xsi:noNamespaceSchemaLocation" =>
-                        'desk.xsd');
+    $writer->startTag(
+        'desk',
+        "xmlns:xsi"                     => "http://www.w3.org/2001/XMLSchema-instance",
+        "xsi:noNamespaceSchemaLocation" => 'desk.xsd'
+    );
 
-    $writer->dataElement( desk_id => $self->desk_id );
-    $writer->dataElement( name => $self->name );
-    $writer->dataElement( order => $self->order );
+    $writer->dataElement(desk_id => $self->desk_id);
+    $writer->dataElement(name    => $self->name);
+    $writer->dataElement(order   => $self->order);
 
     # all done
     $writer->endTag('desk');
@@ -385,33 +387,35 @@ If an incoming desk has the same name as an existing desk then an
 update will occur, unless no_update is set.
 
 =cut
-                                                                                
+
 sub deserialize_xml {
     my ($pkg, %args) = @_;
     my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
 
     # parse it up
-    my $data = pkg('XML')->simple(xml           => $xml,
-                                  suppressempty => 1);
-                                                                                 
+    my $data = pkg('XML')->simple(
+        xml           => $xml,
+        suppressempty => 1
+    );
+
     # is there an existing object?
     my $desk = (pkg('Desk')->find(name => $data->{name}))[0] || '';
 
     if ($desk) {
 
-        debug (__PACKAGE__."->deserialize_xml : found desk");
-        
+        debug(__PACKAGE__ . "->deserialize_xml : found desk");
+
         # if not updating this is fatal
         Krang::DataSet::DeserializationFailed->throw(
-            message => "A desk object with the name '$data->{name}' already ".
-                       "exists and no_update is set.")
-            if $no_update;
-        
+            message => "A desk object with the name '$data->{name}' already "
+              . "exists and no_update is set.")
+          if $no_update;
+
         # update simple fields
         pkg('Desk')->reorder($desk->{desk_id} => $data->{order});
 
     } else {
-        $desk = pkg('Desk')->new( name => $data->{name} );
+        $desk = pkg('Desk')->new(name => $data->{name});
     }
 
     return $desk;

@@ -24,9 +24,9 @@ This application manages the My Workspace for Krang.
 =cut
 
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Log => qw(debug assert affirm ASSERT);
+use Krang::ClassLoader Log     => qw(debug assert affirm ASSERT);
 use Krang::ClassLoader 'HTMLPager';
-use Krang::ClassLoader Widget => qw(format_url);
+use Krang::ClassLoader Widget  => qw(format_url);
 use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'Publisher';
 use Krang::ClassLoader Localization => qw(localize);
@@ -40,18 +40,22 @@ sub setup {
     $self->start_mode('show');
     $self->mode_param('rm');
     $self->tmpl_path('Workspace/');
-    $self->run_modes([qw(
-      show
-      delete
-      delete_checked
-      goto_edit
-      goto_log
-      copy
-      checkin
-      checkin_checked
-      deploy
-      update_testing
-    )]);
+    $self->run_modes(
+        [
+            qw(
+              show
+              delete
+              delete_checked
+              goto_edit
+              goto_log
+              copy
+              checkin
+              checkin_checked
+              deploy
+              update_testing
+              )
+        ]
+    );
 }
 
 =item show
@@ -62,13 +66,15 @@ requires no parameters.
 =cut
 
 sub show {
-    my $self = shift;
-    my $query = $self->query;
-    my $template = $self->load_tmpl("workspace.tmpl", 
-                                    associate         => $query,
-                                    die_on_bad_params => 0,
-                                    loop_context_vars => 1,
-                                    global_vars => 1);
+    my $self     = shift;
+    my $query    = $self->query;
+    my $template = $self->load_tmpl(
+        "workspace.tmpl",
+        associate         => $query,
+        die_on_bad_params => 0,
+        loop_context_vars => 1,
+        global_vars       => 1
+    );
 
     # setup sort selector
     my $sort = $query->param('krang_pager_sort_field') || 'type';
@@ -84,33 +90,35 @@ sub show {
     %labels = map { $_ => localize($labels{$_}) } keys %labels
       unless $session{language} and $session{language} eq 'en';
 
-    $template->param('sort_select' => scalar
-                     $query->popup_menu(-name     => 'sort_select',
-                                        -values   => [ keys %labels ],
-                                        -labels   => \%labels,
-                                        -default  => $sort,
-                                        -override => 1,
-                                        -onchange => "Krang.Pager.sort(this.options[this.selectedIndex].value,0)",
-                                       ));
+    $template->param(
+        'sort_select' => scalar $query->popup_menu(
+            -name     => 'sort_select',
+            -values   => [keys %labels],
+            -labels   => \%labels,
+            -default  => $sort,
+            -override => 1,
+            -onchange => "Krang.Pager.sort(this.options[this.selectedIndex].value,0)",
+        )
+    );
 
     # permissions
     my %admin_perms = pkg('Group')->user_admin_permissions();
     $template->param(may_publish => $admin_perms{may_publish});
 
     # setup paging list of objects
-    my $pager = pkg('HTMLPager')->new
-      (
-       cgi_query   => $query,
-       use_module  => pkg('Workspace'),
-       columns     => [ 'id', 'version', 'url', 'title', 'story_type', 
-                        'thumbnail',
-                        'command_column', 'checkbox_column'],
-       columns_sortable => [ ],
-       command_column_commands => [ 'log', 'edit' ],
-       command_column_labels => { log  => 'View Log', edit => 'Edit' },
-       id_handler  => sub { $self->_obj2id( @_ ) },
-       row_handler => sub { $self->_row_handler(@_) },
-      );
+    my $pager = pkg('HTMLPager')->new(
+        cgi_query  => $query,
+        use_module => pkg('Workspace'),
+        columns    => [
+            'id',         'version',   'url',            'title',
+            'story_type', 'thumbnail', 'command_column', 'checkbox_column'
+        ],
+        columns_sortable        => [],
+        command_column_commands => ['log', 'edit'],
+        command_column_labels   => {log => 'View Log', edit => 'Edit'},
+        id_handler  => sub { $self->_obj2id(@_) },
+        row_handler => sub { $self->_row_handler(@_) },
+    );
 
     # Run the pager
     $pager->fill_template($template);
@@ -118,10 +126,10 @@ sub show {
 }
 
 sub _row_handler {
-    my ( $self, $row, $obj, $pager ) = @_;
+    my ($self, $row, $obj, $pager) = @_;
 
     my $date;
-    if($obj->isa('Krang::Story')) {
+    if ($obj->isa('Krang::Story')) {
         $row->{story_id}   = $obj->story_id;
         $row->{id}         = $self->_obj2id($obj);
         $row->{title}      = $obj->title;
@@ -144,7 +152,7 @@ sub _row_handler {
         foreach my $found_desk (@found_desks) {
             next unless pkg('Group')->may_move_story_to_desk($found_desk->desk_id);
 
-            if($last_desk) {
+            if ($last_desk) {
                 $is_selected = ($found_desk->order eq ($last_desk->order + 1)) ? 1 : 0;
             }
 
@@ -157,7 +165,7 @@ sub _row_handler {
         }
         $row->{desk_loop} = \@desk_loop;
         $date = $obj->cover_date();
-    } elsif($obj->isa('Krang::Media')) {
+    } elsif ($obj->isa('Krang::Media')) {
         $row->{media_id}  = $obj->media_id;
         $row->{id}        = $self->_obj2id($obj);
         $row->{title}     = $obj->title;
@@ -200,13 +208,19 @@ Deletes a single object.  Requires an 'id' parameter of the form
 =cut
 
 sub delete {
-    my $self = shift;
+    my $self  = shift;
     my $query = $self->query;
-    my $obj = $self->_id2obj($query->param('id'));
-    add_message('deleted_obj',
-                type => ($obj->isa('Krang::Story') ? 'Story' : 
-                         ($obj->isa('Krang::Media') ? 'Media' :
-                          'Template')));
+    my $obj   = $self->_id2obj($query->param('id'));
+    add_message(
+        'deleted_obj',
+        type => (
+            $obj->isa('Krang::Story') ? 'Story'
+            : (
+                $obj->isa('Krang::Media') ? 'Media'
+                : 'Template'
+            )
+        )
+    );
 
     $obj->trash;
 
@@ -221,9 +235,9 @@ Deploys a single template.  Requires an 'id' parameter of the form
 =cut
 
 sub deploy {
-    my $self = shift;
+    my $self  = shift;
     my $query = $self->query;
-    my $obj = $self->_id2obj($query->param('id'));
+    my $obj   = $self->_id2obj($query->param('id'));
     add_message('deployed', id => $obj->template_id);
     my $publisher = pkg('Publisher')->new();
     $publisher->deploy_template(template => $obj);
@@ -239,20 +253,17 @@ the copy loaded for editing.
 =cut
 
 sub copy {
-    my $self = shift;
+    my $self  = shift;
     my $query = $self->query;
-    my $obj = $self->_id2obj($query->param('id'));
-    
+    my $obj   = $self->_id2obj($query->param('id'));
+
     # redirect as appropriate
     if ($obj->isa('Krang::Story')) {
-        $self->header_props(-uri => 'story.pl?rm=copy&story_id=' .
-                            $obj->story_id);
+        $self->header_props(-uri => 'story.pl?rm=copy&story_id=' . $obj->story_id);
     } elsif ($obj->isa('Krang::Media')) {
-        $self->header_props(-uri => 'media.pl?rm=copy&media_id=' .
-                            $obj->media_id);
+        $self->header_props(-uri => 'media.pl?rm=copy&media_id=' . $obj->media_id);
     } else {
-        $self->header_props(-uri => 'template.pl?rm=copy&template_id=' .
-                            $obj->template_id);
+        $self->header_props(-uri => 'template.pl?rm=copy&template_id=' . $obj->template_id);
     }
 
     $self->header_type('redirect');
@@ -267,13 +278,12 @@ Deletes a list of checked objects.  Requires an 'id' parameter of the form
 =cut
 
 sub delete_checked {
-    my $self = shift;
+    my $self  = shift;
     my $query = $self->query;
     add_message('deleted_checked');
-    foreach my $obj (map { $self->_id2obj($_) }
-                     $query->param('krang_pager_rows_checked')) {
+    foreach my $obj (map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked')) {
 
-	$obj->trash;
+        $obj->trash;
     }
     return $self->show;
 }
@@ -285,14 +295,15 @@ Checks in object (to specified desk for stories)
 =cut
 
 sub checkin {
-    my $self = shift;
+    my $self  = shift;
     my $query = $self->query;
-    my $obj = $self->_id2obj($query->param('id'));
+    my $obj   = $self->_id2obj($query->param('id'));
 
     # check if they may move story to desired desk
     if ($obj->isa('Krang::Story')) {
-	return $self->access_forbidden()
-	  unless pkg('Group')->may_move_story_to_desk($self->query->param('move_'.$obj->story_id));
+        return $self->access_forbidden()
+          unless pkg('Group')
+              ->may_move_story_to_desk($self->query->param('move_' . $obj->story_id));
     }
 
     $self->_do_checkin($obj);
@@ -307,10 +318,10 @@ Changes the testing flag for a template object.
 =cut
 
 sub update_testing {
-    my $self = shift;
+    my $self  = shift;
     my $query = $self->query;
-    my $obj = $self->_id2obj($query->param('id'));
-    my $val = $query->param('testing_' . $query->param('id'));
+    my $obj   = $self->_id2obj($query->param('id'));
+    my $val   = $query->param('testing_' . $query->param('id'));
 
     if ($val) {
         $obj->mark_for_testing;
@@ -323,23 +334,22 @@ sub update_testing {
     return $self->show;
 }
 
-
 =item checkin_checked
 
 Checks in checked objects (to specified desk for stories).
 
 =cut
-                                                                               
+
 sub checkin_checked {
     my $self  = shift;
     my $query = $self->query;
     foreach my $obj (map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked')) {
 
         # check if they may move story to desired desk
-        if($obj->isa('Krang::Story')) {
+        if ($obj->isa('Krang::Story')) {
             return $self->access_forbidden()
               unless pkg('Group')
-              ->may_move_story_to_desk($self->query->param('move_' . $obj->story_id));
+                  ->may_move_story_to_desk($self->query->param('move_' . $obj->story_id));
         }
 
         $self->_do_checkin($obj);
@@ -354,21 +364,21 @@ Redirects to the appropriate edit screen for this object.
 =cut
 
 sub goto_edit {
-    my $self = shift;
+    my $self  = shift;
     my $query = $self->query;
-    my $obj = $self->_id2obj($query->param('id'));
+    my $obj   = $self->_id2obj($query->param('id'));
 
     # redirect as appropriate
     if ($obj->isa('Krang::Story')) {
         $self->header_props(-uri => 'story.pl?rm=edit&story_id=' . $obj->story_id);
     } elsif ($obj->isa('Krang::Media')) {
         $self->header_props(-uri => 'media.pl?rm=edit&media_id=' . $obj->media_id);
-    } elsif ($obj->isa('Krang::Template'))  {
+    } elsif ($obj->isa('Krang::Template')) {
         $self->header_props(-uri => 'template.pl?rm=edit&template_id=' . $obj->template_id);
     } else {
-        croak ('Unknown object type!');
+        croak('Unknown object type!');
     }
-    
+
     $self->header_type('redirect');
     $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER});
     return "";
@@ -381,36 +391,34 @@ Redirects to the history viewer for this object.
 =cut
 
 sub goto_log {
-    my $self = shift;
+    my $self  = shift;
     my $query = $self->query;
-    my $obj = $self->_id2obj($query->param('id'));
+    my $obj   = $self->_id2obj($query->param('id'));
 
     # redirect as appropriate
     my $id_meth = $obj->id_meth;
-    my $id = $obj->$id_meth;
-    my $class = ref $obj;
+    my $id      = $obj->$id_meth;
+    my $class   = ref $obj;
     if ($obj->isa('Krang::Story')) {
         $class = 'Story';
     } elsif ($obj->isa('Krang::Media')) {
         $class = 'Media';
-    } elsif( $obj->isa('Krang::Template')) {
+    } elsif ($obj->isa('Krang::Template')) {
         $class = 'Template';
     }
 
     my $uri = "history.pl?id=$id&id_meth=$id_meth&class=$class&history_return_script=workspace.pl"
-        . "&history_return_params=rm&history_return_params=show";
-    
+      . "&history_return_params=rm&history_return_params=show";
+
     # mix in pager params for return
     foreach my $name (grep { /^krang_pager/ } $query->param) {
-        $uri .= "&history_return_params=${name}&history_return_params=" . 
-          $query->param($name);
+        $uri .= "&history_return_params=${name}&history_return_params=" . $query->param($name);
     }
 
     $self->header_props(-uri => $uri);
     $self->header_type('redirect');
     return "";
 }
-
 
 #
 # Utility functions
@@ -421,8 +429,8 @@ sub _obj2id {
     my $self = shift;
 
     my $obj = shift;
-    return "story_"    . $obj->story_id    if $obj->isa('Krang::Story');
-    return "media_"    . $obj->media_id    if $obj->isa('Krang::Media');
+    return "story_" . $obj->story_id if $obj->isa('Krang::Story');
+    return "media_" . $obj->media_id if $obj->isa('Krang::Media');
     return "template_" . $obj->template_id;
 }
 
@@ -451,7 +459,7 @@ sub _id2obj {
 sub _do_checkin {
     my ($self, $obj) = @_;
 
-    if($obj->isa('Krang::Story')) {
+    if ($obj->isa('Krang::Story')) {
         my $story_id = $obj->story_id;
         my $desk_id  = $self->query->param('checkin_to_story_' . $story_id);
         my ($desk) = pkg('Desk')->find(desk_id => $desk_id);
@@ -461,14 +469,14 @@ sub _do_checkin {
 
         eval { $obj->move_to_desk($desk_id); };
 
-        if($@ and ref($@)) {
-            if($@->isa('Krang::Story::CheckedOut')) {
+        if ($@ and ref($@)) {
+            if ($@->isa('Krang::Story::CheckedOut')) {
                 add_alert(
                     'story_cant_move_checked_out',
                     id   => $story_id,
                     desk => $desk_name
                 );
-            } elsif($@->isa('Krang::Story::NoDesk')) {
+            } elsif ($@->isa('Krang::Story::NoDesk')) {
                 add_alert(
                     'story_cant_move_no_desk',
                     story_id => $story_id,
@@ -479,7 +487,7 @@ sub _do_checkin {
         } else {
             add_message("moved_story", id => $story_id, desk => $desk_name);
         }
-    } elsif($obj->isa('Krang::Media')) {
+    } elsif ($obj->isa('Krang::Media')) {
         add_message("checkin_media", id => $obj->media_id);
         $obj->checkin();
     } else {

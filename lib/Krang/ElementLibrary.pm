@@ -140,9 +140,8 @@ sub load_set {
         my $conf = $pkg->_load_conf($set);
 
         # load parent sets first
-        $PARENT_SETS{$set} = [ $conf->get('ParentSets') ];
-        pkg('ElementLibrary')->load_set(set => $_) 
-            for (@{$PARENT_SETS{$set}});
+        $PARENT_SETS{$set} = [$conf->get('ParentSets')];
+        pkg('ElementLibrary')->load_set(set => $_) for (@{$PARENT_SETS{$set}});
 
         $pkg->_load_classes($set, $conf);
         $pkg->_instantiate_top_levels($set, $conf);
@@ -166,16 +165,18 @@ sub _load_conf {
     # load the element set configuration file
     my $conf_file = catfile($dir, "set.conf");
     my $conf = Config::ApacheFormat->new(
-           valid_directives => [ qw(version krangversion toplevels
-                                    parentsets )],
-           valid_blocks     => []);
+        valid_directives => [
+            qw(version krangversion toplevels
+              parentsets )
+        ],
+        valid_blocks => []
+    );
     eval { $conf->read($conf_file) };
     croak("Unable to load element set '$set', error loading $conf_file:\n$@")
       if $@;
 
     return $conf;
 }
-
 
 # load classes for an element set
 sub _load_classes {
@@ -191,14 +192,15 @@ sub _load_classes {
     unshift(@INC, "$dir/..");
 
     # make sure to reset @INC before returning
-    eval {         
+    eval {
+
         # require all .pm files in main set
         opendir(DIR, $dir) or die "Unable to open dir '$dir': $!";
         my @file = sort readdir(DIR);
         closedir(DIR) or die $!;
 
         foreach my $file (@file) {
-            next if $file =~ /#/; # skip emacs backup files
+            next if $file =~ /#/;    # skip emacs backup files
             next unless $file =~ /([^\/]+).pm$/;
             my $name = $1;
             eval "use ${set}::$name;";
@@ -254,12 +256,14 @@ element.
 =cut
 
 sub top_level {
-    my %args = @_[1..$#_];
-    our %TOP_LEVEL;    
+    my %args = @_[1 .. $#_];
+    our %TOP_LEVEL;
     return $TOP_LEVEL{InstanceElementSet()}{$args{name}}
       if exists $TOP_LEVEL{InstanceElementSet()}{$args{name}};
-    croak("Unable to find top-level element named '$args{name}' in ".
-          "element set '" . InstanceElementSet() . "'");
+    croak(  "Unable to find top-level element named '$args{name}' in "
+          . "element set '"
+          . InstanceElementSet()
+          . "'");
 }
 
 =item C<< @names = Krang::ElementLibrary->element_names() >>
@@ -273,13 +277,13 @@ set) and sorted.
 sub element_names {
     my $pkg = shift;
     our %TOP_LEVEL;
-    
+
     # start with the top-levels, recursing down from there
     my @stack = values %{$TOP_LEVEL{InstanceElementSet()}};
 
     # build list of names in %names
     my %names;
-    while(@stack) {
+    while (@stack) {
         my $node = pop(@stack);
         $names{$node->name} = 1;
         push(@stack, $node->children);
@@ -288,7 +292,6 @@ sub element_names {
     # sort and return
     return sort keys %names;
 }
-
 
 =item C<< $class = Krang::ElementLibrary->find_class(name => "deck") >>
 
@@ -312,14 +315,14 @@ sub find_class {
     our ($TESTING_SET, %PARENT_SETS);
     my ($name, $set) = @args{('name', 'set')};
     $set ||= ($TESTING_SET || InstanceElementSet);
- 
+
     # look in current set
     my $class_pkg = "${set}::$name";
     return $class_pkg->new() if $class_pkg->can('new');
 
     # look through parent sets, recursing depth first
     my @parent_sets = @{$PARENT_SETS{$set}};
-    while(@parent_sets) {
+    while (@parent_sets) {
         $set       = shift @parent_sets;
         $class_pkg = "${set}::$name";
 
@@ -345,7 +348,7 @@ Implement KrangVersion checking.
 # load all configured element sets unless KRANG_NO_ELEMENTLIBS
 # is set
 BEGIN {
-    unless( $ENV{KRANG_NO_ELEMENTLIBS} ) {
+    unless ($ENV{KRANG_NO_ELEMENTLIBS}) {
         my $cur_instance = pkg('Conf')->instance();
         foreach my $instance (pkg('Conf')->instances()) {
             pkg('Conf')->instance($instance);

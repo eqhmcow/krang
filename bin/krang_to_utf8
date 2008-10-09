@@ -112,15 +112,20 @@ print "\nkrang_to_utf8\n-------------\n";
 print "\n(*TEST MODE*)\n" if $test_mode;
 
 if (pkg('Charset')->is_utf8) {
-    print "\nYour krang.conf file already specifies UTF-8 as the character set.\n\nIf this is a recent change and you haven't actually converted or saved any data since making it, please revert the change and re-run krang_to_utf8.\n\n";
+    print
+      "\nYour krang.conf file already specifies UTF-8 as the character set.\n\nIf this is a recent change and you haven't actually converted or saved any data since making it, please revert the change and re-run krang_to_utf8.\n\n";
     exit;
 }
 
 my $old_charset = pkg('Charset')->mysql_charset;
 unless ($no_prompt) {
-    my $prompt = "\nThis program will stop krang, convert the entire database of every instance to UTF-8, and update krang.conf\n\n";
-    $prompt .= $old_charset ? "Are you ready to proceed?" : "Your krang.conf has no character set specified.\n\nIs it safe to assume that your data is stored in Latin1 (i.e. ISO-8859 or Windows-1252), and that you're ready to convert everything to UTF-8?";
-    exit 1 unless prompt ("y",$prompt,"y/n","n");
+    my $prompt =
+      "\nThis program will stop krang, convert the entire database of every instance to UTF-8, and update krang.conf\n\n";
+    $prompt .=
+      $old_charset
+      ? "Are you ready to proceed?"
+      : "Your krang.conf has no character set specified.\n\nIs it safe to assume that your data is stored in Latin1 (i.e. ISO-8859 or Windows-1252), and that you're ready to convert everything to UTF-8?";
+    exit 1 unless prompt("y", $prompt, "y/n", "n");
 }
 
 # assume latin-1 means windows-1252 so we fix special curly-quotes and the like
@@ -130,59 +135,74 @@ $old_charset = 'windows-1252' unless ($old_charset && ($old_charset != 'latin1')
 my @instances = pkg('Conf')->instances;
 $ENV{KRANG_INSTANCE} ||= $instances[0];
 
-my $verbose = ($v ? '--verbose' : '');
+my $verbose = ($v         ? '--verbose'   : '');
 my $test    = ($test_mode ? '--test-mode' : '');
 my $bin = catdir($ENV{KRANG_ROOT}, "bin");
 
 print "\n\nSTOPPING KRANG\n\n";
-system ("$bin/krang_ctl stop");
+system("$bin/krang_ctl stop");
 
 unless ($no_backup || $test_mode) {
     print "\nBACKING UP EVERYTHING\n\n";
-    if (system ("$bin/krang_backup $verbose")) {
-	print "\nBACKUP FAILED: UTF8 UPGRADE ABORTED\n\n";
-	exit;
+    if (system("$bin/krang_backup $verbose")) {
+        print "\nBACKUP FAILED: UTF8 UPGRADE ABORTED\n\n";
+        exit;
     }
 }
 
 print "\nCONVERTING DATA TO UTF8\n\n";
-if (system ("$bin/krang_charset_convert_data --all-instances --from $old_charset --to utf8 $verbose $test")) {
+if (
+    system(
+        "$bin/krang_charset_convert_data --all-instances --from $old_charset --to utf8 $verbose $test"
+    )
+  )
+{
     print "\nDATA-CONVERSION FAILED: UTF8 UPGRADE INCOMPLETE (YOU MAY NEED TO RESTORE BACKUP!)\n\n";
     exit;
 }
 
-print "\nCONVERTING TABLE DEFINITIONS TO UTF8\n\n";  # skip history - it's huge and only has ASCII anyway
-if (system ("$bin/krang_charset_convert_tables --all-instances --to utf8 --skip-table history $verbose $test")) {
-    print "\nTABLE-CONVERSION FAILED: UTF8 UPGRADE INCOMPLETE (YOU MAY NEED TO RESTORE BACKUP!)\n\n";
+print
+  "\nCONVERTING TABLE DEFINITIONS TO UTF8\n\n"; # skip history - it's huge and only has ASCII anyway
+if (
+    system(
+        "$bin/krang_charset_convert_tables --all-instances --to utf8 --skip-table history $verbose $test"
+    )
+  )
+{
+    print
+      "\nTABLE-CONVERSION FAILED: UTF8 UPGRADE INCOMPLETE (YOU MAY NEED TO RESTORE BACKUP!)\n\n";
     exit;
 }
 
 my $krang_conf_file = catfile($ENV{KRANG_ROOT}, "conf", "krang.conf");
 unless (-e $krang_conf_file) {
     if ($test_mode) {
-	print "\nCOULDN'T FIND KRANG.CONF!\n\n";
+        print "\nCOULDN'T FIND KRANG.CONF!\n\n";
     } else {
-	print "\nCOULDN'T FIND KRANG.CONF! PLEASE LOCATE IT AND ADD THE LINE 'CHARSET UTF8'; ASSUMING THERE WERE NO OTHER ERRORS, YOUR DATA AND TABLES SHOULD NOW BE CONVERTED.\n\n";
-	print "THE ERROR DID PREVENT DELETION OF OLD VERSIONS: AFTER CHANGING KRANG.CONF, SEE BIN/KRANG_PRUNE_VERSIONS TO ACCOMPLISH THIS MANUALLY.\n\n" if $remove_old_versions;
+        print
+          "\nCOULDN'T FIND KRANG.CONF! PLEASE LOCATE IT AND ADD THE LINE 'CHARSET UTF8'; ASSUMING THERE WERE NO OTHER ERRORS, YOUR DATA AND TABLES SHOULD NOW BE CONVERTED.\n\n";
+        print
+          "THE ERROR DID PREVENT DELETION OF OLD VERSIONS: AFTER CHANGING KRANG.CONF, SEE BIN/KRANG_PRUNE_VERSIONS TO ACCOMPLISH THIS MANUALLY.\n\n"
+          if $remove_old_versions;
     }
     exit;
 }
 
 print "\n\nUPDATING $krang_conf_file\n--------\n";
 my $output;
-open KRANG_CONF, "<$krang_conf_file"; 
+open KRANG_CONF, "<$krang_conf_file";
 my $added_charset;
 while (<KRANG_CONF>) {
     if ($_ =~ /^\s*\#*\s*Charset\s/i) {
-	chomp($_);
-	if ($added_charset++) {
-	    print "REMOVING '$_'\n";
-	} else {
-	    print "REPLACING '$_' WITH 'Charset UTF-8'\n";
-	    $output .= "Charset UTF-8\n";
-	}
+        chomp($_);
+        if ($added_charset++) {
+            print "REMOVING '$_'\n";
+        } else {
+            print "REPLACING '$_' WITH 'Charset UTF-8'\n";
+            $output .= "Charset UTF-8\n";
+        }
     } else {
-	$output .= $_;
+        $output .= $_;
     }
 }
 unless ($added_charset) {
@@ -204,18 +224,26 @@ if ($remove_old_versions) {
     print "\nREMOVING OLD VERSIONS OF STORIES, TEMPLATES, AND MEDIA OBJECTS FROM DATABASE\n";
     $versions = 1;
 } else {
-    print "\nADDING LATEST VERSION OF STORIES, TEMPLATES, AND MEDIA OBJECTS TO VERSION TABLES\n(THIS CALL TO KRANG_PRUNE_VERSIONS WILL NOT ACTUALLY DELETE ANYTHING, JUST UPDATE THE VERSION TABLES)\n";
+    print
+      "\nADDING LATEST VERSION OF STORIES, TEMPLATES, AND MEDIA OBJECTS TO VERSION TABLES\n(THIS CALL TO KRANG_PRUNE_VERSIONS WILL NOT ACTUALLY DELETE ANYTHING, JUST UPDATE THE VERSION TABLES)\n";
     $versions = 999999;
 }
 
-if (system ("$bin/krang_prune_versions --all-instances --first-resave --versions-per-media $versions --versions-per-story $versions --versions-per-template $versions $verbose $test")) {
-    print "KRANG_PRUNE_VERSIONS FAILED: NOT THE END OF THE WORLD; YOU CAN RUN THIS BY HAND LATER.\n(MAKE SURE TO USE THE '--first-resave' ARGUMENT)\n";
+if (
+    system(
+        "$bin/krang_prune_versions --all-instances --first-resave --versions-per-media $versions --versions-per-story $versions --versions-per-template $versions $verbose $test"
+    )
+  )
+{
+    print
+      "KRANG_PRUNE_VERSIONS FAILED: NOT THE END OF THE WORLD; YOU CAN RUN THIS BY HAND LATER.\n(MAKE SURE TO USE THE '--first-resave' ARGUMENT)\n";
 }
 
 print "\nRE-STARTING KRANG\n\n";
-system ("$bin/krang_ctl start");
+system("$bin/krang_ctl start");
 
-print "\nUTF8 UPGRADE COMPLETE!\n\nASSUMING NO ERRORS ABOVE, ALL YOU HAVE TO DO NOW IS MAKE SURE YOUR\nCATEGORY TEMPLATES AND/OR SERVER CONFIGURATION INCLUDE A UTF8 HEADER\n(e.g. \"Content-Type: text/html; charset=utf-8\") AND THEN RE-PUBLISH!\n\n";
+print
+  "\nUTF8 UPGRADE COMPLETE!\n\nASSUMING NO ERRORS ABOVE, ALL YOU HAVE TO DO NOW IS MAKE SURE YOUR\nCATEGORY TEMPLATES AND/OR SERVER CONFIGURATION INCLUDE A UTF8 HEADER\n(e.g. \"Content-Type: text/html; charset=utf-8\") AND THEN RE-PUBLISH!\n\n";
 
-print "* * * TEST MODE - NO ACTUAL CHANGES WERE WRITTEN TO THE DATABASE OR KRANG.CONF * * *\n\n" 
-    if $test_mode;
+print "* * * TEST MODE - NO ACTUAL CHANGES WERE WRITTEN TO THE DATABASE OR KRANG.CONF * * *\n\n"
+  if $test_mode;

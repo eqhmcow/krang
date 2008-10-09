@@ -6,7 +6,7 @@ use warnings;
 use Carp qw(croak);
 use Data::Dumper qw();
 
-use Krang::ClassLoader Log => qw(debug info critical);
+use Krang::ClassLoader Log  => qw(debug info critical);
 use Krang::ClassLoader Conf => qw(SavedVersionsPerStory);
 use Krang::ClassLoader base => 'ElementClass';
 
@@ -53,12 +53,15 @@ because the UI does not allow top-level elements to recieve input.
 # stub out interface methods that should never be called on a
 # top-level object
 BEGIN {
-    no strict 'refs'; # needed for glob assign
-    foreach my $meth (qw(input_form param_names bulk_edit_data 
-                         bulk_edit_filter view_data validate 
-                         load_query_data)) {
-        *{"Krang::ElementClass::TopLevel::$meth"} = 
-          sub { croak($meth .'() called on a top-level element!'); };
+    no strict 'refs';    # needed for glob assign
+    foreach my $meth (
+        qw(input_form param_names bulk_edit_data
+        bulk_edit_filter view_data validate
+        load_query_data)
+      )
+    {
+        *{"Krang::ElementClass::TopLevel::$meth"} =
+          sub { croak($meth . '() called on a top-level element!'); };
     }
 }
 
@@ -72,12 +75,11 @@ implement alternative URL schemes.
 =cut
 
 sub build_url {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)      = @_;
     my ($story, $category) = @arg{qw(story category)};
     my $use_slug = ($story->slug && ($story->class->slug_use ne 'prohibit'));
     return ($category ? $category->url : '') . ($use_slug ? CGI::Util::escape($story->slug) : '');
 }
-
 
 =item C<< $url = $class->build_preview_url(story => $story, category => $category) >>
 
@@ -90,12 +92,12 @@ L<Krang::ElementClass::Cover> for an example.
 =cut
 
 sub build_preview_url {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)      = @_;
     my ($story, $category) = @arg{qw(story category)};
     my $use_slug = ($story->slug && ($story->class->slug_use ne 'prohibit'));
-    return ($category ? $category->preview_url : '') . ($use_slug ? CGI::Util::escape($story->slug) : '');
+    return ($category ? $category->preview_url          : '')
+      . ($use_slug    ? CGI::Util::escape($story->slug) : '');
 }
-
 
 =item C<< @fields = $class->url_attributes() >>
 
@@ -105,7 +107,7 @@ url in build_url().  For example, the default implementation returns
 
 =cut
 
-sub url_attributes { 
+sub url_attributes {
     my $self = shift;
     ($self->slug_use ne 'prohibit') ? ('slug') : ();
 }
@@ -158,7 +160,7 @@ saved.  The default implementation does nothing.
 
 =cut
 
-sub save_hook {}
+sub save_hook { }
 
 =item C<< $class->delete_hook(element => $element) >>
 
@@ -168,7 +170,7 @@ default implementation does nothing.
 
 =cut
 
-sub delete_hook {}
+sub delete_hook { }
 
 =item C<< $class->trash_hook(element => $element) >>
 
@@ -178,7 +180,7 @@ The default implementation does nothing.
 
 =cut
 
-sub trash_hook {}
+sub trash_hook { }
 
 =item C<< $bool = $class->publish_check(element => $element) >>
 
@@ -192,7 +194,6 @@ The default implementation just returns 1 (true) in all cases.
 =cut
 
 sub publish_check { 1 }
-
 
 =item C<< $bool = $class->force_republish(element => $element) >>
 
@@ -208,7 +209,6 @@ The default implementation returns 0 (false) in all cases.
 
 sub force_republish { 0 }
 
-
 =item C<< $bool = $class->use_category_templates(element => $element) >>
 
 This method is called during the publish/preview process.  If true, it
@@ -221,7 +221,6 @@ The default implementation returns 1 (true) in all cases.
 =cut
 
 sub use_category_templates { 1 }
-
 
 =item C<< $bool = $class->publish_category_per_page(element => $element) >>
 
@@ -257,8 +256,8 @@ The default implementation returns 'require'.
  
 =cut
 
-sub category_input     { 
-    return 'require'; 
+sub category_input {
+    return 'require';
 }
 
 =item C<< @category_ids = $class->auto_category_ids(cover_date => $cover_date,
@@ -288,7 +287,7 @@ The default implementation returns 1 in all cases.
 
 =cut
 
-sub validate_category  { 
+sub validate_category {
     return 1;
 }
 
@@ -305,11 +304,10 @@ This method is used to determine slug behavior.
 The default implementation returns 'encourage'.
  
 =cut
-    
+
 sub slug_use {
     return 'encourage';
 }
-
 
 =item C<< $title_to_slug = $class->title_to_slug() >>
 
@@ -325,7 +323,6 @@ for example "function(title) { return title.toLowerCase }"
 sub title_to_slug {
     return '';
 }
-
 
 =item C<< $bool = $class->hidden() >>
 
@@ -355,9 +352,7 @@ default mode, determined by the process umask.
 
 =cut
 
-sub file_mode {}
-
-
+sub file_mode { }
 
 =item publish_frontend_app_template()
 
@@ -453,7 +448,6 @@ sub publish_frontend_app_template {
     # Put tmpl_data into template
     $tmpl->param(%$tmpl_data) if ($tmpl_data);
 
-
     # Publish the template
     debug("Publishing template '$filename'");
     $publisher->additional_content_block(
@@ -524,10 +518,10 @@ sub publish_frontend_app_stub {
     my $self = shift;
     my %args = @_;
 
-    my $publisher   = $args{publisher}  || croak("No publisher specified");
-    my $filename    = $args{filename}   || croak("No filename specified");
-    my $app_module  = $args{app_module} || croak("No app_module specified");
-    my $app_params  = $args{app_params} || 0;
+    my $publisher  = $args{publisher}  || croak("No publisher specified");
+    my $filename   = $args{filename}   || croak("No filename specified");
+    my $app_module = $args{app_module} || croak("No app_module specified");
+    my $app_params = $args{app_params} || 0;
     my $return_only = $args{return_only};
 
     my $params_string = "";
@@ -548,21 +542,18 @@ use $app_module;
 my \$app = $app_module->new($params_string);
 \$app->run;
 EOF
-;
 
-    unless( $return_only ) {
+    unless ($return_only) {
         debug("Publishing app stub '$filename'");
-        $publisher->additional_content_block
-            ( filename      => $filename, 
-              content       => $script, 
-              use_category  => 0,
-              mode          => 0755,
-            );    
+        $publisher->additional_content_block(
+            filename     => $filename,
+            content      => $script,
+            use_category => 0,
+            mode         => 0755,
+        );
     }
     return $script;
 }
-
-
 
 =back
 

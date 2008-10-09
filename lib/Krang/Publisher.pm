@@ -546,7 +546,8 @@ sub unpublish_story {
         next unless -f $path;
 
         # make sure this path isn't claimed by another story
-        my ($claimed) = $dbh->selectrow_array(
+        my ($claimed) =
+          $dbh->selectrow_array(
             "SELECT 1 FROM publish_story_location " . "WHERE path = ? AND story_id != ?",
             undef, $path, $story->story_id);
 
@@ -647,9 +648,11 @@ sub unpublish_media {
 
     # if media element has an unpublish() method, call it
     if ($media->element->class->can('unpublish')) {
-        $media->element->class->unpublish(publisher => $self,
-                                          media     => $media,
-                                          element   => $media->element);
+        $media->element->class->unpublish(
+            publisher => $self,
+            media     => $media,
+            element   => $media->element
+        );
     }
 }
 
@@ -2245,9 +2248,11 @@ sub _write_media {
     # (we do this in _write_media() since it's called by
     # both publish_media() and preview_media())
     if ($media->element->class->can('publish')) {
-        $media->element->class->publish(publisher => $self,
-                                        media     => $media,
-                                        element   => $media->element);
+        $media->element->class->publish(
+            publisher => $self,
+            media     => $media,
+            element   => $media->element
+        );
     }
 
     # return URL
@@ -2272,7 +2277,7 @@ sub _write_story {
     my $story       = $args{story} || croak __PACKAGE__ . ": missing argument 'story'";
     my $pages       = $args{pages} || croak __PACKAGE__ . ": missing argument 'pages'";
     my $output_path = $args{path}  || croak __PACKAGE__ . ": missing argument 'path'";
-    my $class       = $story->element->class;
+    my $class = $story->element->class;
     my $mode_fn = $class->can('file_mode') || sub { };
 
     my @created_files;

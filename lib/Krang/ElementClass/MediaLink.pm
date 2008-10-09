@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader base => 'ElementClass';
-use Krang::ClassLoader Log => qw(debug info critical assert ASSERT);
+use Krang::ClassLoader Log  => qw(debug info critical assert ASSERT);
 use Krang::ClassLoader Conf => qw(PreviewSSL);
 use Krang::ClassLoader 'URL';
 use Krang::ClassLoader Localization => qw(localize);
@@ -13,25 +13,25 @@ use Krang::ClassLoader Localization => qw(localize);
 use Storable qw(nfreeze);
 use MIME::Base64 qw(encode_base64);
 
-use Krang::ClassLoader MethodMaker => 
-  get_set => [ qw( allow_upload show_thumbnail ) ],
-  hash => [ qw( find ) ];
+use Krang::ClassLoader MethodMaker => get_set => [qw( allow_upload show_thumbnail )],
+  hash                             => [qw( find )];
 
 use Krang::ClassLoader Message => qw(add_alert);
 
 sub new {
-    my $pkg = shift;
-    my %args = ( allow_upload   => 1,
-                 show_thumbnail => 1,
-                 lazy_loaded    => 1,
-                 @_
-               );
-    
+    my $pkg  = shift;
+    my %args = (
+        allow_upload   => 1,
+        show_thumbnail => 1,
+        lazy_loaded    => 1,
+        @_
+    );
+
     return $pkg->SUPER::new(%args);
 }
 
 sub input_form {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
@@ -41,27 +41,34 @@ sub input_form {
     my $media = $element->data();
     if ($media) {
         my $media_id = $media->media_id;
-        my $size = $media->file_size;
+        my $size     = $media->file_size;
         $size = $size > 1024 ? int($size / 1024) . 'k' : $size . 'b';
         my $thumbnail_path = $media->thumbnail_path(relative => 1);
-        $html .= qq{<div style="padding-bottom: 2px; margin-bottom: 2px; border-bottom: solid #333333 1px">} .
-          ($thumbnail_path ? 
-           qq{<a href="javascript:Krang.preview('media',$media_id)"><img src="$thumbnail_path" align=bottom border=0></a> } :
-           "") . 
-             qq{<a href="javascript:Krang.preview('media',$media_id)">} . 
-               $media->filename . qq{</a> ${size}} . 
-                 qq{</div>};
+        $html .=
+          qq{<div style="padding-bottom: 2px; margin-bottom: 2px; border-bottom: solid #333333 1px">}
+          . (
+            $thumbnail_path
+            ? qq{<a href="javascript:Krang.preview('media',$media_id)"><img src="$thumbnail_path" align=bottom border=0></a> }
+            : ""
+          )
+          . qq{<a href="javascript:Krang.preview('media',$media_id)">}
+          . $media->filename
+          . qq{</a> ${size}}
+          . qq{</div>};
     }
 
     # add interface for find/upload
-    $html .= scalar $query->button(-name    => "find_media_$param",
-                                   -value   => localize("Find Media"),
-                                   -onClick => "find_media('$param')",
-                                   -class   => "button"
-                                  );
+    $html .= scalar $query->button(
+        -name    => "find_media_$param",
+        -value   => localize("Find Media"),
+        -onClick => "find_media('$param')",
+        -class   => "button"
+    );
     if ($self->allow_upload) {
-      $html .= ' ' . localize('or upload a new file:') . ' '
-        . scalar $query->filefield(-name => $param) . '&nbsp;';
+        $html .= ' '
+          . localize('or upload a new file:') . ' '
+          . scalar $query->filefield(-name => $param)
+          . '&nbsp;';
     }
 
     # Add hard find parameters
@@ -75,7 +82,7 @@ sub input_form {
 # due to the unusual way that media links get their data, a story link
 # is invalid only if required and it doesn't already have a value.
 sub validate {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
     return 1 unless $self->{required};
@@ -85,7 +92,7 @@ sub validate {
 
 # show a thumbnail in view mode
 sub view_data {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
     my $html = "";
@@ -94,31 +101,33 @@ sub view_data {
     my $media = $element->data();
     if ($media) {
         my $media_id = $media->media_id;
-        my $size = $media->file_size;
+        my $size     = $media->file_size;
         $size = $size > 1024 ? int($size / 1024) . 'k' : $size . 'b';
-        my $path = $media->file_path(relative => 1);
-        my $thumbnail_path = $media->thumbnail_path(relative => 1);       
-        $html .= ($thumbnail_path ? 
-                  qq{<a href="javascript:Krang.preview('media',$media_id)"><img src="$thumbnail_path" align=bottom border=0></a> }  : 
-                  "") .
-                    qq{<a href="javascript:Krang.preview('media',$media_id)">} . 
-                      $media->filename . qq{</a> ${size}};
+        my $path           = $media->file_path(relative      => 1);
+        my $thumbnail_path = $media->thumbnail_path(relative => 1);
+        $html .= (
+            $thumbnail_path
+            ? qq{<a href="javascript:Krang.preview('media',$media_id)"><img src="$thumbnail_path" align=bottom border=0></a> }
+            : ""
+          )
+          . qq{<a href="javascript:Krang.preview('media',$media_id)">}
+          . $media->filename
+          . qq{</a> ${size}};
     } else {
         $html = localize("No media object assigned.");
     }
     return $html;
 }
 
-
 sub load_query_data {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
     my $filename = $query->param($param);
     return unless defined $filename and length $filename;
-    $filename = "$filename"; # otherwise it's a filehandle/string
-                             # dualvar which pisses off Storable
+    $filename = "$filename";    # otherwise it's a filehandle/string
+                                # dualvar which pisses off Storable
 
     # Coerce a reasonable name from what we get
     my @filename_parts = split(/[\/\\\:]/, $filename);
@@ -132,20 +141,22 @@ sub load_query_data {
     my $category_id;
     if ($object->isa('Krang::Story') || $object->isa('Krang::Media')) {
         $category_id = $object->category()->category_id();
-    } elsif ($object->isa('Krang::Category')) { 
+    } elsif ($object->isa('Krang::Category')) {
         $category_id = $object->category_id();
     } else {
         croak("Expected a story, media object or category in element->object!");
     }
 
-    my %media_types = pkg('Pref')->get('media_type');
+    my %media_types    = pkg('Pref')->get('media_type');
     my @media_type_ids = keys(%media_types);
 
-    my $media = pkg('Media')->new(title => $filename,
-                                  category_id => $category_id,
-                                  filename => $filename,
-                                  filehandle => $fh,
-                                  media_type_id => $media_type_ids[0] );
+    my $media = pkg('Media')->new(
+        title         => $filename,
+        category_id   => $category_id,
+        filename      => $filename,
+        filehandle    => $fh,
+        media_type_id => $media_type_ids[0]
+    );
 
     # this could be a dup
     eval { $media->save(); };
@@ -154,9 +165,10 @@ sub load_query_data {
             my $err = $@;
 
             # tell all about it
-            add_alert(duplicate_media_upload => 
-                        id => $err->media_id,
-                        filename => $filename);
+            add_alert(
+                duplicate_media_upload => id => $err->media_id,
+                filename               => $filename
+            );
 
             # use the dup instead of the new object
             $element->data(pkg('Media')->find(media_id => $err->media_id));
@@ -164,6 +176,7 @@ sub load_query_data {
             die $@;
         }
     } else {
+
         # the save worked
         $element->data($media);
     }
@@ -181,7 +194,7 @@ sub freeze_data {
 # load object by ID, ignoring failure since the object might have been
 # deleted
 sub thaw_data {
-    my ($self, %arg) = @_;
+    my ($self,    %arg)  = @_;
     my ($element, $data) = @arg{qw(element data)};
     return $element->data(undef) unless $data;
     my ($media) = pkg('Media')->find(media_id => $data);
@@ -207,17 +220,19 @@ sub thaw_data_xml {
 
     my $import_id = $data->[0];
     return unless $import_id;
-    my $media_id = $set->map_id(class => pkg('Media'),
-                                id    => $import_id);
+    my $media_id = $set->map_id(
+        class => pkg('Media'),
+        id    => $import_id
+    );
     assert(pkg('Media')->find(media_id => $media_id, count => 1))
       if ASSERT;
     assert((pkg('Media')->find(media_id => $media_id))[0]->url)
       if ASSERT;
-    $self->thaw_data(element => $element,
-                     data    => $media_id);
+    $self->thaw_data(
+        element => $element,
+        data    => $media_id
+    );
 }
-
-
 
 # overriding Krang::ElementClass::template_data
 # checks the publish status, returns url or preview_url, depending.
@@ -225,10 +240,11 @@ sub template_data {
     my $self = shift;
     my %args = @_;
 
-    return pkg('URL')->real_url(object    => $args{element}->data,
-                                publisher => $args{publisher});
+    return pkg('URL')->real_url(
+        object    => $args{element}->data,
+        publisher => $args{publisher}
+    );
 }
-
 
 #
 # If fill_template() has been called, a template exists for this element.
@@ -246,25 +262,24 @@ sub fill_template {
 
     my %params = ();
 
-    $params{title} = $element->data()->title() 
+    $params{title} = $element->data()->title()
       if $tmpl->query(name => 'title');
     $params{caption} = $element->data()->caption()
       if $tmpl->query(name => 'caption');
 
     $params{url} = $element->template_data(publisher => $publisher);
 
-    my $width = $element->data->width;
+    my $width  = $element->data->width;
     my $height = $element->data->height;
 
-    $params{width} = $width if $tmpl->query(name => 'width');
+    $params{width}  = $width  if $tmpl->query(name => 'width');
     $params{height} = $height if $tmpl->query(name => 'height');
-    $params{image_dimensions} = "width='$width' height='$height'" if $tmpl->query(name => 'image_dimensions');
+    $params{image_dimensions} = "width='$width' height='$height'"
+      if $tmpl->query(name => 'image_dimensions');
 
     $tmpl->param(\%params);
 
 }
-
-
 
 =head1 NAME
 

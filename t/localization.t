@@ -7,7 +7,7 @@ use warnings;
 use Data::Dumper;
 
 use Krang::ClassLoader 'Script';
-use Krang::ClassLoader Conf => qw(InstanceElementSet DefaultLanguage AvailableLanguages);
+use Krang::ClassLoader Conf    => qw(InstanceElementSet DefaultLanguage AvailableLanguages);
 use Krang::ClassLoader Session => qw(%session);
 BEGIN { pkg('Session')->create(); }
 END   { pkg('Session')->delete(); }
@@ -43,7 +43,7 @@ $session{language} = 'en';
 is(localize('Workspace'), 'Workspace', "localize('Workspace') for English default");
 
 # ... for other languages
-for my $lang ( grep { $_ ne 'en' } AvailableLanguages ) {
+for my $lang (grep { $_ ne 'en' } AvailableLanguages) {
     $session{language} = $lang;
     ok(localize('Preferences'), "localize('Workspace') for $LANG{$lang}");
 }

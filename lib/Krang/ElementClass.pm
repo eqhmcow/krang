@@ -9,28 +9,19 @@ use CGI ();
 use HTML::Template::Expr;
 use Encode qw(decode_utf8);
 
-use Krang::ClassLoader Log => qw(debug info critical);
-use Krang::ClassLoader Conf => qw(PreviewSSL);
+use Krang::ClassLoader Log          => qw(debug info critical);
+use Krang::ClassLoader Conf         => qw(PreviewSSL);
 use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'Pref';
 
 use Exception::Class
   'Krang::ElementClass::TemplateNotFound' =>
-  {
-   fields => [ 'element_name', 'template_name', 'included_file',
-               'category_url', 'error_msg' ]
-  },
+  {fields => ['element_name', 'template_name', 'included_file', 'category_url', 'error_msg']},
 
   'Krang::ElementClass::TemplateParseError' =>
-  {
-   fields => [ 'element_name', 'template_name',
-               'category_url', 'error_msg' ]
-  },
+  {fields => ['element_name', 'template_name', 'category_url', 'error_msg']},
 
-  'Krang::ElementClass::PublishProblem' =>
-  {
-   fields => [ 'element_name', 'error_msg' ]
-  };
+  'Krang::ElementClass::PublishProblem' => {fields => ['element_name', 'error_msg']};
 
 =head1 NAME
 
@@ -72,24 +63,25 @@ these will always be available.
 
 =cut
 
-use Krang::ClassLoader MethodMaker => 
-  new_with_init => 'new',
-  new_hash_init => 'hash_init',
-  get_set       => [ qw( name
-                         min
-                         display_name
-                         max
-                         bulk_edit
-                         bulk_edit_tag
-                         required
-                         reorderable
-                         hidden
-                         allow_delete
-                         default
-                         pageable
-                         indexed
-                         lazy_loaded
-                       ) ];
+use Krang::ClassLoader MethodMaker => new_with_init => 'new',
+  new_hash_init                    => 'hash_init',
+  get_set                          => [
+    qw( name
+      min
+      display_name
+      max
+      bulk_edit
+      bulk_edit_tag
+      required
+      reorderable
+      hidden
+      allow_delete
+      default
+      pageable
+      indexed
+      lazy_loaded
+      )
+  ];
 
 =over 4
 
@@ -239,18 +231,22 @@ sub children {
     my %children_by_name;
     foreach my $arg (@{$_[0]}) {
         if (ref $arg and UNIVERSAL::isa($arg, 'Krang::ElementClass')) {
+
             # it's an object already, push it along
             push(@children, $arg);
-            croak("Unable to add child named '$arg->{name}' to $self->{name}: there is already a child with that name.")
-              if exists $children_by_name{$arg->{name}};
+            croak(
+                "Unable to add child named '$arg->{name}' to $self->{name}: there is already a child with that name."
+            ) if exists $children_by_name{$arg->{name}};
             $children_by_name{$arg->{name}} = $arg;
         } else {
+
             # it's the name of an element, load it
             my $class = pkg('ElementLibrary')->find_class(name => $arg);
             croak("Unable to find element class named '$arg' while instantiating '$self->{name}'.")
               unless $class;
-            croak("Unable to add child named '$arg' to $self->{name}: there is already a child with that name.")
-              if exists $children_by_name{$arg};
+            croak(
+                "Unable to add child named '$arg' to $self->{name}: there is already a child with that name."
+            ) if exists $children_by_name{$arg};
             push(@children, $class);
             $children_by_name{$arg} = $class;
         }
@@ -275,10 +271,9 @@ you need is a particular child class.
 
 =cut
 
-sub child { 
+sub child {
     my $class = $_[0]->{children_by_name}{$_[1]};
-    croak("No class named '$_[1]' found in child class list for '" . 
-          $_[0]->name . "'")
+    croak("No class named '$_[1]' found in child class list for '" . $_[0]->name . "'")
       unless defined $class;
     return $class;
 }
@@ -313,13 +308,15 @@ implementation returns a hidden field.
 =cut
 
 sub input_form {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
-    
-    return scalar $query->hidden(-name     => $param,
-                                 -default  => ($element->data() || ""),
-                                 -override => 1);
+
+    return scalar $query->hidden(
+        -name     => $param,
+        -default  => ($element->data() || ""),
+        -override => 1
+    );
 }
 
 =item C<< @names = $class->param_names(element => $element) >>
@@ -391,8 +388,8 @@ otherwise does no checking of the input data.
 
 =cut
 
-sub validate { 
-    my ($self, %arg) = @_;
+sub validate {
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
     my $value = $query->param($param);
@@ -414,7 +411,7 @@ The default implementation does nothing.
 
 =cut
 
-sub validate_children { 
+sub validate_children {
     return 1;
 }
 
@@ -447,7 +444,7 @@ C<$element->data()> for this element's parameter.
 =cut
 
 sub load_query_data {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
     $element->data(scalar $query->param($param));
@@ -463,7 +460,7 @@ override this method.  The default implementation does nothing.
 
 =cut
 
-sub check_data {}
+sub check_data { }
 
 =item C<< $text = $class->freeze_data(element => $element) >>
 
@@ -486,7 +483,8 @@ The default implementation just calls C<< $element->data($text) >>.
 
 =cut
 
-sub thaw_data { 
+sub thaw_data {
+
     # I am a bad man
     return $_[2]->data($_[4]) if $_[1] eq 'element';
     return $_[4]->data($_[2]);
@@ -516,14 +514,13 @@ different.
 
 =cut
 
-sub template_data { 
+sub template_data {
     my $self = shift;
     my %args = @_;
 
     croak("Element parameter not defined!") unless $args{element};
     return $args{element}->data();
 }
-
 
 =item C<< $html_tmpl = $class->find_template(element => $element, publisher => $publisher) >>
 
@@ -584,12 +581,13 @@ If the root directory is reached, no template exists.  Croak.
 
 sub find_template {
     my ($self, %args) = @_;
-    my $publisher = $args{publisher} 
+    my $publisher = $args{publisher}
       || croak __PACKAGE__ . ":missing attribute 'publisher'.\n";
-    my $element   = $args{element};
-    my $filename  = $args{filename};
+    my $element  = $args{element};
+    my $filename = $args{filename};
 
-    croak __PACKAGE__ . ":missing attribute 'element' or 'filename'.\n" if (not $element and not $filename);
+    croak __PACKAGE__ . ":missing attribute 'element' or 'filename'.\n"
+      if (not $element and not $filename);
 
     my @search_path = $publisher->template_search_path();
     $filename = $element->name() . '.tmpl' if not $filename;
@@ -599,73 +597,75 @@ sub find_template {
 
     # maybe add a utf-8 decoding filter
     if (pkg('Charset')->is_utf8) {
-	my @filters = ();
-	my $filter = $args{filter};
-	if ($filter) {
-	    if (ref($filter) eq 'CODE') {
-		push @filters, $filter;
-	    } elsif (ref($filter) eq 'ARRAY') {
-		@filters = @$filter;
-	    } else {
-		croak "Filter argument to HTML::Template::Expr must be a code or an array reference, "
-		  . "but ref($filter) returned '" . ref($filter) . "'";
-	    }
-	}
-	push @filters, sub { ${$_[0]} = decode_utf8(${$_[0]}) };
-	$args{filter} = \@filters;
+        my @filters = ();
+        my $filter  = $args{filter};
+        if ($filter) {
+            if (ref($filter) eq 'CODE') {
+                push @filters, $filter;
+            } elsif (ref($filter) eq 'ARRAY') {
+                @filters = @$filter;
+            } else {
+                croak
+                  "Filter argument to HTML::Template::Expr must be a code or an array reference, "
+                  . "but ref($filter) returned '"
+                  . ref($filter) . "'";
+            }
+        }
+        push @filters, sub { ${$_[0]} = decode_utf8(${$_[0]}) };
+        $args{filter} = \@filters;
     }
 
-    # Attempt to instantiate an HTML::Template::Expr object 
+    # Attempt to instantiate an HTML::Template::Expr object
     my $template;
     eval {
-        $template = HTML::Template::Expr->new(filename          => $filename,
-                                              path              => \@search_path,
-                                              die_on_bad_params => 0,
-                                              loop_context_vars => 1,
-                                              global_vars       => 1,
-                                              cache             => 1,
-                                              search_path_on_include => 1,
-                                              %args,
-                                             );
+        $template = HTML::Template::Expr->new(
+            filename               => $filename,
+            path                   => \@search_path,
+            die_on_bad_params      => 0,
+            loop_context_vars      => 1,
+            global_vars            => 1,
+            cache                  => 1,
+            search_path_on_include => 1,
+            %args,
+        );
     };
     if ($@) {
         my $err = $@;
+
         # HTML::Template::Expr is having problems - throw an error
         # based on the problem reported.
         if ($err =~ /file not found/) {
-	    my ($included_file) = $err =~ /Cannot open included file (\S+)/;
-            Krang::ElementClass::TemplateNotFound->throw
-                (
-                 message       => "Missing required output template: '$err'",
-                 element_name  => ($element ? localize($element->display_name) : $filename),
-                 template_name => $filename,
-		 included_file => (($included_file || '') ne $filename) && $included_file,
-                 category_url  => $publisher->category->url(),
-                 error_msg     => $err
-                );
+            my ($included_file) = $err =~ /Cannot open included file (\S+)/;
+            Krang::ElementClass::TemplateNotFound->throw(
+                message       => "Missing required output template: '$err'",
+                element_name  => ($element ? localize($element->display_name) : $filename),
+                template_name => $filename,
+                included_file => (($included_file || '') ne $filename) && $included_file,
+                category_url  => $publisher->category->url(),
+                error_msg     => $err
+            );
         }
+
         # assuming remaining errors are parse errors at this time.
         else {
+
             # parse the message - stack traces aren't user-friendly.
             $err =~ /^(.+?)\n[^\n]+Template\:\:Expr/so;
             my $msg = $1;
 
-            Krang::ElementClass::TemplateParseError->throw
-                (
-                 message       => "Coding error found in template: '$msg'",
-                 element_name  =>  ($element ? localize($element->display_name) : $filename),
-                 template_name => $filename,
-                 category_url  => $publisher->category->url(),
-                 error_msg     => $err
-                );
+            Krang::ElementClass::TemplateParseError->throw(
+                message       => "Coding error found in template: '$msg'",
+                element_name  => ($element ? localize($element->display_name) : $filename),
+                template_name => $filename,
+                category_url  => $publisher->category->url(),
+                error_msg     => $err
+            );
         }
     }
 
     # if we've gotten this far, we have a valid template.
     return $template;
 }
-
-
 
 =item C<< $class->fill_template(element => $element, tmpl => $html_template, publisher => $publisher) >>
 
@@ -768,10 +768,10 @@ sub fill_template {
     my $publisher = $args{publisher};
     my $element   = $args{element};
 
-    my $story     = $publisher->story();
+    my $story = $publisher->story();
 
     my @element_children = $element->children();
-   
+
     # list of variable names in the template -- add element_loop vars if needed
     my %template_vars = map { $_ => 1 } $tmpl->query();
     if (exists($template_vars{element_loop})) {
@@ -780,14 +780,14 @@ sub fill_template {
             $template_vars{element_loop}{$_} = 1;
         }
     }
-    
+
     # list of child element names that have been seen
     my %element_names = ();
 
     # build out params going to the template.
-    my %params  = ($element->name() . '_total' => scalar(@element_children));
+    my %params = ($element->name() . '_total' => scalar(@element_children));
     if (my $element_template_data = $element->template_data(publisher => $publisher)) {
-      $params{$element->name} = $element_template_data;
+        $params{$element->name} = $element_template_data;
     }
 
     # add story title, slug, cover date, page break, and content-break tags, if needed.
@@ -797,7 +797,8 @@ sub fill_template {
     $params{slug} = $publisher->story()->slug()
       if exists($template_vars{slug});
 
-    $params{cover_date} = $publisher->story()->cover_date()->strftime(localize('%b %e, %Y %l:%M %p'))
+    $params{cover_date} =
+      $publisher->story()->cover_date()->strftime(localize('%b %e, %Y %l:%M %p'))
       if exists($template_vars{cover_date});
 
     $params{page_break} = $publisher->page_break()
@@ -809,7 +810,6 @@ sub fill_template {
     # add the contributors loop if desired
     $params{contrib_loop} = $self->_build_contrib_loop(@_)
       if exists($template_vars{contrib_loop});
-
 
     # add the category trail loop
     $params{category_trail_loop} = $self->_build_cat_trail_loop(@_)
@@ -836,16 +836,20 @@ sub fill_template {
     # scan the children for pageable elements.
     foreach my $child (@element_children) {
         if ($child->pageable) {
+
             # build the URL for this 'page' - will be used in the publish pass.
             my $count = @page_urls;
-	    # set protocol to 'https' in preview if running with SSL enabled
-	    my $scheme = ($publisher->is_preview and PreviewSSL) ? 'https' : 'http';
-            push @page_urls, $self->_build_page_url(page => $count,
-                                                    publisher => $publisher,
-						    protocol => $scheme.'://');
+
+            # set protocol to 'https' in preview if running with SSL enabled
+            my $scheme = ($publisher->is_preview and PreviewSSL) ? 'https' : 'http';
+            push @page_urls,
+              $self->_build_page_url(
+                page      => $count,
+                publisher => $publisher,
+                protocol  => $scheme . '://'
+              );
         }
     }
-
 
     my %element_count;
     my %child_params;
@@ -859,129 +863,154 @@ sub fill_template {
         # skip this child unless something in the template references
         # it!  e.g. it exists in element loop, a name_loop, or
         # directly in the template, not seen before.
-        next unless (exists($template_vars{element_loop}{$name}) || 
-                     exists($template_vars{element_loop}{"is_$name"}) ||
-                     exists($template_vars{$child_loop}) ||
-                     (exists($template_vars{$name}) && !exists($child_params{$name})));
+        next
+          unless (exists($template_vars{element_loop}{$name})
+            || exists($template_vars{element_loop}{"is_$name"})
+            || exists($template_vars{$child_loop})
+            || (exists($template_vars{$name}) && !exists($child_params{$name})));
 
         # Pass pagination variables along to child->publish if the
         # child element is pageable (e.g. is used for determining what
         # constitutes a page).
         if ($child->pageable) {
-            my $pagination_info = $self->_build_pagination_vars(page_list => \@page_urls,
-                                                                page_num => $page_number++);
+            my $pagination_info = $self->_build_pagination_vars(
+                page_list => \@page_urls,
+                page_num  => $page_number++
+            );
 
             map { $fill_template_args{$_} = $pagination_info->{$_} } keys %{$pagination_info};
 
         }
 
         # if 'element_loop' exists in template, create or append to it
-        if (exists($template_vars{element_loop}{$name}) || exists($template_vars{element_loop}{"is_$name"})) {
+        if (   exists($template_vars{element_loop}{$name})
+            || exists($template_vars{element_loop}{"is_$name"}))
+        {
 
-            my $loop_idx   = $element_count{$name} ? $element_count{$name}++ : ($element_count{$name} = 1);
-            my $loop_entry = $self->_fill_loop_iteration(tmpl      => $tmpl,
-                                                         child     => $child,
-                                                         html      => \$html,
-                                                         loopname  => 'element_loop',
-                                                         count     => $loop_idx,
-                                                         publisher => $publisher,
-                                                         fill_template_args => \%fill_template_args);
+            my $loop_idx =
+              $element_count{$name} ? $element_count{$name}++ : ($element_count{$name} = 1);
+            my $loop_entry = $self->_fill_loop_iteration(
+                tmpl               => $tmpl,
+                child              => $child,
+                html               => \$html,
+                loopname           => 'element_loop',
+                count              => $loop_idx,
+                publisher          => $publisher,
+                fill_template_args => \%fill_template_args
+            );
             push @{$child_params{element_loop}}, $loop_entry;
         }
 
         # if "$name_loop" exists in template, create or append to it
         if (exists($template_vars{$child_loop})) {
-            
-            my $loop_idx   = exists($child_params{$child_loop}) ? (@{$child_params{$child_loop}} + 1) : 1;
-            my $loop_entry = $self->_fill_loop_iteration(tmpl      => $tmpl,
-                                                         child     => $child,
-                                                         html      => \$html,
-                                                         loopname  => $child_loop,
-                                                         count     => $loop_idx,
-                                                         publisher => $publisher,
-                                                         fill_template_args => \%fill_template_args);
-            
+
+            my $loop_idx =
+              exists($child_params{$child_loop}) ? (@{$child_params{$child_loop}} + 1) : 1;
+            my $loop_entry = $self->_fill_loop_iteration(
+                tmpl               => $tmpl,
+                child              => $child,
+                html               => \$html,
+                loopname           => $child_loop,
+                count              => $loop_idx,
+                publisher          => $publisher,
+                fill_template_args => \%fill_template_args
+            );
+
             # fix to make contrib_loop available - this is because
             # HTML::Template does not support global loops - only global_vars
             if ($tmpl->query(name => [$child_loop, 'contrib_loop'])) {
-                $child_params{contrib_loop} = $self->_build_contrib_loop(@_) unless
-                  exists($child_params{contrib_loop});
+                $child_params{contrib_loop} = $self->_build_contrib_loop(@_)
+                  unless exists($child_params{contrib_loop});
                 $loop_entry->{contrib_loop} = $child_params{contrib_loop};
             }
 
             push @{$child_params{$child_loop}}, $loop_entry;
         }
-	
-        # if the element is used in the template outside of a loop, and 
+
+        # if the element is used in the template outside of a loop, and
         # hasn't been set (first child element takes precedence), set it.
         if (exists($template_vars{$name}) && !exists($child_params{$name})) {
+
             # get html for element, unless it's already built
-            $html ||= $child->publish(publisher => $publisher, 
-                                      fill_template_args =>
-                                      \%fill_template_args);
+            $html ||= $child->publish(
+                publisher          => $publisher,
+                fill_template_args => \%fill_template_args
+            );
             $child_params{$name} = $html;
         }
     }
-    
+
     $tmpl->param(%params, %child_params);
 }
 
-
-# _fill_loop_iteration: helper function called by fill_template which returns a hashref 
+# _fill_loop_iteration: helper function called by fill_template which returns a hashref
 # of the keys & vals necessary inside an iteration of 'element_loop' or "$child_loop"
 sub _fill_loop_iteration {
 
     my ($self, %args) = @_;
 
-    my $tmpl  = $args{tmpl};
-    my $child = $args{child};
-    my $html  = $args{html};
-    my $count = $args{count};
-    my $loopname = $args{loopname};
-    my $publisher = $args{publisher};
+    my $tmpl               = $args{tmpl};
+    my $child              = $args{child};
+    my $html               = $args{html};
+    my $count              = $args{count};
+    my $loopname           = $args{loopname};
+    my $publisher          = $args{publisher};
     my $fill_template_args = $args{fill_template_args};
 
-    my $name = $child->name;
-    my %loop_filled = ($name . '_count' => $count,
-                       "is_$name"       => 1);
-    
+    my $name        = $child->name;
+    my %loop_filled = (
+        $name . '_count' => $count,
+        "is_$name"       => 1
+    );
+
     # see if inner loop contains a tag for the element itself (ie without '_loop')
     if ($tmpl->query(name => [$loopname, $name])) {
-        
+
         # it DOES: try publishing the element, and using the resulting html as its value
-        eval { $$html ||= $child->publish(publisher          => $publisher, 
-                                          fill_template_args => $fill_template_args) };
+        eval {
+            $$html ||= $child->publish(
+                publisher          => $publisher,
+                fill_template_args => $fill_template_args
+            );
+        };
         if (my $err = $@) {
             if ($err->isa('Krang::ElementClass::TemplateNotFound')) {
+
                 # no template could be found; we'll use flattened-template recursion below
             } else {
+
                 # there was an unknown error
-                die ($err);
+                die($err);
             }
         } else {
+
             # success
             $loop_filled{$name} = $$html;
         }
     }
     unless ($loop_filled{$name}) {
-        
+
         # it DOESN'T (or the element had no template): recurse to build the inner loop's vars
-        foreach my $sub_tmpl (values %{$tmpl->{param_map}{$loopname}->[HTML::Template::LOOP::TEMPLATE_HASH]}) {
-            # here we're directly accessing any sub-template(s) HTML::Template built for $loopname....
-            $sub_tmpl->clear_params;                                            
-            $child->fill_template(publisher          => $publisher,              
-                                  fill_template_args => $fill_template_args,     
-                                  tmpl               => $sub_tmpl,               
-                                  element            => $child);
-            foreach (grep {$sub_tmpl->param($_)} $sub_tmpl->param) {
-                $loop_filled{$_} = $sub_tmpl->param($_); # store the values in this iteration of loop
+        foreach my $sub_tmpl (
+            values %{$tmpl->{param_map}{$loopname}->[HTML::Template::LOOP::TEMPLATE_HASH]})
+        {
+
+          # here we're directly accessing any sub-template(s) HTML::Template built for $loopname....
+            $sub_tmpl->clear_params;
+            $child->fill_template(
+                publisher          => $publisher,
+                fill_template_args => $fill_template_args,
+                tmpl               => $sub_tmpl,
+                element            => $child
+            );
+            foreach (grep { $sub_tmpl->param($_) } $sub_tmpl->param) {
+                $loop_filled{$_} =
+                  $sub_tmpl->param($_);    # store the values in this iteration of loop
             }
         }
     }
     return \%loop_filled;
 }
-
-
 
 =item C<< $html = $class->publish(element => $element, publisher => $publisher) >>
 
@@ -1008,7 +1037,6 @@ to make the element's children available directly to its parent's template.
 
 =cut
 
-
 sub publish {
 
     my $self = shift;
@@ -1029,6 +1057,7 @@ sub publish {
 
     if (my $err = $@) {
         if ($err->isa('Krang::ElementClass::TemplateNotFound')) {
+
             # no template found - if the element has children, this is an error.
             # otherwise, return the raw data stored in the element.
             if (scalar($args{element}->children())) {
@@ -1037,6 +1066,7 @@ sub publish {
                 return $args{element}->template_data(publisher => $publisher);
             }
         } else {
+
             # another error occured with the template - re-throw.
             die $err;
         }
@@ -1049,30 +1079,32 @@ sub publish {
     eval { $html = $html_template->output(); };
 
     if (my $err = $@) {
+
         # known output problems involve bad HTML::Template::Expr usage.
         if ($err =~ /HTML::Template::Expr/) {
+
             # try and parse $err to remove the stack trace.
             $err =~ /^(.*?Expr.*?\n)/so;
             my $msg = $1;
 
-            Krang::ElementClass::TemplateParseError->throw
-                (
-                 message       => "Error publishing with template: '$msg'",
-                 element_name  => localize($args{element}->display_name),
-                 template_name => $args{element}->name . '.tmpl',
-                 category_url  => $publisher->category->url(),
-                 error_msg     => $err
-                );
+            Krang::ElementClass::TemplateParseError->throw(
+                message       => "Error publishing with template: '$msg'",
+                element_name  => localize($args{element}->display_name),
+                template_name => $args{element}->name . '.tmpl',
+                category_url  => $publisher->category->url(),
+                error_msg     => $err
+            );
         } elsif (ref $err) {
+
             # something else, but not to be caught here.
             die $err;
         } else {
+
             # something completely unexpected.
-            Krang::ElementClass::PublishProblem->throw
-                (
-                 element_name => localize($args{element}->display_name),
-                 error_msg    => $err
-                );
+            Krang::ElementClass::PublishProblem->throw(
+                element_name => localize($args{element}->display_name),
+                error_msg    => $err
+            );
         }
     }
 
@@ -1080,9 +1112,7 @@ sub publish {
     # indication of trouble.
     unless ($html) {
 
-
     }
-
 
     return $html;
 }
@@ -1106,14 +1136,12 @@ serialize as:
 =cut
 
 sub freeze_data_xml {
-    my ($self, %arg) = @_;
+    my ($self,    %arg)    = @_;
     my ($element, $writer) = @arg{qw(element writer)};
-    
-    my $data = $element->freeze_data();
-    $writer->dataElement(data => 
-                         (defined $data and length $data) ? $data : '');
-}
 
+    my $data = $element->freeze_data();
+    $writer->dataElement(data => (defined $data and length $data) ? $data : '');
+}
 
 =item C<< $class->thaw_data_xml(element => $element, data => $data, set => $set) >>
 
@@ -1135,11 +1163,10 @@ The default implementation calls thaw_data() on $data[0].
 =cut
 
 sub thaw_data_xml {
-    my ($self, %arg) = @_;
+    my ($self,    %arg)  = @_;
     my ($element, $data) = @arg{qw(element data)};
     $self->thaw_data(element => $element, data => $data->[0]);
 }
-
 
 =item C<< $class->order_of_available_children() >>
 
@@ -1164,7 +1191,6 @@ sub order_of_available_children {
     return ();
 }
 
-
 # setup defaults and check for required paramters
 sub init {
     my $self = shift;
@@ -1174,10 +1200,9 @@ sub init {
       unless $args{name};
 
     # display_name defaults to ucfirst on each word in name, split on _
-    $args{display_name} = join " ", 
-      map { ucfirst($_) } 
-        split /_/, $args{name}
-          unless exists $args{display_name};
+    $args{display_name} = join " ", map { ucfirst($_) }
+      split /_/, $args{name}
+      unless exists $args{display_name};
 
     # setup defaults for unset parameters
     $args{min}           = 0     unless exists $args{min};
@@ -1199,7 +1224,6 @@ sub init {
     return $self;
 }
 
-
 #
 # $url = _build_page_url(publisher => $pub, page => $page_num, protocol => 'https://');
 #
@@ -1208,33 +1232,35 @@ sub init {
 # protocol defaults to 'http://' unless otherwise specified.
 #
 
-
 sub _build_page_url {
 
     my $self = shift;
     my %args = @_;
 
-    my $page_num  = $args{page} || 0;
+    my $page_num  = $args{page}      || 0;
     my $publisher = $args{publisher} || $self->{publisher};
-    my $protocol  = $args{protocol} || 'http://';
+    my $protocol  = $args{protocol}  || 'http://';
 
-    my $story     = $publisher->story;
+    my $story = $publisher->story;
 
     my $base_url;
 
     if ($publisher->is_publish) {
-        $base_url = $story->class->build_url(story    => $story,
-                                             category => $publisher->category);
+        $base_url = $story->class->build_url(
+            story    => $story,
+            category => $publisher->category
+        );
     } elsif ($publisher->is_preview) {
-        $base_url = $story->class->build_preview_url(story    => $story,
-                                                     category => $publisher->category);
+        $base_url = $story->class->build_preview_url(
+            story    => $story,
+            category => $publisher->category
+        );
     } else {
         croak __PACKAGE__ . ": Mode unknown - are we in publish or preview mode?";
     }
 
     return sprintf('%s%s/%s', $protocol, $base_url, $publisher->story_filename(page => $page_num));
 }
-
 
 #
 # $pagination_hashref = _build_pagination_vars(page_list => $pages_listref, page_num => $page_num);
@@ -1263,7 +1289,7 @@ sub _build_pagination_vars {
     $page_info{first_page_url} = $page_list->[0];
     $page_info{last_page_url}  = $page_list->[$#$page_list];
 
-    if ($page_num == 1) { # on the first page
+    if ($page_num == 1) {    # on the first page
         $page_info{is_first_page}     = 1;
         $page_info{previous_page_url} = '';
     } else {
@@ -1271,7 +1297,7 @@ sub _build_pagination_vars {
         $page_info{previous_page_url} = $page_list->[($current_idx - 1)];
     }
 
-    if ($page_num == @$page_list) { # on the last page
+    if ($page_num == @$page_list) {    # on the last page
         $page_info{is_last_page}  = 1;
         $page_info{next_page_url} = '';
     } else {
@@ -1279,12 +1305,15 @@ sub _build_pagination_vars {
         $page_info{next_page_url} = $page_list->[($current_idx + 1)];
     }
 
-    for (my $num = 0; $num <= $#$page_list; $num++) {
-        my %element = (page_number => ( $num + 1 ),
-                       page_url    => $page_list->[$num]);
+    for (my $num = 0 ; $num <= $#$page_list ; $num++) {
+        my %element = (
+            page_number => ($num + 1),
+            page_url    => $page_list->[$num]
+        );
 
-        ($num == $current_idx) ? ( $element{is_current_page} = 1 ) :
-          ( $element{is_current_page} = 0 );
+        ($num == $current_idx)
+          ? ($element{is_current_page} = 1)
+          : ($element{is_current_page} = 0);
 
         push @{$page_info{pagination_loop}}, \%element;
 
@@ -1293,7 +1322,7 @@ sub _build_pagination_vars {
     return \%page_info;
 }
 
-# 
+#
 # builds loop of story's category and parent categories
 
 sub _build_cat_trail_loop {
@@ -1302,17 +1331,24 @@ sub _build_cat_trail_loop {
 
     my @category_loop;
 
-    my $object   = $args{element}->object;
+    my $object = $args{element}->object;
     my $base_cat = $object->isa('Krang::Story') ? $object->category : $object;
 
-    push (@category_loop, { display_name => $base_cat->element->child('display_name')->data, url => $base_cat->url } );
+    push(@category_loop,
+        {display_name => $base_cat->element->child('display_name')->data, url => $base_cat->url});
 
-    while ( $base_cat->parent ) {
+    while ($base_cat->parent) {
         $base_cat = $base_cat->parent;
-        unshift (@category_loop, { display_name => $base_cat->element->child('display_name')->data, url => $base_cat->url } );
+        unshift(
+            @category_loop,
+            {
+                display_name => $base_cat->element->child('display_name')->data,
+                url          => $base_cat->url
+            }
+        );
     }
-   
-    return \@category_loop; 
+
+    return \@category_loop;
 }
 
 #
@@ -1327,7 +1363,7 @@ sub _build_contrib_loop {
 
     my %contrib_types = pkg('Pref')->get('contrib_type');
 
-    my %contribs = ();
+    my %contribs      = ();
     my @contributors  = ();
     my @contrib_order = ();
 
@@ -1340,6 +1376,7 @@ sub _build_contrib_loop {
         # check to see if this contributor exists - if so, save
         # on querying for information you already know.
         unless (exists($contribs{$cid})) {
+
             # preserve the order in which the contributors arrive.
             push @contrib_order, $cid;
             $contribs{$cid}{contrib_id} = $cid;
@@ -1363,10 +1400,14 @@ sub _build_contrib_loop {
                 }
             }
         }
+
         # add the selected contributor type to the contrib_type_loop
         my $contrib_type_id = $contrib->selected_contrib_type();
-        push @{$contribs{$cid}{contrib_type_loop}}, {contrib_type_id => $contrib_type_id,
-                                                     contrib_type_name => $contrib_types{$contrib_type_id}};
+        push @{$contribs{$cid}{contrib_type_loop}},
+          {
+            contrib_type_id   => $contrib_type_id,
+            contrib_type_name => $contrib_types{$contrib_type_id}
+          };
 
     }
 

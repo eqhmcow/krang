@@ -58,15 +58,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -92,14 +95,15 @@ use File::Temp qw(tempdir);
 my ($help, $man, $from, $to);
 my $verbose = 0;
 
-pod2usage(2) unless
-  GetOptions(help       => \$help,
-             man        => \$man,
-             'verbose+' => \$verbose,
-             'from=s'   => \$from,
-             'to=s'     => \$to,
-            );
-pod2usage(1)             if $help;
+pod2usage(2)
+  unless GetOptions(
+    help       => \$help,
+    man        => \$man,
+    'verbose+' => \$verbose,
+    'from=s'   => \$from,
+    'to=s'     => \$to,
+  );
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 pod2usage("Bad number of arguments - should have source and target filenames.")
   unless @ARGV == 2;
@@ -126,7 +130,7 @@ $source = rel2abs($source);
 $target = rel2abs($target);
 
 # open up the data set in a temp directory
-my $dir = tempdir( CLEANUP => 1 );
+my $dir = tempdir(CLEANUP => 1);
 chdir($dir) or die $!;
 
 print STDERR "Unpacking '$source'...\n" if $verbose;
@@ -146,7 +150,7 @@ foreach my $file (@xml) {
 
     # update URLs
     my $count = $xml =~ s/<url>$from/<url>$to/g;
-    
+
     # apply changes in preview_url and paths for sites
     if ($file =~ /site/) {
         $count += $xml =~ s/(<preview_url>.*?)$from/$1$to/;

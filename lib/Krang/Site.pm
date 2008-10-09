@@ -71,7 +71,6 @@ N.B - On save(), the root category for the site '/' is created.
 
 =cut
 
-
 #
 # Pragmas/Module Dependencies
 ##############################
@@ -84,16 +83,17 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(croak);
-use Exception::Class
-  ('Krang::Site::Duplicate' => {fields => 'duplicates'},
-   'Krang::Site::Dependency' => {fields => 'category_id'});
+use Exception::Class (
+    'Krang::Site::Duplicate'  => {fields => 'duplicates'},
+    'Krang::Site::Dependency' => {fields => 'category_id'}
+);
 
 # Internal Modules
 ###################
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'UUID';
-use Krang::ClassLoader DB => qw(dbh);
-use Krang::ClassLoader Log => qw/debug affirm assert should shouldnt ASSERT/;
+use Krang::ClassLoader DB   => qw(dbh);
+use Krang::ClassLoader Log  => qw/debug affirm assert should shouldnt ASSERT/;
 use Krang::ClassLoader Conf => qw(KrangRoot instance);
 
 use File::Spec::Functions qw(catdir);
@@ -108,24 +108,24 @@ use constant SITE_RO => qw(site_id site_uuid);
 
 # Read-write fields
 use constant SITE_RW => qw(preview_path
-			   preview_url
-			   publish_path);
+  preview_url
+  publish_path);
 
 # Globals
 ##########
 
 # Lexicals
 ###########
-my %site_args = map {$_ => 1} SITE_RW, 'url';
-my %site_cols = map {$_ => 1} SITE_RO, SITE_RW, 'url';
+my %site_args = map { $_ => 1 } SITE_RW, 'url';
+my %site_cols = map { $_ => 1 } SITE_RO, SITE_RW, 'url';
 
 # Constructor/Accessor/Mutator setup
 use Krang::ClassLoader MethodMaker => new_with_init => 'new',
-			new_hash_init => 'hash_init',
-			get => [SITE_RO],
-			get_set => [SITE_RW];
+  new_hash_init                    => 'hash_init',
+  get                              => [SITE_RO],
+  get_set                          => [SITE_RW];
 
-sub id_meth { 'site_id' }
+sub id_meth   { 'site_id' }
 sub uuid_meth { 'site_uuid' }
 
 =head1 INTERFACE
@@ -207,8 +207,11 @@ sub init {
     for (keys %args) {
         push @bad_args, $_ unless exists $site_args{$_};
     }
-    croak(__PACKAGE__ . "->init(): The following constructor args are " .
-          "invalid: '" . join("', '", @bad_args) . "'") if @bad_args;
+    croak(  __PACKAGE__
+          . "->init(): The following constructor args are "
+          . "invalid: '"
+          . join("', '", @bad_args) . "'")
+      if @bad_args;
 
     for (keys %site_args) {
         croak(__PACKAGE__ . "->init(): Required argument '$_' not present.")
@@ -223,7 +226,6 @@ sub init {
 
     return $self;
 }
-
 
 =item * $success = $site->delete()
 
@@ -253,8 +255,10 @@ sub delete {
     $self->dependent_check();
 
     # delete root category
-    my ($root) = pkg('Category')->find(dir => '/',
-                                       site_id => $id);
+    my ($root) = pkg('Category')->find(
+        dir     => '/',
+        site_id => $id
+    );
     $root->delete();
 
     # remove record from the site table
@@ -264,7 +268,6 @@ sub delete {
     # verify deletion was successful
     return pkg('Site')->find(site_id => $id) ? 0 : 1;
 }
-
 
 =item * $site->dependent_check()
 
@@ -294,20 +297,18 @@ sub dependent_check {
 
     my $dbh = dbh();
     my $sth =
-      $dbh->prepare("SELECT category_id FROM category WHERE dir != '/' AND " .
-                    "site_id = ?");
+      $dbh->prepare("SELECT category_id FROM category WHERE dir != '/' AND " . "site_id = ?");
     $sth->execute($id);
     $sth->bind_col(1, \$category_id);
     push @ids, $category_id while $sth->fetch();
 
-    Krang::Site::Dependency->throw(message => 'Site cannot be deleted. ' .
-                                  'Dependent categories found.',
-                                  category_id => \@ids)
-        if @ids;
+    Krang::Site::Dependency->throw(
+        message     => 'Site cannot be deleted. ' . 'Dependent categories found.',
+        category_id => \@ids
+    ) if @ids;
 
     return 0;
 }
-
 
 =item * $site->duplicate_check()
 
@@ -320,25 +321,25 @@ otherwise, 0 is returned.
 
 sub duplicate_check {
     my $self = shift;
-    my $dbh = dbh();
-    my $id = $self->{site_id};
+    my $dbh  = dbh();
+    my $id   = $self->{site_id};
 
     # setup query
     my @params = ($self->{url});
-    my $query = "SELECT 1 FROM site WHERE url = ?";
+    my $query  = "SELECT 1 FROM site WHERE url = ?";
     if ($id) {
         $query .= " AND site_id != ?";
         push @params, $id;
     }
 
     my ($exists) = $dbh->selectrow_array($query, undef, @params);
-    Krang::Site::Duplicate->throw(message => "A site with the URL '$self->{url}' already exists in the database.")
-        if $exists;
+    Krang::Site::Duplicate->throw(
+        message => "A site with the URL '$self->{url}' already exists in the database.")
+      if $exists;
 
     # no dup found
     return 0;
 }
-
 
 =item * @sites = Krang::Site->find( %params )
 
@@ -415,74 +416,85 @@ sub find {
 
     # grab ascend/descending, limit, and offset args
     my $ascend = delete $args{order_desc} ? 'DESC' : 'ASC';
-    my $limit = delete $args{limit} || '';
-    my $offset = delete $args{offset} || '';
+    my $limit    = delete $args{limit}    || '';
+    my $offset   = delete $args{offset}   || '';
     my $order_by = delete $args{order_by} || 'url';
 
     # set search fields
-    my $count = delete $args{count} || '';
+    my $count    = delete $args{count}    || '';
     my $ids_only = delete $args{ids_only} || '';
 
     # set bool to determine whether to use $row or %row for binding below
     my $single_column = $ids_only || $count ? 1 : 0;
 
-    croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
-          "Only one can be present.") if ($count && $ids_only);
+    croak(  __PACKAGE__
+          . "->find(): 'count' and 'ids_only' were supplied. "
+          . "Only one can be present.")
+      if ($count && $ids_only);
 
-    $fields = $count ? 'count(*)' :
-      ($ids_only ? 'site_id' : join(", ", keys %site_cols));
+    $fields =
+      $count
+      ? 'count(*)'
+      : ($ids_only ? 'site_id' : join(", ", keys %site_cols));
 
     # set up WHERE clause and @params, croak unless the args are in
     # SITE_RO or SITE_RW
     my @invalid_cols;
     for my $arg (keys %args) {
         my $like = 1 if $arg =~ /_like$/;
-        ( my $lookup_field = $arg ) =~ s/^(.+)_like$/$1/;
+        (my $lookup_field = $arg) =~ s/^(.+)_like$/$1/;
 
-        push @invalid_cols, $arg unless exists $site_cols{$lookup_field} ||
-          $arg eq 'simple_search';
+        push @invalid_cols, $arg
+          unless exists $site_cols{$lookup_field}
+              || $arg eq 'simple_search';
 
         if ($arg eq 'site_id' && ref $args{$arg} eq 'ARRAY') {
-            my $tmp = join(" OR ", map {"site_id = ?"} @{$args{$arg}});
+            my $tmp = join(" OR ", map { "site_id = ?" } @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
         } elsif ($arg eq 'simple_search') {
             my @words = split(/\s+/, $args{$arg});
-            for my $word(@words) {
+            for my $word (@words) {
                 my $numeric = $word =~ /^\d+$/ ? 1 : 0;
                 if ($where_clause) {
-                    $where_clause .= $numeric ? " AND site_id LIKE ?" :
-                      " AND (preview_path LIKE ? OR preview_url LIKE ? OR " .
-                        "publish_path LIKE ? OR url LIKE ?)";
+                    $where_clause .=
+                      $numeric
+                      ? " AND site_id LIKE ?"
+                      : " AND (preview_path LIKE ? OR preview_url LIKE ? OR "
+                      . "publish_path LIKE ? OR url LIKE ?)";
                 } else {
-                    $where_clause = $numeric ? "site_id LIKE ?" :
-                      "(preview_path LIKE ? OR preview_url LIKE ? OR " .
-                        "publish_path LIKE ? OR url LIKE ?)";
+                    $where_clause =
+                      $numeric
+                      ? "site_id LIKE ?"
+                      : "(preview_path LIKE ? OR preview_url LIKE ? OR "
+                      . "publish_path LIKE ? OR url LIKE ?)";
                 }
                 my $count = $numeric ? 1 : 4;
-                push @params, "%" . $word . "%" for (1..$count);
+                push @params, "%" . $word . "%" for (1 .. $count);
             }
         } else {
-            my $and = defined $where_clause && $where_clause ne '' ?
-              ' AND' : '';
+            my $and = defined $where_clause && $where_clause ne '' ? ' AND' : '';
             if (not defined $args{$arg}) {
                 $where_clause .= "$and $lookup_field IS NULL";
             } else {
-                $where_clause .= $like ? "$and $lookup_field LIKE ?" :
-                  "$and $lookup_field = ?";
+                $where_clause .=
+                  $like
+                  ? "$and $lookup_field LIKE ?"
+                  : "$and $lookup_field = ?";
                 push @params, $args{$arg};
             }
         }
     }
 
-    croak("The following passed search parameters are invalid: '" .
-          join("', '", @invalid_cols) . "'") if @invalid_cols;
+    croak(
+        "The following passed search parameters are invalid: '" . join("', '", @invalid_cols) . "'")
+      if @invalid_cols;
 
     # construct base query
     my $query = "SELECT $fields FROM site";
 
     # add WHERE and ORDER BY clauses, if any
-    $query .= " WHERE $where_clause" if $where_clause;
+    $query .= " WHERE $where_clause"        if $where_clause;
     $query .= " ORDER BY $order_by $ascend" if $order_by;
 
     # add LIMIT clause, if any
@@ -504,15 +516,17 @@ sub find {
     if ($single_column) {
         $sth->bind_col(1, \$row);
     } else {
-        $sth->bind_columns(\( @$row{@{$sth->{NAME_lc}}} ));
+        $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
     }
 
     # construct site objects from results
     while ($sth->fetchrow_arrayref()) {
+
         # if we just want count or ids
         if ($single_column) {
             push @sites, $row;
         } else {
+
             # set _old_url
             $row->{_old_url} = $row->{url};
             push @sites, bless({%$row}, $self);
@@ -521,10 +535,10 @@ sub find {
 
     # finish statement handle
     $sth->finish();
+
     # return number of rows if count, otherwise an array of site ids or objects
     return $count ? $sites[0] : @sites;
 }
-
 
 =item * $site = $site->save()
 
@@ -540,9 +554,9 @@ its database query affects no rows in the database.
 =cut
 
 sub save {
-    my $self = shift;
-    my $id = $self->{site_id} || '';
-    my @save_fields = grep {$_ ne 'site_id'} keys %site_cols;
+    my $self        = shift;
+    my $id          = $self->{site_id} || '';
+    my @save_fields = grep { $_ ne 'site_id' } keys %site_cols;
 
     # flag to force update of child categories
     my $update = $self->{url} ne $self->{_old_url} ? 1 : 0;
@@ -552,16 +566,18 @@ sub save {
 
     my $query;
     if ($id) {
-        $query = "UPDATE site SET " .
-          join(", ", map {"$_ = ?"} @save_fields) .
-            " WHERE site_id = ?";
+        $query =
+          "UPDATE site SET " . join(", ", map { "$_ = ?" } @save_fields) . " WHERE site_id = ?";
     } else {
-        $query = "INSERT INTO site (" . join(',', @save_fields) .
-          ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
+        $query =
+            "INSERT INTO site ("
+          . join(',', @save_fields)
+          . ") VALUES (?"
+          . ", ?" x (scalar @save_fields - 1) . ")";
     }
 
     # bind parameters
-    my @params = map {$self->{$_}} @save_fields;
+    my @params = map { $self->{$_} } @save_fields;
 
     # need site_id for updates
     push @params, $id if $id;
@@ -569,30 +585,35 @@ sub save {
     my $dbh = dbh();
 
     # croak if no rows are affected
-    croak(__PACKAGE__ . "->save(): Unable to save site object " .
-          ($id ? "id '$id' " : '') . "to the DB.")
+    croak(  __PACKAGE__
+          . "->save(): Unable to save site object "
+          . ($id ? "id '$id' " : '')
+          . "to the DB.")
       unless $dbh->do($query, undef, @params);
 
     unless ($id) {
         $self->{site_id} = $dbh->{mysql_insertid};
 
         # create root category if it doesn't exist...
-        my $category = pkg('Category')->new(dir => '/',
-                                            site_id => $self->{site_id});
+        my $category = pkg('Category')->new(
+            dir     => '/',
+            site_id => $self->{site_id}
+        );
         $category->save();
     }
 
     # update category urls if necessary
     if ($update) {
+
         # Rename templates directory (if it exists)
-        my $current_instance = pkg('Conf')->instance;
-        my $base_template_path = catdir(KrangRoot, "data", "templates", $current_instance);
+        my $current_instance        = pkg('Conf')->instance;
+        my $base_template_path      = catdir(KrangRoot, "data", "templates", $current_instance);
         my $template_directory_path = catdir($base_template_path, $self->{_old_url});
         debug("template_directory_path = '$template_directory_path'");
         if (-d $template_directory_path) {
             my $new_template_path = catdir($base_template_path, $self->{url});
             debug("Renaming '$template_directory_path' to '$new_template_path'");
-            rename($template_directory_path, $new_template_path) 
+            rename($template_directory_path, $new_template_path)
               || die("Can't rename '$template_directory_path' to '$new_template_path': $!");
         }
 
@@ -602,7 +623,6 @@ sub save {
 
     return $self;
 }
-
 
 =item * $success = $site->update_child_categories()
 
@@ -614,7 +634,7 @@ the update.
 
 sub update_child_categories {
     my $self = shift;
-    my $id = $self->{site_id};
+    my $id   = $self->{site_id};
     my ($category_id, @ids);
 
     my $query = <<SQL;
@@ -634,13 +654,11 @@ SQL
     if (@ids) {
         should(scalar @ids, scalar pkg('Category')->find(category_id => \@ids))
           if ASSERT;
-        $_->update_child_urls($self)
-          for pkg('Category')->find(category_id => \@ids);
+        $_->update_child_urls($self) for pkg('Category')->find(category_id => \@ids);
     }
 
     return 1;
 }
-
 
 =item * $url = $site->url()
 
@@ -655,10 +673,9 @@ sub url {
     my $self = shift;
     return $self->{url} unless @_;
     if ($_[0]) {
-        my $val = exists $self->{url} && $self->{url} ne '' ?
-          $self->{url} : $_[0];
+        my $val = exists $self->{url} && $self->{url} ne '' ? $self->{url} : $_[0];
         $self->{_old_url} = $val;
-        $self->{url} = $_[0];
+        $self->{url}      = $_[0];
     }
     return $self;
 }
@@ -670,16 +687,16 @@ Serialize as XML.  See Krang::DataSet for details.
 =cut
 
 sub serialize_xml {
-    my ($self, %args) = @_;
-    my ($writer, $set) = @args{qw(writer set)};
+    my ($self,   %args) = @_;
+    my ($writer, $set)  = @args{qw(writer set)};
     local $_;
 
     # open up <site> linked to schema/site.xsd
-    $writer->startTag('site',
-                      "xmlns:xsi" => 
-                        "http://www.w3.org/2001/XMLSchema-instance",
-                      "xsi:noNamespaceSchemaLocation" =>
-                        'site.xsd');
+    $writer->startTag(
+        'site',
+        "xmlns:xsi"                     => "http://www.w3.org/2001/XMLSchema-instance",
+        "xsi:noNamespaceSchemaLocation" => 'site.xsd'
+    );
 
     $writer->dataElement($_, $self->$_)
       for qw(site_id site_uuid url preview_url publish_path preview_path);
@@ -700,24 +717,25 @@ instances of the same site.
 
 sub deserialize_xml {
     my ($pkg, %args) = @_;
-    my ($xml, $set, $no_update, $skip_update) 
-      = @args{qw(xml set no_update skip_update)};
+    my ($xml, $set, $no_update, $skip_update) = @args{qw(xml set no_update skip_update)};
 
     # parse it up
-    my $data = pkg('XML')->simple(xml           => $xml, 
-                                  suppressempty => 1);
-    
+    my $data = pkg('XML')->simple(
+        xml           => $xml,
+        suppressempty => 1
+    );
+
     # is there an existing object?
     my $site;
 
     # start with UUID lookup
     if (not $args{no_uuid} and $data->{site_uuid}) {
-        ($site) = $pkg->find(site_uuid  => $data->{site_uuid});
+        ($site) = $pkg->find(site_uuid => $data->{site_uuid});
 
         # if not updating this is fatal
-        Krang::DataSet::DeserializationFailed->throw(message =>
-                  "A site object with the UUID '$data->{site_uuid}' already"
-                  . " exists and no_update is set.")
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A site object with the UUID '$data->{site_uuid}' already"
+              . " exists and no_update is set.")
           if $site and $no_update;
     }
 
@@ -727,9 +745,9 @@ sub deserialize_xml {
 
         # if not updating this is fatal
         Krang::DataSet::DeserializationFailed->throw(
-            message => "A site object with the url '$data->{url}' already ".
-                       "exists and no_update is set.")
-            if $site and $no_update;
+            message => "A site object with the url '$data->{url}' already "
+              . "exists and no_update is set.")
+          if $site and $no_update;
     }
 
     if ($site) {
@@ -739,12 +757,13 @@ sub deserialize_xml {
         $site->url($data->{url});
         $site->preview_url($data->{preview_url});
     } else {
+
         # create a new site
         $site = pkg('Site')->new(map { ($_, $data->{$_}) } keys %site_args);
     }
 
     # preserve UUID if available
-    $site->{site_uuid} = $data->{site_uuid} 
+    $site->{site_uuid} = $data->{site_uuid}
       if $data->{site_uuid} and not $args{no_uuid};
 
     $site->save();
@@ -761,7 +780,6 @@ sub deserialize_xml {
 L<Krang>, L<Krang::DB>
 
 =cut
-
 
 my $quip = <<END;
 Democracy is the theory that holds that the common people know what they want,

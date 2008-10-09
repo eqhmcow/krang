@@ -75,15 +75,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -101,8 +104,6 @@ $@
 END
 }
 
-
-
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Story';
@@ -114,41 +115,41 @@ use Pod::Usage;
 my ($help, $man, $per_story, $per_media, $per_template, $all_instances, $first_resave, $test_mode);
 my $verbose = 0;
 
-print "\nkrang_prune_versions\n".
-        "--------------------\n";
+print "\nkrang_prune_versions\n" . "--------------------\n";
 
-print "\n* * * TEST MODE - NO ACTUAL CHANGES WILL BE WRITTEN TO THE DATABASE * * *\n\n" 
-    if $test_mode;
+print "\n* * * TEST MODE - NO ACTUAL CHANGES WILL BE WRITTEN TO THE DATABASE * * *\n\n"
+  if $test_mode;
 
-pod2usage(2) unless
-  GetOptions(
-             'versions-per-story=s' => \$per_story,
-             'versions-per-media=s' => \$per_media,
-             'versions-per-template=s' => \$per_template,
-             'all-instances'    => \$all_instances,
-	     'first-resave'     => \$first_resave,
-             'test-mode'        => \$test_mode,
-             'verbose+'         => \$verbose,
-             'help'             => \$help,
-             'man'              => \$man,
-            );
+pod2usage(2)
+  unless GetOptions(
+    'versions-per-story=s'    => \$per_story,
+    'versions-per-media=s'    => \$per_media,
+    'versions-per-template=s' => \$per_template,
+    'all-instances'           => \$all_instances,
+    'first-resave'            => \$first_resave,
+    'test-mode'               => \$test_mode,
+    'verbose+'                => \$verbose,
+    'help'                    => \$help,
+    'man'                     => \$man,
+  );
 
 pod2usage(1) if $help or $man or not($per_story or $per_media or $per_template);
 my %versions_to_keep = (story => $per_story, media => $per_media, template => $per_template);
 
 # make sure we have at least one instance
 unless ($all_instances || $ENV{KRANG_INSTANCE}) {
-    print "\nYou must either set the KRANG_INSTANCE environment variable or use the --all-instances argument.\n\n";
+    print
+      "\nYou must either set the KRANG_INSTANCE environment variable or use the --all-instances argument.\n\n";
     exit 1;
 }
 
 # make sure we weren't passed anything strange for arguments
 foreach my $type ('story', 'media', 'template') {
     if (my $versions = $versions_to_keep{$type}) {
-	unless ($versions =~ /^\d+$/ || $versions eq 'default') {
-	    print "\nversions-per-$type must be an integer or 'default'\n\n";
-	    exit 1;
-	}
+        unless ($versions =~ /^\d+$/ || $versions eq 'default') {
+            print "\nversions-per-$type must be an integer or 'default'\n\n";
+            exit 1;
+        }
     }
 }
 
@@ -157,38 +158,42 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : $ENV{KRANG_INS
     print "\n$instance:\n";
     pkg('Conf')->instance($instance);
     foreach my $type ('story', 'media', 'template') {
-        my $pkg_name = uc(substr($type, 0, 1)) . substr($type, 1); # convert 'story' to 'Story', etc.
+        my $pkg_name =
+          uc(substr($type, 0, 1)) . substr($type, 1);    # convert 'story' to 'Story', etc.
         if (my $versions_to_keep = $versions_to_keep{$type}) {
             print "\npruning $type objects\n";
-            my %args = ($versions_to_keep eq 'default' ? () : (number_to_keep => $versions_to_keep));
-	    $args{test_mode} = 1 if $test_mode;
+            my %args =
+              ($versions_to_keep eq 'default' ? () : (number_to_keep => $versions_to_keep));
+            $args{test_mode} = 1 if $test_mode;
             foreach my $object_id (pkg($pkg_name)->find(ids_only => 1)) {
-                my ($object) = pkg($pkg_name)->find($type.'_id' => $object_id);
-		if ($first_resave && !$test_mode) {
-		    # before modifying current version of object, record its location
-		    my $checked_out_by = $object->checked_out  && $object->checked_out_by;
-		    my $desk_id        = $type->can('desk_id') && $object->desk_id;
-		    $object->checkin if $object->checked_out;
-		    $object->checkout;
-		    $object->save(keep_version => 1);
-		    $object->checkin;
+                my ($object) = pkg($pkg_name)->find($type . '_id' => $object_id);
+                if ($first_resave && !$test_mode) {
 
-		    # if object was checked out to a user, return it to him/her
-		    if ($checked_out_by) {
-			my $me = $ENV{REMOTE_USER};
-			$ENV{REMOTE_USER} = $checked_out_by; # need to trick API!
-			$object->checkout;
-			$ENV{REMOTE_USER} = $me;
-		    }
-		    # and if it was on a desk, return it to that desk
-		    if ($desk_id) {
-			$object->move_to_desk($desk_id);
-		    }
-		}
+                    # before modifying current version of object, record its location
+                    my $checked_out_by = $object->checked_out  && $object->checked_out_by;
+                    my $desk_id        = $type->can('desk_id') && $object->desk_id;
+                    $object->checkin if $object->checked_out;
+                    $object->checkout;
+                    $object->save(keep_version => 1);
+                    $object->checkin;
+
+                    # if object was checked out to a user, return it to him/her
+                    if ($checked_out_by) {
+                        my $me = $ENV{REMOTE_USER};
+                        $ENV{REMOTE_USER} = $checked_out_by;    # need to trick API!
+                        $object->checkout;
+                        $ENV{REMOTE_USER} = $me;
+                    }
+
+                    # and if it was on a desk, return it to that desk
+                    if ($desk_id) {
+                        $object->move_to_desk($desk_id);
+                    }
+                }
                 my $number_deleted = $object->prune_versions(%args);
                 if ($verbose and ($number_deleted or $verbose > 1)) {
-                    print "#$object_id: deleted $number_deleted version" . 
-                        ($number_deleted == 1 ? '' : 's') . "\n";
+                    print "#$object_id: deleted $number_deleted version"
+                      . ($number_deleted == 1 ? '' : 's') . "\n";
                 }
             }
         }
@@ -196,5 +201,5 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : $ENV{KRANG_INS
 }
 print "\ndone\n\n";
 
-print "* * * TEST MODE - NO ACTUAL CHANGES WERE WRITTEN TO THE DATABASE * * *\n\n" 
-    if ($test_mode && $verbose);
+print "* * * TEST MODE - NO ACTUAL CHANGES WERE WRITTEN TO THE DATABASE * * *\n\n"
+  if ($test_mode && $verbose);

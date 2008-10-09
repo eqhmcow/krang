@@ -6,27 +6,29 @@ use warnings;
 use Krang::ClassLoader base => 'ElementClass';
 use Carp qw(croak);
 
-use Krang::ClassLoader MethodMaker => 
-  get_set => [ qw( value ) ];
+use Krang::ClassLoader MethodMaker => get_set => [qw( value )];
 
 sub new {
-    my $pkg = shift;
-    my %args = ( value    => 1,
-                 @_
-               );
-    
+    my $pkg  = shift;
+    my %args = (
+        value => 1,
+        @_
+    );
+
     return $pkg->SUPER::new(%args);
 }
 
 sub input_form {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
-    return scalar $query->checkbox(-name      => $param,
-                                   -checked   => $element->data() ? 1 : 0,
-                                   -value     => $self->value(),
-                                   -label     => '');
+    return scalar $query->checkbox(
+        -name    => $param,
+        -checked => $element->data() ? 1 : 0,
+        -value   => $self->value(),
+        -label   => ''
+    );
 }
 
 =head1 NAME

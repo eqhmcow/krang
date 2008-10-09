@@ -6,20 +6,23 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
-    
+
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
-    
-    # load Krang::Conf  and Krang::Log 
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
+
+    # load Krang::Conf  and Krang::Log
     # (don't need to load Krang here because we won't
     # be slinging elements)
-    eval { require Krang::Conf};
+    eval { require Krang::Conf };
     warn << "END" and exit(1) if $@;
 
 ######################################################################
@@ -36,6 +39,7 @@ END
 
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'AddOn';
+
 # call the init-handler of any AddOns being used
 BEGIN {
     print STDERR "Initializing AddOns...\n";
@@ -58,14 +62,14 @@ push(@ARGV, '-P', catfile(KrangRoot, 'tmp', 'krang_ftpd.pid'));
 # set port and address if specified
 push(@ARGV, '-p', FTPPort);
 if (FTPAddress ne "") {
-  push(@ARGV, '-o', 'local address=' . FTPAddress);
+    push(@ARGV, '-o', 'local address=' . FTPAddress);
 }
 
 # fix default limits which are set terribly low by default
-push(@ARGV, '-o', 'limit memory=' . 64*1024);
+push(@ARGV, '-o', 'limit memory=' . 64 * 1024);
 push(@ARGV, '-o', 'limit nr files=1024');
 
 # setup log
-push(@ARGV, '-o', 'error log=' . catfile(KrangRoot,"logs",'ftp.log'));
+push(@ARGV, '-o', 'error log=' . catfile(KrangRoot, "logs", 'ftp.log'));
 
 pkg('FTP::Server')->run;

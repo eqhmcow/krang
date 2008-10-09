@@ -8,16 +8,11 @@ use Krang::ClassLoader Conf => qw(KrangRoot);
 
 # a list of CGI modules without a suitable default mode (one that
 # requires no parameters)
-our %BAD_DEFAULT = map { ($_,1) } 
-  (pkg('CGI::History'),
-   pkg('CGI::ElementEditor'),
-   pkg('CGI::Schedule'),
-   pkg('CGI::Desk'),
-   pkg('CGI::Publisher'),
-   pkg('CGI::Help'),
-   pkg('CGI::Login'),
-  );
-
+our %BAD_DEFAULT = map { ($_, 1) } (
+    pkg('CGI::History'), pkg('CGI::ElementEditor'),
+    pkg('CGI::Schedule'), pkg('CGI::Desk'), pkg('CGI::Publisher'), pkg('CGI::Help'),
+    pkg('CGI::Login'),
+);
 
 # Arrange for CGI output to come back via return, but NOT go to STDOUT
 $ENV{CGI_APP_RETURN_ONLY} = 1;
@@ -25,16 +20,19 @@ $ENV{CGI_APP_RETURN_ONLY} = 1;
 my $krang_root = KrangRoot;
 
 # Check all Krang CGI-App modules
-find({ wanted => 
-       sub { 
-           return unless /\Q$krang_root\E\/lib\/Krang\/(CGI\/.*)\.pm$/;
-           return if /#/; # skip emacs droppings
+find(
+    {
+        wanted => sub {
+            return unless /\Q$krang_root\E\/lib\/Krang\/(CGI\/.*)\.pm$/;
+            return if /#/;    # skip emacs droppings
 
-           my $app_package = pkg(join('::', (split(/\//, $1))));
-           check_cgiapp($app_package);
-       },
-       no_chdir => 1 },
-    catdir($krang_root, 'lib', 'Krang', 'CGI'));
+            my $app_package = pkg(join('::', (split(/\//, $1))));
+            check_cgiapp($app_package);
+        },
+        no_chdir => 1
+    },
+    catdir($krang_root, 'lib', 'Krang', 'CGI')
+);
 
 # A Krang CGI-App module is deemed to be OK if:
 #    1. Compiles OK
@@ -49,7 +47,7 @@ sub check_cgiapp {
 
     # Is this a Krang::CGI?
     my $app = 0;
-    eval ( $app = $app_package->new() );
+    eval($app = $app_package->new());
     isa_ok($app, pkg('CGI'));
 
     # skip modules without a suitable default mode
@@ -65,5 +63,5 @@ sub check_cgiapp {
 
     # Does our output have the right HTTP headers?
     my $regex = qr/^Pragma: no-cache\s*\nCache-control: no-cache\s*\nContent\-Type\:([^\n]+)\s*\n/;
-    like( $output, $regex, "correct headers for $app_package->run().");
+    like($output, $regex, "correct headers for $app_package->run().");
 }

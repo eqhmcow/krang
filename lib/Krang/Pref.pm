@@ -119,14 +119,11 @@ sub add_option {
     my $sql = "INSERT INTO $conf->{table} ($conf->{name_field}) VALUES (?)";
     $dbh->do($sql, undef, $opt);
 
-    $sql = "SELECT $conf->{id_field} FROM $conf->{table} WHERE " .
-      "$conf->{name_field} = ?";
+    $sql = "SELECT $conf->{id_field} FROM $conf->{table} WHERE " . "$conf->{name_field} = ?";
     my $row = $dbh->selectrow_arrayref($sql, undef, $opt);
 
     return $row->[0];
 }
-
-
 
 =item $value = Krang::Pref->get('scalar_pref');
 
@@ -149,21 +146,23 @@ sub get {
       unless $conf;
 
     if ($conf->{type} eq 'scalar') {
+
         # handle scalar pref
-        my ($value) = $dbh->selectrow_array(
-                              'SELECT value FROM pref WHERE id = ?',
-                                            undef, $conf->{row});
+        my ($value) =
+          $dbh->selectrow_array('SELECT value FROM pref WHERE id = ?', undef, $conf->{row});
         return $value;
     } elsif ($conf->{type} eq 'list') {
+
         # handle list pref
         my $result = $dbh->selectall_arrayref(
-                              "SELECT $conf->{id_field}, $conf->{name_field}
-                               FROM   $conf->{table}");
+            "SELECT $conf->{id_field}, $conf->{name_field}
+                               FROM   $conf->{table}"
+        );
         return unless $result and @$result;
         return map { @$_ } @$result;
     }
-    
-    croak("Unknown pref type '$conf->{type}'");    
+
+    croak("Unknown pref type '$conf->{type}'");
 }
 
 =item Krang::Pref->set(scalar_pref => 'value');
@@ -187,16 +186,17 @@ sub set {
       unless $conf;
 
     if ($conf->{type} eq 'scalar') {
-        $dbh->do('REPLACE INTO pref (id, value) VALUES (?,?)', undef, 
-                 $conf->{row}, $args[0]);
+        $dbh->do('REPLACE INTO pref (id, value) VALUES (?,?)', undef, $conf->{row}, $args[0]);
     } elsif ($conf->{type} eq 'list') {
         $dbh->do("DELETE FROM $conf->{table}");
-        while(@args) {
-            my $id = shift @args;
+        while (@args) {
+            my $id   = shift @args;
             my $name = shift @args;
-            $dbh->do("INSERT INTO $conf->{table} 
+            $dbh->do(
+                "INSERT INTO $conf->{table} 
                         ($conf->{id_field}, $conf->{name_field})
-                      VALUES (?, ?)", undef, $id, $name);
+                      VALUES (?, ?)", undef, $id, $name
+            );
         }
     } else {
         croak("Unknown pref type '$conf->{type}'");

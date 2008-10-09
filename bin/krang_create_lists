@@ -55,15 +55,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang
     eval { require Krang };
@@ -83,7 +86,7 @@ END
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader Conf => qw (InstanceElementSet KrangRoot InstanceDisplayName);
-use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader DB   => qw(dbh);
 use Krang::ClassLoader 'ListGroup';
 use Krang::ClassLoader 'List';
 use Krang::ClassLoader 'ListItem';
@@ -96,17 +99,19 @@ use Pod::Usage;
 our ($help, $man, $verbose, $list_conf_file, $delete_missing);
 $verbose = 0;
 
-pod2usage(2) unless
-  GetOptions(help           => \$help,
-             man            => \$man,
-             'verbose+'     => \$verbose,
-             'input_file=s' => \$list_conf_file,
-             delete_missing => \$delete_missing);
-pod2usage(1)             if $help;
+pod2usage(2)
+  unless GetOptions(
+    help           => \$help,
+    man            => \$man,
+    'verbose+'     => \$verbose,
+    'input_file=s' => \$list_conf_file,
+    delete_missing => \$delete_missing
+  );
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
-my ($groups_created, $groups_deleted, $lists_created, $lists_deleted,
-    $items_created, $items_deleted);
+my ($groups_created, $groups_deleted, $lists_created, $lists_deleted, $items_created,
+    $items_deleted);
 
 # Find path to element library for InstanceElementSet
 my $addon = InstanceElementSet;
@@ -114,7 +119,8 @@ my $addon = InstanceElementSet;
 # Are we in the new /krang/addons/ directory, or legacy /krang/element_lib/?
 my $element_lib_dir = catdir(KrangRoot, 'addons', $addon, 'element_lib', $addon);
 $element_lib_dir = catdir(KrangRoot, 'element_lib', $addon) unless (-d $element_lib_dir);
-die("Can't find element_lib/$addon/ in krang/addons/ or krang/element_lib/") unless (-d $element_lib_dir);
+die("Can't find element_lib/$addon/ in krang/addons/ or krang/element_lib/")
+  unless (-d $element_lib_dir);
 
 # Location of our file, if we have one.
 $list_conf_file ||= catfile($element_lib_dir, 'lists.conf');
@@ -136,99 +142,108 @@ if (-f $list_conf_file) {
         my $lg;
         if ($lg = $existing_groups{$list_group_name}) {
             print STDERR "Found Group '$list_group_name'\n" if $verbose;
+
             # remove group fr. hash so it'll be easy to find superfluous ones
             delete $existing_groups{$list_group_name};
         } else {
             print STDERR "Adding Group '$list_group_name'\n" if $verbose;
-            $lg = pkg('ListGroup')->new( name => $list_group_name, 
-                                         description => $list_group->{description} );            
+            $lg = pkg('ListGroup')->new(
+                name        => $list_group_name,
+                description => $list_group->{description}
+            );
             $lg->save;
             ++$groups_created;
         }
-        
+
         my $prev_list_id;
-        
+
         # Get lists currently in the CMS under this group
-        my %existing_lists = 
-            ( map { ($_->parent_list_id || '').':'.$_->name, $_ }
-              pkg('List')->find (list_group_id => $lg->list_group_id) );
-        
+        my %existing_lists =
+          (map { ($_->parent_list_id || '') . ':' . $_->name, $_ }
+              pkg('List')->find(list_group_id => $lg->list_group_id));
+
         # Iterate through lists in the lists.conf file under this group
         foreach my $list (@{$list_group->{list}}) {
             my %params;
-            $params{name} = $list->{list_name};
-            $params{list_group_id} = $lg->list_group_id;
-            $params{parent_list_id} = $prev_list_id if $prev_list_id; 
-            
+            $params{name}           = $list->{list_name};
+            $params{list_group_id}  = $lg->list_group_id;
+            $params{parent_list_id} = $prev_list_id if $prev_list_id;
+
             my $new_list;
-            my $list_key = ($prev_list_id || '').':'.$list->{list_name};
+            my $list_key = ($prev_list_id || '') . ':' . $list->{list_name};
             if ($new_list = $existing_lists{$list_key}) {
-                print STDERR "  Found List '". $params{name} ."'\n" 
+                print STDERR "  Found List '" . $params{name} . "'\n"
                   if $verbose;
                 delete $existing_lists{$list_key};
             } else {
-                print STDERR "  Adding List '". $params{name} ."'\n" 
+                print STDERR "  Adding List '" . $params{name} . "'\n"
                   if $verbose;
-                $new_list = pkg('List')->new( %params );
+                $new_list = pkg('List')->new(%params);
                 $new_list->save;
                 ++$lists_created;
             }
-            
+
             # Get items currently in the CMS for this list
-            my %existing_items = 
-                ( map { ($_->parent_list_item_id || '').':'.$_->data, $_ }
-                  pkg('ListItem')->find (list_id => $new_list->list_id) );
-            
+            my %existing_items =
+              (map { ($_->parent_list_item_id || '') . ':' . $_->data, $_ }
+                  pkg('ListItem')->find(list_id => $new_list->list_id));
+
             # Iterate through items in the lists.conf file for this list
             my $order = 1;
             foreach my $item (@{$list->{list_item}}) {
-                my $item_name = $item->{item_name};
+                my $item_name        = $item->{item_name};
                 my $parent_item_name = $item->{parent_item_name};
-                $item_name =~ s/\s+$//;        # remove any trailing whitespace
-                $parent_item_name =~ s/\s+$//  # since CMS seems to do the same
+                $item_name        =~ s/\s+$//;    # remove any trailing whitespace
+                $parent_item_name =~ s/\s+$//     # since CMS seems to do the same
                   if $parent_item_name;
-                
+
                 # Set up new item
-                my %item_params = ( list => $new_list,
-                                    order => $order++,
-                                    data => $item_name);
+                my %item_params = (
+                    list  => $new_list,
+                    order => $order++,
+                    data  => $item_name
+                );
 
                 # Find parent (if applicable)
                 my $parent_item_id;
                 if ($parent_item_name) {
-                    if (my ($parent_item) = pkg('ListItem')->find
-                        ( list_id => $prev_list_id,
-                          data => $parent_item_name )) {
+                    if (
+                        my ($parent_item) = pkg('ListItem')->find(
+                            list_id => $prev_list_id,
+                            data    => $parent_item_name
+                        )
+                      )
+                    {
                         $item_params{parent_list_item} = $parent_item;
                         $parent_item_id = $parent_item->list_item_id;
                     } elsif (!$delete_missing) {
-                        die ("Cannot find parent item '$parent_item_name' ".
-                             "in list_id '$prev_list_id'");
+                        die(    "Cannot find parent item '$parent_item_name' "
+                              . "in list_id '$prev_list_id'");
                     }
                 }
 
-                my $item_key = ($parent_item_id || '').':'.$item_name;
-                if ( $existing_items{$item_key} ) {
+                my $item_key = ($parent_item_id || '') . ':' . $item_name;
+                if ($existing_items{$item_key}) {
                     print STDERR "    Found Item '$item_name'\n"
                       if $verbose > 1;
                     delete $existing_items{$item_key};
                 } else {
-                    print STDERR "    Adding Item '$item_name'". 
-                      ($parent_item_name ? " (parent $parent_item_name)" : "") ."\n"
-                        if $verbose > 1;
+                    print STDERR "    Adding Item '$item_name'"
+                      . ($parent_item_name ? " (parent $parent_item_name)" : "") . "\n"
+                      if $verbose > 1;
                     my $new_item = pkg('ListItem')->new(%item_params);
                     $new_item->save();
                     ++$items_created;
                 }
             }
-            
+
             # Set up previous list ID for next list
-            $prev_list_id = $new_list->list_id ;
+            $prev_list_id = $new_list->list_id;
 
             # If user wanted, remove items in CMS that aren't in lists.conf...
             if ($delete_missing) {
                 foreach my $item_not_in_file (keys %existing_items) {
-                    print STDERR "    Deleting item '$item_not_in_file'\n" if ($verbose>1);
+                    print STDERR "    Deleting item '$item_not_in_file'\n" if ($verbose > 1);
                     $existing_items{$item_not_in_file}->delete;
                     ++$items_deleted;
                 }
@@ -246,7 +261,7 @@ if (-f $list_conf_file) {
         }
 
     }
-    
+
     # ...and groups that aren't in lists.conf
     if ($delete_missing) {
         foreach my $group_not_in_file (keys %existing_groups) {
@@ -255,7 +270,7 @@ if (-f $list_conf_file) {
             ++$groups_deleted;
         }
     }
-    
+
 } else {
 
     print "\nERROR: Could not open '$list_conf_file'\n\n";
@@ -263,10 +278,11 @@ if (-f $list_conf_file) {
 
 }
 
-
 # Output report
 if ($verbose) {
-    print "\nListGroups and Lists updated successfully for instance '". InstanceDisplayName ."'.\n\n";
+    print "\nListGroups and Lists updated successfully for instance '"
+      . InstanceDisplayName
+      . "'.\n\n";
 
     print "Groups    created: " . ($groups_created || 0) . "\n";
     print "  Lists   created: " . ($lists_created  || 0) . "\n";
@@ -274,8 +290,8 @@ if ($verbose) {
 
     if ($delete_missing) {
         print "\n(entire) Groups    deleted: " . ($groups_deleted || 0) . "\n";
-        print   "  (entire) Lists   deleted: " . ($lists_deleted  || 0) . "\n";
-        print   "    (single) Items deleted: " . ($items_deleted  || 0) . "\n";
+        print "  (entire) Lists   deleted: " .   ($lists_deleted  || 0) . "\n";
+        print "    (single) Items deleted: " .   ($items_deleted  || 0) . "\n";
     }
 
     print "\n";

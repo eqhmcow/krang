@@ -15,7 +15,7 @@ BEGIN {
     unless (-e catfile(KrangRoot, 'tmp', 'httpd.pid')) {
         eval "use Test::More skip_all => 'Krang Apache server not running.';";
     } else {
-        eval "use Test::More qw(no_plan);"
+        eval "use Test::More qw(no_plan);";
     }
     die $@ if $@;
 }
@@ -28,7 +28,7 @@ foreach my $instance (pkg('Conf')->instances()) {
 
     # try logging in with a bad password
     $mech->login_not_ok(rand(), rand());
-    
+
     # try logging in with good (default) creds
     $mech->login_ok('', '', "Login INSTANCE '$instance'");
 

@@ -38,14 +38,13 @@ the configured characters set if none is given.
 
 sub _munge_charset {
     my $charset = lc shift;
-    $charset =~ s/\s*//g; # remove ws
-    $charset =~ s/-//g;   # remove hyphens
+    $charset =~ s/\s*//g;    # remove ws
+    $charset =~ s/-//g;      # remove hyphens
     return $charset;
 }
 
-
 sub is_utf8 {
-    my ($class, $charset ) = @_;
+    my ($class, $charset) = @_;
     $charset ||= pkg('Conf')->get('Charset') || '';
     return _munge_charset($charset) eq 'utf8';
 }
@@ -92,7 +91,7 @@ sub is_supported {
 
     # see if Perl supports it
     eval { encode($charset, 'abc') };
-    if( $@ ) {
+    if ($@) {
         return 0 if $@ =~ /Unknown encoding/i;
         die $@;
     }
@@ -105,7 +104,5 @@ sub is_supported {
     my $rows = $sth->selectall_arrayref();
     return @$rows == 1;
 }
-
-
 
 1;

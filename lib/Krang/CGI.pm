@@ -160,7 +160,7 @@ use base 'CGI::Application';
 use Krang::ClassLoader Conf => qw(KrangRoot InstanceDisplayName Charset);
 use Krang::ClassLoader 'ErrorHandler';
 use Krang::ClassLoader 'HTMLTemplate';
-use Krang::ClassLoader Log => qw(critical info debug);
+use Krang::ClassLoader Log     => qw(critical info debug);
 use Krang::ClassLoader Session => qw/%session/;
 use Krang::ClassLoader 'User';
 
@@ -173,12 +173,13 @@ use constant HTMLLint => 0;
 my $LOGIN_URL;
 
 BEGIN {
+
     # setup instance and preview scheme if not running in mod_perl
     # needs to be set before import of Krang::ElementLibrary in
     # Krang::CGI::ElementEditor
-    unless($ENV{MOD_PERL}) {
-        my $instance = exists $ENV{KRANG_INSTANCE} ?
-          $ENV{KRANG_INSTANCE} : (pkg('Conf')->instances())[0];
+    unless ($ENV{MOD_PERL}) {
+        my $instance =
+          exists $ENV{KRANG_INSTANCE} ? $ENV{KRANG_INSTANCE} : (pkg('Conf')->instances())[0];
         debug("Krang::CGI:  Setting instance to '$instance'");
         pkg('Conf')->instance($instance);
     }
@@ -189,13 +190,16 @@ BEGIN {
     __PACKAGE__->add_callback(
         init => sub {
             my $self = shift;
+
             # add access_forbidden, redirect_to_login, redirect_to_workspace rms
-            $self->run_modes(access_forbidden      => 'access_forbidden',
-                             redirect_to_login     => 'redirect_to_login',
-                             redirect_to_workspace => 'redirect_to_workspace');
+            $self->run_modes(
+                access_forbidden      => 'access_forbidden',
+                redirect_to_login     => 'redirect_to_login',
+                redirect_to_workspace => 'redirect_to_workspace'
+            );
 
             # send the no-cache headers
-            if( $ENV{MOD_PERL} ) {
+            if ($ENV{MOD_PERL}) {
                 require Apache;
                 my $r = Apache->request();
                 $r->no_cache(1);
@@ -211,30 +215,33 @@ BEGIN {
             return if $q->param('is_non_utf8_redirect');
 
             # Decode the data
-            # If the 'base64' flag is set data could be Base64 encoded (we 
-            # Base64 encode in the client-side JavaScript since JavaScript 
+            # If the 'base64' flag is set data could be Base64 encoded (we
+            # Base64 encode in the client-side JavaScript since JavaScript
             # would natively encode to UTF-8 (done # by encodeURIComponent()).
-            # So by encoding in Base64 first we preserve the orginal 
+            # So by encoding in Base64 first we preserve the orginal
             # characters.
-            if( $q->param('base64') ) {
+            if ($q->param('base64')) {
                 my @names = $q->param();
                 foreach my $name (@names) {
+
                     # 'ajax' and 'base64' are not encoded
                     next if $name eq 'ajax' or $name eq 'base64';
                     my @values = $q->param($name);
-                    foreach my $i (0..$#values) {
+                    foreach my $i (0 .. $#values) {
                         $values[$i] = decode_base64($values[$i]);
                     }
 
                     $q->param($name => @values);
                 }
-            } elsif( $q->param('ajax') or pkg('Charset')->is_utf8 ) {
+            } elsif ($q->param('ajax') or pkg('Charset')->is_utf8) {
+
                 # else we mark the strings as UTF8 so other stuff doesn't
                 # have to worry about it
                 my @names = $q->param();
                 foreach my $name (@names) {
                     my @values = $q->param($name);
-                    foreach my $i (0..$#values) {
+                    foreach my $i (0 .. $#values) {
+
                         # CGI.pm overloads file upload params so that they are both
                         # strings and filehandles. If we decode it it will just be
                         # a string. There might be a better way to handle this if
@@ -248,56 +255,65 @@ BEGIN {
             }
         }
     );
+
     # setup our Authorization
     __PACKAGE__->add_callback(
         prerun => sub {
             my ($self, $rm) = @_;
 
             # if someone is actually logged in
-            if( $ENV{REMOTE_USER} ) {
+            if ($ENV{REMOTE_USER}) {
 
                 # make sure they can authorize this package first
-                my $perms = $self->param('PACKAGE_PERMISSIONS');
-                my $assets = $self->param('PACKAGE_ASSETS');
+                my $perms      = $self->param('PACKAGE_PERMISSIONS');
+                my $assets     = $self->param('PACKAGE_ASSETS');
                 my $authorized = $self->_check_permissions($perms) && $self->_check_assets($assets);
 
                 # now see if there are any run mode level restrictions
-                if( $authorized ) {
-                    $perms  = $self->param('RUNMODE_PERMISSIONS');
-                    $assets = $self->param('RUNMODE_ASSETS');
+                if ($authorized) {
+                    $perms      = $self->param('RUNMODE_PERMISSIONS');
+                    $assets     = $self->param('RUNMODE_ASSETS');
                     $authorized = $self->_check_permissions($perms->{$rm})
-                        && $self->_check_assets($assets->{$rm});
+                      && $self->_check_assets($assets->{$rm});
                 }
 
                 # don't let them go any further if they aren't authorized
-                $self->prerun_mode('access_forbidden') unless($authorized);
+                $self->prerun_mode('access_forbidden') unless ($authorized);
             }
         }
     );
 
-    __PACKAGE__->add_callback(postrun => sub {
-        # check for HTML errors if HTMLLint is on
-        my ($self, $o) = @_;   
-        return unless HTMLLint;
+    __PACKAGE__->add_callback(
+        postrun => sub {
 
-        # parse the output with HTML::Lint
-        require HTML::Lint;
-        my $lint = HTML::Lint->new();
-        $lint->parse($$o);
-        $lint->eof();
+            # check for HTML errors if HTMLLint is on
+            my ($self, $o) = @_;
+            return unless HTMLLint;
 
-        # if there were errors put them into a javascript popup
-        if ($lint->errors) {
-            my $err_text = "<ul>" . join("", map { "<li>$_</li>" }
-                                         map { s/&/&amp;/g;
-                                               s/</&lt;/g;
-                                               s/>/&gt;/g;
-                                               s/\\/\\\\/g;
-                                               s/"/\\"/g;
-                                               $_; }
-                                         map { $_->as_string } $lint->errors) .
-                                           "</ul>";
-        my $js = qq|
+            # parse the output with HTML::Lint
+            require HTML::Lint;
+            my $lint = HTML::Lint->new();
+            $lint->parse($$o);
+            $lint->eof();
+
+            # if there were errors put them into a javascript popup
+            if ($lint->errors) {
+                my $err_text = "<ul>" . join(
+                    "",
+                    map { "<li>$_</li>" }
+                      map {
+                        s/&/&amp;/g;
+                        s/</&lt;/g;
+                        s/>/&gt;/g;
+                        s/\\/\\\\/g;
+                        s/"/\\"/g;
+                        $_;
+                      }
+                      map {
+                        $_->as_string
+                      } $lint->errors
+                ) . "</ul>";
+                my $js = qq|
             <script type="text/javascript">
             var html_lint_window = window.open( '', 'html_lint_window', 'height=300,width=600' );
             html_lint_window.document.write( '<html><head><title>HTML Errors Detected</title></head><body><h1>HTML Errors Detected</h1>$err_text</body></html>' );
@@ -305,76 +321,84 @@ BEGIN {
             html_lint_window.focus();
             </script>
         |;
-            if ($$o =~ m!</body>!) {
-                $$o =~ s!</body>!$js\n</body>!;
-            } else {
-                $$o .= $js;
+                if ($$o =~ m!</body>!) {
+                    $$o =~ s!</body>!$js\n</body>!;
+                } else {
+                    $$o .= $js;
+                }
             }
         }
-    });
+    );
 
     # make sure our redirect headers are AJAXy
     # if the original request was for AJAX
     # also make sure that the Charset is set if we have it
-    __PACKAGE__->add_callback(postrun => sub {
-        # take care of AJAXy redirects
-        my $self  = shift;
-        my %props = $self->header_props();
-        my $uri   = delete $props{'uri'} 
-            || delete $props{'-uri'} 
-            || delete $props{'url'} 
-            || delete $props{'-url'};
+    __PACKAGE__->add_callback(
+        postrun => sub {
 
-        if ($uri) {
-            # add ajax flag
-            my $ajax  = $self->param('ajax');
-            $self->add_to_query(\$uri, "ajax=$ajax")
-                if $ajax;
+            # take care of AJAXy redirects
+            my $self  = shift;
+            my %props = $self->header_props();
+            my $uri   = delete $props{'uri'}
+              || delete $props{'-uri'}
+              || delete $props{'url'}
+              || delete $props{'-url'};
 
-            # add window_id
-            $self->add_to_query(\$uri, "window_id=$ENV{KRANG_WINDOW_ID}")
-                if $ENV{KRANG_WINDOW_ID};
+            if ($uri) {
 
-            unless (pkg('Charset')->is_utf8()) {
-                $uri .= '&is_non_utf8_redirect=1';
+                # add ajax flag
+                my $ajax = $self->param('ajax');
+                $self->add_to_query(\$uri, "ajax=$ajax")
+                  if $ajax;
+
+                # add window_id
+                $self->add_to_query(\$uri, "window_id=$ENV{KRANG_WINDOW_ID}")
+                  if $ENV{KRANG_WINDOW_ID};
+
+                unless (pkg('Charset')->is_utf8()) {
+                    $uri .= '&is_non_utf8_redirect=1';
+                }
             }
+
+            # and allow non-AJAXy redirects
+            $props{'-uri'} = $uri if $uri;
+            $self->header_props(%props);
         }
+    );
 
-        # and allow non-AJAXy redirects
-        $props{'-uri'} = $uri if $uri;
-        $self->header_props(%props);
-    });
+    __PACKAGE__->add_callback(
+        prerun => sub {
+            my $self = shift;
 
-    __PACKAGE__->add_callback(prerun => sub {
-        my $self  = shift;
-        # This run mode is added as a run mode to every controller class since it's used
-        # in almost all of them. It is designed to be called as an AJAX request by
-        # the C<category_chooser> widget to return a portion of the category tree.
-        $self->run_modes(
-            category_chooser_node => sub {
-                my $self = shift;
-                my $query = $self->query();
-                my $chooser = category_chooser_object(
-                    query    => $query,
-                    may_edit => 1,
-                );
-                return $chooser->handle_get_node( query => $query );
-            },
-        );
+            # This run mode is added as a run mode to every controller class since it's used
+            # in almost all of them. It is designed to be called as an AJAX request by
+            # the C<category_chooser> widget to return a portion of the category tree.
+            $self->run_modes(
+                category_chooser_node => sub {
+                    my $self    = shift;
+                    my $query   = $self->query();
+                    my $chooser = category_chooser_object(
+                        query    => $query,
+                        may_edit => 1,
+                    );
+                    return $chooser->handle_get_node(query => $query);
+                },
+            );
 
-        # store the ajax flag in $self->param early on
-        # since some modules will call $query->delete_all();
-        $self->param( ajax => (scalar $self->query->param('ajax') ) );
-    });
+            # store the ajax flag in $self->param early on
+            # since some modules will call $query->delete_all();
+            $self->param(ajax => (scalar $self->query->param('ajax')));
+        }
+    );
 }
 
 sub _check_permissions {
     my ($self, $perms) = @_;
-    if( $perms && ref $perms eq 'ARRAY' ) {
+    if ($perms && ref $perms eq 'ARRAY') {
         my %actual_perms = pkg('Group')->user_admin_permissions();
         foreach my $perm (@$perms) {
             debug("Checking for permission '$perm'");
-            if( $actual_perms{$perm} ) {
+            if ($actual_perms{$perm}) {
                 debug("Found permission '$perm'");
                 return 1;
             } else {
@@ -390,14 +414,14 @@ sub _check_permissions {
 
 sub _check_assets {
     my ($self, $assets) = @_;
-    if( $assets && ref $assets eq 'HASH' ) {
+    if ($assets && ref $assets eq 'HASH') {
         my %actual_assets = pkg('Group')->user_asset_permissions();
         foreach my $asset (keys %$assets) {
             debug("Checking for asset '$asset'");
-            
+
             # assets have values, not just true/false so check for a correct value
             for my $val (@{$assets->{$asset}}) {
-                if( $val eq $actual_assets{$asset} ) {
+                if ($val eq $actual_assets{$asset}) {
                     debug("Found correct value '$val' for asset '$asset'");
                     return 1;
                 }
@@ -439,16 +463,12 @@ sub access_forbidden {
     my ($self, $msg) = @_;
 
     info(
-        "Unauthorized Access attempted by user #$ENV{REMOTE_USER}."
-        . " Redirecting to 'login.pl'"
-    );
+        "Unauthorized Access attempted by user #$ENV{REMOTE_USER}." . " Redirecting to 'login.pl'");
 
     $msg ||= localize("You do not have permissions to access that portion of the site.");
 
     return $self->redirect_to_login($msg);
 }
-
-
 
 =item * redirect_to_login($msg)
 
@@ -464,12 +484,13 @@ sub redirect_to_login {
     pkg('Session')->delete($ENV{KRANG_SESSION_ID});
 
     if ($msg) {
-	# care for non-urics in $msg
-	my $module = 'URI::Escape';
-	eval "require $module";
-	import $module qw(uri_escape);
 
-	$msg = '?alert=' . uri_escape($msg);
+        # care for non-urics in $msg
+        my $module = 'URI::Escape';
+        eval "require $module";
+        import $module qw(uri_escape);
+
+        $msg = '?alert=' . uri_escape($msg);
     } else {
         $msg = '';
     }
@@ -477,7 +498,7 @@ sub redirect_to_login {
     if ($self->param('ajax')) {
         return qq{<script type="text/javascript">location.replace("login.pl$msg")</script>};
     } else {
-        $self->header_add( -location => "login.pl$msg" );
+        $self->header_add(-location => "login.pl$msg");
         $self->header_type('redirect');
         return '';
     }
@@ -490,11 +511,11 @@ This runmode redirects the user to his or her workspace.
 =cut
 
 sub redirect_to_workspace {
-  my $self = shift;
-  my $uri = 'workspace.pl';
-  $self->header_props(-uri => $uri);
-  $self->header_type('redirect');
-  return "Redirect: <a href=\"$uri\">$uri</a>";
+    my $self = shift;
+    my $uri  = 'workspace.pl';
+    $self->header_props(-uri => $uri);
+    $self->header_type('redirect');
+    return "Redirect: <a href=\"$uri\">$uri</a>";
 }
 
 =item * cancel_edit()
@@ -505,42 +526,45 @@ version may have been written to disk via Save & Stay)
 =cut
 
 sub cancel_edit {
-    my $self   = shift;
-    my $q      = $self->query;
-    my $user   = $ENV{REMOTE_USER};
+    my $self = shift;
+    my $q    = $self->query;
+    my $user = $ENV{REMOTE_USER};
     my ($type) = $q->url(-relative => 1) =~ /(.*)\.pl$/;
     my $object = delete $session{$type};
 
-    die ('cancel_edit did not recognize URL: ' . $q->url) 
+    die('cancel_edit did not recognize URL: ' . $q->url)
       unless ($type eq 'story' || $type eq 'template' || $type eq 'media');
-    die ("cancel_edit did not find a $type in session")
+    die("cancel_edit did not find a $type in session")
       unless ($object);
 
     # if it's a new object that hasn't yet been saved, delete it
     if ($self->_cancel_edit_deletes($object)) {
         $object->checkin;
         $object->delete;
-    } 
-    
+    }
+
     # regardless, grab previous URL and check-out status
     my $pre_edit_url   = delete $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL};
     my $pre_edit_owner = delete $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID};
-    die ("cancel_edit wasn't told where to send browser!") unless $pre_edit_url;
+    die("cancel_edit wasn't told where to send browser!") unless $pre_edit_url;
 
     # if it's an object we opened from workspace, we'll leave it there, otherwise...
     unless ($pre_edit_url eq 'workspace.pl') {
         if (!$pre_edit_owner) {
+
             # if object wasn't checked out to anyone prior to our edit, check it in...
             $object->checkin;
             if ($object->isa('Krang::Story') && $object->last_desk_id) {
-                # and, if it was a story on a desk, return it to that desk 
+
+                # and, if it was a story on a desk, return it to that desk
                 $object->move_to_desk($object->last_desk_id);
             }
         } elsif ($pre_edit_owner != $user) {
+
             # if object was checked out to a different user, we must have stolen it..
             $object->checkin;
-            $ENV{REMOTE_USER} = $pre_edit_owner; # this hack returns the object to 
-            $object->checkout;                   # the user from whom we stole it
+            $ENV{REMOTE_USER} = $pre_edit_owner;    # this hack returns the object to
+            $object->checkout;                      # the user from whom we stole it
             $ENV{REMOTE_USER} = $user;
         }
     }
@@ -548,7 +572,7 @@ sub cancel_edit {
     # finally, return to pre-edit URL
     $self->header_props(uri => $pre_edit_url);
     $self->header_type('redirect');
-    return ""; 
+    return "";
 }
 
 # end of POD notes
@@ -557,14 +581,17 @@ sub cancel_edit {
 
 =cut
 
-
 sub _cancel_edit_goes_to {
     my ($self, $pre_edit_url, $pre_edit_owner) = @_;
     if (!$pre_edit_url) {
+
         # get
-        return ($session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL},
-                $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID});
+        return (
+            $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL},
+            $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID}
+        );
     } else {
+
         # set
         $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL}      = $pre_edit_url;
         $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID} = $pre_edit_owner;
@@ -573,12 +600,13 @@ sub _cancel_edit_goes_to {
 
 sub _cancel_edit_deletes {
     my ($self, $object) = @_;
+
     # currently only story.pl creates an object even before the user hits Save...
     return ($object->version == 1 && ($self->_cancel_edit_goes_to)[0] =~ /new_story$/);
 }
 
 sub _cancel_edit_changes_owner {
-    my $self = shift;
+    my $self           = shift;
     my $pre_edit_owner = ($self->_cancel_edit_goes_to)[1];
     return (!$pre_edit_owner || $pre_edit_owner != $ENV{REMOTE_USER});
 }
@@ -588,47 +616,43 @@ sub _cancel_edit_goes_to_workspace {
     return (($self->_cancel_edit_goes_to)[0] eq 'workspace.pl');
 }
 
-
-
-
-
-
-
 # load template using Krang::HTMLTemplate.  CGI::App doesn't provide a
 # way to specify a different class to use, so this code is copied in.
 sub load_tmpl {
     my $self = shift;
     my ($tmpl_file, @extra_params) = @_;
-    
+
     # add tmpl_path to path array if one is set, otherwise add a path arg
     if (my $tmpl_path = $self->tmpl_path) {
         my @tmpl_paths = (ref $tmpl_path eq 'ARRAY') ? @$tmpl_path : $tmpl_path;
         my $found = 0;
-        for( my $x = 0; $x < @extra_params; $x += 2 ) {
-            if ($extra_params[$x] eq 'path' and
-            ref $extra_params[$x+1] eq 'ARRAY') {
-                unshift @{$extra_params[$x+1]}, @tmpl_paths;
+        for (my $x = 0 ; $x < @extra_params ; $x += 2) {
+            if ($extra_params[$x] eq 'path'
+                and ref $extra_params[$x + 1] eq 'ARRAY')
+            {
+                unshift @{$extra_params[$x + 1]}, @tmpl_paths;
                 $found = 1;
                 last;
             }
         }
-        push(@extra_params, path => [ @tmpl_paths ]) unless $found;
-    } 
+        push(@extra_params, path => [@tmpl_paths]) unless $found;
+    }
 
     my $t = pkg('HTMLTemplate')->new_file($tmpl_file, @extra_params);
 
     # add the AJAX flag if we need to
-    $t->param(ajax => 1 ) if( $self->param('ajax') && $t->query( name => 'ajax' ) );
+    $t->param(ajax => 1) if ($self->param('ajax') && $t->query(name => 'ajax'));
     return $t;
 }
 
 sub run {
     my $self = shift;
-    my @args = ( @_ );
+    my @args = (@_);
 
     # Load and unload session ONLY if we have a session ID set
     my $we_loaded_session = 0;
     if (my $session_id = $ENV{KRANG_SESSION_ID}) {
+
         # Load session if we have a KRANG_SESSION_ID
         debug("Krang::CGI:  Loading Session '$session_id'");
         pkg('Session')->load($session_id);
@@ -650,14 +674,12 @@ sub run {
         die $@;
     }
 
-
     # In debug mode append dump_html()
     if ($ENV{KRANG_DEBUG} and $self->header_type() ne 'redirect') {
         my $dump_html = $self->dump_html();
         $output .= $dump_html;
         print $dump_html;
     }
-
 
     # Unload session if we loaded it
     if ($we_loaded_session) {
@@ -668,10 +690,9 @@ sub run {
     return $output;
 }
 
-
 # Krang-specific dump_html
 sub dump_html {
-    my $self = shift;
+    my $self   = shift;
     my $output = '';
 
     # Call standard dump
@@ -691,22 +712,19 @@ sub script_name {
 
 sub update_nav {
     my $self = shift;
-    my $q = $self->query;
+    my $q    = $self->query;
 
     $self->add_json_header('krang_update_nav' => 1);
 }
 
 sub add_to_query {
     my ($self, $uri, $param) = @_;
-    if( $$uri =~ /\?/ ) {
+    if ($$uri =~ /\?/) {
         $$uri .= '&';
     } else {
         $$uri .= '?';
     }
     $$uri .= $param;
 }
-
-
-
 
 1;

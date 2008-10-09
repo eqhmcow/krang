@@ -124,7 +124,7 @@ sub test_this {
     is(scalar(@live), 4, "Four $objects alive");
 
     my @retired = pkg($Object)->find(include_live => 0, include_retired => 1);
-    is(scalar(@retired),     1,     "One $object retired");
+    is(scalar(@retired), 1, "One $object retired");
     is($retired[0]->$obj_id, $oid0, "Found correct retired $object");
 
     my @trashed = pkg($Object)->find(include_live => 0, include_trashed => 1);
@@ -166,7 +166,7 @@ sub test_this {
     is(scalar(@live), 4, "Four $objects alive");
 
     @trashed = pkg($Object)->find(include_live => 0, include_trashed => 1);
-    is(scalar(@trashed),     1,     "One $object trashed");
+    is(scalar(@trashed), 1, "One $object trashed");
     is($trashed[0]->$obj_id, $oid0, "Found correct trashed $object");
 
     $count = pkg($Object)->find(include_live => 0, include_trashed => 1, count => 1);
@@ -217,7 +217,7 @@ sub test_this {
     is(scalar(@retired), 2, "Two $objects retired");
 
     @trashed = pkg($Object)->find(include_live => 0, include_trashed => 1);
-    is(scalar(@trashed),     1,     "One $object trashed");
+    is(scalar(@trashed), 1, "One $object trashed");
     is($trashed[0]->$obj_id, $oid2, "Found correct trashed $object");
 
     $obj1->trash();
@@ -229,7 +229,7 @@ sub test_this {
     is(scalar(@live), 2, "Two $objects alive");
 
     @retired = pkg($Object)->find(include_live => 0, include_retired => 1);
-    is(scalar(@retired),     1,     "One $object retired");
+    is(scalar(@retired), 1, "One $object retired");
     is($retired[0]->$obj_id, $oid0, "Found correct retired $object");
 
     @trashed = pkg($Object)->find(include_live => 0, include_trashed => 1);
@@ -247,7 +247,7 @@ sub test_this {
     is(scalar(@retired), 2, "Two $objects retired");
 
     @trashed = pkg($Object)->find(include_live => 0, include_trashed => 1);
-    is(scalar(@trashed),     1,     "One $object trashed");
+    is(scalar(@trashed), 1, "One $object trashed");
     is($trashed[0]->$obj_id, $oid2, "Found correct trashed $object");
 
     $obj1->unretire();
@@ -259,7 +259,7 @@ sub test_this {
     is(scalar(@live), 3, "Three $objects alive");
 
     @retired = pkg($Object)->find(include_live => 0, include_retired => 1);
-    is(scalar(@retired),     1,     "One $object retired");
+    is(scalar(@retired), 1, "One $object retired");
     is($retired[0]->$obj_id, $oid0, "Found correct retired $object");
 
     @trashed = pkg($Object)->find(include_live => 0, include_trashed => 1);

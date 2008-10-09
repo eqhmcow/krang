@@ -56,30 +56,30 @@ sub real_url {
 
     my ($self, %args) = @_;
 
-    my ($object, $publisher) = @args{ qw(object publisher) };
+    my ($object, $publisher) = @args{qw(object publisher)};
 
     return '' unless ref($object);
 
     $self->_check_object($object);
 
     if ($publisher->is_publish) {
-	return 'http://' . $object->url;
+        return 'http://' . $object->url;
     } elsif ($publisher->is_preview) {
-	my $scheme = PreviewSSL ? 'https' : 'http';
-	return "$scheme://" . $object->preview_url();
+        my $scheme = PreviewSSL ? 'https' : 'http';
+        return "$scheme://" . $object->preview_url();
     } else {
-	croak(__PACKAGE__ . ': Not in publish or preview mode. Cannot return proper URL.');
+        croak(__PACKAGE__ . ': Not in publish or preview mode. Cannot return proper URL.');
     }
 }
 
 sub _check_object {
 
-    my($self, $object) = @_;
+    my ($self, $object) = @_;
 
-    for my $method ( qw(url preview_url) ) {
-	unless ($object->can($method)) {
-	    croak(__PACKAGE__. ': ' . ref($object) . " misses required method '$method'.");
-	}
+    for my $method (qw(url preview_url)) {
+        unless ($object->can($method)) {
+            croak(__PACKAGE__ . ': ' . ref($object) . " misses required method '$method'.");
+        }
     }
 
     return 1;

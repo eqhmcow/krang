@@ -37,7 +37,7 @@ this feature, and only by knowing the hotkey (Ctrl-Alt-D).
 sub setup {
     my $self = shift;
     $self->mode_param('rm');
-    $self->start_mode('show');    
+    $self->start_mode('show');
     $self->run_modes(show => 'show');
     $self->tmpl_path('Debug/');
 }
@@ -54,22 +54,24 @@ sub show {
 
     # make sure they're really a global admin
     my %admin_perms = pkg('Group')->user_admin_permissions();
-    my @admin_apps = (qw(admin_users admin_groups admin_contribs
-                         admin_sites admin_categories admin_jobs
-                         admin_desks admin_lists));
+    my @admin_apps  = (
+        qw(admin_users admin_groups admin_contribs
+          admin_sites admin_categories admin_jobs
+          admin_desks admin_lists)
+    );
     croak("Attempt by non-global admin to access debug.pl!")
       if grep { not $admin_perms{$_} } @admin_apps;
 
-    my $query = $self->query();
+    my $query    = $self->query();
     my $template = $self->load_tmpl('debug.tmpl');
 
     my $log = catfile(KrangRoot, 'logs', 'krang.log');
-    $template->param(log  => scalar `tail -n300 $log`);
+    $template->param(log => scalar `tail -n300 $log`);
 
     my $conf = catfile(KrangRoot, 'conf', 'krang.conf');
     $template->param(conf => scalar `cat $conf`);
 
-    my $perl = $query->param('perl');
+    my $perl   = $query->param('perl');
     my $output = "";
     if (defined $perl and length $perl) {
         no strict;

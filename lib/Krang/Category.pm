@@ -1528,7 +1528,7 @@ sub can_copy_test {
     my %dst_cat_urls        = ();
 
     # verify that we are not copying ourself to one of our children
-    if(grep { $dst_cat->category_id == $_->category_id } @src_cat_descendants) {
+    if (grep { $dst_cat->category_id == $_->category_id } @src_cat_descendants) {
         Krang::Category::CantCopyParentToChild->throw(message => "Can't copy category #"
               . $self->category_id
               . " to child category "
@@ -1658,6 +1658,7 @@ sub can_copy_test {
     # handled further up.
     #
     for my $src_story (pkg('Story')->find(below_category_id => $self->category_id)) {
+
         # Build URL of would-be-created story
         (my $rel_src_path = $src_story->url) =~ s!^$src_cat_url!!;
         my $dst_story_url = $dst_cat_url . $rel_src_path;
@@ -1665,10 +1666,14 @@ sub can_copy_test {
         # check if a cat with this URL exists
         my ($conflicting_dst_cat) = pkg('Category')->find(url => $dst_story_url . '/');
         if ($conflicting_dst_cat) {
+
             # does this cat already have a category index?
-            my ($index) = pkg('Story')->find(category_id => $conflicting_dst_cat->category_id,
-                                             slug        => '');
+            my ($index) = pkg('Story')->find(
+                category_id => $conflicting_dst_cat->category_id,
+                slug        => ''
+            );
             if ($index) {
+
                 # ask user if non-conflicting assets should be copied
                 Krang::Category::CopyAssetConflict->throw(message =>
                       "At least one asset below source category would cause a DuplicateURL conflict with an asset existing below the destination category."
@@ -1826,10 +1831,14 @@ sub copy {
                     my $would_be_story_url = $dst->url . $obj->slug . '/';
                     my ($c_cat) = pkg('Category')->find(url => $would_be_story_url);
                     if ($c_cat) {
+
                         # we might transform the story into a category
                         # index of the existing category
-                        my ($index) = pkg('Story')->find(category_id => $c_cat->category_id,
-                                                         slug        => '');
+                        my ($index) = pkg('Story')->find(
+                            category_id => $c_cat->category_id,
+                            slug        => ''
+                        );
+
                         # trash the existing category index to make room
                         if ($index) {
                             if ($args{overwrite}) {
@@ -1841,7 +1850,7 @@ sub copy {
 
                         # cat and slug for a new index category
                         $dst_cat_id = $c_cat->category_id;
-                        $slug = '';
+                        $slug       = '';
                     }
                 }
 

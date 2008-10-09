@@ -3,7 +3,7 @@ use Krang::ClassFactory qw(pkg);
 use Test::More qw(no_plan);
 
 # ignore a few tables which harmlessly grow in certain circumstances
-our %IGNORE = map { ($_,1) } qw( my_pref sessions history );
+our %IGNORE = map { ($_, 1) } qw( my_pref sessions history );
 
 use strict;
 use warnings;

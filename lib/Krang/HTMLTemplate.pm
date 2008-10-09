@@ -26,16 +26,16 @@ See L<HTML::Template>.
 
 use base 'HTML::Template';
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Conf => qw(
-    InstanceDisplayName 
-    KrangRoot 
-    Skin 
-    CustomCSS 
-    EnableBugzilla 
-    ContactEmail 
-    Charset 
-    EnableTemplateCache
-    DefaultLanguage
+use Krang::ClassLoader Conf    => qw(
+  InstanceDisplayName
+  KrangRoot
+  Skin
+  CustomCSS
+  EnableBugzilla
+  ContactEmail
+  Charset
+  EnableTemplateCache
+  DefaultLanguage
 );
 use Krang::ClassLoader Message => qw(get_messages clear_messages get_alerts clear_alerts);
 use Krang::ClassLoader 'Navigation';
@@ -51,17 +51,23 @@ use Carp qw(croak);
 our @PATH;
 
 sub reload_paths {
-    @PATH = 
-      (grep { -e $_ } 
-       (map { catdir(KrangRoot, 'addons', $_, 'skins', Skin, 'templates'),
-              catdir(KrangRoot, 'addons', $_, 'templates') }
-        (map { $_->name } pkg('AddOn')->find())),
-       catdir(KrangRoot, 'skins', Skin, 'templates'),
-       catdir(KrangRoot, 'templates'));
+    @PATH = (
+        grep { -e $_ } (
+            map {
+                catdir(KrangRoot, 'addons', $_, 'skins', Skin, 'templates'),
+                  catdir(KrangRoot, 'addons', $_, 'templates')
+              } (
+                map {
+                    $_->name
+                  } pkg('AddOn')->find()
+              )
+        ),
+        catdir(KrangRoot, 'skins', Skin, 'templates'),
+        catdir(KrangRoot, 'templates')
+    );
 }
 
 BEGIN { reload_paths() }
-
 
 # overload new() to setup template paths
 sub new {
@@ -71,26 +77,29 @@ sub new {
 
     # by default we search the whole path on includes so that addons
     # (which come first in the paths) can override even included templates.
-    $arg{search_path_on_include} = defined $arg{search_path_on_include} 
-        ? $arg{search_path_on_include}
-        : 1;
+    $arg{search_path_on_include} =
+      defined $arg{search_path_on_include}
+      ? $arg{search_path_on_include}
+      : 1;
 
     # maybe add a utf-8 decoding filter
     if (pkg('Charset')->is_utf8) {
-	my @filters = ();
-	my $filter = $arg{filter};
-	if ($filter) {
-	    if (ref($filter) eq 'CODE') {
-		push @filters, $filter;
-	    } elsif (ref($filter) eq 'ARRAY') {
-		@filters = @$filter;
-	    } else {
-		croak "Filter argument to Krang::HTMLTemplate must be a code or an array reference, "
-		  . "but ref($filter) returned '" . ref($filter) . "'";
-	    }
-	}
-	push @filters, sub { ${$_[0]} = decode_utf8(encode_utf8(${$_[0]})) };
-	$arg{filter} = \@filters;
+        my @filters = ();
+        my $filter  = $arg{filter};
+        if ($filter) {
+            if (ref($filter) eq 'CODE') {
+                push @filters, $filter;
+            } elsif (ref($filter) eq 'ARRAY') {
+                @filters = @$filter;
+            } else {
+                croak
+                  "Filter argument to Krang::HTMLTemplate must be a code or an array reference, "
+                  . "but ref($filter) returned '"
+                  . ref($filter) . "'";
+            }
+        }
+        push @filters, sub { ${$_[0]} = decode_utf8(encode_utf8(${$_[0]})) };
+        $arg{filter} = \@filters;
     }
 
     return $pkg->SUPER::new(%arg);
@@ -99,7 +108,7 @@ sub new {
 # given the path setting coming from the caller, compute the final path array
 sub _compute_path {
     my $in = shift;
-    $in = [ $in ] unless ref $in;
+    $in = [$in] unless ref $in;
 
     # append @PATH to each input path
     my @out;
@@ -110,8 +119,8 @@ sub _compute_path {
     foreach my $in (@$in) {
         foreach my $path (@PATH) {
             push(@out, catdir($path, $in, $language));
-            push(@out, catdir($path, $language     ));
-            push(@out, catdir($path, $in           ));
+            push(@out, catdir($path, $language));
+            push(@out, catdir($path, $in));
         }
     }
     push(@out, @PATH);
@@ -120,15 +129,16 @@ sub _compute_path {
 }
 
 # overload output() to setup template variables
-my %CSS_CACHE; # for CustomCSS and language-specific CSS files in skin/*/css/
+my %CSS_CACHE;    # for CustomCSS and language-specific CSS files in skin/*/css/
+
 sub output {
     my $template = shift;
 
     # fill in header variables as necessary
     if ($template->query(name => 'header_user_name')) {
-      if (my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER})) {
-        $template->param(header_user_name => $user->first_name.' '.$user->last_name);
-      }
+        if (my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER})) {
+            $template->param(header_user_name => $user->first_name . ' ' . $user->last_name);
+        }
     }
 
     $template->param(window_id => $ENV{KRANG_WINDOW_ID})
@@ -141,44 +151,45 @@ sub output {
       if $template->query(name => 'instance_display_name');
 
     $template->param(enable_bugzilla => EnableBugzilla)
-        if $template->query(name => 'enable_bugzilla');
+      if $template->query(name => 'enable_bugzilla');
 
     # add the message and alert loops
     if ($template->query(name => 'header_message_loop')) {
-        $template->param( header_message_loop => [ map { { message => $_ } } get_messages() ] );
+        $template->param(header_message_loop => [map { {message => $_} } get_messages()]);
         clear_messages();
     }
 
     if ($template->query(name => 'header_alert_loop')) {
-        $template->param( header_alert_loop => [ map { { alert => $_ } } get_alerts() ] );
+        $template->param(header_alert_loop => [map { {alert => $_} } get_alerts()]);
         clear_alerts();
     }
 
-    if (CustomCSS() and $template->query(name => 'custom_css') ) {
+    if (CustomCSS() and $template->query(name => 'custom_css')) {
+
         # read in the custom css file if we can find it
         my $file = pkg('File')->find(CustomCSS());
-        if( $file ) {
-	    $template->_insert_css($file, 'custom_css');
-	}
+        if ($file) {
+            $template->_insert_css($file, 'custom_css');
+        }
     }
 
     # add the Krang version, product_name and install_id
     foreach my $name qw(version product_name install_id) {
-        $template->param("krang_$name" => pkg('Info')->$name )
-            if $template->query(name => "krang_$name");
+        $template->param("krang_$name" => pkg('Info')->$name)
+          if $template->query(name => "krang_$name");
     }
 
     # add any contact info
-    $template->param(cms_contact_email => ContactEmail() )
-        if $template->query(name => 'cms_contact_email' );
+    $template->param(cms_contact_email => ContactEmail())
+      if $template->query(name => 'cms_contact_email');
 
     pkg('Navigation')->fill_template(template => $template);
 
     # maybe include language-specific CSS file
     if ($template->query(name => 'language_specific_css')) {
-	my $lang = $session{language} || DefaultLanguage || 'en';
+        my $lang = $session{language} || DefaultLanguage || 'en';
 
-	unless ($lang eq 'en') {
+        unless ($lang eq 'en') {
 
             my $file = pkg('File')->find(catfile('lang', $lang, 'skins', Skin, 'css', "$lang.css"));
             if ($file) {
@@ -195,18 +206,19 @@ sub _insert_css {
     my ($template, $file, $param_name) = @_;
 
     my $css;
-    if( $CSS_CACHE{$file} ) {
-	$css = $CSS_CACHE{$file};
+    if ($CSS_CACHE{$file}) {
+        $css = $CSS_CACHE{$file};
     } else {
-	my $IN;
-	open($IN, $file) or croak "Could not open file $file for reading: $!";
-	# hopefully a tiny file, so slurp it
-	{
-	    local $/;
-	    $css = <$IN>;
-	}
-	close($IN);
-	$CSS_CACHE{$file} = $css;
+        my $IN;
+        open($IN, $file) or croak "Could not open file $file for reading: $!";
+
+        # hopefully a tiny file, so slurp it
+        {
+            local $/;
+            $css = <$IN>;
+        }
+        close($IN);
+        $CSS_CACHE{$file} = $css;
     }
     $template->param($param_name => $css);
 }

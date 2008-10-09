@@ -45,14 +45,15 @@ use FindBin qw($RealBin);
 use POSIX;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
     $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -71,7 +72,6 @@ $@
 END
 }
 
-
 # Krang-Dependent External Modules
 ###################################
 use Getopt::Long;
@@ -85,6 +85,7 @@ use Krang::ClassLoader 'PasswordHandler';
 use Krang::ClassLoader Message => qw(get_messages get_alerts);
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Conf';
+
 # use first instance if one isn't set.
 BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 
@@ -104,11 +105,12 @@ my $help = my $man = 0;
 # termial I/O vars
 my ($c_lflag, $fd, $termios);
 
-
 # Input Validation
 ###################
-pod2usage(2) unless GetOptions(help	=> \$help,
-                               man	=> \$man);
+pod2usage(2) unless GetOptions(
+    help => \$help,
+    man  => \$man
+);
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
@@ -118,7 +120,6 @@ pod2usage("No user 'login' specified") unless defined $login;
 
 # Program Body :-)
 main();
-
 
 =head1 METHODS
 
@@ -133,12 +134,13 @@ is a success.
 =cut
 
 sub main {
+
     # lookup user
     my ($user) = pkg('User')->find(login => $login);
     die("Login '$login' not found.") unless defined $user;
 
     # setup terminal I/O
-    $fd = fileno(STDIN);
+    $fd      = fileno(STDIN);
     $termios = POSIX::Termios->new;
     $termios->getattr($fd);
     $c_lflag = $termios->getlflag;
@@ -150,7 +152,7 @@ sub main {
     $user->password($pass);
 
     # save changes to user
-    eval {$user->save};
+    eval { $user->save };
     if (my $err = $@) {
         print STDERR "\nAttempt to set password failed: $err\n";
         exit 1;
@@ -158,7 +160,6 @@ sub main {
         print "\nPassword changed.\n";
     }
 }
-
 
 =item * $new_password = ask_pass()
 
@@ -183,14 +184,11 @@ sub ask_pass {
 
     chomp $npass;
 
-    my $ok = pkg('PasswordHandler')->check_pw(
-        $npass,
-        $user->login,
-        $user->email,
-        $user->first_name,
-        $user->last_name,
-    );
-    if( $ok ) {
+    my $ok =
+      pkg('PasswordHandler')
+      ->check_pw($npass, $user->login, $user->email, $user->first_name, $user->last_name,);
+    if ($ok) {
+
         # Confirm new pass
         ###################
         set_echo();
@@ -207,18 +205,18 @@ sub ask_pass {
             exit 1;
         }
     } else {
+
         # get any messages added to the stack and print them
         my @msgs = get_messages();
-        print STDERR "\n$_" foreach( @msgs );
+        print STDERR "\n$_" foreach (@msgs);
         my @alerts = get_alerts();
-        print STDERR "\n! $_" foreach( @alerts );
+        print STDERR "\n! $_" foreach (@alerts);
         print STDERR "\nInvalid password!\n";
         exit 1;
     }
 
     return $npass;
 }
-
 
 =item * set_echo()
 
@@ -236,7 +234,6 @@ sub set_echo {
     # activate changes to terminal now
     $termios->setattr($fd, TCSANOW);
 }
-
 
 =back
 

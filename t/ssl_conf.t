@@ -66,8 +66,9 @@ my %params = pkg('Platform')->build_params();
 
 SKIP: {
 
-    skip('Krang not built with --with-ssl option skipping ssl_conf tests.', 31) 
-        unless($params{SSL});
+    skip('Krang not built with --with-ssl option skipping ssl_conf tests.', 31)
+      unless ($params{SSL});
+
     # setup the test conf file
     _setup_conf($base_conf);
 
@@ -76,9 +77,9 @@ SKIP: {
 
     # get the globals, all ways
     my @ssl_directives = qw(
-        SSLApachePort EnableSSL SSLPassPhraseDialog SSLRandomSeedStartup 
-        SSLRandomSeedConnect SSLProtocol SSLCipherSuite SSLVerifyClient 
-        SSLVerifyDepth SSLLogLevel
+      SSLApachePort EnableSSL SSLPassPhraseDialog SSLRandomSeedStartup
+      SSLRandomSeedConnect SSLProtocol SSLCipherSuite SSLVerifyClient
+      SSLVerifyDepth SSLLogLevel
     );
 
     foreach my $directive (@ssl_directives) {
@@ -87,7 +88,7 @@ SKIP: {
         pkg('Conf')->import($directive);
         ok(eval "$directive()", "$directive imported");
     }
-};
+}
 
 # put an arbitary conf file into place so that Krang::Conf will load it
 sub _setup_conf {
@@ -100,10 +101,9 @@ sub _setup_conf {
     $ENV{KRANG_CONF} = $test_conf;
 }
 
-END { 
-    if( -e $test_conf ) {
-        unlink($test_conf) or warn "Can't unlink($test_conf) : $!" 
+END {
+    if (-e $test_conf) {
+        unlink($test_conf) or warn "Can't unlink($test_conf) : $!";
     }
 }
-
 

@@ -3,38 +3,41 @@ use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::ClassLoader base => 'ElementClass';
+use Krang::ClassLoader base         => 'ElementClass';
 use Krang::ClassLoader Localization => qw(localize);
 use Carp qw(croak);
 
-use Krang::ClassLoader MethodMaker => 
-  get_set => [ qw( values ) ];
+use Krang::ClassLoader MethodMaker => get_set => [qw( values )];
 
 sub new {
-    my $pkg = shift;
-    my %args = ( values    => [],
-                 labels    => {},
-                 @_
-               );
-    
+    my $pkg  = shift;
+    my %args = (
+        values => [],
+        labels => {},
+        @_
+    );
+
     return $pkg->SUPER::new(%args);
 }
 
 sub input_form {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
     my $values = $self->values || [];
     my $labels = $self->labels || {};
+
     # if it's code, then call it to get the values
     $values = $values->($self, %arg) if ref $values eq 'CODE';
     $labels = $labels->($self, %arg) if ref $labels eq 'CODE';
 
-    return scalar $query->popup_menu(-name      => $param,
-                                     -default   => $element->data(),
-                                     -values    => $values,
-                                     -labels    => $labels);
+    return scalar $query->popup_menu(
+        -name    => $param,
+        -default => $element->data(),
+        -values  => $values,
+        -labels  => $labels
+    );
 }
 
 sub view_data {
@@ -59,15 +62,17 @@ sub labels {
     my %localized_labels = ();
 
     if (%{$self->{labels}}) {
-	# We've got labels
-	while ( my ($key, $val) = each %{$self->{labels}} ) {
-	    $localized_labels{$key} = localize($val);
-	}
+
+        # We've got labels
+        while (my ($key, $val) = each %{$self->{labels}}) {
+            $localized_labels{$key} = localize($val);
+        }
     } else {
-	# We've only got values
-	for my $val (@{$self->{values}}) {
-	    $localized_labels{$val} = localize($val);
-	}
+
+        # We've only got values
+        for my $val (@{$self->{values}}) {
+            $localized_labels{$val} = localize($val);
+        }
     }
 
     return \%localized_labels;

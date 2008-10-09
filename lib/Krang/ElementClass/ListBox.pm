@@ -3,34 +3,34 @@ use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::ClassLoader base => 'ElementClass::Storable';
+use Krang::ClassLoader base         => 'ElementClass::Storable';
 use Krang::ClassLoader Localization => qw(localize);
 use Carp qw(croak);
 
-use Krang::ClassLoader MethodMaker => 
-  get_set => [ qw( size multiple values ) ];
+use Krang::ClassLoader MethodMaker => get_set => [qw( size multiple values )];
 
 sub new {
-    my $pkg = shift;
-    my %args = ( size      => 5,
-                 multiple  => 0,
-                 values    => [],
-                 labels    => {},
-                 @_
-               );
-    
+    my $pkg  = shift;
+    my %args = (
+        size     => 5,
+        multiple => 0,
+        values   => [],
+        labels   => {},
+        @_
+    );
+
     return $pkg->SUPER::new(%args);
 }
 
 sub check_data {
     my ($class, %arg) = @_;
     croak("ListBox element class requires an array-ref in data().")
-      unless not defined $arg{data} or 
-        (ref($arg{data}) and ref($arg{data}) eq 'ARRAY');
+      unless not defined $arg{data}
+          or (ref($arg{data}) and ref($arg{data}) eq 'ARRAY');
 }
 
 sub input_form {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
@@ -43,21 +43,23 @@ sub input_form {
 
     my $values = $self->values || [];
     my $labels = $self->labels || {};
+
     # if it's code, then call it to get the values
     $values = $values->($self, %arg) if ref $values eq 'CODE';
     $labels = $labels->($self, %arg) if ref $labels eq 'CODE';
 
-    return scalar $query->scrolling_list(-name      => $param,
-                                         -default   => $default,
-                                         -values    => $values,
-                                         -labels    => $labels,
-                                         -size      => $self->size(),
-                                         ($self->multiple ? 
-                                          (-multiple => 'true') : ()));
+    return scalar $query->scrolling_list(
+        -name    => $param,
+        -default => $default,
+        -values  => $values,
+        -labels  => $labels,
+        -size    => $self->size(),
+        ($self->multiple ? (-multiple => 'true') : ())
+    );
 }
 
 sub load_query_data {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my $param = $element->xpath;
     $element->data([$query->param($param)]);
@@ -74,7 +76,7 @@ sub view_data {
     my ($self, %arg) = @_;
     my $element = $arg{element};
 
-    my @data   = @{$element->data};
+    my @data = @{$element->data};
     return '' unless @data;
 
     my $labels = $self->labels;
@@ -96,15 +98,17 @@ sub labels {
     my %localized_labels = ();
 
     if (%{$self->{labels}}) {
-	# We've got labels
-	while ( my ($key, $val) = each %{$self->{labels}} ) {
-	    $localized_labels{$key} = localize($key);
-	}
+
+        # We've got labels
+        while (my ($key, $val) = each %{$self->{labels}}) {
+            $localized_labels{$key} = localize($key);
+        }
     } else {
-	# We've only got values
-	for my $val (@{$self->{values}}) {
-	    $localized_labels{$val} = localize($val);
-	}
+
+        # We've only got values
+        for my $val (@{$self->{values}}) {
+            $localized_labels{$val} = localize($val);
+        }
     }
 
     return \%localized_labels;

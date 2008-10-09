@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Message => qw(add_alert);
-use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader DB      => qw(dbh);
 use Krang::ClassLoader 'User';
 use Digest::MD5 qw(md5_hex);
 
@@ -14,13 +14,13 @@ sub check_pw {
     my ($class, $pw, @info) = @_;
 
     my $valid = 0;
-    if( length $pw < 6 ) {
+    if (length $pw < 6) {
         add_alert('password_too_short');
-    } elsif( !($pw =~ /\d/ && $pw =~ /[^\d]/)) {
+    } elsif (!($pw =~ /\d/ && $pw =~ /[^\d]/)) {
         add_alert('password_too_simple');
-    } elsif( _pw_is_used($pw, $info[0]) ) {
+    } elsif (_pw_is_used($pw, $info[0])) {
         add_alert('password_currently_used');
-    } elsif( _pw_was_used($pw, $info[0]) ) {
+    } elsif (_pw_was_used($pw, $info[0])) {
         add_alert('password_used_recently');
     } else {
         $valid = 1;
@@ -34,7 +34,7 @@ sub _pw_is_used {
 
     # look for a user with that login
     my ($user) = pkg('User')->find(login => $login);
-    if( $user ) {
+    if ($user) {
         return (md5_hex($SALT, $pw) eq $user->password);
     }
     return 0;
@@ -47,23 +47,24 @@ sub _pw_was_used {
 
     # look for a user with that login
     my ($user) = pkg('User')->find(login => $login);
-    if( $user ) {
+    if ($user) {
+
         # see if they have an MD5 of this pw in the old_password table
-        my $sth = dbh()->prepare_cached(
-            'SELECT password FROM old_password WHERE user_id = ?'
-        );
+        my $sth = dbh()->prepare_cached('SELECT password FROM old_password WHERE user_id = ?');
         $sth->execute($user->user_id);
         my $old_pws = $sth->fetchall_arrayref();
         foreach my $row (@$old_pws) {
-            return 1 if(md5_hex($SALT, $pw) eq $row->[0]);
+            return 1 if (md5_hex($SALT, $pw) eq $row->[0]);
         }
     }
+
     # else it wasn't found so we're in the clear
     return 0;
 }
 
 sub _password_spec {
-    return "Password must be at least 6 characters long and include at least one number and one letter.";
+    return
+      "Password must be at least 6 characters long and include at least one number and one letter.";
 }
 
 1;

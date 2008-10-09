@@ -3,7 +3,7 @@ use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::ClassLoader Conf => qw(KrangRoot AvailableLanguages);
+use Krang::ClassLoader Conf    => qw(KrangRoot AvailableLanguages);
 use Krang::ClassLoader Session => qw(%session);
 use File::Spec::Functions qw(catfile catdir);
 use Carp qw(croak);
@@ -15,7 +15,8 @@ use I18N::LangTags qw(is_language_tag);
 use Class::ISA;
 
 use base 'Exporter';
-our @EXPORT_OK = qw(add_message get_messages get_message_text clear_messages add_alert get_alerts clear_alerts);
+our @EXPORT_OK =
+  qw(add_message get_messages get_message_text clear_messages add_alert get_alerts clear_alerts);
 
 our %CONF;
 
@@ -120,12 +121,12 @@ sub add_message {
 
     # get the text of this message with any variable substitution
     my $message = get_message_text($key, $from_module, %args);
-    croak("Unable to find message '$key' in lang/messages.$session{language} ".
-          "for '$from_module'")
+    croak(
+        "Unable to find message '$key' in lang/messages.$session{language} " . "for '$from_module'")
       unless $message;
 
     # push message
-    push(@{$session{messages} ||= []}, [ $key, $message ]);
+    push(@{$session{messages} ||= []}, [$key, $message]);
 }
 
 =over 4
@@ -157,12 +158,11 @@ sub add_alert {
 
     # get the text of this alert including variable substitution
     my $alert = get_message_text($key, $from_module, %args);
-    croak("Unable to find alert '$key' in lang/messages.$session{language} ".
-          "for '$from_module'")
+    croak("Unable to find alert '$key' in lang/messages.$session{language} " . "for '$from_module'")
       unless $alert;
 
     # push alert
-    push(@{$session{alerts} ||= []}, [ $key, $alert ]);
+    push(@{$session{alerts} ||= []}, [$key, $alert]);
 }
 
 =item @messages = get_messages();
@@ -242,6 +242,7 @@ sub get_message_text {
 
     my $msg;
     foreach my $module (Class::ISA::self_and_super_path($class)) {
+
         # get handle for the module block, if there is one
         my $conf;
         eval { $conf = $CONF->block(Module => $module) };
@@ -259,14 +260,13 @@ sub get_message_text {
     # perform substitutions
     while (my ($name, $value) = each %args) {
         unless ($msg =~ s/\$\Q$name\E/$value/g) {
-            croak("Unable to find substitution variable '$name' for message ".
-                  "'$key' in lang/$language/messages.conf");
+            croak(  "Unable to find substitution variable '$name' for message "
+                  . "'$key' in lang/$language/messages.conf");
         }
     }
 
     return $msg;
 }
-
 
 =item clear_messages();
 
@@ -295,30 +295,30 @@ sub _load_config {
     our %CONF;
 
     # the English default
-    my @languages = ( ['en' => 'conf'] );
+    my @languages = (['en' => 'conf']);
 
     # other languages
-    push @languages, map  { [$_ => catdir('lang', $_)] }
-                     grep { $_ ne 'en'                 } AvailableLanguages;
+    push @languages, map { [$_ => catdir('lang', $_)] }
+      grep { $_ ne 'en' } AvailableLanguages;
 
     # load them for all AvailableLanguages or just English
     for my $spec (@languages) {
-	my ($lang, $dir) = @$spec;
+        my ($lang, $dir) = @$spec;
 
-	croak "$lang is not a valid language tag"
-	  unless is_language_tag($lang);
+        croak "$lang is not a valid language tag"
+          unless is_language_tag($lang);
 
-	# find all messages.conf files in reverse order to
-	# give the intended overriding effect
-	my @files = reverse Krang::File->find_all(catfile($dir, 'messages.conf'));
+        # find all messages.conf files in reverse order to
+        # give the intended overriding effect
+        my @files = reverse Krang::File->find_all(catfile($dir, 'messages.conf'));
 
-	my $conf = Config::ApacheFormat->new();
-	$conf->read($_) for @files;
+        my $conf = Config::ApacheFormat->new();
+        $conf->read($_) for @files;
 
-	$CONF{$lang} = $conf;
+        $CONF{$lang} = $conf;
     }
 }
-BEGIN { _load_config() };
+BEGIN { _load_config() }
 
 1;
 

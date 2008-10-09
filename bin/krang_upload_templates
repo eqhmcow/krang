@@ -65,24 +65,25 @@ If specified, categories which do not exist in the CMS will be created instead o
 
 =cut
 
-
-
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
 use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
-    # load Krang::Conf 
+    # load Krang::Conf
     eval { require Krang::Conf };
     warn << "END" and exit(1) if $@;
 ######################################################################
@@ -97,8 +98,6 @@ $@
 END
 }
 
-
-
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader Conf => qw(InstanceElementSet KrangRoot);
@@ -110,27 +109,26 @@ use Krang::ClassLoader 'IO';
 use Getopt::Long;
 use Pod::Usage;
 
-
 my ($help, $man, $path);
-my $user = "admin";
-my $password = "";
-my $makecats = 0;
-my $verbose = 0;
+my $user          = "admin";
+my $password      = "";
+my $makecats      = 0;
+my $verbose       = 0;
 my $force_checkin = 0;
 
-pod2usage(2) unless
-  GetOptions(
-             'path=s' => \$path,
-             'user=s' => \$user,
-             'password=s' => \$password,
-             'verbose+' => \$verbose,
-             'force-checkin' => \$force_checkin,
-             'makecats' => \$makecats,
-             'help' => \$help,
-             'man' => \$man,
-            );
+pod2usage(2)
+  unless GetOptions(
+    'path=s'        => \$path,
+    'user=s'        => \$user,
+    'password=s'    => \$password,
+    'verbose+'      => \$verbose,
+    'force-checkin' => \$force_checkin,
+    'makecats'      => \$makecats,
+    'help'          => \$help,
+    'man'           => \$man,
+  );
 
-pod2usage(1)             if $help || !$path;
+pod2usage(1) if $help || !$path;
 pod2usage(-verbose => 2) if $man;
 
 # Does path exist?
@@ -143,9 +141,6 @@ upload_templates($path);
 # Done!
 print "Upload templates complete\n" if $verbose;
 exit(0);
-
-
-
 
 ####  PRIVATE METHODS  ####
 #
@@ -161,22 +156,22 @@ sub upload_templates {
     $fs_path = catdir($tmpl_dir, $category->url) if ($category);
 
     # Get list of files and directories
-    print "Opening '". ( ($category) ? $category->url : "/" ) ."'\n" if $verbose;
+    print "Opening '" . (($category) ? $category->url : "/") . "'\n" if $verbose;
     opendir(TMPLDIR, "$fs_path") || die("Can't open '$fs_path': " . $!);
     my @found = (readdir(TMPLDIR));
     closedir(TMPLDIR);
 
     my @files = grep { (-f catfile($fs_path, $_)) } (@found);
-    my @dirs = grep { not(/^\.{1,2}$/) and 
-                        not(/^\.svn$/) and 
-                          not(/^CVS$/) and 
-                            (-d catfile($fs_path, $_)) } (@found);
+    my @dirs =
+      grep { not(/^\.{1,2}$/) and not(/^\.svn$/) and not(/^CVS$/) and (-d catfile($fs_path, $_)) }
+      (@found);
 
-    print "Found dirs: '". join("', '", @dirs) ."'\n" if ($verbose > 1);
-    print "Found files: '". join("', '", @files) ."'\n" if ($verbose > 1);
+    print "Found dirs: '" . join("', '",  @dirs) . "'\n"  if ($verbose > 1);
+    print "Found files: '" . join("', '", @files) . "'\n" if ($verbose > 1);
 
     # Upload template files in this dir
     foreach my $f (@files) {
+
         # Only .tmpl files
         unless ($f =~ /\.tmpl$/) {
             print "  Skipping '$f' (not a *.tmpl file)\n" if $verbose;
@@ -186,33 +181,37 @@ sub upload_templates {
         # Try to find template.
         my $category_id = undef;
         $category_id = $category->category_id if $category;
-        my ($t) = pkg('Template')->find( category_id => $category_id,
-                                         filename => $f );
+        my ($t) = pkg('Template')->find(
+            category_id => $category_id,
+            filename    => $f
+        );
 
         # Create it if we can't find it.
         unless ($t) {
             my %new_params = (filename => $f);
             $new_params{category} = $category if ($category);
-            $t = pkg('Template')->new( category => $category,
-                                       filename => $f );
+            $t = pkg('Template')->new(
+                category => $category,
+                filename => $f
+            );
         }
 
-        # Do we have access?  
+        # Do we have access?
         if ($t->checked_out()) {
             my ($checked_out_user) = pkg('User')->find(user_id => $t->checked_out_by);
             my $cou_login = $checked_out_user->login();
             unless ($cou_login eq 'system') {
-		if ($force_checkin) {
-		    $t->checkin;
-		    if ($t->checked_out) {
-			print STDERR "*** UNABLE TO CHECK IN '$f' ***\n";
-		    } else {
-			print "Checked in '$f' (was checked out by '$cou_login')\n" if $verbose;
-		    }
-		} else {
-		    print "  Skipping '$f' (checked out by '$cou_login')\n" if $verbose;
-		    next;
-		}
+                if ($force_checkin) {
+                    $t->checkin;
+                    if ($t->checked_out) {
+                        print STDERR "*** UNABLE TO CHECK IN '$f' ***\n";
+                    } else {
+                        print "Checked in '$f' (was checked out by '$cou_login')\n" if $verbose;
+                    }
+                } else {
+                    print "  Skipping '$f' (checked out by '$cou_login')\n" if $verbose;
+                    next;
+                }
             }
         }
 
@@ -222,7 +221,7 @@ sub upload_templates {
         # Read template file from disk
         my $fq_filename = catfile($fs_path, $f);
         print "    Opening '$fq_filename' for read\n" if $verbose > 1;
-        my $TMPL = pkg('IO')->io_file($fq_filename);
+        my $TMPL    = pkg('IO')->io_file($fq_filename);
         my @content = (<$TMPL>);
         close($TMPL);
 
@@ -241,16 +240,19 @@ sub upload_templates {
 
             # If we're in a site
             my $new_cat_path = catdir($category->url, $d);
-            my ($c) = pkg('Category')->find(url=>$new_cat_path."/");
+            my ($c) = pkg('Category')->find(url => $new_cat_path . "/");
             if ($c) {
                 upload_templates($tmpl_dir, $c);
             } elsif ($makecats) {
+
                 # Create missing directory
                 my $newcat;
                 eval {
-                    $newcat = pkg('Category')->new( dir => $d,
-                                                    parent_id => $category->category_id );
-                    $newcat->save(); 
+                    $newcat = pkg('Category')->new(
+                        dir       => $d,
+                        parent_id => $category->category_id
+                    );
+                    $newcat->save();
                 };
                 if ($@) {
                     print "  Unable to create '$new_cat_path' ($@)\n";
@@ -265,17 +267,17 @@ sub upload_templates {
         } else {
 
             # No site yet -- still global templates
-            my ($s) = pkg('Site')->find( url => $d);
-            die ("Can't find site '$d'") unless ($s);
-            my ($root_cat) = pkg('Category')->find(url => $s->url."/");
+            my ($s) = pkg('Site')->find(url => $d);
+            die("Can't find site '$d'") unless ($s);
+            my ($root_cat) = pkg('Category')->find(url => $s->url . "/");
             upload_templates($tmpl_dir, $root_cat);
 
         }
     }
 }
 
-
 sub element_lib_path {
+
     # Try addons/
     my $libdir = catdir(KrangRoot, 'addons', InstanceElementSet, 'element_lib', InstanceElementSet);
     return $libdir if (-d $libdir);
@@ -284,6 +286,4 @@ sub element_lib_path {
     $libdir = catdir(KrangRoot, 'element_lib', InstanceElementSet);
     return $libdir if (-d $libdir);
 }
-
-
 

@@ -23,14 +23,14 @@ repetitive tasks when testing Krang.
 
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Conf => qw(
-    KrangRoot 
-    ApachePort 
-    SiteServerPort 
-    EnableSiteServer 
-    FTPPort 
-    EnableFTP 
-    SSLApachePort 
-    EnableSSL
+  KrangRoot
+  ApachePort
+  SiteServerPort
+  EnableSiteServer
+  FTPPort
+  EnableFTP
+  SSLApachePort
+  EnableSSL
 );
 use File::Spec::Functions qw(catfile);
 
@@ -47,13 +47,15 @@ sub restart_krang {
     my @ports = (
         ApachePort,
         EnableSiteServer ? SiteServerPort : (),
-        EnableFTP ? FTPPort : (),
-        EnableSSL ? SSLApachePort : (),
+        EnableFTP        ? FTPPort        : (),
+        EnableSSL        ? SSLApachePort  : (),
     );
+
     # will need sudo?
     if ($< != 0 or $> != 0) {
+
         # are the ports reserved?
-        if( grep { $_ <= 1024 } @ports ) {
+        if (grep { $_ <= 1024 } @ports) {
             $cmd = "sudo $cmd";
         }
     }

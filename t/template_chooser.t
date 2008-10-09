@@ -9,7 +9,7 @@ use Krang::ClassLoader Conf => qw(InstanceElementSet);
 use Krang::ClassLoader 'ElementLibrary';
 use CGI;
 
-BEGIN{ use_ok('Krang::Widget', qw(template_chooser_object)) }
+BEGIN { use_ok('Krang::Widget', qw(template_chooser_object)) }
 
 # clean up when finished
 my $old_instance = pkg('Conf')->instance;
@@ -24,9 +24,9 @@ foreach my $instance (pkg('Conf')->instances) {
 }
 
 # set up the template chooser
-my $query = CGI->new();
-my $chooser = template_chooser_object(name => 'name', query => $query);
-my $content = $chooser->handle_get_node( query => $query );
+my $query      = CGI->new();
+my $chooser    = template_chooser_object(name => 'name', query => $query);
+my $content    = $chooser->handle_get_node(query => $query);
 my @top_levels = pkg('ElementLibrary')->top_levels;
 
 # make sure all the top level elements are there
@@ -35,7 +35,8 @@ foreach my $element (@top_levels) {
 }
 
 # now make sure the children of each top level is there too
-for(my $i = 0; $i<@top_levels; $i++) {
+for (my $i = 0 ; $i < @top_levels ; $i++) {
+
     # get the node contents for this element
     my $el = pkg('ElementLibrary')->top_level(name => $top_levels[$i]);
     $query->param(id => $i);

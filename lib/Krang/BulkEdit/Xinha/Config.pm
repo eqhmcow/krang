@@ -55,13 +55,13 @@ sub xinha_toolbar {
     my ($pkg, %arg) = @_;
 
     my @formatblock = qw(
-        bold                 italic              underline separator
-        insertorderedlist    insertunorderedlist separator
-        inserthorizontalrule createlink          separator
-        subscript            superscript         separator
-        copy                 cut                 paste     separator
-        htmlmode             separator
-        undo                 redo
+      bold                 italic              underline separator
+      insertorderedlist    insertunorderedlist separator
+      inserthorizontalrule createlink          separator
+      subscript            superscript         separator
+      copy                 cut                 paste     separator
+      htmlmode             separator
+      undo                 redo
     );
 
     if ($arg{include_formatblock}) {
@@ -157,31 +157,34 @@ in...
 sub html_scrubber {
     my ($pkg, %arg) = @_;
 
-    my @block_elements  = ( qw(p h1 h2 h3 h4 h5 h6 ol ul hr li)      );
-    my @inline_elements = ( qw(a br em strong strike u sub sup) );
+    my @block_elements  = (qw(p h1 h2 h3 h4 h5 h6 ol ul hr li));
+    my @inline_elements = (qw(a br em strong strike u sub sup));
 
     my $scrubber = HTML::Scrubber->new(
+
         # deny all tags and all attribs
         default => [0, {'*' => 0}],
+
         # however allow some tags
-        allow   => [ @block_elements, @inline_elements ],
+        allow => [@block_elements, @inline_elements],
+
         # and allow some attribs with A tags
-        rules   => [
-            a   =>   {
-                      '*'    => 0, # deny all attribs on A tags
-                      href   => 1, # allow some attribs
-                      name   => 1,
-                      title  => 1,
-                      target => 1
-                     },
-            img =>   {
-                      '*'    => 0, # deny all attribs on IMG tags
-                      src    => 1, # allow some attribs
-                      alt    => 1,
-                      title  => 1,
-                      width  => 1,
-                      height => 1,
-                     },
+        rules => [
+            a => {
+                '*'    => 0,    # deny all attribs on A tags
+                href   => 1,    # allow some attribs
+                name   => 1,
+                title  => 1,
+                target => 1
+            },
+            img => {
+                '*'    => 0,    # deny all attribs on IMG tags
+                src    => 1,    # allow some attribs
+                alt    => 1,
+                title  => 1,
+                width  => 1,
+                height => 1,
+            },
 ##
 ## To allow tables, you might consider
 ##

@@ -32,19 +32,23 @@ use Krang::ClassLoader 'DataSet';
 use File::Spec::Functions qw(catfile);
 
 # create a site and category for dummy story
-my $site = pkg('Site')->new(preview_url  => 'storytest.preview.com',
-                            url          => 'storytest.com',
-                            publish_path => '/tmp/storytest_publish',
-                            preview_path => '/tmp/storytest_preview');
+my $site = pkg('Site')->new(
+    preview_url  => 'storytest.preview.com',
+    url          => 'storytest.com',
+    publish_path => '/tmp/storytest_publish',
+    preview_path => '/tmp/storytest_preview'
+);
 $site->save();
 END { $site->delete() }
 my ($category) = pkg('Category')->find(site_id => $site->site_id());
 
 # create a new story
-my $story = pkg('Story')->new(categories => [$category],
-                              title      => "Test",
-                              slug       => "test",
-                              class      => "article");
+my $story = pkg('Story')->new(
+    categories => [$category],
+    title      => "Test",
+    slug       => "test",
+    class      => "article"
+);
 $story->save();
 
 END { $story->delete(); }
@@ -52,11 +56,11 @@ END { $story->delete(); }
 # export the story
 $ENV{KRANG_INSTANCE} = pkg('Conf')->instance();
 my $krang_export = catfile(KrangRoot, 'bin', 'krang_export');
-my $kds = catfile(KrangRoot, 'tmp', 'export.kds');
+my $kds          = catfile(KrangRoot, 'tmp', 'export.kds');
 my ($in, $out, $err) = ("", "", "");
 my @cmd = ($krang_export, '--overwrite', '--output', $kds, '--story_id', $story->story_id);
 run(\@cmd, \$in, \$out, \$err);
-ok(length($err) == 0);  
+ok(length($err) == 0);
 like($out, qr/Export completed/);
 ok(-s $kds);
 
@@ -68,9 +72,6 @@ isa_ok($set, 'Krang::DataSet');
 # site.
 my @obj = $set->list;
 is(@obj, 3);
-ok(grep { $_->[0]->isa('Krang::Story') and
-          $_->[1] eq $story->story_id  } @obj);
-ok(grep { $_->[0]->isa('Krang::Category') and
-          $_->[1] eq $story->category->category_id  } @obj);
-ok(grep { $_->[0]->isa('Krang::Site') and
-          $_->[1] eq $story->category->site->site_id  } @obj);
+ok(grep { $_->[0]->isa('Krang::Story')    and $_->[1] eq $story->story_id } @obj);
+ok(grep { $_->[0]->isa('Krang::Category') and $_->[1] eq $story->category->category_id } @obj);
+ok(grep { $_->[0]->isa('Krang::Site')     and $_->[1] eq $story->category->site->site_id } @obj);

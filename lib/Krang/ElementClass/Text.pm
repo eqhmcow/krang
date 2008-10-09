@@ -5,31 +5,31 @@ use warnings;
 
 use Krang::ClassLoader base => 'ElementClass';
 
-use Krang::ClassLoader MethodMaker => 
-  get_set => [ qw( size maxlength ) ];
+use Krang::ClassLoader MethodMaker => get_set => [qw( size maxlength )];
 
 sub new {
-    my $pkg = shift;
-    my %args = ( size      => 30,
-                 maxlength => 0,
-                 @_
-               );
-    
+    my $pkg  = shift;
+    my %args = (
+        size      => 30,
+        maxlength => 0,
+        @_
+    );
+
     return $pkg->SUPER::new(%args);
 }
 
 sub input_form {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
-    
-    return scalar $query->textfield(-name      => $param,
-                                    -default   => $element->data() || "",
-                                    -size      => $self->size,
-                                    ($self->maxlength ? 
-                                     (-maxlength => $self->maxlength) : ()));
-}
 
+    return scalar $query->textfield(
+        -name    => $param,
+        -default => $element->data() || "",
+        -size    => $self->size,
+        ($self->maxlength ? (-maxlength => $self->maxlength) : ())
+    );
+}
 
 =head1 NAME
 

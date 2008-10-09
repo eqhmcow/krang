@@ -106,7 +106,7 @@ sub _replace_tags {
     $t->elementify;
 
     # replace tags
-    while(my $element = $t->look_down("_tag" => $regexp)) {
+    while (my $element = $t->look_down("_tag" => $regexp)) {
         $element->tag($map->{$element->tag});
     }
 

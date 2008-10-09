@@ -50,21 +50,21 @@ and the and the category_id which this file is in.
 =cut
 
 sub new {
-    my $class   = shift;
-    my $ftps    = shift;
-    my $object  = shift;
-    my $type    = shift;
+    my $class       = shift;
+    my $ftps        = shift;
+    my $object      = shift;
+    my $type        = shift;
     my $category_id = shift;
 
-    my $filename =  $object->filename();
+    my $filename = $object->filename();
 
     # Create object.
-    my $self = Net::FTPServer::FileHandle->new ($ftps, $filename);
+    my $self = Net::FTPServer::FileHandle->new($ftps, $filename);
 
-    $self->{object}         = $object;
-    $self->{category_id}    = $category_id;
-    $self->{type}           = $type;
-    $self->{filename}       = $filename;
+    $self->{object}      = $object;
+    $self->{category_id} = $category_id;
+    $self->{type}        = $type;
+    $self->{filename}    = $filename;
 
     return bless $self, $class;
 }
@@ -84,13 +84,14 @@ failure.
 
 # Open the file handle.
 sub open {
-    my $self = shift;
-    my $mode = shift;
+    my $self   = shift;
+    my $mode   = shift;
     my $object = $self->{object};
-    my $type = $self->{type};
-    debug(__PACKAGE__."::open($mode) : ".$self->{filename}."\n");
+    my $type   = $self->{type};
+    debug(__PACKAGE__ . "::open($mode) : " . $self->{filename} . "\n");
 
     if ($mode eq "r") {
+
         # check write access
         return undef unless $self->can_read;
 
@@ -100,14 +101,15 @@ sub open {
             return new IO::Scalar \$data;
         } else {
             my $path = $object->file_path();
-            return new IO::File $path;        
+            return new IO::File $path;
         }
     } elsif ($mode eq "w") {
+
         # check write access
         return undef unless $self->can_write;
 
-        return pkg('FTP::FileHandle::Handle')->new($object,$type);
-        
+        return pkg('FTP::FileHandle::Handle')->new($object, $type);
+
     }
 }
 
@@ -119,12 +121,10 @@ in.  Calls Bric::Util::FTP::DirHandle->new().
 =cut
 
 sub dir {
-  my $self = shift;
-  debug(__PACKAGE__."::dir() : ".$self->{filename}."\n");
-  return pkg('FTP::DirHandle')->new (   $self->{ftps},
-                                        $self->dirname,
-                                        $self->{type},
-                                        $self->{category_id});
+    my $self = shift;
+    debug(__PACKAGE__ . "::dir() : " . $self->{filename} . "\n");
+    return pkg('FTP::DirHandle')
+      ->new($self->{ftps}, $self->dirname, $self->{type}, $self->{category_id});
 }
 
 =item status()
@@ -155,13 +155,13 @@ of the template.
 =cut
 
 sub status {
-    my $self = shift;
+    my $self   = shift;
     my $object = $self->{object};
-    my $type = $self->{type};
+    my $type   = $self->{type};
 
-    debug(__PACKAGE__."::status() : ".$self->{filename}."\n");
+    debug(__PACKAGE__ . "::status() : " . $self->{filename} . "\n");
 
-    my ($data,$size,$date,$mode);
+    my ($data, $size, $date, $mode);
 
     if ($type eq 'template') {
         $data = $object->content;
@@ -171,23 +171,22 @@ sub status {
     }
 
     $date = $object->creation_date()->epoch;
-    
+
     my $owner = $object->checked_out_by;
 
-    if ( $owner) { # if checked out, get the username, return read-only
-        my @user = pkg('User')->find( user_id => $owner );
+    if ($owner) {    # if checked out, get the username, return read-only
+        my @user = pkg('User')->find(user_id => $owner);
         my $login = defined $user[0] ? $user[0]->login : "unknown";
-        return ( 'f', 0777, 1, $login, "co", $size,  $date);
-    } else { # check for write privs - TODO
+        return ('f', 0777, 1, $login, "co", $size, $date);
+    } else {         # check for write privs - TODO
         my $priv = 1;
         if ($priv) {
             $mode = 0777;
-        } else { 
+        } else {
             $mode = 0400;
         }
-    return ( 'f', $mode, 1, "nobody", "ci", $size,  $date);
-  }
-
+        return ('f', $mode, 1, "nobody", "ci", $size, $date);
+    }
 
 }
 
@@ -198,12 +197,12 @@ the object thru the UI.
 
 =cut
 
-sub delete {    
-    my $self = shift;
+sub delete {
+    my $self   = shift;
     my $object = $self->{object};
-    my $type = $self->{type};
+    my $type   = $self->{type};
 
-    debug(__PACKAGE__."::delete() : ".$self->filename."\n");
+    debug(__PACKAGE__ . "::delete() : " . $self->filename . "\n");
 
     $object->delete;
 
@@ -221,21 +220,21 @@ media/template - if it's checked in and the user has permission.
 =cut
 
 # fixed properties
-sub can_read   {  1; }
-sub can_rename {  0; }
-sub can_delete {  1; }
+sub can_read   { 1; }
+sub can_rename { 0; }
+sub can_delete { 1; }
 
 # check to see if template is checked out
-sub can_write  {
-  my $self = shift;
-  my @stats = $self->status();
+sub can_write {
+    my $self  = shift;
+    my @stats = $self->status();
 
-  # this should probably be a real bit test for u+w
-  if ($stats[1] == 0777) {
-    return 1;
-  } else {
-    return 0;
-  }
+    # this should probably be a real bit test for u+w
+    if ($stats[1] == 0777) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 *can_append = \&can_write;
 

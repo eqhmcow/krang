@@ -46,7 +46,7 @@ sub _fix {
 
     if ($type eq 'HASH') {
         foreach my $val (values %$data) {
-            if( ref $val ) {
+            if (ref $val) {
                 _fix($val);
             } else {
                 $val = _fix_scalar($val);
@@ -54,7 +54,7 @@ sub _fix {
         }
     } elsif ($type eq 'ARRAY') {
         foreach my $val (@$data) {
-            if( ref $val ) {
+            if (ref $val) {
                 _fix($val);
             } else {
                 $val = _fix_scalar($val);

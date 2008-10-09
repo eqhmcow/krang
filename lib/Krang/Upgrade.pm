@@ -3,7 +3,6 @@ use Krang::ClassFactory qw(pkg);
 use warnings;
 use strict;
 
-
 use Krang::ClassLoader 'Conf';
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader 'AddOn';
@@ -128,7 +127,7 @@ sub remove_files {
     my ($self, @files) = @_;
     foreach my $file (@files) {
         $file = catfile($ENV{KRANG_ROOT}, $file);
-        system("rm -rf $file") if (-e $file || -d $file)
+        system("rm -rf $file") if (-e $file || -d $file);
     }
 }
 
@@ -147,11 +146,12 @@ sub upgrade {
     # Run per_instance() method, for each instance
     my @instances = pkg('Conf')->instances();
     foreach my $instance (@instances) {
+
         # Switch to that instance
         pkg('Conf')->instance($instance);
 
         # Load the dbh, without version checking, to prime cache
-        my $dbh = dbh(ignore_version=>1);
+        my $dbh = dbh(ignore_version => 1);
 
         # Call per_instance(), now that the environment has been established
         $self->per_instance(%args);

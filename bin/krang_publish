@@ -235,8 +235,8 @@ my $not_on_desk         = 0;
 my @story_class         = ();
 
 # for backwards compatibility, convert all underscores in options to hyphens
-for(0..$#ARGV) {
-    if( $ARGV[$_] =~ /^--\S+/ && $ARGV[$_] =~ /_/) {
+for (0 .. $#ARGV) {
+    if ($ARGV[$_] =~ /^--\S+/ && $ARGV[$_] =~ /_/) {
         $ARGV[$_] =~ s/_/-/g;
     }
 }
@@ -366,7 +366,7 @@ if ($everything) {
         }
     }
 
-    if( @story_class ) {
+    if (@story_class) {
         $arg_string .= " --story-class $_" foreach @story_class;
         $find_options{class} = \@story_class;
         $has_options = 1;

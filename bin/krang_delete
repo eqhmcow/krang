@@ -76,15 +76,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -115,7 +118,6 @@ use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Group';
 
-
 my ($help, $man);
 my $sites;
 my $cats;
@@ -131,41 +133,47 @@ my @story_ids;
 my @media_ids;
 my @user_ids;
 my @template_ids;
-my %uuids =
-  (site => [], category => [], story => [], media => [], user => [],
-   template => []);
+my %uuids = (
+    site     => [],
+    category => [],
+    story    => [],
+    media    => [],
+    user     => [],
+    template => []
+);
 my $verbose;
 my $recursive;
 
-pod2usage(2) unless
-  GetOptions(help         => \$help,
-             man          => \$man,
-             verbose => \$verbose,
-             'sites'    => \$sites,
-             'site_id=s'  => \@site_ids,
-             'site_uuid=s'  => $uuids{site},
-             'categories'     => \$cats,
-             'cats'     => \$cats,
-             'category_id=s' => \@cat_ids,
-             'category_uuid=s' => $uuids{category},
-             'contribs' => \$contribs,
-             'contrib_id=s' => \@contrib_ids,
-             'stories'  => \$stories,
-             'story_id=s' => \@story_ids,
-             'story_uuid=s' => $uuids{story},
-             'media'    => \$media,
-             'media_id=s' => \@media_ids,
-             'media_uuid=s' => $uuids{media},
-	     'users'	  => \$users,
-             'user_id=s' => \@user_ids,
-             'user_uuid=s' => $uuids{user},
-             'templates'=> \$templates,
-             'template_id=s' => \@template_ids,
-             'template_uuid=s' => $uuids{template},
-             'recursive' => \$recursive
-            );
+pod2usage(2)
+  unless GetOptions(
+    help              => \$help,
+    man               => \$man,
+    verbose           => \$verbose,
+    'sites'           => \$sites,
+    'site_id=s'       => \@site_ids,
+    'site_uuid=s'     => $uuids{site},
+    'categories'      => \$cats,
+    'cats'            => \$cats,
+    'category_id=s'   => \@cat_ids,
+    'category_uuid=s' => $uuids{category},
+    'contribs'        => \$contribs,
+    'contrib_id=s'    => \@contrib_ids,
+    'stories'         => \$stories,
+    'story_id=s'      => \@story_ids,
+    'story_uuid=s'    => $uuids{story},
+    'media'           => \$media,
+    'media_id=s'      => \@media_ids,
+    'media_uuid=s'    => $uuids{media},
+    'users'           => \$users,
+    'user_id=s'       => \@user_ids,
+    'user_uuid=s'     => $uuids{user},
+    'templates'       => \$templates,
+    'template_id=s'   => \@template_ids,
+    'template_uuid=s' => $uuids{template},
+    'recursive'       => \$recursive
+  );
 
-pod2usage(1)             if $help;
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 # translate UUIDs to IDs
@@ -187,17 +195,19 @@ _uuids_to_ids($uuids{template}, \@template_ids, 'template', pkg('Template'));
 
 #### First delete media
 
-if ($media) { 
-    @media_ids = pkg('Media')->find( ids_only => 1 );
-} 
+if ($media) {
+    @media_ids = pkg('Media')->find(ids_only => 1);
+}
 
 if (@media_ids) {
     foreach my $id (@media_ids) {
-       
+
         my $exists;
         if (not $media) {
-            $exists = pkg('Media')->find( media_id => $id, ids_only => 1
-) || '';
+            $exists = pkg('Media')->find(
+                media_id => $id,
+                ids_only => 1
+            ) || '';
         } else {
             $exists = 1;
         }
@@ -214,20 +224,22 @@ if (@media_ids) {
 #### Delete templates
 
 if ($templates) {
-    @template_ids = pkg('Template')->find( ids_only => 1 );
+    @template_ids = pkg('Template')->find(ids_only => 1);
 }
-                                                                                
+
 if (@template_ids) {
     foreach my $id (@template_ids) {
-       
+
         my $exists;
         if (not $templates) {
-            $exists = pkg('Template')->find( template_id => $id, ids_only => 1
-) || '';
+            $exists = pkg('Template')->find(
+                template_id => $id,
+                ids_only    => 1
+            ) || '';
         } else {
             $exists = 1;
         }
-        
+
         if (not $exists) {
             print "Template $id does not exist.\n" if $verbose;
             next;
@@ -237,23 +249,25 @@ if (@template_ids) {
     }
 }
 
-#### delete stories 
+#### delete stories
 
 if ($stories) {
-    @story_ids = pkg('Story')->find( ids_only => 1, show_hidden => 1);
+    @story_ids = pkg('Story')->find(ids_only => 1, show_hidden => 1);
 }
-                                                                                
+
 if (@story_ids) {
     foreach my $id (@story_ids) {
-        
+
         my $exists;
         if (not $stories) {
-            $exists = pkg('Story')->find(story_id => $id,
-                                         ids_only => 1 ) || '';
+            $exists = pkg('Story')->find(
+                story_id => $id,
+                ids_only => 1
+            ) || '';
         } else {
             $exists = 1;
         }
-        
+
         if (not $exists) {
             print "Story $id does not exist.\n" if $verbose;
             next;
@@ -266,15 +280,17 @@ if (@story_ids) {
 #### delete contributors
 
 if ($contribs) {
-    @contrib_ids = pkg('Contrib')->find( ids_only => 1 );
+    @contrib_ids = pkg('Contrib')->find(ids_only => 1);
 }
-                                                                                
+
 if (@contrib_ids) {
     foreach my $id (@contrib_ids) {
         my $exists;
         if (not $contribs) {
-            $exists = pkg('Contrib')->find( contrib_id => $id, ids_only => 1
-) || '';
+            $exists = pkg('Contrib')->find(
+                contrib_id => $id,
+                ids_only   => 1
+            ) || '';
         } else {
             $exists = 1;
         }
@@ -289,24 +305,26 @@ if (@contrib_ids) {
 }
 
 #### delete users
-                                                                                
+
 if ($users) {
-    @user_ids = pkg('User')->find( ids_only => 1 );
+    @user_ids = pkg('User')->find(ids_only => 1);
 }
-                                                                                
+
 if (@user_ids) {
 
-    my ($admin_user_id) = pkg('User')->find( login => 'admin') || '';
+    my ($admin_user_id) = pkg('User')->find(login => 'admin') || '';
 
     foreach my $id (@user_ids) {
         my $exists;
         if (not $users) {
-            $exists = pkg('User')->find( user_id => $id, ids_only => 1
-) || '';
+            $exists = pkg('User')->find(
+                user_id  => $id,
+                ids_only => 1
+            ) || '';
         } else {
             $exists = 1;
         }
-        
+
         if (not $exists) {
             print "User $id does not exist.\n" if $verbose;
             next;
@@ -320,134 +338,147 @@ if (@user_ids) {
 
 #### delete categories
 my @categories;
- 
+
 if ($cats) {
-    @categories = pkg('Category')->find( order_desc => 1 );
+    @categories = pkg('Category')->find(order_desc => 1);
 } elsif (@cat_ids) {
-    @categories = pkg('Category')->find( category_id => \@cat_ids, order_desc => 1 );
+    @categories = pkg('Category')->find(category_id => \@cat_ids, order_desc => 1);
 }
-                                                                                
+
 if (@categories) {
-                                                                                
+
     foreach my $cat (@categories) {
-        if ( $cat->parent ) {
+        if ($cat->parent) {
             my @dep_cats;
             push(@dep_cats, $cat);
-            
+
             while (@dep_cats) {
                 $cat = shift @dep_cats;
-                eval {$cat->dependent_check()};
+                eval { $cat->dependent_check() };
                 if ($@ and $@->isa('Krang::Category::Dependent')) {
                     my $dependents = $@->dependents();
-                
+
                     if ($recursive) {
                         my $has_cats = 0;
                         foreach my $d (keys %$dependents) {
                             foreach my $oid (@{$dependents->{$d}}) {
                                 if ($d eq 'category') {
-                                    push (@dep_cats, (pkg('Category')->find( category_id => $oid ))[0]); 
+                                    push(@dep_cats,
+                                        (pkg('Category')->find(category_id => $oid))[0]);
                                     $has_cats = 1;
                                 } else {
-                                    my $pkg = "Krang::".ucfirst($d);
+                                    my $pkg = "Krang::" . ucfirst($d);
                                     $pkg->delete($oid);
-                                    print "Deleted $d $oid.\n" if $verbose; 
+                                    print "Deleted $d $oid.\n" if $verbose;
                                 }
                             }
-                        } 
-                        
+                        }
+
                         if (not $has_cats) {
                             $cat->delete;
-                            print "Deleted category ".$cat->category_id.".\n" if $verbose;
+                            print "Deleted category " . $cat->category_id . ".\n" if $verbose;
                         } else {
-                            push (@dep_cats, $cat);
+                            push(@dep_cats, $cat);
                         }
 
                     } else {
-                        $dependents = join("\n\t", map{"$_: [" .
-                        join(",", @{$dependents->{$_}}) .
-                    "]"} keys %$dependents);
-    
-                        print STDERR "The following object classes and ids rely upon " .
-                    "category ". $cat->category_id." (skipping):\n\t$dependents\n";
+                        $dependents = join("\n\t",
+                            map { "$_: [" . join(",", @{$dependents->{$_}}) . "]" }
+                              keys %$dependents);
+
+                        print STDERR "The following object classes and ids rely upon "
+                          . "category "
+                          . $cat->category_id
+                          . " (skipping):\n\t$dependents\n";
                         next;
                     }
-                } else { 
+                } else {
                     next unless pkg('Category')->find(category_id => $cat->category_id);
                     $cat->delete();
-                    print "Deleted category ".$cat->category_id.".\n" if $verbose;
+                    print "Deleted category " . $cat->category_id . ".\n" if $verbose;
                 }
             }
         } else {
-            print STDERR "Skipping category ".$cat->category_id.", it is a top level category.\n";
+            print STDERR "Skipping category "
+              . $cat->category_id
+              . ", it is a top level category.\n";
         }
     }
 }
 
 #### delete sites
 my @sts;
-                                                                                
+
 if ($sites) {
-    @sts = pkg('Site')->find( order_desc => 1 );
+    @sts = pkg('Site')->find(order_desc => 1);
 } elsif (@site_ids) {
-    @sts = pkg('Site')->find( site_id => \@site_ids, order_desc => 1 );
+    @sts = pkg('Site')->find(site_id => \@site_ids, order_desc => 1);
 }
 
 if (@sts) {
-    outer: foreach my $site (@sts) {
+  outer: foreach my $site (@sts) {
         my @dep_cats;
         push(@dep_cats, $site);
-        my ($root) = pkg('Category')->find(dir => '/',
-                                       site_id => $site->site_id); 
-        push(@dep_cats, $root);                                                                               
-       while (@dep_cats) {
-            my $cat = shift @dep_cats;
-            my $type = ((ref $cat) eq 'Krang::Site') ? 'site' : 'category';
-            my $type_id = $type."_id";
-            
-            eval {$cat->dependent_check()};
+        my ($root) = pkg('Category')->find(
+            dir     => '/',
+            site_id => $site->site_id
+        );
+        push(@dep_cats, $root);
+        while (@dep_cats) {
+            my $cat     = shift @dep_cats;
+            my $type    = ((ref $cat) eq 'Krang::Site') ? 'site' : 'category';
+            my $type_id = $type . "_id";
+
+            eval { $cat->dependent_check() };
             if ($@ and $@->isa('Krang::Site::Dependency')) {
-                if ($recursive) {    
-                    push (@dep_cats, $cat);
+                if ($recursive) {
+                    push(@dep_cats, $cat);
                     foreach my $cid (@{$@->category_id}) {
-                        push (@dep_cats, (pkg('Category')->find(category_id => $cid))[0] );
+                        push(@dep_cats, (pkg('Category')->find(category_id => $cid))[0]);
                     }
                 } else {
-                    print STDERR "Site ".$site->site_id." cannot be deleted.  Categories with the following" .
-           " ids depend upon it: " . join(",", @{$@->category_id}) . "\n";
-                    next outer; 
+                    print STDERR "Site "
+                      . $site->site_id
+                      . " cannot be deleted.  Categories with the following"
+                      . " ids depend upon it: "
+                      . join(",", @{$@->category_id}) . "\n";
+                    next outer;
                 }
             } elsif ($@ and $@->isa('Krang::Category::Dependent')) {
-               my $dependents = $@->dependents();
-               my $has_cats = 0;
-               foreach my $d (keys %$dependents) {
-                  foreach my $oid (@{$dependents->{$d}}) {
-                      if ($d eq 'category') {
-                          push (@dep_cats, (pkg('Category')->find( category_id => $oid ))[0]);
-                          $has_cats = 1;
-                       } else {
-                          my $pkg = "Krang::".ucfirst($d);
-                          $pkg->delete($oid);
-                          print "Deleted $d $oid.\n" if $verbose;
-                       }
-                   }
-               }
-                                                                         
-               if (not $has_cats) {
-                    $cat->delete() if (not( ($type eq 'category') and ($cat->category_id eq $root->category_id)));
-                   print "Deleted $type ".$cat->$type_id.".\n" if $verbose;
-               } else {
-                  push (@dep_cats, $cat);
-               }
-                                                                                
+                my $dependents = $@->dependents();
+                my $has_cats   = 0;
+                foreach my $d (keys %$dependents) {
+                    foreach my $oid (@{$dependents->{$d}}) {
+                        if ($d eq 'category') {
+                            push(@dep_cats, (pkg('Category')->find(category_id => $oid))[0]);
+                            $has_cats = 1;
+                        } else {
+                            my $pkg = "Krang::" . ucfirst($d);
+                            $pkg->delete($oid);
+                            print "Deleted $d $oid.\n" if $verbose;
+                        }
+                    }
+                }
+
+                if (not $has_cats) {
+                    $cat->delete()
+                      if (not(($type eq 'category') and ($cat->category_id eq $root->category_id)));
+                    print "Deleted $type " . $cat->$type_id . ".\n" if $verbose;
+                } else {
+                    push(@dep_cats, $cat);
+                }
+
             } else {
+
                 # make sure cat/site still exists
-                my $pkg = "Krang::".ucfirst($type);
+                my $pkg = "Krang::" . ucfirst($type);
                 next unless $pkg->find($type_id => $cat->$type_id);
 
-                $cat->delete() if (not( ($type eq 'category') and ($cat->category_id eq $root->category_id)));
-                print "Deleted $type ".$cat->$type_id.".\n" if $verbose;
+                $cat->delete()
+                  if (not(($type eq 'category') and ($cat->category_id eq $root->category_id)));
+                print "Deleted $type " . $cat->$type_id . ".\n" if $verbose;
             }
-       }
+        }
     }
 }
 

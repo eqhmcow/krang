@@ -5,30 +5,31 @@ use warnings;
 
 use Krang::ClassLoader base => 'ElementClass';
 
-use Krang::ClassLoader MethodMaker => 
-  get_set => [ qw( rows cols ) ];
+use Krang::ClassLoader MethodMaker => get_set => [qw( rows cols )];
 
 sub new {
-    my $pkg = shift;
-    my %args = ( rows => 4,
-                 cols => 30,
-                 @_
-               );
-    
+    my $pkg  = shift;
+    my %args = (
+        rows => 4,
+        cols => 30,
+        @_
+    );
+
     return $pkg->SUPER::new(%args);
 }
 
 sub input_form {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
-    return scalar $query->textarea(-name     => $param,
-                                   -default  => $element->data() || "",
-                                   -rows     => $self->rows,
-                                   -cols     => $self->cols);
+    return scalar $query->textarea(
+        -name    => $param,
+        -default => $element->data() || "",
+        -rows    => $self->rows,
+        -cols    => $self->cols
+    );
 }
-
 
 =head1 NAME
 

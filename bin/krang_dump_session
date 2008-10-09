@@ -84,7 +84,7 @@ END
 
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Conf';
-BEGIN { pkg('Conf')->instance($ENV{KRANG_INSTANCE})  }
+BEGIN { pkg('Conf')->instance($ENV{KRANG_INSTANCE}) }
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Session' => qw(%session);
 use Krang::Session;
@@ -106,8 +106,8 @@ pod2usage(1) if $help;
 pod2usage("You must provide an --id!") unless $id;
 
 eval { pkg('Session')->load($id) };
-if( $@ ) {
-    if( $@ =~ /Session '\Q$id\E' does not exist/ ) {
+if ($@) {
+    if ($@ =~ /Session '\Q$id\E' does not exist/) {
         print "No session with id #$id exists\n";
         exit(1);
     } else {
@@ -115,15 +115,15 @@ if( $@ ) {
     }
 }
 
-$Data::Dumper::Indent = 2;
+$Data::Dumper::Indent   = 2;
 $Data::Dumper::Sortkeys = 1;
 $Data::Dumper::Maxdepth = $depth;
 my $data = \%session;
-while(my $key = shift @keys) {
+while (my $key = shift @keys) {
     my $type = ref $data || '';
-    if( $type eq 'ARRAY' ) {
-        if( $key =~ /^\d+$/ ) {
-            if( $#$data >= $key ) {
+    if ($type eq 'ARRAY') {
+        if ($key =~ /^\d+$/) {
+            if ($#$data >= $key) {
                 $data = $data->[$key];
             } else {
                 print "Index $key does not exist!\n";
@@ -132,9 +132,10 @@ while(my $key = shift @keys) {
             print "Data is an array and key '$key' needs to be an integer!\n";
             exit(0);
         }
-    } elsif( $type ) {
+    } elsif ($type) {
+
         # try to treat everything else like a hash
-        if( exists $data->{$key } ) {
+        if (exists $data->{$key}) {
             $data = $data->{$key};
         } else {
             print "Key $key does not exist!\n";
@@ -143,7 +144,7 @@ while(my $key = shift @keys) {
     } else {
         print "Data is not a hash or array when looking for key $key!\n";
         exit(1);
-    } 
+    }
 }
 
 print "\n" . Dumper($data) . "\n";

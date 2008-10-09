@@ -74,14 +74,15 @@ use FindBin qw($RealBin);
 use POSIX;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
     $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -102,9 +103,9 @@ END
 
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Conf';
-# use first instance if one isn't set. 
-BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 
+# use first instance if one isn't set.
+BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 
 # Krang-Dependent External Modules
 ###################################
@@ -131,11 +132,10 @@ our ($email, $first_name, $last_name, $mobile_phone, $phone, @groups, $no_defaul
 ###########
 my @gids;
 my $debug = my $help = my $man = 0;
-my %valid_groups = map {lc $_->name, $_->group_id} pkg('Group')->find;
+my %valid_groups = map { lc $_->name, $_->group_id } pkg('Group')->find;
 
 # termial I/O vars
 my ($c_lflag, $fd, $termios);
-
 
 # Input Validation
 ###################
@@ -158,8 +158,8 @@ pod2usage(-verbose => 2) if $man;
 # get login
 my $login = shift @ARGV;
 pod2usage("No user 'login' specified") unless defined $login;
-pod2usage("Logins must be at least 6 characters") unless
-  (length $login >= 6 || grep $login eq $_, pkg('User::SHORT_NAMES'));
+pod2usage("Logins must be at least 6 characters")
+  unless (length $login >= 6 || grep $login eq $_, pkg('User::SHORT_NAMES'));
 
 # handle groups
 ################
@@ -171,11 +171,11 @@ push @groups, 'default' unless $no_default;
 
 # bail out if we have no groups
 pod2usage("\n>>> If you don't want to put the new user into the 'default' group,\n"
-	  .">>> you must specify the user's group(s) using option --groups\n")
+      . ">>> you must specify the user's group(s) using option --groups\n")
   unless @groups;
 
 # erase dupes
-my %groups = map {$_, 1} @groups;
+my %groups = map { $_, 1 } @groups;
 
 # validate groups
 for (keys %groups) {
@@ -184,10 +184,8 @@ for (keys %groups) {
     push @gids, $gid;
 }
 
-
 # Program Body :-)
 main();
-
 
 =head1 METHODS
 
@@ -201,12 +199,13 @@ it sets the objects fields and attempts to save it to the database.
 =cut
 
 sub main {
+
     # lookup user
     my ($user) = pkg('User')->find(login => $login);
     die("User with login '$login' already exists.") if defined $user;
 
     # setup terminal I/O
-    $fd = fileno(STDIN);
+    $fd      = fileno(STDIN);
     $termios = POSIX::Termios->new;
     $termios->getattr($fd);
     $c_lflag = $termios->getlflag;
@@ -217,6 +216,7 @@ sub main {
     # constuct user
     $user = pkg('User')->new(login => $login, password => $pass);
     {
+
         # allow symbolic references to access variables and methods of the
         # same name in for loop :)
         no strict qw/refs subs/;
@@ -227,8 +227,8 @@ sub main {
     }
 
     if ($debug) {
-my $groups = join ",", keys %groups;
-print STDERR <<END;
+        my $groups = join ",", keys %groups;
+        print STDERR <<END;
 Login:		$login
 Email:		$email
 First Name:	$first_name
@@ -243,19 +243,18 @@ END
     $user->group_ids(@gids);
 
     # save changes to user
-    eval {$user->save};
+    eval { $user->save };
     if (my $err = $@) {
         print STDERR "Attempt to add user failed: $err\n";
         exit 1;
     } else {
         if ($debug) {
             require Data::Dumper;
-            print STDERR "\n", Data::Dumper->Dump([$user],['user']), "\n";
+            print STDERR "\n", Data::Dumper->Dump([$user], ['user']), "\n";
         }
         print "\nUser '$login' successfully added.\n";
     }
 }
-
 
 =item * $new_password = ask_pass()
 
@@ -279,8 +278,7 @@ sub ask_pass {
     chomp $npass;
 
     unless (valid_pass($npass)) {
-        print STDERR "\nInvalid password!  Passwords must be at least 6 " .
-          "characters.\n";
+        print STDERR "\nInvalid password!  Passwords must be at least 6 " . "characters.\n";
         exit 1;
     } else {
 
@@ -306,15 +304,13 @@ sub ask_pass {
     return $npass;
 }
 
-
 =item * $gid = group_id( $group_name )
 
 Returns the group id named '$group_name' and undef otherwise
 
 =cut
 
-sub group_id {return @_ ? $valid_groups{$_[0]} : 0;}
-
+sub group_id { return @_ ? $valid_groups{$_[0]} : 0; }
 
 =item * set_echo()
 
@@ -333,7 +329,6 @@ sub set_echo {
     $termios->setattr($fd, TCSANOW);
 }
 
-
 =item * $success = valid_pass( $password )
 
 Returns 1 if the passed string is a valid password or 0 otherwise.
@@ -343,7 +338,6 @@ Returns 1 if the passed string is a valid password or 0 otherwise.
 sub valid_pass {
     return length shift >= 6 ? 1 : 0;
 }
-
 
 =back
 

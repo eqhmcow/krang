@@ -49,21 +49,23 @@ This parameter causes templates that have previously been deployed to be skipped
 
 =cut
 
-
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
 use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -82,7 +84,6 @@ $@
 END
 }
 
-
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader Conf => qw(InstanceElementSet KrangRoot);
@@ -92,23 +93,23 @@ use Getopt::Long;
 use Pod::Usage;
 
 my ($help, $man, @template_ids, $everything, $skip_undeployed, $only_undeployed);
-my $user = "admin";
+my $user     = "admin";
 my $password = "";
 my $makecats = 0;
-my $verbose = 0;
+my $verbose  = 0;
 
-pod2usage(2) unless
-  GetOptions(
-             'template-id=s' => \@template_ids,
-	     'everything' => \$everything,
-	     'redeploy-only' => \$skip_undeployed,
-	     'newly-deploy-only' => \$only_undeployed,
-             'verbose+' => \$verbose,
-             'help' => \$help,
-             'man' => \$man,
-            );
+pod2usage(2)
+  unless GetOptions(
+    'template-id=s'     => \@template_ids,
+    'everything'        => \$everything,
+    'redeploy-only'     => \$skip_undeployed,
+    'newly-deploy-only' => \$only_undeployed,
+    'verbose+'          => \$verbose,
+    'help'              => \$help,
+    'man'               => \$man,
+  );
 
-pod2usage(1)             if $help || !(@template_ids || $everything || $skip_undeployed || $only_undeployed);
+pod2usage(1) if $help || !(@template_ids || $everything || $skip_undeployed || $only_undeployed);
 pod2usage(-verbose => 2) if $man;
 
 if ($everything && (@template_ids || $skip_undeployed || $only_undeployed)) {
@@ -116,7 +117,7 @@ if ($everything && (@template_ids || $skip_undeployed || $only_undeployed)) {
 }
 
 if ($skip_undeployed && $only_undeployed) {
-    die ("Can't specify --redeploy-only and --newly-deploy-only the same time!\n");
+    die("Can't specify --redeploy-only and --newly-deploy-only the same time!\n");
 }
 
 @template_ids = pkg('Template')->find(ids_only => 1) unless @template_ids;
@@ -126,33 +127,33 @@ foreach my $template_id (@template_ids) {
 
     my ($template) = pkg('Template')->find(template_id => $template_id);
     unless ($template) {
-	print STDERR "Couldn't find template $template_id!\n";
-	next;
+        print STDERR "Couldn't find template $template_id!\n";
+        next;
     }
 
     if ($skip_undeployed && !$template->deployed) {
-	print "Skipping undeployed template $template_id\n" if $verbose > 1;
-	next;
+        print "Skipping undeployed template $template_id\n" if $verbose > 1;
+        next;
     } elsif ($only_undeployed && $template->deployed) {
-	print "Skipping deployed template $template_id\n" if $verbose > 1;
-	next;
+        print "Skipping deployed template $template_id\n" if $verbose > 1;
+        next;
     }
 
     if ($template->deployed) {
-	++$redeployed_count;
-	print "Re-deploying template $template_id\n" if $verbose;
+        ++$redeployed_count;
+        print "Re-deploying template $template_id\n" if $verbose;
     } else {
-	++$newly_deployed_count;
-	print "Deploying template $template_id\n" if $verbose;
+        ++$newly_deployed_count;
+        print "Deploying template $template_id\n" if $verbose;
     }
     $template->deploy;
 }
 
 if ($newly_deployed_count || $redeployed_count) {
     print "Total newly deployed templates: $newly_deployed_count\n" if $newly_deployed_count;
-    print "Total re-deployed templates: $redeployed_count\n" if $redeployed_count;
-} else { 
+    print "Total re-deployed templates: $redeployed_count\n"        if $redeployed_count;
+} else {
     print "Nothing to deploy.\n";
 }
- 
+
 exit 0;

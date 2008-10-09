@@ -31,7 +31,7 @@ like($@, qr/Database <-> Krang version mismatch!/, "dbh() detects version mismat
 # Try to get dbh in spite of version mismatch (ignore_version=>1)
 forget_dbh();
 undef($dbh2);
-eval { $dbh2 = dbh(ignore_version=>1); };
+eval { $dbh2 = dbh(ignore_version => 1); };
 ok(ref($dbh2), "dbh() respects 'ignore_version' pragma");
 
 # Fix version

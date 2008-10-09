@@ -202,7 +202,8 @@ sub show_row_handler {
 
     # setup action
     my $object_type = ucfirst((split('::', $history->object_type))[-1]);
-    $row->{action} = $q->escapeHTML("$object_type " . localize($self->action_label($history->action)));
+    $row->{action} =
+      $q->escapeHTML("$object_type " . localize($self->action_label($history->action)));
 
     # setup user
     my ($user) = pkg('User')->find(user_id => $history->user_id);
@@ -221,7 +222,8 @@ sub show_row_handler {
     my $attr = "";
     $attr .= localize("Version:") . ' ' . $history->version
       if $history->version;
-    $attr .= localize("Desk:") . ' ' . localize((pkg('Desk')->find( desk_id => $history->desk_id))[0]->name)
+    $attr .=
+      localize("Desk:") . ' ' . localize((pkg('Desk')->find(desk_id => $history->desk_id))[0]->name)
       if $history->desk_id;
     $row->{attr} = $q->escapeHTML($attr);
 }

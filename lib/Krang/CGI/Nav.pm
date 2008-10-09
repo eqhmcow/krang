@@ -37,7 +37,7 @@ level changed).
 sub setup {
     my $self = shift;
     $self->mode_param('rm');
-    $self->start_mode('show');    
+    $self->start_mode('show');
     $self->run_modes(show => 'show');
 }
 
@@ -49,7 +49,7 @@ The only available run-mode, displays the navigation menu.
 
 sub show {
     my $self = shift;
-    my $template = $self->load_tmpl('nav.tmpl', path => [ $session{language} || '' ]);
+    my $template = $self->load_tmpl('nav.tmpl', path => [$session{language} || '']);
     pkg('Navigation')->fill_template(template => $template, force_ajax => 1);
     return $template->output;
 }

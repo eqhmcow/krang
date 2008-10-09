@@ -114,7 +114,9 @@ END
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader 'Conf';
+
 BEGIN {
+
     # we don't care right now which instance we use, but Krang::Script does
     # so just use the first one
     my ($first_instance) = pkg('Conf')->instances();
@@ -123,9 +125,10 @@ BEGIN {
 }
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader 'Script';
+
 BEGIN {
     pkg('AddOn')->call_handler('InitHandler');
-};
+}
 use Getopt::Long;
 use Data::Dumper;
 use Pod::Usage;
@@ -151,14 +154,14 @@ pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 $code ||= <STDIN>;
-unless( $code ) {
+unless ($code) {
     print "No code to run!\n";
     exit(1);
 }
 
 foreach my $mod (@modules) {
     eval "require $mod";
-    if( $@ ) {
+    if ($@) {
         print "Could not load module $mod: $@";
         exit(1);
     }
@@ -166,7 +169,7 @@ foreach my $mod (@modules) {
 foreach my $mod (@krang_modules) {
     $mod = pkg($mod);
     eval "require $mod";
-    if( $@ ) {
+    if ($@) {
         print "Could not load module $mod: $@";
         exit(1);
     }
@@ -183,22 +186,21 @@ foreach my $instance (@instances) {
 sub run_code {
     my $code = shift;
     my $result;
-    if( $system ) {
+    if ($system) {
         $result = `$code 2>&1`;
-    } elsif( $query ) {
+    } elsif ($query) {
         my $sth = dbh()->prepare_cached($code);
         eval { $sth->execute() };
         eval { $result = $sth->fetchall_arrayref({}) unless $@ };
-        print "Error: $@\n" if $@ and $@ !~ /fetch\(\) without execute\(\)/i
+        print "Error: $@\n" if $@ and $@ !~ /fetch\(\) without execute\(\)/i;
     } else {
         $result = eval $code;
         print "Error: $@\n" if $@;
     }
 
-    if( $print && defined $result ) {
+    if ($print && defined $result) {
         print ref $result ? Dumper($result) : $result;
     }
 }
 print "\n";
-
 

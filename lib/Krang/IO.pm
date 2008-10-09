@@ -67,13 +67,15 @@ sub io_file {
     my ($pkg, $file) = @_;
     my $charset = Charset();
 
-    if( $charset ) {
+    if ($charset) {
+
         # see if the mode is specified
         my $mode;
-        if( $file =~ /^\s*(<|>|>>)\s*(.*)/ ) {
+        if ($file =~ /^\s*(<|>|>>)\s*(.*)/) {
             $mode = $1;
             $file = $2;
         } else {
+
             # it's an implicit read
             $mode = '<';
         }

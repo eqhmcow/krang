@@ -49,7 +49,7 @@ $tmpl = pkg('Template')->new(
     content     => '<blink><tmpl_var bob></blink>',
     filename    => 'bob.tmpl'
 );
-isa_ok($tmpl,                'Krang::Template');
+isa_ok($tmpl, 'Krang::Template');
 isa_ok($tmpl->creation_date, 'Time::Piece');
 ok($tmpl->template_uuid);
 

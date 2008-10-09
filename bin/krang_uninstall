@@ -36,15 +36,18 @@ Please use this script with utmost caution!
 =cut
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -70,34 +73,37 @@ use Krang::ClassLoader Conf => qw(KrangRoot HostName InstanceDBName DBUser DBPas
 my ($help, $man, $no_prompt, $MySQLRootPassword);
 my $verbose;
 
-pod2usage(2) unless
-  GetOptions(help         => \$help,
-             man          => \$man,
-             verbose => \$verbose,
-             no_prompt => \$no_prompt,
-             'MySQLRootPassword=s' => \$MySQLRootPassword
-            );
+pod2usage(2)
+  unless GetOptions(
+    help                  => \$help,
+    man                   => \$man,
+    verbose               => \$verbose,
+    no_prompt             => \$no_prompt,
+    'MySQLRootPassword=s' => \$MySQLRootPassword
+  );
 
-pod2usage(1)             if $help;
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 unless ($no_prompt) {
     exit 1
-      unless prompt("y", "This program will totally and permanently remove this krang installation.\n\nAre you sure you
-want to proceed?", "y/n", "y");
+      unless prompt(
+        "y",
+        "This program will totally and permanently remove this krang installation.\n\nAre you sure you
+want to proceed?", "y/n", "y"
+      );
 }
 
 # Must be running as root.
 exit_error("Must be run as root.") unless ($> eq "0");
 
 # stop krang services
-system($ENV{KRANG_ROOT}."/bin/krang_ctl stop");
+system($ENV{KRANG_ROOT} . "/bin/krang_ctl stop");
 
 # drop all databases
-my $cmd = $ENV{KRANG_ROOT} . "/bin/krang_createdb" .
-          " --destroy --all --no_create --no_prompt";
-$cmd .= " --verbose --verbose" if $verbose;
-$cmd .= " --hostname=" . DBHost if DBHost;
+my $cmd = $ENV{KRANG_ROOT} . "/bin/krang_createdb" . " --destroy --all --no_create --no_prompt";
+$cmd .= " --verbose --verbose"              if $verbose;
+$cmd .= " --hostname=" . DBHost             if DBHost;
 $cmd .= " --password=" . $MySQLRootPassword if $MySQLRootPassword;
 
 system($cmd) == 0

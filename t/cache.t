@@ -27,7 +27,7 @@ for my $x (0 .. $#objs) {
 Krang::Cache::stop();
 Krang::Cache::start();
 
-@objs = ('a', 'b', 'c', 'd', 'e', 'f'); 
+@objs = ('a', 'b', 'c', 'd', 'e', 'f');
 for my $x (0 .. $#objs) {
     Krang::Cache::set('Foo' => $x => $objs[$x]);
 }
@@ -39,7 +39,7 @@ for my $x (1 .. $#objs) {
 Krang::Cache::stop();
 Krang::Cache::start();
 
-@objs = ('a', 'b', 'c', 'd', 'e'); 
+@objs = ('a', 'b', 'c', 'd', 'e');
 for my $x (0 .. $#objs) {
     Krang::Cache::set('Foo' => $x => $objs[$x]);
 }
@@ -58,5 +58,5 @@ Krang::Cache::set('Foo' => 14 => 'zzzzz');
 ok(not defined Krang::Cache::get('Foo' => $_)) for (0 .. 6);
 
 my ($hits, $loads, $fill) = Krang::Cache::stats();
-is ($fill, 5);
+is($fill, 5);
 

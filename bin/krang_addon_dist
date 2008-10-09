@@ -40,15 +40,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     eval { require Krang::Conf };
     warn << "END" and exit(1) if $@;
@@ -76,42 +79,40 @@ use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'AddOn';
 
 # options
-my ( $verbose, $help, $man );
+my ($verbose, $help, $man);
 GetOptions(
-    'verbose'       => \$verbose,
-    'help'          => \$help,
-    'man'           => \$man,
-  )
-  or pod2usage(2);
+    'verbose' => \$verbose,
+    'help'    => \$help,
+    'man'     => \$man,
+) or pod2usage(2);
 pod2usage(1) if $help;
-pod2usage( -verbose => 2 ) if $man;
+pod2usage(-verbose => 2) if $man;
 
 # get addon name
 my $name;
 if (@ARGV == 1) {
     $name = $ARGV[0];
 } else {
-    pod2usage("Bad arguments to krang_addon_build: '" . 
-              join(' ', @ARGV) . "'\n");
+    pod2usage("Bad arguments to krang_addon_build: '" . join(' ', @ARGV) . "'\n");
 }
 
 # find the addon
 my ($addon) = pkg('AddOn')->find(name => $name);
-die("Can't find addon named '$name'!  The following addons are installed:\n" .
-    join("\n", map { "\t" . $_->name . " v" . $_->version } 
-         pkg('AddOn')->find()) . "\n")
+die("Can't find addon named '$name'!  The following addons are installed:\n"
+      . join("\n", map { "\t" . $_->name . " v" . $_->version } pkg('AddOn')->find()) . "\n")
   unless $addon;
 
 # assemble info for tar
-my $dir      = catdir(KrangRoot, 'addons', $name);
-my $adir     = catdir(KrangRoot, 'addons');
-my $conf     = $addon->conf;
+my $dir  = catdir(KrangRoot, 'addons', $name);
+my $adir = catdir(KrangRoot, 'addons');
+my $conf = $addon->conf;
 my $version  = $conf->get('Version');
 my $filename = $name . '-' . $version . '.tar.gz';
 
 # create tarball
 print STDERR "Creating tarball $filename...\n" if $verbose;
-my $out = `tar zvcf $filename -C $adir --exclude=CVS --exclude=.svn --exclude=*.swp --exclude=*.tdy --exclude=*~ --exclude=*bak --exclude=.#* $name/.`;
+my $out =
+  `tar zvcf $filename -C $adir --exclude=CVS --exclude=.svn --exclude=*.swp --exclude=*.tdy --exclude=*~ --exclude=*bak --exclude=.#* $name/.`;
 print STDERR $out if $verbose;
 
 print "Success.  Created addon distribution in $filename.\n";

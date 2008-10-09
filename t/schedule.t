@@ -620,7 +620,7 @@ push @schedules, $sched;
 # text 'context' behavior
 is(ref $sched->{context}, 'ARRAY', 'Krang::Schedule->context()');
 my %context1 = @{$sched->{context}};
-is($context1{version},               1, 'Krang::Schedule->context()');
+is($context1{version}, 1, 'Krang::Schedule->context()');
 is(exists $sched->{_frozen_context}, 1, 'Krang::Schedule->context()');
 my %context2;
 eval { %context2 = @{thaw($sched->{_frozen_context})} };
@@ -768,10 +768,10 @@ is($sched->inactive, 0, "Schedule for Story $story_id is again active");
 ##############################
 # configurable failure
 
-is ($sched->failure_max_tries, undef, "failure_max_tries NULL by default");
-is ($sched->failure_delay_sec, undef, "failure_delay_sec NULL by default");
-is ($sched->failure_notify_id, undef, "failure_notify_id NULL by default");
-is ($sched->success_notify_id, undef, "success_notify_id NULL by default");
+is($sched->failure_max_tries, undef, "failure_max_tries NULL by default");
+is($sched->failure_delay_sec, undef, "failure_delay_sec NULL by default");
+is($sched->failure_notify_id, undef, "failure_notify_id NULL by default");
+is($sched->success_notify_id, undef, "success_notify_id NULL by default");
 
 $sched = pkg('Schedule::Action::send')->new(
     action            => 'publish',
@@ -783,15 +783,16 @@ $sched = pkg('Schedule::Action::send')->new(
     failure_max_tries => 3,
     failure_delay_sec => 30,
     failure_notify_id => 2,
-    success_notify_id => 5);
+    success_notify_id => 5
+);
 $sched->save;
 
 ($sched) = pkg('Schedule')->find(schedule_id => $sched->schedule_id);
-ok ($sched, 'Schedule with configurable failure successfully saved to DB'); 
-is ($sched->failure_max_tries, 3,  "failure_max_tries successfully retrieved from schedule object");
-is ($sched->failure_delay_sec, 30, "failure_delay_sec successfully retrieved from schedule object");
-is ($sched->failure_notify_id, 2,  "failure_notify_id successfully retrieved from schedule object");
-is ($sched->success_notify_id, 5,  "success_notify_id successfully retrieved from schedule object");
+ok($sched, 'Schedule with configurable failure successfully saved to DB');
+is($sched->failure_max_tries, 3,  "failure_max_tries successfully retrieved from schedule object");
+is($sched->failure_delay_sec, 30, "failure_delay_sec successfully retrieved from schedule object");
+is($sched->failure_notify_id, 2,  "failure_notify_id successfully retrieved from schedule object");
+is($sched->success_notify_id, 5,  "success_notify_id successfully retrieved from schedule object");
 $sched->delete;
 
 ##############################

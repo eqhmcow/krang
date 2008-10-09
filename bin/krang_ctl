@@ -45,14 +45,15 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
     $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -76,24 +77,27 @@ use Krang::ClassLoader Conf => qw(KrangRoot EnableSiteServer);
 # check for args
 usage() unless @ARGV;
 my $command = shift @ARGV;
-usage() unless $command eq 'start' or
-               $command eq 'stop' or
-               $command eq 'restart';
+usage()
+  unless $command eq 'start'
+      or $command eq 'stop'
+      or $command eq 'restart';
 
 my @ctl = (
-           { name => 'krang_apachectl',   port => 'ApachePort' },
-           { name => 'krang_ftpctl',      port => 'FTPPort'    },
-           { name => 'krang_schedulectl', port => 'ApachePort' },
-          );
-push(@ctl, { name => 'krang_siteserverctl', port => 'SiteServerPort' })
-    if EnableSiteServer;
+    {name => 'krang_apachectl',   port => 'ApachePort'},
+    {name => 'krang_ftpctl',      port => 'FTPPort'},
+    {name => 'krang_schedulectl', port => 'ApachePort'},
+);
+push(@ctl, {name => 'krang_siteserverctl', port => 'SiteServerPort'})
+  if EnableSiteServer;
 
 # call ctl scripts
 foreach my $service (@ctl) {
     my $script = catfile(KrangRoot, 'bin', $service->{'name'});
+
     # will need sudo?
-    if (($< != 0 or $> != 0) and 
-        pkg('Conf')->get($service->{'port'}) <= 1024) {
+    if (($< != 0 or $> != 0)
+        and pkg('Conf')->get($service->{'port'}) <= 1024)
+    {
         $script = "sudo $script";
     }
     print STDERR "=> krang_ctl calling '$script $command'...\n";
@@ -102,7 +106,7 @@ foreach my $service (@ctl) {
 }
 
 sub usage {
-  print <<END;
+    print <<END;
 usage: krang_ctl (start|stop|restart)
 
   start      - start krang services
@@ -111,5 +115,5 @@ usage: krang_ctl (start|stop|restart)
 
 END
 
-  exit;
+    exit;
 }

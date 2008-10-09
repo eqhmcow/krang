@@ -1,3 +1,4 @@
+
 =head1 NAME
 
 Krang::Schedule::Action - Abstract class for scheduler action type classes.
@@ -41,7 +42,7 @@ sub execute {
     my $self = shift;
     my $msg = sprintf("%s->execute(): unknown action '%s'", __PACKAGE__, $self->{action});
     $msg .= "\nmust define execute() in subclass of Schedule::Action\n";
-        die($msg);
+    die($msg);
 }
 
 =over
@@ -56,16 +57,17 @@ sub clean_entry {
     my $self = shift;
 
     if ($self->{repeat} eq 'never') {
+
         # never to be run again.  delete yourself.
         $self->delete();
-    } else {         # set last_run, update next_run, save.
+    } else {    # set last_run, update next_run, save.
         $self->{last_run} = $self->{next_run};
         $self->{next_run} = $self->_calc_next_run(skip_match => 1);
 
         if ($self->expires) {
-            my $exp = Time::Piece->from_mysql_datetime($self->{expires});
+            my $exp  = Time::Piece->from_mysql_datetime($self->{expires});
             my $next = Time::Piece->from_mysql_datetime($self->{next_run});
-            if ($exp < $next ) {
+            if ($exp < $next) {
                 $self->delete;
             } else {
                 $self->save;
@@ -99,7 +101,9 @@ sub failure_subject {
 
 sub failure_message {
     my ($self, $error) = @_;
-    return "Schedule " . $self->schedule_id . " has failed and you are being notified because no further attempts will be made."
+    return "Schedule "
+      . $self->schedule_id
+      . " has failed and you are being notified because no further attempts will be made.";
 }
 
 =over

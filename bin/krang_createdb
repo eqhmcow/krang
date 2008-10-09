@@ -97,15 +97,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang
     eval { require Krang };
@@ -125,7 +128,8 @@ END
 use Krang::ClassFactory qw(pkg);
 use Term::Prompt qw(prompt);
 use Krang;
-use Krang::ClassLoader Conf => qw(InstanceElementSet KrangRoot InstanceDBName DBUser DBPass Charset);
+use Krang::ClassLoader Conf =>
+  qw(InstanceElementSet KrangRoot InstanceDBName DBUser DBPass Charset);
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader 'Charset';
 
@@ -134,18 +138,19 @@ use Pod::Usage;
 
 my ($help, $man, $password, $hostname, $destroy, $no_prompt, $no_create, $all, $CHARSET);
 my $verbose = 0;
-GetOptions(help         => \$help,
-           man          => \$man,
-           'verbose+'   => \$verbose,
-           destroy      => \$destroy,
-            no_prompt   => \$no_prompt,
-            no_create   => \$no_create,
-           'password=s' => \$password,
-           'hostname=s' => \$hostname,
-           'charset=s'  => \$CHARSET,
-           all          => \$all,
-          );
-pod2usage(1)             if $help;
+GetOptions(
+    help         => \$help,
+    man          => \$man,
+    'verbose+'   => \$verbose,
+    destroy      => \$destroy,
+    no_prompt    => \$no_prompt,
+    no_create    => \$no_create,
+    'password=s' => \$password,
+    'hostname=s' => \$hostname,
+    'charset=s'  => \$CHARSET,
+    all          => \$all,
+);
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 # get an instance, or collect instances for all
@@ -177,10 +182,10 @@ unless ($output =~ /hello.*world/s) {
             $msg .= "for this host '$hostname'.\n" if defined $hostname;
             die($msg);
         } else {
-            my $msg = "Unable to connect to MySQL as root with no password.  ".
-                      "Maybe you need to use --password?";
-            $msg .=   " or --hostname?" if not defined $hostname;
-            $msg .=   "\n";
+            my $msg = "Unable to connect to MySQL as root with no password.  "
+              . "Maybe you need to use --password?";
+            $msg .= " or --hostname?" if not defined $hostname;
+            $msg .= "\n";
             die($msg);
         }
     } else {
@@ -188,14 +193,18 @@ unless ($output =~ /hello.*world/s) {
     }
 }
 
-
 # leave no database standing
 if ($destroy) {
 
     # make sure they really meant --destroy
     unless ($no_prompt) {
-        exit 1      
-        unless prompt("y", "This program will drop and recreate Krang databases (including the \ndatabase-linked contents of data/) for this installation.\n\nAre you sure you want to proceed?", "y/n", "y");
+        exit 1
+          unless prompt(
+            "y",
+            "This program will drop and recreate Krang databases (including the \ndatabase-linked contents of data/) for this installation.\n\nAre you sure you want to proceed?",
+            "y/n",
+            "y"
+          );
     }
 
     # drop all databases
@@ -206,13 +215,12 @@ if ($destroy) {
         my $cmd = "mysql -uroot -e 'DROP DATABASE IF EXISTS $name'";
         $cmd .= " -p$password" if defined $password;
         $cmd .= " -h$hostname" if defined $hostname;
-        $cmd .= " -v" if $verbose > 1;
+        $cmd .= " -v"          if $verbose > 1;
         print "Running '$cmd'\n" if $verbose > 1;
         system($cmd) && die "Couldn't drop database: $?";
 
         # remove the data directories for this database
-        my $template_dir = catdir($ENV{KRANG_ROOT}, "data", "templates", 
-                                  $instance);
+        my $template_dir = catdir($ENV{KRANG_ROOT}, "data", "templates", $instance);
         print STDERR "Clearing '$template_dir'...\n" if $verbose;
         system("rm -rf $template_dir");
 
@@ -238,7 +246,7 @@ foreach my $instance (@instances) {
     my $cmd = qq{mysql -uroot -e 'select "$name exists"' $name};
     $cmd .= " -p$password" if defined $password;
     $cmd .= " -h$hostname" if defined $hostname;
-    $cmd .= " -v" if $verbose > 1;
+    $cmd .= " -v"          if $verbose > 1;
     $cmd .= " 2>&1";
     print "Running '$cmd'\n" if $verbose > 1;
     if (`$cmd` =~ /$name exists/) {
@@ -253,32 +261,30 @@ foreach my $instance (@instances) {
     $cmd = "mysql -uroot -e 'CREATE DATABASE $name $charset_clause'";
     $cmd .= " -p$password" if defined $password;
     $cmd .= " -h$hostname" if defined $hostname;
-    $cmd .= " -v" if $verbose > 1;
+    $cmd .= " -v"          if $verbose > 1;
     print "Running '$cmd'\n" if $verbose > 1;
     system($cmd) && die "Couldn't create database: $?";
 
     # grant access to the database to DBUser
     $cmd = qq{mysql -uroot -e 'grant all on $name.* to "$user"};
-    $cmd .= q{@localhost} if !defined $hostname;
+    $cmd .= q{@localhost}               if !defined $hostname;
     $cmd .= qq{ identified by "$pass" } if $pass;
     $cmd .= "'";
-    $cmd .= " -p$password" if defined $password;
-    $cmd .= " -h$hostname" if defined $hostname;
-    $cmd .= " -v" if $verbose > 1;
+    $cmd .= " -p$password"              if defined $password;
+    $cmd .= " -h$hostname"              if defined $hostname;
+    $cmd .= " -v"                       if $verbose > 1;
     print "Running '$cmd'\n" if $verbose > 1;
     system($cmd) && die "Couldn't grant all: $?";
 
     # load all sql files as the DBUser
     # find them in reverse order so that krang files get run first
     # and addons have a chance to change them later
-    my @sql_dirs = reverse pkg('File')->find_all('sql'); 
-    print STDERR "Loading SQL for '$name' from " . join(', ', @sql_dirs) . 
-      "...\n" if $verbose;
-    $cmd = "cat " . join(' ', map { catfile($_, '*.sql') } @sql_dirs) . 
-      " | mysql -u$user $name ";
-    $cmd .= " -p$pass" if $pass;
+    my @sql_dirs = reverse pkg('File')->find_all('sql');
+    print STDERR "Loading SQL for '$name' from " . join(', ', @sql_dirs) . "...\n" if $verbose;
+    $cmd = "cat " . join(' ', map { catfile($_, '*.sql') } @sql_dirs) . " | mysql -u$user $name ";
+    $cmd .= " -p$pass"     if $pass;
     $cmd .= " -h$hostname" if defined $hostname;
-    $cmd .= " -v" if $verbose > 1;
+    $cmd .= " -v"          if $verbose > 1;
     print "Running '$cmd'\n" if $verbose > 1;
     system($cmd) && die "Couldn't load SQL: $?: $!";
 
@@ -287,16 +293,16 @@ foreach my $instance (@instances) {
     $cmd = qq{mysql -uroot -e 'UPDATE db_version set db_version="$krang_version"' $name};
     $cmd .= " -p$password" if defined $password;
     $cmd .= " -h$hostname" if defined $hostname;
-    $cmd .= " -v" if $verbose > 1;
+    $cmd .= " -v"          if $verbose > 1;
     print "Running '$cmd'\n" if $verbose > 1;
     system($cmd) && die "Couldn't update db_version: $?";
 
     # populate default template set, if it exists
-    my $import_file = pkg('File')->find(catfile('element_lib', 
-                                                InstanceElementSet,
-                                                'templates.kds'));
+    my $import_file =
+      pkg('File')->find(catfile('element_lib', InstanceElementSet, 'templates.kds'));
 
     if ($import_file) {
+
         # perform import from templates.kds file
         $cmd = catdir(KrangRoot, 'bin', 'krang_import') . " ";
         $cmd .= "--verbose " if $verbose;
@@ -318,7 +324,7 @@ foreach my $instance (@instances) {
         print "Running '$cmd'\n" if $verbose > 1;
         system($cmd) && die "'$cmd' failed: $?";
     }
- 
+
     # Load media from filesystem
     my $media_dir = catdir(element_lib_path(), 'media');
     if (-d $media_dir) {
@@ -330,21 +336,20 @@ foreach my $instance (@instances) {
         print "Running '$cmd'\n" if $verbose > 1;
         system($cmd) && die "'$cmd' failed: $?";
     }
- 
+
     # have Krang::ListGroups and Krang::Lists created if needed
-    if (pkg('File')->find(catfile('element_lib', InstanceElementSet, 
-                                  'lists.conf'))) {
+    if (pkg('File')->find(catfile('element_lib', InstanceElementSet, 'lists.conf'))) {
         $cmd = catdir(KrangRoot, 'bin', 'krang_create_lists');
         local $ENV{KRANG_INSTANCE} = $instance;
         print "Running '$cmd'\n" if $verbose > 1;
         system($cmd) && die "krang_create_lists failed: $?";
-        
+
         # if a lists.kds file exists, import it.
-        my $lists_import_file = pkg('File')->find(catfile('element_lib',
-                                                          InstanceElementSet, 
-                                                          'lists.kds'));
-        
+        my $lists_import_file =
+          pkg('File')->find(catfile('element_lib', InstanceElementSet, 'lists.kds'));
+
         if ($lists_import_file) {
+
             # perform import from lists.kds file
             $cmd = catdir(KrangRoot, 'bin', 'krang_import') . " ";
             $cmd .= "--verbose " if $verbose;
@@ -358,16 +363,15 @@ foreach my $instance (@instances) {
 
 }
 
-
 print "Databases created successfully.\n";
 exit(0);
-
 
 ###########################
 ####  Private methods  ####
 ###########################
 
 sub element_lib_path {
+
     # Try addons/
     my $libdir = catdir(KrangRoot, 'addons', InstanceElementSet, 'element_lib', InstanceElementSet);
     return $libdir if (-d $libdir);

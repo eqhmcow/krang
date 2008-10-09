@@ -59,15 +59,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -108,32 +111,36 @@ my $cats     = 15;
 my $contribs = 50;
 my $stories  = 50;
 my $covers;
-my $media    = 25;
-my $users    = 50;
+my $media     = 25;
+my $users     = 50;
 my $templates = 1;
 my $undo_script;
-pod2usage(2) unless
-  GetOptions(help         => \$help,
-             man          => \$man,
-             'sites=s'    => \$sites,
-             'cats=s'     => \$cats,
-             'contribs=s' => \$contribs,
-             'stories=s'  => \$stories,
-             'media=s'    => \$media,
-	     'users=s'	  => \$users,
-             'templates=s'=> \$templates,
-             'covers=s'   => \$covers,
-             'undo_script=s' => \$undo_script,
-            );
+pod2usage(2)
+  unless GetOptions(
+    help            => \$help,
+    man             => \$man,
+    'sites=s'       => \$sites,
+    'cats=s'        => \$cats,
+    'contribs=s'    => \$contribs,
+    'stories=s'     => \$stories,
+    'media=s'       => \$media,
+    'users=s'       => \$users,
+    'templates=s'   => \$templates,
+    'covers=s'      => \$covers,
+    'undo_script=s' => \$undo_script,
+  );
 $covers = defined $covers ? $covers : ($cats >= 2 ? int($cats / 2) : 0);
 
-pod2usage(1)             if $help;
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 # make sure element set is supported
-if (($stories or $covers or $cats) and 
-    (InstanceElementSet ne 'TestSet1' and InstanceElementSet ne 'Default')) {
-    die "Unknown element set '" . InstanceElementSet . "'.  I only know how to create stories and categories for 'TestSet1' and 'Default'.\n";
+if (    ($stories or $covers or $cats)
+    and (InstanceElementSet ne 'TestSet1' and InstanceElementSet ne 'Default'))
+{
+    die "Unknown element set '"
+      . InstanceElementSet
+      . "'.  I only know how to create stories and categories for 'TestSet1' and 'Default'.\n";
 }
 
 # covers each need a category
@@ -143,38 +150,35 @@ unless ($covers <= $cats) {
 
 # list of available sites, configured in a developer's /etc/hosts
 my @site_urls = qw(
-propositions.kra storeys.kra deallocations.kra wades.kra navigate.kra
-cannon.kra tribe.kra allocates.kra precipitate.kra vanquishing.kra
-vaticanizes.kra companies.kra expertness.kra crutch.kra fondles.kra
-orangutan.kra equilibrium.kra mystics.kra chirped.kra bogartian.kra
-backstitches.kra outset.kra certainly.kra possums.kra mercenariness.kra
-stationing.kra menstruate.kra collects.kra superscripted.kra forgivably.kra
-flo.kra checkerboarding.kra attainments.kra feud.kra spooler.kra shuttered.kra
-slurs.kra beautifying.kra farkas.kra outperformed.kra subtree.kra tautness.kra
-stella.kra renaults.kra synthesizers.kra toryizes.kra outlasts.kra limp.kra
-collision.kra taoist.kra
+  propositions.kra storeys.kra deallocations.kra wades.kra navigate.kra
+  cannon.kra tribe.kra allocates.kra precipitate.kra vanquishing.kra
+  vaticanizes.kra companies.kra expertness.kra crutch.kra fondles.kra
+  orangutan.kra equilibrium.kra mystics.kra chirped.kra bogartian.kra
+  backstitches.kra outset.kra certainly.kra possums.kra mercenariness.kra
+  stationing.kra menstruate.kra collects.kra superscripted.kra forgivably.kra
+  flo.kra checkerboarding.kra attainments.kra feud.kra spooler.kra shuttered.kra
+  slurs.kra beautifying.kra farkas.kra outperformed.kra subtree.kra tautness.kra
+  stella.kra renaults.kra synthesizers.kra toryizes.kra outlasts.kra limp.kra
+  collision.kra taoist.kra
 );
 use Krang::ClassLoader 'Test::Content';
-    # get a random word
+
+# get a random word
 
 my $creator = pkg('Test::Content')->new();
 
 # create sites
 my (@sites, @cats);
-for(1 .. $sites) {
+for (1 .. $sites) {
     my $name = $site_urls[int(rand(scalar(@site_urls)))];
-    my $site = pkg('Site')->new(publish_path => 
-                                  catdir(KrangRoot, "tmp", "${name}_publish"),
-                                preview_path => 
-                                  catdir(KrangRoot, "tmp", "${name}_preview"),
-                                preview_url  => "preview.$name" .
-                                  (EnableSiteServer ? 
-                                   (SiteServerPort eq '80' ? 
-                                    "" : ":" . SiteServerPort) : ""),
-                                url          => "$name" .
-                                  (EnableSiteServer ? 
-                                   (SiteServerPort eq '80' ? 
-                                    "" : ":" . SiteServerPort) : ""));
+    my $site = pkg('Site')->new(
+        publish_path => catdir(KrangRoot, "tmp", "${name}_publish"),
+        preview_path => catdir(KrangRoot, "tmp", "${name}_preview"),
+        preview_url  => "preview.$name"
+          . (EnableSiteServer ? (SiteServerPort eq '80' ? "" : ":" . SiteServerPort) : ""),
+        url => "$name"
+          . (EnableSiteServer ? (SiteServerPort eq '80' ? "" : ":" . SiteServerPort) : "")
+    );
     eval { $site->save() };
     redo if $@ and $@ =~ /duplicate/;
     print STDERR "Created site " . $site->url . "...\n";
@@ -185,12 +189,13 @@ for(1 .. $sites) {
     push(@cats, $root);
 }
 
-
 # create categorie
-for(1 .. $cats) {
+for (1 .. $cats) {
     my $cname = get_word('ascii');
-    my $cat = pkg('Category')->new(dir       => $cname,
-                                   parent_id => $cats[int(rand(scalar(@cats)))]->category_id);
+    my $cat   = pkg('Category')->new(
+        dir       => $cname,
+        parent_id => $cats[int(rand(scalar(@cats)))]->category_id
+    );
 
     # TestSet1 categories have display names
     if (InstanceElementSet eq 'TestSet1') {
@@ -203,75 +208,80 @@ for(1 .. $cats) {
     push(@cats, $cat);
 }
 
-
 # create contribs
 my %types = pkg('Pref')->get('contrib_type');
 my @contribs;
-for(1 .. $contribs) {
-    my $fname = ucfirst(get_word('ascii'));
-    my $lname = ucfirst(get_word('ascii'));
-    my $mname = int(rand(2)) ? ucfirst(get_word()) : "";
-    my $prefix = ("Sir", "General", "Her Royal Highness",
-                  ("") x 20)[int(rand(23))];
-    my $suffix = ("Jr.", "Sr.", "III", "IV",
-                  ("") x 20)[int(rand(24))];
-    my @types = grep { int(rand(2)) } keys %types;
+for (1 .. $contribs) {
+    my $fname  = ucfirst(get_word('ascii'));
+    my $lname  = ucfirst(get_word('ascii'));
+    my $mname  = int(rand(2)) ? ucfirst(get_word()) : "";
+    my $prefix = ("Sir", "General", "Her Royal Highness", ("") x 20)[int(rand(23))];
+    my $suffix = ("Jr.", "Sr.", "III", "IV", ("") x 20)[int(rand(24))];
+    my @types  = grep { int(rand(2)) } keys %types;
     @types = (keys %types)[0] unless @types;
 
-    my $contrib = pkg('Contrib')->new(prefix => $prefix,
-                                      first  => $fname,
-                                      middle => $mname,
-                                      last   => $lname,
-                                      email  => "$fname\@$lname.com",
-                                      phone  => "1-800-$lname",
-                                      bio    => get_words(20),
-                                      url => "http://$fname.$lname.com");
+    my $contrib = pkg('Contrib')->new(
+        prefix => $prefix,
+        first  => $fname,
+        middle => $mname,
+        last   => $lname,
+        email  => "$fname\@$lname.com",
+        phone  => "1-800-$lname",
+        bio    => get_words(20),
+        url    => "http://$fname.$lname.com"
+    );
     $contrib->contrib_type_ids(@types);
     eval { $contrib->save() };
     redo if $@ and $@ =~ /duplicate/;
     push(@contribs, $contrib);
-    print STDERR "Created contributor " .
-      join(' ', grep { $_ } ($prefix, $fname, $mname, $lname, $suffix)) .
-        " (" . join(', ', map { $types{$_} } @types) . ")" .
-           "\n";
+    print STDERR "Created contributor "
+      . join(' ', grep { $_ } ($prefix, $fname, $mname, $lname, $suffix)) . " ("
+      . join(', ', map { $types{$_} } @types) . ")" . "\n";
 }
 
 # create media
 my @media;
 for my $media_count (1 .. $media) {
+
     # create a random image
     my ($x, $y);
-    my $img = Imager->new(xsize => $x = (int(rand(600) + 25)),
-                          ysize => $y = (int(rand(600) + 25)),
-                          channels => 3,
-                         );
+    my $img = Imager->new(
+        xsize => $x = (int(rand(600) + 25)),
+        ysize => $y = (int(rand(600) + 25)),
+        channels => 3,
+    );
 
     # fill with a random color
-    $img->box(color => Imager::Color->new(map { int(rand(255)) } 1 .. 3),
-              filled => 1);
+    $img->box(
+        color  => Imager::Color->new(map { int(rand(255)) } 1 .. 3),
+        filled => 1
+    );
 
     # draw some boxes, circles and polygons
     for (0 .. (int(rand(10)) + 2)) {
         if ((int(rand(2))) == 1) {
-            $img->box(color =>
-                      Imager::Color->new(map { int(rand(255)) } 1 .. 3),
-                      xmin => (int(rand($x - ($x/2))) + 1),
-                      ymin => (int(rand($y - ($y/2))) + 1),
-                      xmax => (int(rand($x * 2)) + 1),
-                      ymax => (int(rand($y * 2)) + 1),
-                      filled => 1);
+            $img->box(
+                color => Imager::Color->new(map { int(rand(255)) } 1 .. 3),
+                xmin => (int(rand($x - ($x / 2))) + 1),
+                ymin => (int(rand($y - ($y / 2))) + 1),
+                xmax   => (int(rand($x * 2)) + 1),
+                ymax   => (int(rand($y * 2)) + 1),
+                filled => 1
+            );
         } elsif ((int(rand(3))) == 1) {
             my $points = int(rand(5)) + 3;
-            $img->polygon(color => 
-                            Imager::Color->new(map { int(rand(255)) } 1 .. 3),
-                          x => [ map { int(rand($x) + 1) } (0 .. $points) ],
-                          y => [ map { int(rand($x) + 1) } (0 .. $points) ]);
+            $img->polygon(
+                color => Imager::Color->new(map { int(rand(255)) } 1 .. 3),
+                x => [map { int(rand($x) + 1) } (0 .. $points)],
+                y => [map { int(rand($x) + 1) } (0 .. $points)]
+            );
         } else {
-            $img->circle(color =>
-                         Imager::Color->new(map { int(rand(255)) } 1 .. 3),
-                         r => (int(rand(100)) + 1),
-                         x => (int(rand($x)) + 1),
-                         'y' => (int(rand($y)) + 1));
+            $img->circle(
+                color => Imager::Color->new(map { int(rand(255)) } 1 .. 3),
+                r     => (int(rand(100)) + 1),
+                x     => (int(rand($x)) + 1),
+                'y'   => (int(rand($y)) + 1)
+            );
         }
     }
 
@@ -283,19 +293,18 @@ for my $media_count (1 .. $media) {
       or die "Unable to open tmp/tmp.$format: $!";
 
     # Pick a type
-    my %media_types = pkg('Pref')->get('media_type');
+    my %media_types    = pkg('Pref')->get('media_type');
     my @media_type_ids = keys(%media_types);
-    my $media_type_id = $media_type_ids[int(rand(scalar(@media_type_ids)))];
+    my $media_type_id  = $media_type_ids[int(rand(scalar(@media_type_ids)))];
 
     # create a media object
-    my $media = pkg('Media')->new(title      => join(" ",
-                                                     map {ucfirst(get_word())}
-                                                     (1..(int(rand(3)) + 2))),
-                                  filename   => get_word('ascii') . ".$format",
-                                  filehandle => $fh,
-                                  category_id => $cats[int(rand(scalar(@cats)))]->category_id,
-                                  media_type_id => $media_type_id,
-                                  );
+    my $media = pkg('Media')->new(
+        title => join(" ", map { ucfirst(get_word()) } (1 .. (int(rand(3)) + 2))),
+        filename      => get_word('ascii') . ".$format",
+        filehandle    => $fh,
+        category_id   => $cats[int(rand(scalar(@cats)))]->category_id,
+        media_type_id => $media_type_id,
+    );
     eval { $media->save };
     if ($@) {
         if (ref($@) and ref($@) eq 'Krang::Media::DuplicateURL') {
@@ -310,7 +319,6 @@ for my $media_count (1 .. $media) {
     print STDERR "Created Media " . $media->url . "\n";
 }
 
-
 # create stories
 my @stories;
 for my $story_count (1 .. $stories) {
@@ -321,20 +329,20 @@ for my $story_count (1 .. $stories) {
       if (int(rand(2)));
     push(@c, $cats[int(rand(scalar(@cats)))])
       if (int(rand(2)));
-    my %c = map { ($_->category_id,$_) } @c;
+    my %c = map { ($_->category_id, $_) } @c;
     @c = values(%c);
 
     # create story
     my $story;
 
     eval {
-        $story = pkg('Story')->new(title     => join(" ",
-                                                     map {ucfirst(get_word())}
-                                                     (1..(int(rand(3)) + 2))),
-                                   slug       => get_word('ascii'),
-                                   categories => \@c,
-                                   cover_date => get_date(),
-                                   class      => "article");
+        $story = pkg('Story')->new(
+            title => join(" ", map { ucfirst(get_word()) } (1 .. (int(rand(3)) + 2))),
+            slug       => get_word('ascii'),
+            categories => \@c,
+            cover_date => get_date(),
+            class      => "article"
+        );
     };
     if ($@) {
         if (ref($@) and ref($@) eq 'Krang::Story::DuplicateURL') {
@@ -346,45 +354,50 @@ for my $story_count (1 .. $stories) {
 
     # add some contribs, up to 5
     my @con;
-    for(1 .. (int(rand(4)) + 1)) {
+    for (1 .. (int(rand(4)) + 1)) {
         my $contrib = $contribs[int(rand(scalar(@contribs)))];
-        my @types = $contrib->contrib_type_ids;
+        my @types   = $contrib->contrib_type_ids;
         $contrib->selected_contrib_type($types[int(rand(scalar(@types)))]);
         push(@con, $contrib)
           unless grep { $_->contrib_id == $contrib->contrib_id } @con;
     }
     $story->contribs(@con);
-    
+
     # make a multi-page story
     my $element = $story->element;
 
     if (InstanceElementSet eq 'TestSet1') {
         my $deck = get_words(100);
         $element->child('deck')->data($deck);
-        $element->add_child(class => "page") for (1 .. ((int(rand(5)))+1));
-        
+        $element->add_child(class => "page") for (1 .. ((int(rand(5))) + 1));
+
         # foreach page, add some paragraphs and photos
         foreach my $page (grep { $_->name eq 'page' } $element->children()) {
             $page->child('header')->data(get_words(6));
-            foreach my $obj_num (1 .. ((int(rand(20)))+1)) {
+            foreach my $obj_num (1 .. ((int(rand(20))) + 1)) {
                 if ((int(rand(3))) != 1) {
-                    $page->add_child(class => "paragraph",
-                                     data => get_words(100));
+                    $page->add_child(
+                        class => "paragraph",
+                        data  => get_words(100)
+                    );
                 } else {
-                    $page->add_child(class => "photo",
-                                     data => $media[int(rand(scalar(@media)))]);
+                    $page->add_child(
+                        class => "photo",
+                        data  => $media[int(rand(scalar(@media)))]
+                    );
                 }
             }
         }
+
         # add some keywords
-        $element->child('fancy_keyword')->data([ map { get_word() } (1 .. ((int(rand(10)))+1))]);
+        $element->child('fancy_keyword')->data([map { get_word() } (1 .. ((int(rand(10))) + 1))]);
 
     } elsif (InstanceElementSet eq 'Default') {
         $element->child('metadata_title')->data($story->title);
         $element->child('promo_title')->data($story->title);
         $element->child('metadata_description')->data(get_words(50));
         $element->child('metadata_keywords')
-          ->data([map { get_word() } (0 .. ((int(rand(25)))+1))]);
+          ->data([map { get_word() } (0 .. ((int(rand(25))) + 1))]);
         $element->child('promo_teaser')->data(get_words(25));
         $element->child('deck')->data(get_words(25));
 
@@ -394,42 +407,54 @@ for my $story_count (1 .. $stories) {
         $pis->child('media')->data($media[int(rand(scalar(@media)))]);
 
         # add a few pages
-        $element->add_child(class => "page") for (1 .. ((int(rand(5)))+1));
-        
+        $element->add_child(class => "page") for (1 .. ((int(rand(5))) + 1));
+
         # foreach page, add some element data
         foreach my $page (grep { $_->name eq 'page' } $element->children()) {
-            foreach my $obj_num (1 .. ((int(rand(30)))+1)) {
+            foreach my $obj_num (1 .. ((int(rand(30))) + 1)) {
                 my $num = int(rand(13));
                 if ($num < 5) {
-                    $page->add_child(class => "paragraph",
-                                     data => get_words(100));
+                    $page->add_child(
+                        class => "paragraph",
+                        data  => get_words(100)
+                    );
                 } elsif ($num == 5) {
-                    $page->add_child(class => 'section_header',
-                                     data => get_words(10));
+                    $page->add_child(
+                        class => 'section_header',
+                        data  => get_words(10)
+                    );
                 } elsif ($num == 6) {
-                    $page->add_child(class => 'large_header',
-                                     data => get_words(10));
+                    $page->add_child(
+                        class => 'large_header',
+                        data  => get_words(10)
+                    );
                 } elsif ($num == 7) {
                     $page->add_child(class => 'horizontal_line');
                 } elsif ($num == 8) {
                     my $box = $page->add_child(class => 'inset_box');
                     $box->child('title')->data(get_words(5));
-                    $box->add_child(class => 'paragraph',
-                                    data  => get_words(100));
+                    $box->add_child(
+                        class => 'paragraph',
+                        data  => get_words(100)
+                    );
                 } elsif ($num == 9) {
-                    $page->add_child(class => 'section_header_image',
-                                     data =>$media[int(rand(scalar(@media)))]);
+                    $page->add_child(
+                        class => 'section_header_image',
+                        data  => $media[int(rand(scalar(@media)))]
+                    );
                 } else {
                     my $image = $page->add_child(class => 'image');
-                    $image->child('alignment')
-                      ->data(('Left','Right')[int(rand(1))]);
-                    $image->child('media')
-                      ->data($media[int(rand(scalar(@media)))]);
+                    $image->child('alignment')->data(('Left', 'Right')[int(rand(1))]);
+                    $image->child('media')->data($media[int(rand(scalar(@media)))]);
                     if (int(rand(3)) > 1) {
-                        $image->add_child(class => 'caption',
-                                          data  => get_words(5));
-                        $image->add_child(class => 'copyright',
-                                          data  => get_words(5));
+                        $image->add_child(
+                            class => 'caption',
+                            data  => get_words(5)
+                        );
+                        $image->add_child(
+                            class => 'copyright',
+                            data  => get_words(5)
+                        );
                     }
                 }
             }
@@ -451,25 +476,29 @@ for my $cover_count (1 .. $covers) {
     # create story
     my $cover;
 
-    $cover = pkg('Story')->new(title     => join(" ",
-                                                 map {ucfirst(get_word())}
-                                                 (1..(int(rand(3)) + 2))),
-                               slug       => get_word('ascii'),
-                               categories => [$c],
-                               cover_date => get_date(),
-                               class      => "cover");
+    $cover = pkg('Story')->new(
+        title => join(" ", map { ucfirst(get_word()) } (1 .. (int(rand(3)) + 2))),
+        slug       => get_word('ascii'),
+        categories => [$c],
+        cover_date => get_date(),
+        class      => "cover"
+    );
 
     # add some photos and lead-ins to stories
     my $element = $cover->element;
 
     if (InstanceElementSet eq 'TestSet1') {
-        foreach my $obj_num (1 .. ((int(rand(30)))+1)) {
+        foreach my $obj_num (1 .. ((int(rand(30))) + 1)) {
             if ((int(rand(3))) != 1) {
-                $element->add_child(class => "leadin",
-                                    data => $stories[int(rand(scalar(@stories)))]);
+                $element->add_child(
+                    class => "leadin",
+                    data  => $stories[int(rand(scalar(@stories)))]
+                );
             } else {
-                $element->add_child(class => "photo",
-                                    data => $media[int(rand(scalar(@media)))]);
+                $element->add_child(
+                    class => "photo",
+                    data  => $media[int(rand(scalar(@media)))]
+                );
             }
         }
 
@@ -481,7 +510,7 @@ for my $cover_count (1 .. $covers) {
         $element->child('promo_title')->data(get_words(10));
         $element->child('metadata_description')->data(get_words(50));
         $element->child('metadata_keywords')
-          ->data([map { get_word() } (0 .. ((int(rand(25)))+1))]);
+          ->data([map { get_word() } (0 .. ((int(rand(25))) + 1))]);
         $element->child('promo_teaser')->data(get_words(25));
 
         my $pil = $element->add_child(class => 'promo_image_large');
@@ -492,71 +521,87 @@ for my $cover_count (1 .. $covers) {
         # add a few cover pages
 
         # add a few pages
-        $element->add_child(class => "cover_page") for (1 .. ((int(rand(5)))+1));
+        $element->add_child(class => "cover_page") for (1 .. ((int(rand(5))) + 1));
 
         # foreach page, add some element data
         foreach my $page (grep { $_->name eq 'cover_page' } $element->children()) {
-            foreach my $obj_num (1 .. ((int(rand(10)))+1)) {
+            foreach my $obj_num (1 .. ((int(rand(10))) + 1)) {
                 my $num = int(rand(12));
                 if ($num < 5) {
                     my $lin = $page->add_child(class => "lead_in");
                     $lin->child('story')->data($stories[int(rand(scalar(@stories)))]);
                 } elsif ($num == 5) {
-                    $page->add_child(class => 'section_header',
-                                     data => get_words(10));
+                    $page->add_child(
+                        class => 'section_header',
+                        data  => get_words(10)
+                    );
                 } elsif ($num == 6) {
-                    $page->add_child(class => 'large_header',
-                                     data => get_words(10));
+                    $page->add_child(
+                        class => 'large_header',
+                        data  => get_words(10)
+                    );
                 } elsif ($num == 7) {
                     $page->add_child(class => 'horizontal_line');
                 } elsif ($num == 8) {
-                    $page->add_child(class => 'paragraph',
-                                     data => get_words(50));
+                    $page->add_child(
+                        class => 'paragraph',
+                        data  => get_words(50)
+                    );
                 } elsif ($num == 9 or $num == 10) {
                     my $double = $page->add_child(class => 'double_column');
                     foreach my $col ($double->children) {
-                        foreach my $obj_num (1 .. ((int(rand(10)))+1)) {
+                        foreach my $obj_num (1 .. ((int(rand(10))) + 1)) {
                             my $num = int(rand(11));
                             if ($num < 5) {
                                 my $li = $col->add_child(class => "lead_in");
                                 $li->child('story')->data($stories[int(rand(scalar(@stories)))]);
                             } elsif ($num == 5) {
-                                $col->add_child(class => 'section_header',
-                                                 data => get_words(10));
+                                $col->add_child(
+                                    class => 'section_header',
+                                    data  => get_words(10)
+                                );
                             } elsif ($num == 6) {
-                                $col->add_child(class => 'large_header',
-                                                data => get_words(10));
+                                $col->add_child(
+                                    class => 'large_header',
+                                    data  => get_words(10)
+                                );
                             } elsif ($num == 7) {
                                 $col->add_child(class => 'horizontal_line');
                             } elsif ($num == 8) {
-                                $col->add_child(class => 'paragraph',
-                                                data => get_words(50));
+                                $col->add_child(
+                                    class => 'paragraph',
+                                    data  => get_words(50)
+                                );
                             } else {
                                 my $image = $col->add_child(class => 'image');
-                                $image->child('alignment')
-                                  ->data(('Left','Right')[int(rand(1))]);
-                                $image->child('media')
-                                  ->data($media[int(rand(scalar(@media)))]);
+                                $image->child('alignment')->data(('Left', 'Right')[int(rand(1))]);
+                                $image->child('media')->data($media[int(rand(scalar(@media)))]);
                                 if (int(rand(3)) > 1) {
-                                    $image->add_child(class => 'caption',
-                                                      data  => get_words(5));
-                                    $image->add_child(class => 'copyright',
-                                                      data  => get_words(5));
+                                    $image->add_child(
+                                        class => 'caption',
+                                        data  => get_words(5)
+                                    );
+                                    $image->add_child(
+                                        class => 'copyright',
+                                        data  => get_words(5)
+                                    );
                                 }
                             }
-                        }                        
+                        }
                     }
                 } else {
                     my $image = $page->add_child(class => 'image');
-                    $image->child('alignment')
-                      ->data(('Left','Right')[int(rand(1))]);
-                    $image->child('media')
-                      ->data($media[int(rand(scalar(@media)))]);
+                    $image->child('alignment')->data(('Left', 'Right')[int(rand(1))]);
+                    $image->child('media')->data($media[int(rand(scalar(@media)))]);
                     if (int(rand(3)) > 1) {
-                        $image->add_child(class => 'caption',
-                                          data  => get_words(5));
-                        $image->add_child(class => 'copyright',
-                                          data  => get_words(5));
+                        $image->add_child(
+                            class => 'caption',
+                            data  => get_words(5)
+                        );
+                        $image->add_child(
+                            class => 'copyright',
+                            data  => get_words(5)
+                        );
                     }
                 }
             }
@@ -570,55 +615,60 @@ for my $cover_count (1 .. $covers) {
     push(@covers, $cover);
 }
 
-
-
 # create templates
 my @templates;
 if ($templates) {
     my $publisher = pkg('Publisher')->new();
-    my @estack = map { pkg('ElementLibrary')->top_level(name => $_) }
-      pkg('ElementLibrary')->top_levels;
+    my @estack =
+      map { pkg('ElementLibrary')->top_level(name => $_) } pkg('ElementLibrary')->top_levels;
     while (@estack) {
         my $element = pop(@estack);
         push(@estack, $element->children);
-        
-        my $bgcolor = "#" . 
-          join('', map { (3 .. 9, 'A' .. 'F')[int(rand(13))] } (1 .. 6));
-        
+
+        my $bgcolor = "#" . join('', map { (3 .. 9, 'A' .. 'F')[int(rand(13))] } (1 .. 6));
+
         # draw a labeled box for the element
-        my $display_name = $element->display_name;    
-        my $content = <<END;
+        my $display_name = $element->display_name;
+        my $content      = <<END;
 <div style='border: 1px solid black; margin-left: 3px; margin-top: 10px; margin-right: 5px; padding-left: 3px; padding-right: 3px; padding-bottom: 3px; background-color: $bgcolor'>
   <span style='border: 1px; border-style: dashed; border-color: #AAA; padding-left: 5px; padding-right: 5px; background-color: white; text-color: whte; top: -7px; left: 5px; position: relative; width: 150px;'>$display_name</span><br>
 END
-        
+
         if ($element->children) {
+
             # container
             $content .= "<tmpl_loop element_loop>\n";
             foreach my $child ($element->children) {
-                $content .= "<tmpl_if is_" . $child->name . ">".
-                  "<tmpl_var name='" . $child->name . "'>".
-                    "</tmpl_if>\n";
+                $content .=
+                    "<tmpl_if is_"
+                  . $child->name . ">"
+                  . "<tmpl_var name='"
+                  . $child->name . "'>"
+                  . "</tmpl_if>\n";
             }
             $content .= "</tmpl_loop>";
         } elsif ($element->isa('Krang::ElementClass::MediaLink')) {
+
             # media link
             $content .= "<img src='<tmpl_var name='url'>'>\n";
         } elsif ($element->isa('Krang::ElementClass::StoryLink')) {
+
             # story link
             $content .= "<a href='<tmpl_var name='url'>/'><tmpl_var url></a>\n";
         } else {
+
             # data
             $content .= "<tmpl_var name='" . $element->name . "'>\n";
         }
-        
+
         if ($element->name eq 'category') {
             $content .= "<tmpl_var content>";
         }
 
         if ($element->name eq 'page') {
+
             # add pagination
-            $content .=<<END;
+            $content .= <<END;
 <P>Page number <tmpl_var current_page_number> of <tmpl_var total_pages>.</p>
 <tmpl_unless is_first_page>
 <a href="<tmpl_var previous_page_url>">Previous Page</a>&lt;&lt;
@@ -639,12 +689,14 @@ END
 
         }
         $content .= "</div>";
-        
-        my $tmpl = pkg('Template')->new(content		   => $content,
-                                        filename          => $element->name . ".tmpl");
+
+        my $tmpl = pkg('Template')->new(
+            content  => $content,
+            filename => $element->name . ".tmpl"
+        );
         eval { $tmpl->save; };
         next if $@;
-        
+
         push @templates, $tmpl;
         $publisher->deploy_template(template => $tmpl);
         $tmpl->checkin;
@@ -652,52 +704,64 @@ END
     }
 }
 
-
 # create users
-my %groups = map {$_->group_id, $_->name} pkg('Group')->find();
+my %groups = map { $_->group_id, $_->name } pkg('Group')->find();
 my @users;
-for(1 .. $users) {
-    my $login = lc(get_word());
-    my $fname = ucfirst(get_word('ascii'));
-    my $lname = ucfirst(get_word('ascii'));
+for (1 .. $users) {
+    my $login    = lc(get_word());
+    my $fname    = ucfirst(get_word('ascii'));
+    my $lname    = ucfirst(get_word('ascii'));
     my $password = lc(get_word());
-    my @groups = grep { int(rand(5)) } keys %groups;
+    my @groups   = grep { int(rand(5)) } keys %groups;
     @groups = (keys %groups)[0] unless @groups;
 
-    my $user = pkg('User')->new(login 		=> $login,
-                                first_name  	=> $fname,
-                                last_name   	=> $lname,
-                                email  		=> "$fname\@$lname.com",
-                                password	=> $password,
-                                phone		=> "1-800-$lname",);
+    my $user = pkg('User')->new(
+        login      => $login,
+        first_name => $fname,
+        last_name  => $lname,
+        email      => "$fname\@$lname.com",
+        password   => $password,
+        phone      => "1-800-$lname",
+    );
     $user->group_ids(@groups);
     eval { $user->save() };
     redo if $@ and $@ =~ /duplicate/;
     push(@users, $user);
-    print STDERR "Created user " .
-      join(' ', grep { $_ } ("$login:", $fname, $lname)) .
-        " (" . join(', ', map { $groups{$_} } @groups) . ")" .
-          "\n";
+    print STDERR "Created user "
+      . join(' ', grep { $_ } ("$login:", $fname, $lname)) . " ("
+      . join(', ', map { $groups{$_} } @groups) . ")" . "\n";
 }
 
 # create an undo script if requested
 if ($undo_script) {
     my @undo;
-    for my $rec ([ media => \@media ],
-                 [ story => \@stories ],
-                 [ story => \@covers ],
-                 [ contrib => \@contribs ],
-                 [ template => \@templates ],
-                 [ category => [ reverse grep { $_->parent_id } @cats] ],
-                 [ site => \@sites ],
-                 [ user => \@users ]) {
+    for my $rec (
+        [media    => \@media],
+        [story    => \@stories],
+        [story    => \@covers],
+        [contrib  => \@contribs],
+        [template => \@templates],
+        [category => [reverse grep { $_->parent_id } @cats]],
+        [site     => \@sites],
+        [user     => \@users]
+      )
+    {
         my ($name, $list) = @$rec;
         my $meth = "${name}_id";
-        push(@undo, (map { 
-            ("print STDERR qq{Deleting $name $_...\\n};",
-             "(Krang::" . ucfirst($name) . 
-             "->find($meth => $_))[0]->delete;") }
-                 map { $_->$meth } @$list));
+        push(
+            @undo,
+            (
+                map {
+                    (
+                        "print STDERR qq{Deleting $name $_...\\n};",
+                        "(Krang::" . ucfirst($name) . "->find($meth => $_))[0]->delete;"
+                      )
+                  }
+                  map {
+                    $_->$meth
+                  } @$list
+            )
+        );
     }
 
     print STDERR "Writing undo script to '$undo_script'...\n";
@@ -720,9 +784,8 @@ use Krang::ClassLoader 'Media';
 
 UNDOEND
 
-
     print UNDO join("\n", @undo), "\n";
-    
+
     print UNDO "print qq{Deleting self.  Goodbye cruel world!\\n};\n";
     print UNDO "unlink \$0 or die qq{Unable to delete \$0 : \$!};\n";
     close UNDO;
@@ -748,9 +811,8 @@ sub get_words {
     my ($num, $sep, $type) = @_;
     $type = 'ascii' if $sep eq 'ascii' && not $type;
     $sep = " " unless defined $sep and length $sep;
-    return join($sep, map { get_word($type) } (0 .. ((int(rand($num)))+1)));
+    return join($sep, map { get_word($type) } (0 .. ((int(rand($num))) + 1)));
 }
-
 
 # we outy
 exit(0);

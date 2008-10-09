@@ -1398,23 +1398,28 @@ sub test_cgistory_publish {
 sub test_publish_flattened {
 
     # create new story
-    my $story = $creator->create_story( class => 'cgi_story', category => [$category] );
-    $story->checkout(); $story->save(); $story->checkin();
+    my $story = $creator->create_story(class => 'cgi_story', category => [$category]);
+    $story->checkout();
+    $story->save();
+    $story->checkin();
     my @paragraphs = $story->element->match('/page[0]/paragraph');
 
     # publish story twice - once with flattened template, once without
     my @tmpl_content;
     my @output_text;
-    for (0..1) {
+    for (0 .. 1) {
+
         # create template (using <element_loop> built by Test::Content)
-        my ($tmpl, $content) = $creator->create_template(element     => $story->element, 
-                                                         flattened   => $_,
-                                                         predictable => 1);
+        my ($tmpl, $content) = $creator->create_template(
+            element     => $story->element,
+            flattened   => $_,
+            predictable => 1
+        );
         $tmpl->deploy();
 
         # publish with it
         $publisher->publish_story(story => $story);
-        
+
         # save results
         push @tmpl_content, $content;
         my @story_paths = build_publish_paths($story);
@@ -1427,19 +1432,19 @@ sub test_publish_flattened {
     $creator->delete_item(item => $story);
 
     # make sure the templates were both non-empty
-    ok ($tmpl_content[0] && $tmpl_content[1], "Flattened & unflattened tmpls non-empty");
+    ok($tmpl_content[0] && $tmpl_content[1], "Flattened & unflattened tmpls non-empty");
 
     # make sure the templates were different from each other
-    ok ($tmpl_content[0] ne $tmpl_content[1], "Flattened & unflattened tmpls different");
+    ok($tmpl_content[0] ne $tmpl_content[1], "Flattened & unflattened tmpls different");
 
     # make sure both templates managed to publish all three paragraphs
-    for my $flattened (0..1) {
-        for (0..2) {
+    for my $flattened (0 .. 1) {
+        for (0 .. 2) {
             my $paragraph = $paragraphs[$_]->data;
-            ok ($output_text[$flattened] =~ /$paragraph/, "Flattened/unflattened output correct");
+            ok($output_text[$flattened] =~ /$paragraph/, "Flattened/unflattened output correct");
         }
     }
-}    
+}
 
 sub test_fill_flattened_page_loop {
 
@@ -1448,14 +1453,19 @@ sub test_fill_flattened_page_loop {
     $publisher->{story} = $story;
 
     # fill story's 'page_loop' (as opposed to publish test above, which fills 'element_loop')
-    my $tags = '<TMPL_LOOP PAGE_LOOP><TMPL_LOOP PARAGRAPH_LOOP><TMPL_VAR PARAGRAPH></TMPL_LOOP></TMPL_LOOP>';
-    my $tmpl = HTML::Template->new( scalarref => \$tags, die_on_bad_params => 0);
-    $story->element->fill_template(element => $story->element, tmpl => $tmpl, publisher => $publisher);
+    my $tags =
+      '<TMPL_LOOP PAGE_LOOP><TMPL_LOOP PARAGRAPH_LOOP><TMPL_VAR PARAGRAPH></TMPL_LOOP></TMPL_LOOP>';
+    my $tmpl = HTML::Template->new(scalarref => \$tags, die_on_bad_params => 0);
+    $story->element->fill_template(
+        element   => $story->element,
+        tmpl      => $tmpl,
+        publisher => $publisher
+    );
 
     # check results
-    ok(ref $tmpl->param('page_loop'), "Flattened page_loop built");
-    ok(ref $tmpl->param('page_loop')->[0], "Flattened page 1 built");
-    ok(ref $tmpl->param('page_loop')->[0]->{'paragraph_loop'}, "Flattened paragraph loop built");
+    ok(ref $tmpl->param('page_loop'),                           "Flattened page_loop built");
+    ok(ref $tmpl->param('page_loop')->[0],                      "Flattened page 1 built");
+    ok(ref $tmpl->param('page_loop')->[0]->{'paragraph_loop'},  "Flattened paragraph loop built");
     ok($tmpl->param('page_loop')->[0]->{'paragraph_loop'}->[0], "Flattened paragraph 1 built");
     ok($tmpl->param('page_loop')->[0]->{'paragraph_loop'}->[1], "Flattened paragraph 2 built");
     ok($tmpl->param('page_loop')->[0]->{'paragraph_loop'}->[2], "Flattened paragraph 3 built");
@@ -1468,21 +1478,35 @@ sub test_fill_flattened_missing_template {
     $publisher->{story} = $story;
 
     # fill page-loop twice...
-    my @params; 
-    my $tags = '<TMPL_LOOP PAGE_LOOP><TMPL_VAR PAGE><TMPL_LOOP PARAGRAPH_LOOP></TMPL_LOOP></TMPL_LOOP>';
-    my $tmpl = HTML::Template->new( scalarref => \$tags, die_on_bad_params => 0);
-    
+    my @params;
+    my $tags =
+      '<TMPL_LOOP PAGE_LOOP><TMPL_VAR PAGE><TMPL_LOOP PARAGRAPH_LOOP></TMPL_LOOP></TMPL_LOOP>';
+    my $tmpl = HTML::Template->new(scalarref => \$tags, die_on_bad_params => 0);
+
     # ...once when page.tmpl is missing
     $publisher->undeploy_template(template => $template_deployed{page});
-    $story->element->fill_template(element => $story->element, tmpl => $tmpl, publisher => $publisher);
-    ok(ref $tmpl->param('PAGE_LOOP')->[0]->{'paragraph_loop'}, "Paragraph loop built due to missing page.tmpl");
+    $story->element->fill_template(
+        element   => $story->element,
+        tmpl      => $tmpl,
+        publisher => $publisher
+    );
+    ok(
+        ref $tmpl->param('PAGE_LOOP')->[0]->{'paragraph_loop'},
+        "Paragraph loop built due to missing page.tmpl"
+    );
 
     # ...once when it's not
     $publisher->deploy_template(template => $template_deployed{page});
-    $story->element->fill_template(element => $story->element, tmpl => $tmpl, publisher => $publisher);
-    ok(!$tmpl->param('PAGE_LOOP')->[0]->{'paragraph_loop'}, "Paragraph loop missing - page.tmpl takes precedence");
+    $story->element->fill_template(
+        element   => $story->element,
+        tmpl      => $tmpl,
+        publisher => $publisher
+    );
+    ok(
+        !$tmpl->param('PAGE_LOOP')->[0]->{'paragraph_loop'},
+        "Paragraph loop missing - page.tmpl takes precedence"
+    );
 }
-    
 
 sub test_preview_story {
     my $story = shift;
@@ -1546,7 +1570,7 @@ sub test_maintain_versions {
         maintain_versions => 0,
         version_check     => 0
     );
-    is(scalar @$publish_list,        3);
+    is(scalar @$publish_list, 3);
     is($publish_list->[0]->story_id, $story->story_id);
     is($publish_list->[0]->version, $latest_version_of_story, "--maintain-versions=0 on story");
     ok($publish_list->[1]->story_id != $story->story_id);
@@ -1561,7 +1585,7 @@ sub test_maintain_versions {
         maintain_versions => 1,
         version_check     => 0
     );
-    is(scalar @$publish_list,        3);
+    is(scalar @$publish_list, 3);
     is($publish_list->[0]->story_id, $story->story_id);
     is($publish_list->[0]->version, $published_version_of_story, "--maintain-versions=1 on story");
     ok($publish_list->[1]->story_id != $story->story_id);
@@ -2006,8 +2030,8 @@ sub load_story_page {
     undef $/;
 
     if (my $PAGE = pkg('IO')->io_file("<$filename")) {
-	$data = <$PAGE>;
-	close $PAGE;
+        $data = <$PAGE>;
+        close $PAGE;
     } else {
         diag("Cannot open $filename: $!");
         fail('Krang::Publisher->publish_story();');

@@ -13,9 +13,8 @@ my ($lazy) = pkg('AddOn')->find(name => 'LazyLoader');
 ok(not $lazy);
 
 # install LazyLoader 1.00
-pkg('AddOn')->install(src => 
-                      catfile(pkg('Conf')->get('KrangRoot'), 
-                              't', 'addons', 'LazyLoader-1.00.tar.gz'));
+pkg('AddOn')
+  ->install(src => catfile(pkg('Conf')->get('KrangRoot'), 't', 'addons', 'LazyLoader-1.00.tar.gz'));
 
 # worked?
 ($lazy) = pkg('AddOn')->find(name => 'LazyLoader');
@@ -23,7 +22,7 @@ END { $lazy->uninstall }
 isa_ok($lazy, 'Krang::AddOn');
 
 # run story.t to see if the story tests still pass with the addon installed
-eval { 
+eval {
     local $ENV{SUB_TEST} = 1;
     my $story_t = catfile(pkg('Conf')->get('KrangRoot'), 't', 'story.t');
     do $story_t;
@@ -31,5 +30,4 @@ eval {
 
 ok(not($@), "story.t ran with LazyLoader add-on installed");
 diag($@) if ($@);
-
 

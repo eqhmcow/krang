@@ -65,10 +65,9 @@ sub find {
     my $root   = KrangRoot;
     my @addons = pkg('AddOn')->find();
 
-    -e $_ and return $CACHE{$file} = $_ 
-      for ((map { catfile($root, 'addons', $_->name, $file) } 
-              pkg('AddOn')->find()), 
-           catfile($root, $file));
+    -e $_ and return $CACHE{$file} = $_
+      for ((map { catfile($root, 'addons', $_->name, $file) } pkg('AddOn')->find()),
+        catfile($root, $file));
 
     return $CACHE{$file} = undef;
 }
@@ -80,10 +79,10 @@ sub find_all {
     my $root   = KrangRoot;
     my @addons = pkg('AddOn')->find();
 
-    return grep { -e $_ }
-      ((map { catfile($root, 'addons', $_->name, $file) } 
-        pkg('AddOn')->find()), 
-       catfile($root, $file));
+    return grep { -e $_ } (
+        (map { catfile($root, 'addons', $_->name, $file) } pkg('AddOn')->find()),
+        catfile($root, $file)
+    );
 }
 
 sub find_glob {
@@ -92,7 +91,7 @@ sub find_glob {
     my @addons = pkg('AddOn')->find();
 
     my @files = glob(catfile($root, $file));
-    foreach my $addon (pkg('AddOn')->find ) {
+    foreach my $addon (pkg('AddOn')->find) {
         unshift(@files, glob(catfile($root, 'addons', $addon->name, $file)));
     }
 

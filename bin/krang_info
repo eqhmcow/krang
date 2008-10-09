@@ -26,21 +26,23 @@ None at this time.
 
 =cut
 
-
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
 use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -78,7 +80,6 @@ my @instances  = pkg('Conf')->instances;
 my $version    = $Krang::VERSION;
 my $ip_address = pkg('Conf')->get('ApacheAddr');
 
-
 my @addons = sort { $a->name cmp $b->name } pkg('AddOn')->find();
 
 my %instance_stats;
@@ -88,20 +89,21 @@ foreach my $i (@instances) {
     pkg('Conf')->instance($i);
 
     foreach my $site (pkg('Site')->find(order_by => 'url')) {
-        $site_list{$site->url}{site_id} = $site->site_id;
-        $site_list{$site->url}{story_count} =
-          pkg('Story')->find(count   => 1,
-                             site_id => $site->site_id);
-        $site_list{$site->url}{media_count} =
-          pkg('Media')->find(count   => 1,
-                             site_id => $site->site_id);
+        $site_list{$site->url}{site_id}     = $site->site_id;
+        $site_list{$site->url}{story_count} = pkg('Story')->find(
+            count   => 1,
+            site_id => $site->site_id
+        );
+        $site_list{$site->url}{media_count} = pkg('Media')->find(
+            count   => 1,
+            site_id => $site->site_id
+        );
 
     }
 
     $instance_stats{$i} = \%site_list;
 
 }
-
 
 print STDOUT<<END;
 ######################################################################
@@ -121,8 +123,7 @@ foreach (@addons) {
 
 print STDOUT "\nConfigured instances (in conf/krang.conf):\n\n";
 
-my ($total_stories, $total_media) = (0,0);
-
+my ($total_stories, $total_media) = (0, 0);
 
 foreach my $i (keys %instance_stats) {
 
@@ -133,7 +134,7 @@ foreach my $i (keys %instance_stats) {
         next;
     }
 
-    my ($tot_s, $tot_m) = (0,0);
+    my ($tot_s, $tot_m) = (0, 0);
 
     foreach my $s (keys %{$instance_stats{$i}}) {
         my $sitename = sprintf("%s (id=%i)", $s, $instance_stats{$i}{$s}{site_id});
@@ -142,10 +143,12 @@ foreach my $i (keys %instance_stats) {
 
         my $site_tabs = ((32 - $len) > 8) ? "\t\t" : "\t";
 
-        print STDOUT sprintf("\t%s%s%4i stories\t%4i media\n",
-                             $sitename, $site_tabs,
-                             $instance_stats{$i}{$s}{story_count},
-                             $instance_stats{$i}{$s}{media_count});
+        print STDOUT sprintf(
+            "\t%s%s%4i stories\t%4i media\n",
+            $sitename, $site_tabs,
+            $instance_stats{$i}{$s}{story_count},
+            $instance_stats{$i}{$s}{media_count}
+        );
 
         $tot_s += $instance_stats{$i}{$s}{story_count};
         $tot_m += $instance_stats{$i}{$s}{media_count};
@@ -161,8 +164,7 @@ foreach my $i (keys %instance_stats) {
 }
 
 print STDOUT "\n\n------------------------------------------------------------------\n";
-print STDOUT sprintf("SYSTEMWIDE TOTAL:\t\t\t%4i stories\t%4i media\n\n",
-                     $total_stories, $total_media);
-
+print STDOUT
+  sprintf("SYSTEMWIDE TOTAL:\t\t\t%4i stories\t%4i media\n\n", $total_stories, $total_media);
 
 exit;

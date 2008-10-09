@@ -63,15 +63,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -105,42 +108,48 @@ if (DefaultLanguage && DefaultLanguage ne 'en') {
 our ($help, $man, $archive);
 my $v = 0;
 my $files;
-pod2usage(2) unless
-  GetOptions(help          => \$help,
-             man           => \$man,
-             'verbose'     => \$v,
-             'verbose-i=i' => \$v,
-             'tap-archive' => \$archive,
-             'files=s'     => \$files,
-            );
-pod2usage(1)             if $help;
+pod2usage(2)
+  unless GetOptions(
+    help          => \$help,
+    man           => \$man,
+    'verbose'     => \$v,
+    'verbose-i=i' => \$v,
+    'tap-archive' => \$archive,
+    'files=s'     => \$files,
+  );
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 my $root = pkg('Conf')->get('KrangRoot');
-$files ||= join(" ", map { s!^$root/!!; $_ } 
-                     map { "$_/*.t" } 
-                     grep { -d $_ } pkg('File')->find_all('t'));
+$files ||= join(
+    " ", map { s!^$root/!!; $_ }
+      map  { "$_/*.t" }
+      grep { -d $_ } pkg('File')->find_all('t')
+);
 print "FILES: $files\n";
-$files = [ glob($files) ];
+$files = [glob($files)];
 
 # choose the first instance if KRANG_INSTANCE not set
 unless ($ENV{KRANG_INSTANCE}) {
     $ENV{KRANG_INSTANCE} = (pkg('Conf')->instances())[0];
 }
 
-if( $archive ) {
+if ($archive) {
     require TAP::Harness::Archive;
     my $harness;
-    $harness = TAP::Harness::Archive->new({
-        archive => 'krang_test_run.tar.gz',
-        verbose => $v,
-        merge   => 1, 
-    });
+    $harness = TAP::Harness::Archive->new(
+        {
+            archive => 'krang_test_run.tar.gz',
+            verbose => $v,
+            merge   => 1,
+        }
+    );
     $harness->runtests(@$files);
 } else {
+
     # run tests through Test::Harness
     require Test::Harness;
-    no warnings; # silence used-only-once warning
+    no warnings;    # silence used-only-once warning
     $Test::Harness::Verbose = $v;
     Test::Harness::runtests(@$files);
 }

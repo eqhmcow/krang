@@ -35,7 +35,7 @@ sub setup {
 }
 
 sub show {
-    my $self = shift;
+    my $self  = shift;
     my $query = $self->query;
     my $topic = $query->param('topic') or die "Missing required topic.";
     die "Bad topic." if $topic !~ /^\w+/;
@@ -47,15 +47,17 @@ sub show {
 
     # find topic help file
     my $file = pkg('File')->find(catfile('htdocs', 'help', $localized_help_dir, "$topic.html"));
-    if (not -e $file) { 
+    if (not -e $file) {
         return "<h2>Unable to find help file for '$topic' topic.</h2>";
     }
 
     # load as template to process includes
-    my $template = $self->load_tmpl($file,
-                                            path     => ['Help'],
-                                            search_path_on_include => 1,
-                                            cache    => 1);
+    my $template = $self->load_tmpl(
+        $file,
+        path                   => ['Help'],
+        search_path_on_include => 1,
+        cache                  => 1
+    );
 
     return $template->output;
 }

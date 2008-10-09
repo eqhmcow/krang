@@ -84,17 +84,19 @@ use Pod::Usage;
 use Cwd qw(getcwd);
 
 my ($help, $man, $file, $dir);
-GetOptions(help     => \$help,
-           man      => \$man,
-           'file=s' => \$file,
-           'dir=s'  => \$dir,);
+GetOptions(
+    help     => \$help,
+    man      => \$man,
+    'file=s' => \$file,
+    'dir=s'  => \$dir,
+);
 
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 pod2usage("Missing required --file or --dir parameter.") unless $file or $dir;
 pod2usage("Can't use --file and --dir at the same time.") if $file and $dir;
 
-if( $file ) {
+if ($file) {
     check_deps($file);
 } else {
     my @files = glob(catfile($dir, '*.tar.gz'));
@@ -109,8 +111,10 @@ sub check_deps {
     my $filename = shift;
 
     # make a temp copy of the tarball
-    my $tmpdir = tempdir(CLEANUP => 1,
-                         DIR     => catdir(KrangRoot, 'tmp'),);
+    my $tmpdir = tempdir(
+        CLEANUP => 1,
+        DIR     => catdir(KrangRoot, 'tmp'),
+    );
     my ($name, $path, $suffix) = fileparse($filename, '.tar.gz');
     my $new_file = catfile($tmpdir, "$name$suffix");
     copy($filename, $new_file)
@@ -151,21 +155,21 @@ sub check_deps {
             if ($@) {
                 printf($format, $module, 'NOT OK', 'Not found');
             } else {
-                my $krang_lib = catdir(KrangRoot, 'lib');
+                my $krang_lib     = catdir(KrangRoot, 'lib');
                 my $krang_ext_lib = catdir(KrangRoot, 'addons');
-                my $mod_file = "$module.pm";
+                my $mod_file      = "$module.pm";
                 $mod_file =~ s/::/\//g;
-                if( $INC{$mod_file} ) {
+                if ($INC{$mod_file}) {
                     my $mod_path = $INC{$mod_file};
                     if ($mod_path =~ /\Q$krang_lib\E/) {
                         printf($format, $module, 'OK', 'Found in Krang lib');
-                    } elsif ( $mod_path =~ m#\Q$krang_ext_lib\E/([^/]+)/#) {
+                    } elsif ($mod_path =~ m#\Q$krang_ext_lib\E/([^/]+)/#) {
                         printf($format, $module, 'OK', "Found in Krang extension '$1' lib");
-                    } elsif ( $mod_path =~ /\Q$Config{sitelib}\E/) {
+                    } elsif ($mod_path =~ /\Q$Config{sitelib}\E/) {
                         printf($format, $module, 'NOT OK', 'Found in Site lib');
-                    } elsif ( $mod_path =~ /\Q$Config{vendorlib}\E/) {
+                    } elsif ($mod_path =~ /\Q$Config{vendorlib}\E/) {
                         printf($format, $module, 'OK?', 'Found in Vendor lib');
-                    } elsif ( $mod_path =~ /\Q$Config{privlib}\E/) {
+                    } elsif ($mod_path =~ /\Q$Config{privlib}\E/) {
                         printf($format, $module, 'OK', 'Found in CORE');
                     } else {
                         printf($format, $module, 'NOT OK', "Found in $mod_path");

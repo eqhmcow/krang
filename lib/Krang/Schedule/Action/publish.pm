@@ -1,3 +1,4 @@
+
 =head1 NAME
 
 Krang::Schedule::Action::publish - Scheduler Action class which implements scheduler publish
@@ -12,12 +13,11 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader base => 'Schedule::Action';
-use Krang::ClassLoader Log => qw/ASSERT assert critical debug info/;
+use Krang::ClassLoader Log  => qw/ASSERT assert critical debug info/;
 use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Publisher';
 use Krang::ClassLoader 'Story';
 use Carp qw(verbose croak);
-
 
 =head1 SYNOPSIS
 
@@ -49,13 +49,23 @@ In this class it functions to publish stories and media type objects.
 sub execute {
     my $self = shift;
 
-    if ($self->_object_exists()) { 
+    if ($self->_object_exists()) {
         if ($self->_object_checked_out()) {
-            die (sprintf("%s->execute(): %s ID='%i' is checked out.",
-                __PACKAGE__, ucfirst($self->object_type), $self->object_id));
+            die(
+                sprintf(
+                    "%s->execute(): %s ID='%i' is checked out.",
+                    __PACKAGE__, ucfirst($self->object_type),
+                    $self->object_id
+                )
+            );
         }
     } else {
-        info(sprintf("%s->execute(): Cannot run schedule id '%i'. %s id='%i' cannot be found. Deleting scheduled job.", __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id));
+        info(
+            sprintf(
+                "%s->execute(): Cannot run schedule id '%i'. %s id='%i' cannot be found. Deleting scheduled job.",
+                __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id
+            )
+        );
         $self->delete();
         return;
     }
@@ -86,31 +96,32 @@ sub _publish {
     my $object = $self->{object};
     my $err;
 
-    if ($object->isa( pkg('Media') )) {
-        eval {
-            $publisher->publish_media(media => $object);
-        };
+    if ($object->isa(pkg('Media'))) {
+        eval { $publisher->publish_media(media => $object); };
 
         if ($err = $@) {
             my $msg = sprintf("%s->_publish(): error publishing Media ID=%i: %s",
-                              __PACKAGE__, $object->media_id, $err);
+                __PACKAGE__, $object->media_id, $err);
             die $msg;
         }
-    } elsif ($object->isa( pkg('Story') )) {
+    } elsif ($object->isa(pkg('Story'))) {
+
         # check to make sure scheduled publish isn't disabled
         unless ($object->element->publish_check) {
-            debug(sprintf("%s->_publish(): Story id '%i' has scheduled publish disabled.  Skipping.",
-                          __PACKAGE__, $object->story_id()));
+            debug(
+                sprintf(
+                    "%s->_publish(): Story id '%i' has scheduled publish disabled.  Skipping.",
+                    __PACKAGE__, $object->story_id()
+                )
+            );
             return;
         }
 
-        eval {
-            $publisher->publish_story(story => $object, version_check => 0);
-        };
+        eval { $publisher->publish_story(story => $object, version_check => 0); };
 
         if (my $err = $@) {
             my $msg = sprintf("%s->_publish(): error publishing Story ID=%i: ERR=%s",
-                              __PACKAGE__, $object->story_id, (ref $err ? ref $err : $err));
+                __PACKAGE__, $object->story_id, (ref $err ? ref $err : $err));
             die $msg;
         }
     }
@@ -121,7 +132,7 @@ sub failure_subject {
     my ($self, $error) = @_;
     my $object = $self->{object};
     my $type = ($object->isa(pkg('Media')) ? 'Media' : 'Story');
-    return "KRANG ALERT: $type ".$self->{object_id} . " not published";
+    return "KRANG ALERT: $type " . $self->{object_id} . " not published";
 }
 
 sub failure_message {
@@ -129,22 +140,22 @@ sub failure_message {
     my $object = $self->{object};
     my $type = ($object->isa(pkg('Media')) ? 'Media' : 'Story');
     return sprintf("Krang %s %d (%s) was not published due to the error below:\n\n%s",
-                   $type, $self->{object_id}, $object->url, $error);
+        $type, $self->{object_id}, $object->url, $error);
 }
 
 sub success_subject {
-    my $self = shift;
+    my $self   = shift;
     my $object = $self->{object};
-    my $type = ($object->isa(pkg('Media')) ? 'Media' : 'Story');
-    return "KRANG ALERT: $type ".$self->{object_id} . " published";
+    my $type   = ($object->isa(pkg('Media')) ? 'Media' : 'Story');
+    return "KRANG ALERT: $type " . $self->{object_id} . " published";
 }
 
 sub success_message {
-    my $self = shift;
+    my $self   = shift;
     my $object = $self->{object};
-    my $type = ($object->isa(pkg('Media')) ? 'Media' : 'Story');
+    my $type   = ($object->isa(pkg('Media')) ? 'Media' : 'Story');
     return sprintf("Krang %s %d (%s) has been successfully published",
-                   $type, $self->{object_id}, $object->url);
+        $type, $self->{object_id}, $object->url);
 }
 
 =head1 See Also

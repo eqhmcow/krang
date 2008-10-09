@@ -39,22 +39,24 @@ provide it here.
 
 =cut
 
-
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
 use FindBin qw($RealBin);
 use Config;
 
 # Set up KRANG_ROOT and PERL5LIB
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 }
 
 use Getopt::Long;
@@ -64,37 +66,38 @@ use Term::Prompt qw(prompt);
 
 use Krang;
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Conf => qw(KrangRoot KrangUser KrangGroup InstanceDBName DBUser DBPass Charset);
+use Krang::ClassLoader Conf =>
+  qw(KrangRoot KrangUser KrangGroup InstanceDBName DBUser DBPass Charset);
 use Krang::ClassLoader 'Platform';
 use Krang::ClassLoader 'Charset';
 
 my ($help, $man, $password, $hostname, $no_prompt);
 my $verbose = 0;
-GetOptions(help         => \$help,
-           man          => \$man,
-           'verbose'    => \$verbose,
-	   'no-prompt'  => \$no_prompt,
-           'password=s' => \$password,
-           'hostname=s' => \$hostname
-          );
-pod2usage(1)             if $help;
+GetOptions(
+    help         => \$help,
+    man          => \$man,
+    'verbose'    => \$verbose,
+    'no-prompt'  => \$no_prompt,
+    'password=s' => \$password,
+    'hostname=s' => \$hostname
+);
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 pod2usage("Too many args.")
-    if @ARGV > 1;
+  if @ARGV > 1;
 pod2usage("Missing required backup file name.")
-    unless @ARGV;
+  unless @ARGV;
 
-print "\nkrang_restore_instance\n".
-        "----------------------\n";
+print "\nkrang_restore_instance\n" . "----------------------\n";
 
-exit_error ("Must be run as root") unless ($> eq "0");
+exit_error("Must be run as root") unless ($> eq "0");
 
 # make sure backup exists
 
 my $kba = $ARGV[0];
-exit_error ("Can't find $kba") unless (-e $kba);
-exit_error ("Backup file should end in .kba or .kba.gz") unless ($kba =~ /\.kba(\.gz)?/);
+exit_error("Can't find $kba") unless (-e $kba);
+exit_error("Backup file should end in .kba or .kba.gz") unless ($kba =~ /\.kba(\.gz)?/);
 
 # make sure MySQL has what it needs
 
@@ -110,9 +113,9 @@ unless ($output =~ /hello.*world/s) {
             $msg .= "for this host '$hostname'." if defined $hostname;
             exit_error($msg);
         } else {
-            my $msg = "Unable to connect to MySQL as root with no password.  ".
-                      "Maybe you need to use --password?";
-            $msg .=   " or --hostname?" if not defined $hostname;
+            my $msg = "Unable to connect to MySQL as root with no password.  "
+              . "Maybe you need to use --password?";
+            $msg .= " or --hostname?" if not defined $hostname;
             exit_error($msg);
         }
     } else {
@@ -130,45 +133,49 @@ system($cmd) && exit_error("Couldn't un-tar $kba to $BACKUP_DIR");
 # make sure backup includes expected files
 
 my @conf_files = glob(catfile($BACKUP_DIR, 'data', 'backup', '*.conf'));
-exit_error ("$kba is not a valid Krang backup: it's missing data/backup/<InstanceDBName>.conf")
-    unless @conf_files;
-exit_error ("$kba is not a valid Krang backup: it should have a single .conf file in data/backup/")
-    unless @conf_files == 1;
+exit_error("$kba is not a valid Krang backup: it's missing data/backup/<InstanceDBName>.conf")
+  unless @conf_files;
+exit_error("$kba is not a valid Krang backup: it should have a single .conf file in data/backup/")
+  unless @conf_files == 1;
 my $conf_file = shift @conf_files;
 
 my @sql_files = glob(catfile($BACKUP_DIR, 'data', 'backup', '*.sql'));
-exit_error ("$kba is not a valid Krang backup - it's missing data/backup/<InstanceDBName>.sql")
-    unless @sql_files;
-exit_error ("$kba is not a valid Krang backup - it should have a single .sql file in data/backup/")
-    unless @sql_files == 1;
+exit_error("$kba is not a valid Krang backup - it's missing data/backup/<InstanceDBName>.sql")
+  unless @sql_files;
+exit_error("$kba is not a valid Krang backup - it should have a single .sql file in data/backup/")
+  unless @sql_files == 1;
 my $sql_file = shift @sql_files;
 
 # grab instance name from the .conf backup
 
 open CONF_FILE, "< $conf_file";
-my $conf_text = join('',<CONF_FILE>);
+my $conf_text = join('', <CONF_FILE>);
 $conf_text =~ s/BACKUP CREATED IN KRANG V(\S+)\s+//is;
-my $krang_version   = $1;
+my $krang_version = $1;
 my ($instance_name) = ($conf_text =~ /\s*\<Instance ([^\>]+)\>\s*/is);
-exit_error ("Couldn't find instance block in $conf_file!") 
-    unless $instance_name;
-exit_error ("Backup was created in Krang V$krang_version, but you are running Krang V" . $Krang::VERSION . " here!")
-    unless ($krang_version eq $Krang::VERSION);
+exit_error("Couldn't find instance block in $conf_file!")
+  unless $instance_name;
+exit_error("Backup was created in Krang V$krang_version, but you are running Krang V"
+      . $Krang::VERSION
+      . " here!")
+  unless ($krang_version eq $Krang::VERSION);
 
 # calculate template/media paths
 
 my $template_dir = catdir(KrangRoot, 'data', 'templates', $instance_name);
-my $media_dir = catdir(KrangRoot, 'data', 'media', $instance_name);
+my $media_dir    = catdir(KrangRoot, 'data', 'media',     $instance_name);
 
 # make sure instance exists in the active krang.conf
 
 my @instances = pkg('Conf')->instances;
 my %instances = map { $_ => 1 } @instances;
 unless ($instances{$instance_name}) {
-    print ("\n$conf_text\n\nERROR: Your krang.conf has no block for the instance $instance_name.\nAbove are the contents of the backed-up version: please make any necessary\nchanges, add it to your krang.conf, and re-run this script!\n\n");
-    exit (1);
+    print(
+        "\n$conf_text\n\nERROR: Your krang.conf has no block for the instance $instance_name.\nAbove are the contents of the backed-up version: please make any necessary\nchanges, add it to your krang.conf, and re-run this script!\n\n"
+    );
+    exit(1);
 }
-	
+
 # get DB name (which may not match old DB name)
 
 pkg('Conf')->instance($instance_name);
@@ -181,39 +188,47 @@ my $pass = DBPass;
 $cmd = qq{mysql -uroot -e 'select "$name exists"' $name};
 $cmd .= " -p$password" if defined $password;
 $cmd .= " -h$hostname" if defined $hostname;
-$cmd .= " -v" if $verbose > 1;
+$cmd .= " -v"          if $verbose > 1;
 $cmd .= " 2>&1";
 if (`$cmd` =~ /$name exists/) {
     unless ($no_prompt) {
-	exit 1      
-	    unless prompt("y", "\nDatabase '$name' already exists. This program will drop & recreate both the database and its /templates and /media path.\n\nAre you sure you want to proceed?", "y/n", "n");
-	print "\n";
+        exit 1
+          unless prompt(
+            "y",
+            "\nDatabase '$name' already exists. This program will drop & recreate both the database and its /templates and /media path.\n\nAre you sure you want to proceed?",
+            "y/n",
+            "n"
+          );
+        print "\n";
     }
 } else {
-    
+
     foreach ($template_dir, $media_dir) {
-	if (-d $_) {
-	    exit_error ("$_ already exists, even though database $name doesn't!\n\nIf you created this path by hand, please remove it and re-run this script.");
-	}
+        if (-d $_) {
+            exit_error(
+                "$_ already exists, even though database $name doesn't!\n\nIf you created this path by hand, please remove it and re-run this script."
+            );
+        }
     }
-    
+
     print "Creating database '$name'...\n" if $verbose;
-    my $charset_clause = Charset ? (" CHARACTER SET " . pkg('Charset')->mysql_charset(Charset)) : '';
+    my $charset_clause =
+      Charset ? (" CHARACTER SET " . pkg('Charset')->mysql_charset(Charset)) : '';
     $cmd = "mysql -uroot -e 'CREATE DATABASE $name $charset_clause'";
     $cmd .= " -p$password" if defined $password;
     $cmd .= " -h$hostname" if defined $hostname;
-    $cmd .= " -v" if $verbose > 1;
-    system($cmd) && exit_error ("Couldn't create database: $?");
-    
+    $cmd .= " -v"          if $verbose > 1;
+    system($cmd) && exit_error("Couldn't create database: $?");
+
     # grant access to the database to DBUser
     $cmd = "mysql -uroot -e 'grant all on $name.* to \"$user\"";
-    $cmd .= q{@localhost} if !defined $hostname;
+    $cmd .= q{@localhost}               if !defined $hostname;
     $cmd .= qq{ identified by "$pass" } if $pass;
     $cmd .= "'";
-    $cmd .= " -p$password" if defined $password;
-    $cmd .= " -h$hostname" if defined $hostname;
-    $cmd .= " -v" if $verbose > 1;
-    system($cmd) && exit_error ("Couldn't grant all: $?");
+    $cmd .= " -p$password"              if defined $password;
+    $cmd .= " -h$hostname"              if defined $hostname;
+    $cmd .= " -v"                       if $verbose > 1;
+    system($cmd) && exit_error("Couldn't grant all: $?");
 
 }
 
@@ -221,47 +236,45 @@ if (`$cmd` =~ /$name exists/) {
 
 foreach ($template_dir, $media_dir) {
     if (-d $_) {
-	print "Removing current contents of $_\n" if $verbose;
-	system ("rm -rf $_") && exit_error ("Unable to remove $_!");
+        print "Removing current contents of $_\n" if $verbose;
+        system("rm -rf $_") && exit_error("Unable to remove $_!");
     } else {
-	print "Creating $_\n" if $verbose;
+        print "Creating $_\n" if $verbose;
     }
-    mkdir ($_);
-    system ("chown -R  --no-dereference ".KrangUser.":".KrangGroup." $_") &&
-	exit_error ("Couldn't change ownership of $_ to ".KrangUser.":".KrangGroup."!");
+    mkdir($_);
+    system("chown -R  --no-dereference " . KrangUser . ":" . KrangGroup . " $_")
+      && exit_error("Couldn't change ownership of $_ to " . KrangUser . ":" . KrangGroup . "!");
 }
 
 # restore old template & media paths
 
 print "Copying $BACKUP_DIR/data/templates/$instance_name to $template_dir\n" if $verbose;
-system ("cp -f -R $BACKUP_DIR/data/templates/$instance_name/* $template_dir") &&
-    exit_error ("Couldn't copy templates to $template_dir!");
-    
+system("cp -f -R $BACKUP_DIR/data/templates/$instance_name/* $template_dir")
+  && exit_error("Couldn't copy templates to $template_dir!");
+
 print "Copying $BACKUP_DIR/data/media/$instance_name to $media_dir\n" if $verbose;
-system ("cp -f -R $BACKUP_DIR/data/media/$instance_name/* $media_dir") &&
-    exit_error ("Couldn't copy media files to $media_dir!");
+system("cp -f -R $BACKUP_DIR/data/media/$instance_name/* $media_dir")
+  && exit_error("Couldn't copy media files to $media_dir!");
 
 foreach ($template_dir, $media_dir) {
-    print "Setting ownership of $_ to ".KrangUser.":".KrangGroup."\n" if $verbose;
-    system ("chown -R  --no-dereference ".KrangUser.":".KrangGroup." $_") &&
-	exit_error ("Couldn't change ownership of $_!");
+    print "Setting ownership of $_ to " . KrangUser . ":" . KrangGroup . "\n" if $verbose;
+    system("chown -R  --no-dereference " . KrangUser . ":" . KrangGroup . " $_")
+      && exit_error("Couldn't change ownership of $_!");
 }
 
 # restore database
 
 $cmd = "cat $sql_file | mysql -u$user $name";
-$cmd .= " -p$pass" if $pass;
+$cmd .= " -p$pass"     if $pass;
 $cmd .= " -h$hostname" if defined $hostname;
-$cmd .= " -v" if $verbose > 1;
+$cmd .= " -v"          if $verbose > 1;
 
 print "Loading $sql_file into database $name\n" if $verbose;
-system ($cmd) && exit_error ("Couldn't load $sql_file into database!");
+system($cmd) && exit_error("Couldn't load $sql_file into database!");
 
 # we're finished!
 
 print "\nDone!\n\n";
-
-
 
 # private helper function to display errors and exit
 

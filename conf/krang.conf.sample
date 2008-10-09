@@ -21,14 +21,14 @@ DBPass ""
 # 
 # ApacheAddr and ApachePort: the IP and port for the Apache server
 #
-ApacheAddr 192.168.40.128
-ApachePort 80
+ApacheAddr 127.0.0.1
+ApachePort 8088
 
 #
 # HostName: the virtual host for the root server, which
 # displays a list of available instances.
 #
-HostName turdblossom
+HostName turdblossomm
 
 #
 # EnableSiteServer: the site server offers developers a means to test
@@ -36,9 +36,9 @@ HostName turdblossom
 # set to 1 then SiteServerAddr and SiteServerPort must be defined and
 # must differ from the ApacheAddr and ApachePort settings.
 #
-EnableSiteServer 1
-SiteServerAddr 192.168.40.128
-SiteServerPort 8080
+##EnableSiteServer 1
+##SiteServerAddr 192.168.40.128
+##SiteServerPort 8080
 
 #
 # LogLevel: how much logging detail to include in krang.log.  Valid setting are
@@ -51,10 +51,10 @@ LogLevel 2
 # FTPAddress and FTPPort: set this to the address and port of the
 # Krang internal FTP server.
 #
-EnableFTP 1
-FTPAddress 192.168.40.128
-FTPHostName localhost
-FTPPort 2121
+##EnableFTP 1
+##FTPAddress 192.168.40.128
+##FTPHostName localhost
+##FTPPort 2121
 
 #
 # SMTPServer: Krang needs to be able to mail alerts to users.  Set
@@ -104,7 +104,7 @@ SchedulerDefaultFailureDelay 300
 # non-ASCII data into Krang then you may need to set this to either
 # "windows-1252" or "utf-8" to work-around a bug in IE 6.
 #
-Charset iso-8859-1
+Charset utf-8
 
 #
 # This variable controls whether Krang uses SSL.  You must compile
@@ -203,7 +203,7 @@ TrashMaxItems 20
    InstanceHostName cms.test1.com
 
    # MySQL database name for this instance
-   InstanceDBName krang_test
+   InstanceDBName krang_test_weg
 
    # the element set to be used in this instance.  Instances may share
    # element sets.
@@ -226,35 +226,3 @@ TrashMaxItems 20
 
 </Instance>
 
-
-<Instance test2>
-
-   # the UI display name for this instance
-   InstanceDisplayName "Test Magazine Two"
-
-   # the virtual host users will use to access this instance
-   InstanceHostName cms.test2.com
-
-   # MySQL database name for this instance
-   InstanceDBName krang_test2
-
-   # the element set to be used in this instance.  Instances may share
-   # element sets.
-   InstanceElementSet TestSet1
-
-   # optionally run this instance on a different IP and port than
-   # other Krang instances
-
-   # InstanceApacheAddr 10.0.1.86
-   # InstanceApachePort 8090
-   # InstanceSSLPort 4430
-
-   # optionally use a different SSL config for this instance, use with EnableSSL
-
-   # InstanceSSLCertificateFile /path/to/krang/conf/rabbit.crt
-   # InstanceSSLCertificateKeyFile /path/to/krang/conf/rabbit.key
-   # InstanceSSLCertificateChainFile /path/to/krang/conf/rabbit-ca.crt
-   # InstanceSSLCACertificateFile /path/to/krang/conf/rabbit-ca_client.crt
-   # InstanceSSLCARevocationFile  /path/to/krang/conf/rabbit-ca_client.crl
-
-</Instance>

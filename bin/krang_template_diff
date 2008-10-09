@@ -73,14 +73,15 @@ use Getopt::Long;
 use Pod::Usage;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
     $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -98,23 +99,23 @@ $@
 ######################################################################
 END
 
-
     # get parameters from command line.  do this during compile so
     # $VERBOSE can effect use options and such.  also so errors get
     # detected as quick as possible - people are waiting out there!
     our ($from, $to);
-    our $VERBOSE              = 0;
+    our $VERBOSE = 0;
     our ($help, $man);
     our $template_id;
-    our $diff_options         = '-ur';
-    GetOptions("help"                   => \$help,
-	       "man"                    => \$man,
-	       "verbose+"               => \$VERBOSE,
-               "template_id=s"          => \$template_id,
-               "diff-options=s"         => \$diff_options,
-	      ) or  pod2usage(2);
+    our $diff_options = '-ur';
+    GetOptions(
+        "help"           => \$help,
+        "man"            => \$man,
+        "verbose+"       => \$VERBOSE,
+        "template_id=s"  => \$template_id,
+        "diff-options=s" => \$diff_options,
+    ) or pod2usage(2);
 
-    pod2usage(1)             if $help;
+    pod2usage(1) if $help;
     pod2usage(-verbose => 2) if $man;
 
     # get from and tos
@@ -124,7 +125,7 @@ END
     $to = shift @ARGV;
     pod2usage("Missing required 'to' dataset")
       unless $to;
-};
+}
 
 our $VERBOSE;
 
@@ -143,9 +144,9 @@ sub main {
     my $temp = tempdir(DIR => $root, CLEANUP => 1);
 
     # extract .kds's
-    my ($from_dir, $to_dir) = map {catdir($temp, $_)} qw/from to/;
+    my ($from_dir, $to_dir) = map { catdir($temp, $_) } qw/from to/;
     extract($from_dir, $from);
-    extract($to_dir, $to);
+    extract($to_dir,   $to);
 
     # rewrite out 'content' for each template to 'filename'
     write_out($from_dir);
@@ -156,7 +157,6 @@ sub main {
 
     exit 0;
 }
-
 
 # make a diff of the templates
 sub make_diff {
@@ -171,7 +171,7 @@ sub make_diff {
       if $VERBOSE;
     open(DIFF, $cmd)
       or die "Unable to start diff: $!";
-    while(<DIFF>) {
+    while (<DIFF>) {
         print;
     }
     close DIFF;
@@ -180,7 +180,6 @@ sub make_diff {
     chdir($old_dir) or die "Can't get back to $old_dir: $!";
 }
 
-
 sub extract {
     my ($dir, $kds) = @_;
     my ($in, $out, $err);
@@ -188,13 +187,12 @@ sub extract {
     mkpath([$dir]) unless -d $dir;
 
     my @cmd = ("tar", "-C" => $dir, "-xf" => $kds, "template_*.xml");
-    run(\@cmd, \$in, \$out, \$err) or
-      die("Unable to extract '$kds' to '$dir': $!");
+    run(\@cmd, \$in, \$out, \$err)
+      or die("Unable to extract '$kds' to '$dir': $!");
 
     # DEBUG
     print STDERR "Extracted '$kds' to '$dir'\n" if $VERBOSE;
 }
-
 
 sub write_out {
     my ($dir) = @_;
@@ -206,9 +204,9 @@ sub write_out {
 
     for (@files) {
         my $fpath = catfile($dir, $_);
-        my $xml = XMLin($fpath);
+        my $xml   = XMLin($fpath);
         my $npath = catfile($dir, $xml->{filename});
-        my $data = $xml->{content} || '';
+        my $data  = $xml->{content} || '';
 
         # DEBUG
         print STDERR "Writing to '$npath'\n" if $VERBOSE;

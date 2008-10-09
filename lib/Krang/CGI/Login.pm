@@ -24,27 +24,27 @@ None.
 
 use Krang::ClassLoader base => 'CGI';
 use Digest::MD5 qw(md5_hex md5);
-use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader DB      => qw(dbh);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'User';
 use Krang::ClassLoader 'MyPref';
 use Krang::ClassLoader 'PasswordHandler';
-use Krang::ClassLoader 'Log' => qw(debug info);
+use Krang::ClassLoader 'Log'     => qw(debug info);
 use Krang::ClassLoader 'Message' => qw(add_message add_alert);
-use Krang::ClassLoader Conf => qw(
-    ApachePort
-    BadLoginCount
-    BadLoginNotify
-    BadLoginWait
-    Charset
-    DefaultLanguage
-    FromAddress
-    InstanceApachePort
-    InstanceDisplayName
-    InstanceHostName
-    PasswordChangeTime
-    Secret
-    SMTPServer
+use Krang::ClassLoader Conf      => qw(
+  ApachePort
+  BadLoginCount
+  BadLoginNotify
+  BadLoginWait
+  Charset
+  DefaultLanguage
+  FromAddress
+  InstanceApachePort
+  InstanceDisplayName
+  InstanceHostName
+  PasswordChangeTime
+  Secret
+  SMTPServer
 );
 use CGI::Application::Plugin::RateLimit;
 use JSON::Any;
@@ -57,7 +57,7 @@ sub setup {
 
     # use CAP::RateLimit to limit the number of bad logins
     # per username if we need to
-    if( BadLoginCount() ) {
+    if (BadLoginCount()) {
         my $rl = $self->rate_limit;
         $rl->protected_actions(
             failed_login => {
@@ -81,14 +81,14 @@ sub login_wait {
         my $email_to = $ENV{KRANG_TEST_EMAIL} || BadLoginNotify;
         my $user     = $self->query->param('username');
         my $url      = 'http://' . InstanceHostName . ':' . (InstanceApachePort || ApachePort);
-        my $msg      =
+        my $msg =
             "User '$user' has been locked out of Krang at $url for "
           . BadLoginWait
           . " minutes because of more than "
           . BadLoginCount
           . " failed login attempts.";
 
-        debug( __PACKAGE__ . "->login_wait() - sending email to $email_to : $msg" );
+        debug(__PACKAGE__ . "->login_wait() - sending email to $email_to : $msg");
         my $sender = Mail::Sender->new(
             {
                 smtp      => SMTPServer,
@@ -115,8 +115,8 @@ sub show_form {
     my $self     = shift;
     my $query    = $self->query();
     my %arg      = @_;
-    my $template = $self->load_tmpl("login.tmpl",
-                                    associate => $query);
+    my $template = $self->load_tmpl("login.tmpl", associate => $query);
+
     # this can be an arbitrary message coming from some other place
     my $msg = $arg{alert} || $query->param('alert');
     add_alert('custom_msg', msg => $msg) if $msg;
@@ -132,19 +132,19 @@ sub login {
     my $dbh      = dbh();
 
     # make sure they don't need to wait
-    if( BadLoginCount ) {
+    if (BadLoginCount) {
         my $rl = $self->rate_limit;
         $rl->identity_callback(sub { $username });
-        if( $rl->check_violation(action => 'failed_login') ) {
+        if ($rl->check_violation(action => 'failed_login')) {
             return $self->login_wait;
         }
     }
 
-    unless( 
-        defined $username and length $username
-        and
-        defined $password and length $password
-    ) {
+    unless (defined $username
+        and length $username
+        and defined $password
+        and length $password)
+    {
         add_alert('missing_username_pw');
         return $self->show_form();
     }
@@ -153,9 +153,10 @@ sub login {
     my $user_id = pkg('User')->check_auth($username, $password);
 
     # failure
-    unless( $user_id ) {
+    unless ($user_id) {
+
         # record the failed login if we are protecting with RateLimit
-        if( BadLoginCount ) {
+        if (BadLoginCount) {
             $self->rate_limit->record_hit(action => 'failed_login');
         }
         add_alert('failed_login');
@@ -170,10 +171,10 @@ sub _do_login {
     my $q = $self->query();
 
     # if we are enforcing password changes every few days
-    if( PasswordChangeTime ) {
+    if (PasswordChangeTime) {
         my ($user) = pkg('User')->find(user_id => $user_id);
-        my $expired = time() - (PasswordChangeTime * 24 * 60 * 60); 
-        if( $user->password_changed < $expired ) {
+        my $expired = time() - (PasswordChangeTime * 24 * 60 * 60);
+        if ($user->password_changed < $expired) {
             $user->force_pw_change(1);
             $user->save();
         }
@@ -184,13 +185,14 @@ sub _do_login {
     # for tampering
     my $session_id = pkg('Session')->create();
     my $instance   = pkg('Conf')->instance();
-    my %filling    = ( user_id    => $user_id, 
-                       session_id => $session_id,
-                       instance   => $instance,
-                       next_wid   => 2,
-                       wid_1      => $session_id,
-                       hash       => md5_hex($user_id . $instance .
-                                             $session_id . Secret()) );
+    my %filling    = (
+        user_id    => $user_id,
+        session_id => $session_id,
+        instance   => $instance,
+        next_wid   => 2,
+        wid_1      => $session_id,
+        hash       => md5_hex($user_id . $instance . $session_id . Secret())
+    );
 
     # Propagate user to environment
     $ENV{REMOTE_USER} = $user_id;
@@ -223,18 +225,16 @@ sub _do_login {
     );
 
     # and store meta information about this installation/instance of Krang
-    my %conf_info = (
-        charset => ( Charset() || '' ),
-    );
+    my %conf_info = (charset => (Charset() || ''),);
     my $conf_cookie = $q->cookie(
         -name  => 'KRANG_CONFIG',
         -value => JSON::Any->new->encode(\%conf_info),
-	-path  => '/'
+        -path  => '/'
     );
 
     # and set all four cookies
-    $self->header_add(-cookie => [$authen_cookie->as_string,
-                                  $pref_cookie->as_string, $conf_cookie->as_string]);
+    $self->header_add(
+        -cookie => [$authen_cookie->as_string, $pref_cookie->as_string, $conf_cookie->as_string]);
 
     # now we're ready to redirect
     my $target = './';
@@ -245,23 +245,25 @@ sub _do_login {
 
 # handle a logout
 sub logout {
-    my $self     = shift;
-    my $query    = $self->query();
+    my $self  = shift;
+    my $query = $self->query();
 
     # build a poison cookie
     my $authen_cookie = $query->cookie(
-                                -name   => pkg('Conf')->instance,
-				-value  => "",
-				-expires=>'-90d',
-			       );
+        -name    => pkg('Conf')->instance,
+        -value   => "",
+        -expires => '-90d',
+    );
 
     # delete the session & window ID
     pkg('Session')->delete($ENV{KRANG_SESSION_ID});
     delete $ENV{KRANG_WINDOW_ID};
 
     # redirect to login
-    $self->header_props(-uri => 'login.pl',
-			-cookie => [$authen_cookie->as_string]);
+    $self->header_props(
+        -uri    => 'login.pl',
+        -cookie => [$authen_cookie->as_string]
+    );
     $self->header_type('redirect');
     return '';
 }
@@ -271,27 +273,29 @@ sub forgot_pw {
     my $q    = $self->query;
     my $tmpl = $self->load_tmpl('forgot_pw.tmpl', associate => $q);
 
-    if( $q->param('email') ) {
+    if ($q->param('email')) {
         my $email = $q->param('email');
         add_message('forgot_pw');
         $tmpl->param(email_sent => 1);
 
         # find the user this email address belongs to
         my ($user) = pkg('User')->find(email => $email);
-        if( $user ) {
+        if ($user) {
             my $port = InstanceApachePort || ApachePort;
             my $site_url = 'http://' . InstanceHostName . ($port == 80 ? '' : ":$port");
 
             # create the link
             my $instance = pkg('Conf')->instance();
-            my $ticket = md5_hex($user->user_id . $instance . Secret()) . '-' . $user->user_id;
+            my $ticket   = md5_hex($user->user_id . $instance . Secret()) . '-' . $user->user_id;
 
             # send the email
-            my $sender = Mail::Sender->new({
-                smtp      => SMTPServer,
-                from      => FromAddress,
-                on_errors => 'die'
-            });
+            my $sender = Mail::Sender->new(
+                {
+                    smtp      => SMTPServer,
+                    from      => FromAddress,
+                    on_errors => 'die'
+                }
+            );
 
             my $msg_tmpl = $self->load_tmpl('forgot_pw_email.tmpl');
             $msg_tmpl->param(
@@ -300,14 +304,16 @@ sub forgot_pw {
                 username => $user->login,
             );
 
-            $sender->MailMsg({
-                to      => $email,
-                subject => "[" . InstanceHostName . "] Forgot Password?",
-                msg     => $msg_tmpl->output,
-            });
-            debug( __PACKAGE__ . "->forgot_pw() - sending forgot_pw email to $email" );
+            $sender->MailMsg(
+                {
+                    to      => $email,
+                    subject => "[" . InstanceHostName . "] Forgot Password?",
+                    msg     => $msg_tmpl->output,
+                }
+            );
+            debug(__PACKAGE__ . "->forgot_pw() - sending forgot_pw email to $email");
         } else {
-            debug( __PACKAGE__ . "->forgot_pw() - no user found with email '$email'" );
+            debug(__PACKAGE__ . "->forgot_pw() - no user found with email '$email'");
         }
     }
 
@@ -322,33 +328,31 @@ sub reset_pw {
 
     # decode the ticket
     $t =~ /^(.*)-(\d+)$/;
-    my $hash = $1;
-    my $user_id = $2;
+    my $hash     = $1;
+    my $user_id  = $2;
     my $instance = pkg('Conf')->instance();
-            
-    debug( __PACKAGE__ . "->reset_pw() - decoding ticket $t: user_id = $user_id'" );
+
+    debug(__PACKAGE__ . "->reset_pw() - decoding ticket $t: user_id = $user_id'");
 
     # if it matches what we need it to
-    if( md5_hex($user_id . $instance . Secret()) eq $hash ) {
+    if (md5_hex($user_id . $instance . Secret()) eq $hash) {
         my $new_pw    = $q->param('new_password');
         my $new_pw_re = $q->param('new_password_re');
         my $alert     = '';
 
         # if we have the necessary info to change it
-        if( $new_pw || $new_pw_re ) {
-            if( $new_pw eq $new_pw_re ) {
+        if ($new_pw || $new_pw_re) {
+            if ($new_pw eq $new_pw_re) {
                 my ($user) = pkg('User')->find(user_id => $user_id);
-                if( $user ) {
-                    # check the password constraints
-                    my $valid = pkg('PasswordHandler')->check_pw(
-                        $new_pw,
-                        $user->login,
-                        $user->email,
-                        $user->first_name,
-                        $user->last_name,
-                    );
+                if ($user) {
 
-                    if( $valid ) {
+                    # check the password constraints
+                    my $valid =
+                      pkg('PasswordHandler')
+                      ->check_pw($new_pw, $user->login, $user->email, $user->first_name,
+                        $user->last_name,);
+
+                    if ($valid) {
                         $user->password($new_pw);
                         $user->save;
                         add_message("changed_password");

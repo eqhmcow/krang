@@ -66,7 +66,8 @@ sub new {
 
 sub conf {
     my $self = shift;
-    unless( $self->{conf} ) {
+    unless ($self->{conf}) {
+
         # read in conf file
         my $conf = Config::ApacheFormat->new(expand_vars => 1);
         eval { $conf->read(catfile($self->{skin_dir}, 'skin.conf')) };
@@ -79,9 +80,9 @@ sub conf {
 
 sub base {
     my $self = shift;
-    unless( $self->{base} ) {
+    unless ($self->{base}) {
         my $conf = $self->conf;
-        if( $conf->get('Base') ) {
+        if ($conf->get('Base')) {
             my $base = pkg('Skin')->new(name => $conf->get('Base'));
             $self->{base} = $base;
         }
@@ -105,7 +106,7 @@ sub install {
     # does our skin use another skin as it's base?
     my $base = $self->base;
     $base->install if $base;
-    
+
     $self->_install_css;
     $self->_install_images;
 }
@@ -115,7 +116,7 @@ sub _install_css {
 
     # make all our config vars visible to the templates
     my $vars = $self->merge_config();
-    
+
     # by default we load any *.css.tmpl files in templates/ and we
     # also add any *.css.tmpl files in the skin's css/ dir
     my @css_tmpls = (
@@ -123,10 +124,11 @@ sub _install_css {
         pkg('File')->find_glob(catfile('skins', $self->{name}, 'css', '*.css.tmpl')),
     );
 
-    my %processed; # to keep track of files we've already seen
+    my %processed;    # to keep track of files we've already seen
     foreach my $css_tmpl (@css_tmpls) {
         my $basename = basename($css_tmpl, '.css.tmpl');
         next if $processed{$basename};
+
         # load the css template
         my $template = pkg('HTMLTemplate')->new(
             filename          => $css_tmpl,
@@ -134,11 +136,8 @@ sub _install_css {
         );
 
         # pass in params
-        $template->param(
-            %$vars,
-            krang_install_id => pkg('Info')->install_id,
-        );
-        
+        $template->param(%$vars, krang_install_id => pkg('Info')->install_id,);
+
         # put output in htdocs/krang.css
         my $dest_file = catfile(KrangRoot, 'htdocs', "$basename.css");
         open(CSS, '>', $dest_file)
@@ -157,7 +156,7 @@ sub _install_images {
     # copy anything in images/ to htdocs/images/
     my $img_dir = catdir($skin_dir, 'images');
     my $dest_dir = catdir(KrangRoot, 'htdocs', 'images');
-    if(-d $img_dir) {
+    if (-d $img_dir) {
         $img_dir = catdir($img_dir, '*');
         system("cp -R $img_dir $dest_dir") == 0
           or croak "Could not copy images from $img_dir to $dest_dir";

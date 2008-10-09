@@ -23,18 +23,18 @@ use File::Spec::Functions qw(catdir);
 
 use base 'Exporter';
 our @EXPORT_OK = qw(
-    category_chooser
-    category_chooser_object
-    time_chooser
-    decode_time
-    date_chooser
-    datetime_chooser
-    decode_date
-    decode_datetime
-    format_url
-    template_chooser
-    template_chooser_object
-    autocomplete_values
+  category_chooser
+  category_chooser_object
+  time_chooser
+  decode_time
+  date_chooser
+  datetime_chooser
+  decode_date
+  decode_datetime
+  format_url
+  template_chooser
+  template_chooser_object
+  autocomplete_values
 );
 
 =head1 NAME
@@ -154,7 +154,7 @@ F<Widget/category_chooser.tmpl>.
 
 sub category_chooser {
     my %args = @_;
-    my ( $name, $query, $display, $onchange, $formname, $field, $persistkey ) =
+    my ($name, $query, $display, $onchange, $formname, $field, $persistkey) =
       @args{qw(name query display onchange formname field persistkey)};
     croak("Missing required args: name and query")
       unless $name and $query;
@@ -166,14 +166,15 @@ sub category_chooser {
     my $allow_clear = exists $args{allow_clear} ? $args{allow_clear} : 1;
 
     my $chooser = category_chooser_object(%args);
+
     # if we didn't get a choose it's cause there are no categories to choose from
-    if( ! $chooser ) {
+    if (!$chooser) {
         add_alert('no_categories_for_chooser');
         return "No categories are defined.";
     }
 
     my $template = pkg('HTMLTemplate')->new(
-        path              => [ catdir('Widget', $session{language}), 'Widget' ],
+        path              => [catdir('Widget', $session{language}), 'Widget'],
         filename          => 'category_chooser.tmpl',
         cache             => 1,
         die_on_bad_params => 1,
@@ -185,14 +186,14 @@ sub category_chooser {
     my $category_id =
       defined $query->param($field) ? $query->param($field)
       : $persistkey
-      ? $session{KRANG_PERSIST}{$persistkey}{ 'cat_chooser_id_' . $formname . "_" . $name }
+      ? $session{KRANG_PERSIST}{$persistkey}{'cat_chooser_id_' . $formname . "_" . $name}
       : 0;
 
-    my ($cat) = pkg('Category')->find( category_id => $category_id );
+    my ($cat) = pkg('Category')->find(category_id => $category_id);
 
     if ($cat) {
-        $template->param( category_id  => $category_id );
-        $template->param( category_url => $cat->url );
+        $template->param(category_id  => $category_id);
+        $template->param(category_url => $cat->url);
     }
 
     # send data to the template
@@ -208,7 +209,7 @@ sub category_chooser {
     my ($show_button, $chooser_html) = $chooser->output();
 
     return wantarray
-      ? ($show_button . $template->output() , $chooser_html)
+      ? ($show_button . $template->output(), $chooser_html)
       : ($show_button . $template->output() . $chooser_html);
 }
 
@@ -274,11 +275,8 @@ look for a pre-existing value.
 
 sub category_chooser_object {
     my %args = @_;
-    my (
-        $name,  $query, $label,   $formname, $site_id,
-        $field, $title, $may_see, $may_edit, $persistkey
-      )
-      = @args{
+    my ($name, $query, $label, $formname, $site_id, $field, $title, $may_see, $may_edit,
+        $persistkey) = @args{
         qw(name query label formname site_id
           field title may_see may_edit persistkey)
       };
@@ -298,9 +296,9 @@ sub category_chooser_object {
     $name       ||= '';
     $persistkey ||= '';
 
-    $session{KRANG_PERSIST}{$persistkey}{ 'cat_chooser_id_' . $formname . "_" . $name } =
+    $session{KRANG_PERSIST}{$persistkey}{'cat_chooser_id_' . $formname . "_" . $name} =
       $query->param($field)
-      if defined( $query->param($field) );
+      if defined($query->param($field));
 
     # setup category loop
     my %find_params = ();
@@ -310,7 +308,7 @@ sub category_chooser_object {
 
     # get list of all cats
     my @cats = pkg('Category')->find(%find_params);
-    
+
     # if there are no cats then there can't be any chooser
     return unless @cats;
 
@@ -319,34 +317,34 @@ sub category_chooser_object {
     @cats = sort { substr($a->url, 0, -1) cmp substr($b->url, 0, -1) } @cats;
 
     # build up data structure used by HTML::PopupTreeSelect::Dynamic
-    my $data = { children => [], label => "", open => 1 };
+    my $data = {children => [], label => "", open => 1};
     my %nodes;
     while (@cats) {
         my $cat = shift @cats;
 
-        my $parent_id   = $cat->parent_id;
+        my $parent_id = $cat->parent_id;
         my $parent_node = $parent_id ? $nodes{$parent_id} : $data;
 
         # maybe they don't have permissions to the parent, so it
         # wasn't returned from the initial find().  Fill it in
         # deactivated.
         unless ($parent_node) {
-            unshift( @cats, $cat );
-            unshift( @cats, pkg('Category')->find( category_id => $parent_id ) );
+            unshift(@cats, $cat);
+            unshift(@cats, pkg('Category')->find(category_id => $parent_id));
             $cats[0]->{_inactive} = 1;
             next;
         }
 
         push(
-            @{ $parent_node->{children} },
+            @{$parent_node->{children}},
             {
-                label => ( $cat->dir eq '/' ? $cat->url : $cat->dir ),
+                label => ($cat->dir eq '/' ? $cat->url : $cat->dir),
                 value    => $cat->category_id . "," . $cat->url,
                 children => [],
-                ( $cat->{_inactive} ? ( inactive => 1 ) : () ),
+                ($cat->{_inactive} ? (inactive => 1) : ()),
             }
         );
-        $nodes{ $cat->category_id } = $parent_node->{children}[-1];
+        $nodes{$cat->category_id} = $parent_node->{children}[-1];
     }
 
     # build the chooser
@@ -369,13 +367,13 @@ sub category_chooser_object {
         separate_show_bnt   => 1,
         ok_button_label     => ' ' . localize('Ok') . ' ',
         cancel_button_label => localize('Cancel'),
+
         # The following is just for documentation purposes
         # In our Krang installation the alert message is part
         # of htdocs/js/popup_tree_select.js
         # alert => localize('Please select an item or click Cancel to cancel selection.'),
     );
 }
-
 
 =item $chooser_html = time_chooser(name => 'time', query => $query)
 
@@ -419,11 +417,11 @@ sub time_chooser {
     # pull the time from the query first, then from given hour/minute and
     # finally from localtime
     my $value;
-    if( $query->param($name) ) {
+    if ($query->param($name)) {
         ($hour, $minute) = decode_time(name => $name, query => $query);
         $value = $query->param($name);
     } else {
-        unless( $nochoice ) {
+        unless ($nochoice) {
             my $current_date = localtime();
             $hour   = $current_date->hour   unless defined $hour;
             $minute = $current_date->minute unless defined $minute;
@@ -433,16 +431,17 @@ sub time_chooser {
     # hours running from 1-12 or 0-23
     my $use_ampm_time = localize('AMPM');
 
-    my @hours = (1..12);
+    my @hours = (1 .. 12);
 
     if ($use_ampm_time) {
         my $ampm = $hour && $hour >= 12 ? 'PM' : 'AM';
-        $hour    = $hour && $hour >= 13 ? $hour - 12 : $hour;
-        $hour    = 12 if defined $hour && $hour == 0;
-        $value ||= (defined $hour && defined $minute) ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
+        $hour = $hour && $hour >= 13 ? $hour - 12 : $hour;
+        $hour = 12 if defined $hour && $hour == 0;
+        $value ||=
+          (defined $hour && defined $minute) ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
     } else {
         $value ||= (defined $hour && defined $minute) ? sprintf('%i:%02i', $hour, $minute) : "";
-	@hours = (0..23);
+        @hours = (0 .. 23);
     }
 
     # an image src prefix for caching
@@ -463,19 +462,19 @@ sub time_chooser {
         <img alt="" src="${img_prefix}images/clock.gif" id="${name}_trigger" class="clock_trigger">
         <div id="${name}_clock" class="clock_widget" style="display:none">
             <select name="${name}_hour" onchange="Krang.Widget.update_time_chooser('$name', $js_use_ampm_time); $onchange" disabled>
-                <option value="">$Hour</option> | 
-        . join(' ', map { qq|<option value="$_">$_</option>| } @hours) .
-        qq|
+                <option value="">$Hour</option> |
+      . join(' ', map { qq|<option value="$_">$_</option>| } @hours) . qq|
             </select>
             :
             <select name="${name}_minute" onchange="Krang.Widget.update_time_chooser('$name', $js_use_ampm_time); $onchange" disabled>
                 <option value="">$Minute</option> |
-        . join(' ', map { qq|<option value="$_">$_</option>| } 
-            ('00', '01', '02', '03', '04', '05', '06', '07', '08', '09', 10..59)) .
-        qq|</select>|;
+      . join(' ',
+        map { qq|<option value="$_">$_</option>| }
+          ('00', '01', '02', '03', '04', '05', '06', '07', '08', '09', 10 .. 59))
+      . qq|</select>|;
 
     if ($use_ampm_time) {
-	$html .= qq|
+        $html .= qq|
             &nbsp;
             <select name="${name}_ampm" onchange="Krang.Widget.update_time_chooser('$name', $js_use_ampm_time); $onchange" disabled>
                 <option value="AM">AM</option> <option value="PM">PM</option>
@@ -513,10 +512,10 @@ sub decode_time {
 
     my $value = $query->param($name);
     my ($hour, $minute, $ampm);
-    if( $value && $value =~ /^(\d+):(\d+)\s?(am|pm)$/i ) {
-        $hour = $1;
+    if ($value && $value =~ /^(\d+):(\d+)\s?(am|pm)$/i) {
+        $hour   = $1;
         $minute = $2;
-        $ampm = $3 ? uc($3) : '';
+        $ampm   = $3 ? uc($3) : '';
 
         if ($hour == 12 and $ampm eq 'AM') {
             $hour = 0;
@@ -565,19 +564,19 @@ sub datetime_chooser {
     # get the first part from the date_chooser
     my $html = date_chooser(%args);
     $html .= '&nbsp;';
+
     # and get the 2nd part from the time_chooser
-    my $date = $args{date};
-    my $hour = $date ? $date->hour : undef;
+    my $date   = $args{date};
+    my $hour   = $date ? $date->hour : undef;
     my $minute = $date ? $date->minute : undef;
     $html .= time_chooser(
         %args,
-        name     => $args{name} . '_time',
-        hour     => $hour,
-        minute   => $minute,
+        name   => $args{name} . '_time',
+        hour   => $hour,
+        minute => $minute,
     );
     return $html;
 }
-
 
 =item $chooser_html = date_chooser(name => 'cover_date')
 
@@ -619,9 +618,10 @@ sub date_chooser {
     my $date_format = localize('%m/%d/%Y');
 
     # use the date from the query first, if not there use
-    if( $query->param($name) ) {
+    if ($query->param($name)) {
         $date = $query->param($name);
     } else {
+
         # Set date to today if it is NOT already set, AND if we do not allow "no choice"
         $date ||= localtime() unless ($nochoice);
         $date = $date ? $date->strftime($date_format) : '';
@@ -640,7 +640,6 @@ sub date_chooser {
     |;
 
 }
-
 
 =item $datetime_object = decode_date(name => 'cover_datetime', query => $query)
 
@@ -668,7 +667,7 @@ sub decode_datetime {
     my $date = $query->param($name);
     my $time = $query->param($name . '_time');
 
-    if( $date && $time ) {
+    if ($date && $time) {
         my $piece;
         eval { $piece = Time::Piece->strptime("$date $time", localize('%m/%d/%Y %I:%M %p')) };
         return $piece unless $@;
@@ -695,7 +694,7 @@ sub decode_date {
       unless $name and $query;
 
     my $value = $query->param($name);
-    if( $value ) {
+    if ($value) {
         return Time::Piece->strptime($value, localize('%m/%d/%Y'));
     } else {
         return;
@@ -724,7 +723,7 @@ sub format_url {
 
     # Validate calling input
     my ($url, $linkto, $length) = @args{qw/url linkto length/};
-    croak ("Missing required argument 'url'") unless ($url);
+    croak("Missing required argument 'url'") unless ($url);
 
     $length = 15 unless ($length);
 
@@ -734,23 +733,24 @@ sub format_url {
     # put spaces after /'s so that wrap() will try to wrap to them if
     # possible
     $url =~ s!/!/ !g;
-    $url = wrap("","",$url);
+    $url = wrap("", "", $url);
     $url =~ s!/ !/!g;
 
     # format wrapped URL in HTML
     my $format_url_html;
-    my @url_lines = split("\n",$url);
+    my @url_lines = split("\n", $url);
     if ($linkto) {
+
         # URL with links
         $format_url_html = qq{<a href="$linkto">} . join('<wbr>', @url_lines) . qq{</a>};
     } else {
+
         # URL without links
-        $format_url_html = join( '<wbr>', @url_lines );
+        $format_url_html = join('<wbr>', @url_lines);
     }
 
     return $format_url_html;
 }
-
 
 =item $chooser_html = template_chooser(name => 'category_id', query => $query)
 
@@ -817,7 +817,7 @@ F<Widget/template_chooser.tmpl>.
 
 sub template_chooser {
     my %args = @_;
-    my ( $name, $query, $display, $onchange, $formname, $field, $persistkey ) = @args{
+    my ($name, $query, $display, $onchange, $formname, $field, $persistkey) = @args{
         qw(name query display onchange formname
           field title persistkey)
       };
@@ -826,7 +826,7 @@ sub template_chooser {
       unless $name and $query;
 
     my $template = pkg('HTMLTemplate')->new(
-        path              => [ catdir('Widget', $session{language}), 'Widget' ],
+        path              => [catdir('Widget', $session{language}), 'Widget'],
         filename          => 'template_chooser.tmpl',
         cache             => 1,
         die_on_bad_params => 1,
@@ -841,14 +841,14 @@ sub template_chooser {
 
     # pass the element name around in advanced search
     my $element_name = $query->param($field)
-      || $session{KRANG_PERSIST}{$persistkey}{ 'tmpl_chooser_id_' . $formname . "_" . $name }
+      || $session{KRANG_PERSIST}{$persistkey}{'tmpl_chooser_id_' . $formname . "_" . $name}
       || '';
 
-    $session{KRANG_PERSIST}{$persistkey}{ 'tmpl_chooser_id_' . $formname . "_" . $name } =
+    $session{KRANG_PERSIST}{$persistkey}{'tmpl_chooser_id_' . $formname . "_" . $name} =
       $query->param($field)
-      if defined( $query->param($field) );
+      if defined($query->param($field));
 
-    $template->param( element_class_name => $element_name );
+    $template->param(element_class_name => $element_name);
 
     # build the chooser
     my $chooser = template_chooser_object(%args);
@@ -865,7 +865,7 @@ sub template_chooser {
     my ($show_button, $chooser_html) = $chooser->output();
 
     return wantarray
-      ? ($show_button . $template->output() , $chooser_html)
+      ? ($show_button . $template->output(), $chooser_html)
       : ($show_button . $template->output() . $chooser_html);
 }
 
@@ -903,8 +903,7 @@ The title on the chooser window.  Defaults to 'Choose a Template'.
 
 sub template_chooser_object {
     my %args = @_;
-    my ( $name, $query, $label, $title ) =
-      @args{qw(name query label title)};
+    my ($name, $query, $label, $title) = @args{qw(name query label title)};
 
     croak("Missing required arg: query") unless $query;
 
@@ -912,7 +911,7 @@ sub template_chooser_object {
     croak("Missing required arg: name") unless $name;
 
     # get element names
-    my @elements = map { [ pkg('ElementLibrary')->top_level( name => $_ ) => '' ] }
+    my @elements = map { [pkg('ElementLibrary')->top_level(name => $_) => ''] }
       reverse pkg('ElementLibrary')->top_levels;
 
     # get existing templates
@@ -920,16 +919,16 @@ sub template_chooser_object {
       map { $_->filename } pkg('Template')->find;
 
     # root node
-    my $data = { children => [], label => '', open => 1 };
+    my $data = {children => [], label => '', open => 1};
 
     # build element tree
     while (@elements) {
-        my ( $class, $parent ) = @{ pop(@elements) };
+        my ($class, $parent) = @{pop(@elements)};
         my $parent_node = $parent ? $parent : $data;
-        my $element     = $class->name;
+        my $element = $class->name;
 
         # elements for which a template already exists are colored in green
-        if ( $exists{$element} ) {
+        if ($exists{$element}) {
             $element = '<span class="tmpl_chooser_has_template">' . $class->name . '</span>';
         }
 
@@ -939,10 +938,10 @@ sub template_chooser_object {
             children => [],
         };
 
-        push @{ $parent_node->{children} }, $child;
+        push @{$parent_node->{children}}, $child;
 
-        if ( my @children = $class->children ) {
-            push( @elements, map { [ $_ => $child ] } sort { $b->name cmp $a->name } @children );
+        if (my @children = $class->children) {
+            push(@elements, map { [$_ => $child] } sort { $b->name cmp $a->name } @children);
         }
     }
 
@@ -965,13 +964,13 @@ sub template_chooser_object {
         separate_show_btn   => 1,
         ok_button_label     => ' ' . localize('Ok') . ' ',
         cancel_button_label => localize('Cancel'),
+
         # The following is just for documentation purposes
         # In our installation the alert message is part
         # of htdocs/js/popup_tree_select.js
         # alert => localize('Please select an item or click Cancel to cancel selection.'),
     );
 }
-
 
 =item $values = autocomplete_values(%args)
 
@@ -1018,14 +1017,17 @@ sub autocomplete_values {
     my %args = @_;
     my ($phrase, $table, $fields, $dbh, $where) = @args{qw(phrase table fields dbh where)};
     $dbh ||= dbh();
-    if(! $phrase ) {
+    if (!$phrase) {
         my $cgi = CGI->new();
         $phrase = $cgi->param('phrase');
     }
 
     # query the db for these values
-    my $sql   = "SELECT " . join(', ', map { "`$_`" } @$fields) . " FROM `$table` WHERE ("
-        . join(' OR ', map { "`$_` REGEXP ?" } @$fields ) . ')';
+    my $sql =
+        "SELECT "
+      . join(', ', map { "`$_`" } @$fields)
+      . " FROM `$table` WHERE ("
+      . join(' OR ', map { "`$_` REGEXP ?" } @$fields) . ')';
     $sql .= " AND $where" if $where;
 
     my $regex = '(^|[[:blank:]_//])' . $phrase;
@@ -1035,11 +1037,13 @@ sub autocomplete_values {
 
     # split into individual words and then sort
     my %words;
-    while( my $row = $sth->fetchrow_arrayref ) {
-        foreach my $pos (0..(scalar @$row -1) ) {
+    while (my $row = $sth->fetchrow_arrayref) {
+        foreach my $pos (0 .. (scalar @$row - 1)) {
             my $answer = lc($row->[$pos]);
+
             # remove any potential file suffixes
             $answer =~ s/\.\w{3,5}$//;
+
             # remove these characters
             $answer =~ s/['"\.\,:]//g;
 
@@ -1047,17 +1051,18 @@ sub autocomplete_values {
             # start with our phrase
             foreach (split(/(?:_|\s|\/)+/, $answer)) {
                 my $w = lc($_);
-                if( index($w, $phrase) == 0 ) {
+                if (index($w, $phrase) == 0) {
                     $words{$w} = 1;
                 }
             }
+
             # if it has an '_' and no spaces, keep the whole word as well
-            if( $answer =~ /_/ && $answer !~ /\s/ && ( index($answer, $phrase) == 0 ) ) {
+            if ($answer =~ /_/ && $answer !~ /\s/ && (index($answer, $phrase) == 0)) {
                 $words{$answer} = 1;
             }
         }
     }
-    
+
     my $html = '<ul>';
     foreach (sort keys %words) {
         s/</&lt;/g;
@@ -1068,9 +1073,9 @@ sub autocomplete_values {
 }
 
 sub _img_prefix {
-    return ForceStaticBrowserCaching 
-        ? '/static/' . pkg('Info')->install_id .'/' 
-        : '';
+    return ForceStaticBrowserCaching
+      ? '/static/' . pkg('Info')->install_id . '/'
+      : '';
 }
 
 1;

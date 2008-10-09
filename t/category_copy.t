@@ -620,7 +620,9 @@ push @media,      @{$copied->{media}}    if $copied->{media};
 push @templates,  @{$copied->{template}} if $copied->{template};
 
 diag('');
-diag('12. Conflict between would-be-created story and existing category having index story - without overwrite');
+diag(
+    '12. Conflict between would-be-created story and existing category having index story - without overwrite'
+);
 diag('');
 setup_tree();
 
@@ -669,7 +671,8 @@ eval {
 };
 
 my ($findex) = pkg('Story')->find(url => $index->url);
-is($findex->story_id, $index->story_id, 'The existing index category has been preserved. No copy occured.');
+is($findex->story_id, $index->story_id,
+    'The existing index category has been preserved. No copy occured.');
 
 push @categories, @{$copied->{category}} if $copied->{category};
 push @media,      @{$copied->{media}}    if $copied->{media};
@@ -677,7 +680,9 @@ push @templates,  @{$copied->{template}} if $copied->{template};
 push @stories,    @{$copied->{story}}    if $copied->{story};
 
 diag('');
-diag('13. Conflict between would-be-created story and existing category having index story - with overwrite');
+diag(
+    '13. Conflict between would-be-created story and existing category having index story - with overwrite'
+);
 diag('');
 setup_tree();
 
@@ -728,10 +733,10 @@ eval {
 my @indices = pkg('Story')->find(url => $index->url, include_trashed => 1);
 is(scalar(@indices), 2, "Two stories with the same URL exist now");
 
-($index)        = grep {$_->story_id == $index->story_id} @indices;
+($index) = grep { $_->story_id == $index->story_id } @indices;
 is($index->trashed, 1, "Original category index story has been trashed.");
 
-my ($new_index) = grep {$_->story_id != $index->story_id} @indices;
+my ($new_index) = grep { $_->story_id != $index->story_id } @indices;
 isa_ok($new_index, 'Krang::Story');
 
 push @stories,    @{$copied->{story}}    if $copied->{story};

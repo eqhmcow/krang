@@ -81,7 +81,7 @@ BEGIN {
     use Fcntl qw(:flock);
     open LH, $0
       or die localtime() . ": Can't open $0 for locking: $!\n";
-    if(!flock(LH, LOCK_EX | LOCK_NB)) {
+    if (!flock(LH, LOCK_EX | LOCK_NB)) {
         print "Tests are currently running. Exiting.\n";
         exit(0);
     }
@@ -112,13 +112,13 @@ pod2usage(-verbose => 2) if $man;
 
 # get the lastest version of this checkout from SVN
 chdir($ENV{KRANG_ROOT});
-if($no_update or `svn update` =~ /Updated to/i) {
+if ($no_update or `svn update` =~ /Updated to/i) {
 
     # stop any possible previous runs
     system('bin/krang_ctl stop') == 0 or die "Could not stop Krang";
 
     # gives us a clean slate to start
-    unless($no_rebuild) {
+    unless ($no_rebuild) {
         system('bin/krang_build --with-ssl --rebuild') == 0 or die "Could not build Krang";
     }
     system('bin/krang_createdb --destroy --no_prompt test1') == 0
@@ -149,14 +149,14 @@ END {
 sub send_results_to_smolder {
     my $mech = WWW::Mechanize->new();
     $mech->get("$server/app");
-    unless($mech->status eq '200') {
+    unless ($mech->status eq '200') {
         print "Could not reach $server/app successfully. Received status " . $mech->status . "\n";
         exit(1);
     }
 
     # now go to the add-smoke-report page for this project
     $mech->get("$server/app/public_projects/add_report/$project_id");
-    if($mech->status ne '200' || $mech->content !~ /New Smoke Report/) {
+    if ($mech->status ne '200' || $mech->content !~ /New Smoke Report/) {
         print "Could not reach the Add Smoke Report form in Smolder!\n";
         exit(1);
     }
@@ -176,7 +176,7 @@ sub send_results_to_smolder {
     $mech->submit();
 
     my $content = $mech->content;
-    if($mech->status ne '200' || $content !~ /Recent Smoke Reports/) {
+    if ($mech->status ne '200' || $content !~ /Recent Smoke Reports/) {
         print "Could not upload smoke report with the given information!\n";
         exit(1);
     }

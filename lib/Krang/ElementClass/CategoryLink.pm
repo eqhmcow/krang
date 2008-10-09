@@ -3,9 +3,9 @@ use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::ClassLoader base => 'ElementClass';
-use Krang::ClassLoader Log => qw(debug info critical);
-use Krang::ClassLoader Conf => qw(PreviewSSL);
+use Krang::ClassLoader base         => 'ElementClass';
+use Krang::ClassLoader Log          => qw(debug info critical);
+use Krang::ClassLoader Conf         => qw(PreviewSSL);
 use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'URL';
 
@@ -13,16 +13,14 @@ use Krang::ClassLoader 'URL';
 #  get_set => [ qw( ) ];
 
 sub new {
-    my $pkg = shift;
-    my %args = ( 
-                @_
-               );
+    my $pkg  = shift;
+    my %args = (@_);
 
     return $pkg->SUPER::new(%args);
 }
 
 sub input_form {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
@@ -32,24 +30,27 @@ sub input_form {
     (my $name = $param) =~ s/\W//g;
     $query->param($param => $category->category_id) if $category;
     my ($html, $chooser) = pkg('Widget')->can('category_chooser')->(
-                                               name  => $name,
-                                               field => $param,
-                                               query => $query);
-    $html .= qq{<input type="hidden" name="$param" } .
-      ($category ? q{value="} . $category->category_id . q{"} : '') . q{>};
+        name  => $name,
+        field => $param,
+        query => $query
+    );
+    $html .= qq{<input type="hidden" name="$param" }
+      . ($category ? q{value="} . $category->category_id . q{"} : '') . q{>};
     return ($html, $chooser);
 }
 
-sub validate { 
-    my ($self, %arg) = @_;
+sub validate {
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
     my $value = $query->param($param);
 
     # don't allow self references
     my $object = $element->object;
-    if ($object->isa('Krang::Category') and 
-        $value and $value == $object->category_id) {
+    if (    $object->isa('Krang::Category')
+        and $value
+        and $value == $object->category_id)
+    {
         return (0, localize($self->display_name) . ' ' . localize('cannot link to this category!'));
     }
 
@@ -57,7 +58,7 @@ sub validate {
 }
 
 sub load_query_data {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
     my $value = $query->param($param);
@@ -69,7 +70,7 @@ sub load_query_data {
 }
 
 sub view_data {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
@@ -96,7 +97,7 @@ sub freeze_data {
 # load object by ID, ignoring failure since the object might have been
 # deleted
 sub thaw_data {
-    my ($self, %arg) = @_;
+    my ($self,    %arg)  = @_;
     my ($element, $data) = @arg{qw(element data)};
     return $element->data(undef) unless $data;
     my ($category) = pkg('Category')->find(category_id => $data);
@@ -115,7 +116,6 @@ sub freeze_data_xml {
     $set->add(object => $category, from => $element->object) if $category;
 }
 
-
 # translate the incoming category ID into a real ID
 sub thaw_data_xml {
     my ($self, %arg) = @_;
@@ -123,10 +123,14 @@ sub thaw_data_xml {
 
     my $import_id = $data->[0];
     return unless $import_id;
-    my $category_id = $set->map_id(class => pkg('Category'),
-                                   id    => $import_id);
-    $self->thaw_data(element => $element,
-                     data    => $category_id);
+    my $category_id = $set->map_id(
+        class => pkg('Category'),
+        id    => $import_id
+    );
+    $self->thaw_data(
+        element => $element,
+        data    => $category_id
+    );
 }
 
 # overriding Krang::ElementClass::template_data
@@ -135,8 +139,10 @@ sub template_data {
     my $self = shift;
     my %args = @_;
 
-    return pkg('URL')->real_url(object    => $args{element}->data,
-                                publisher => $args{publisher});
+    return pkg('URL')->real_url(
+        object    => $args{element}->data,
+        publisher => $args{publisher}
+    );
 }
 
 #
@@ -160,8 +166,6 @@ sub fill_template {
     $tmpl->param(\%params);
 
 }
-
-
 
 =head1 NAME
 

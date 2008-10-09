@@ -55,7 +55,6 @@ sub db2browser_map {
     croak(__PACKAGE__ . '->db2browser_map() must be defined in a subclass of Krang::Markup');
 }
 
-
 =item pkg('Markup::Subclass')->browser2db_map()
 
 This method must return a list mapping browser-specific HTML tags to
@@ -156,15 +155,13 @@ to be cleaned.
 sub remove_junk {
     my ($self, $html) = @_;
 
-    $$html =~ s/<([^>]+)>\s*<\/\1>//gs;     # remove tags w/o content inside
-    $$html =~ s/<\/([^>]+)>(\s*)<\1>/$2/gs; # remove adjacent closing/opening tags
-    $$html =~ s/(\s|&nbsp;)+/ /gs;          # remove excess whitespace
-    $$html =~ s/^\s+//sg;                   # remove leading whitespace
-    $$html =~ s/\s+$//sg;                   # remove trailing whitespace
-    $$html =~ s/^(<\/?br[^>]*>)+//gsi;      # remove leading BR tags
-    $$html =~ s/(<\/?br[^>]*>)+$//gsi;      # remove trailing BR tags
+    $$html =~ s/<([^>]+)>\s*<\/\1>//gs;        # remove tags w/o content inside
+    $$html =~ s/<\/([^>]+)>(\s*)<\1>/$2/gs;    # remove adjacent closing/opening tags
+    $$html =~ s/(\s|&nbsp;)+/ /gs;             # remove excess whitespace
+    $$html =~ s/^\s+//sg;                      # remove leading whitespace
+    $$html =~ s/\s+$//sg;                      # remove trailing whitespace
+    $$html =~ s/^(<\/?br[^>]*>)+//gsi;         # remove leading BR tags
+    $$html =~ s/(<\/?br[^>]*>)+$//gsi;         # remove trailing BR tags
 }
-
-
 
 1;

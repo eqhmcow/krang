@@ -10,7 +10,7 @@ use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
 
 require Exporter;
-our @ISA = ('Exporter');
+our @ISA       = ('Exporter');
 our @EXPORT_OK = ('run_benchmark');
 
 =head1 NAME
@@ -102,10 +102,10 @@ The code to run.  Must be a reference to a subroutine.
 sub run_benchmark {
     my %arg = @_;
     croak("Invalid call to run_benchmark, missing required keys")
-      unless exists $arg{module} and 
-             exists $arg{name}   and
-             exists $arg{count}  and
-             exists $arg{code};
+      unless exists $arg{module}
+          and exists $arg{name}
+          and exists $arg{count}
+          and exists $arg{code};
     croak("Invalid call to run_benchmark, count must be a positive integer")
       unless $arg{count} =~ /^\d+$/ and $arg{count};
 
@@ -122,13 +122,13 @@ END
     my ($start, $end);
     $start = time;
     for (1 .. $count) { &$code; }
-    $end   = time;
+    $end = time;
 
     my $time = $end - $start;
 
-    my $ops = sprintf("%.2f", $arg{count} / $time);
+    my $ops   = sprintf("%.2f", $arg{count} / $time);
     my $ftime = sprintf("%.2f", $time);
-    
+
     # print results for user
     print <<END, "#" x 79, "\n\n";
   Runtime      : $ftime seconds ($ops iter/sec)
@@ -160,7 +160,7 @@ sub start_benchmark {
 
     open(BENCH, ">>", catfile(KrangRoot, "bench.out"))
       or die "Unable to open bench.out; $!";
-    $arg{name}   =~ tr/\t\n/ /;
+    $arg{name} =~ tr/\t\n/ /;
     print BENCH "!\t$arg{name}\n";
     close BENCH;
 }

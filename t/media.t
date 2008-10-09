@@ -272,7 +272,7 @@ ok(($m2->checked_out_by > 0), 'Krang::Media->checked_out_by');
 $m2->checkin();
 
 # test that checkin is working properly - should return that it is not checked out.
-is($m2->checked_out,    0,     'Krang::Media->checked_out');
+is($m2->checked_out, 0, 'Krang::Media->checked_out');
 is($m2->checked_out_by, undef, 'Krang::Media->checked_out_by');
 
 # test renaming of media file
@@ -280,17 +280,17 @@ $m2->checkout;
 $m2->{filename} = 'renamed.jpg';
 $m2->save;
 $m2->checkin;
-is ($m2->filename, 'renamed.jpg');
-ok (-e $m2->file_path);
+is($m2->filename, 'renamed.jpg');
+ok(-e $m2->file_path);
 
 # test pruning of old versions
 my @all_versions = @{$m2->all_versions};
-is (@all_versions, 4);
+is(@all_versions, 4);
 $m2->prune_versions(number_to_keep => 2);
 @all_versions = @{$m2->all_versions};
-is (@all_versions,    2);
-is ($all_versions[0], 3);
-is ($all_versions[1], 4);
+is(@all_versions,    2);
+is($all_versions[0], 3);
+is($all_versions[1], 4);
 
 # test mark_as_published
 $m2->mark_as_published();

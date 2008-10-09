@@ -14,7 +14,7 @@ is(length($id), 32);
 
 # set some keys
 $session{foo} = 'bar';
-$session{bar} = [ qw(bing bang boom) ];
+$session{bar} = [qw(bing bang boom)];
 
 # did that work?
 is($session{foo}, 'bar');

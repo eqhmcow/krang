@@ -32,29 +32,41 @@ sub setup {
 }
 
 sub status {
-    my $self = shift;
-    my $output = join("\n",
-                      start_html('Krang Status'),
-                      h1('Krang Status'),
-                      h2('Instance Settings'),
-                      table({border => 1},
-                            th("Directive"), th("Value"),
-                            Tr(td("Instance"), td(pkg('Conf')->instance)),
-                            ( map { Tr(td($_), td(pkg('Conf')->get($_))) }
-                              (qw( InstanceElementSet InstanceDBName InstanceHostName ))),
-                           ),
-                      h2('Global Settings'),
-                        table({border => 1},
-                              th("Directive"), th("Value"),
-                              ( map { Tr(td($_), td(pkg('Conf')->get($_))) }
-                                
-                                (qw( KrangRoot ElementLibrary
-                                     KrangUser KrangGroup
-                                   ))),
-                             ));
+    my $self   = shift;
+    my $output = join(
+        "\n",
+        start_html('Krang Status'),
+        h1('Krang Status'),
+        h2('Instance Settings'),
+        table(
+            {border => 1},
+            th("Directive"),
+            th("Value"),
+            Tr(td("Instance"), td(pkg('Conf')->instance)),
+            (
+                map { Tr(td($_), td(pkg('Conf')->get($_))) }
+                  (qw( InstanceElementSet InstanceDBName InstanceHostName ))
+            ),
+        ),
+        h2('Global Settings'),
+        table(
+            {border => 1},
+            th("Directive"),
+            th("Value"),
+            (
+                map { Tr(td($_), td(pkg('Conf')->get($_))) }
+
+                  (
+                    qw( KrangRoot ElementLibrary
+                      KrangUser KrangGroup
+                      )
+                  )
+            ),
+        )
+    );
 
     return $output;
 }
 
 1;
-        
+

@@ -10,8 +10,7 @@ use Carp qw(croak);
 use Krang::ClassLoader Message      => qw(add_message);
 use Krang::ClassLoader Localization => qw(localize);
 
-use Krang::MethodMaker get_set =>
-  [qw( toolbar_config toolbar_config_string rows cols )];
+use Krang::MethodMaker get_set => [qw( toolbar_config toolbar_config_string rows cols )];
 
 our %button_layouts = (
     all => q{
@@ -64,8 +63,8 @@ sub new {
     );
 
     # check args
-    if ( $args{'toolbar_config'} ) {
-        if ( !exists $button_layouts{ $args{'toolbar_config'} } ) {
+    if ($args{'toolbar_config'}) {
+        if (!exists $button_layouts{$args{'toolbar_config'}}) {
             croak("\"$args{'buttons'}\" is not a known button layout");
         }
     }
@@ -74,15 +73,19 @@ sub new {
 }
 
 # check for empty value, which for this widget is a single break tag.
-sub validate { 
-    my ($self, %arg) = @_;
+sub validate {
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
     my $value = $query->param($param);
 
-    if ($self->{required} and 
-        (not defined $value or not length $value or
-         $value =~ m!^<br\s*/>\s*$!)) {
+    if (
+        $self->{required}
+        and (  not defined $value
+            or not length $value
+            or $value =~ m!^<br\s*/>\s*$!)
+      )
+    {
         return (0, localize($self->display_name) . ' ' . localize('requires a value.'));
     }
     return 1;
@@ -97,9 +100,9 @@ sub mark_form_invalid {
 }
 
 sub input_form {
-    my ( $self,  %arg )     = @_;
-    my ( $query, $element ) = @arg{qw(query element)};
-    my ($param) = $self->param_names( element => $element );
+    my ($self,  %arg)     = @_;
+    my ($query, $element) = @arg{qw(query element)};
+    my ($param) = $self->param_names(element => $element);
     my $html = "";
 
     my $lang = localize('en');
@@ -108,19 +111,22 @@ sub input_form {
     my $install_id = pkg('Info')->install_id();
 
     # only add this once
-    my @sibs = grep { $_->class->isa(__PACKAGE__) } 
-      $element->parent()->children();
-    if ( $sibs[0]->xpath() eq $element->xpath() ) {        
-        my @params = map { $self->param_names( element => $_ ) } @sibs;
+    my @sibs = grep { $_->class->isa(__PACKAGE__) } $element->parent()->children();
+    if ($sibs[0]->xpath() eq $element->xpath()) {
+        my @params = map { $self->param_names(element => $_) } @sibs;
         my $params = join(', ', map { "'$_'" } @params);
 
         # Adjust for Xinha's link-breaking hack-a-thon
         #   var serverBase = location.href.replace(/(https?:\/\/[^\/]*)\/.*/, '$1') + '/';
-        my $serverbase = ($ENV{SERVER_PROTOCOL} =~ /^HTTP\//) ? "http://" : "https://" ;
+        my $serverbase = ($ENV{SERVER_PROTOCOL} =~ /^HTTP\//) ? "http://" : "https://";
         $serverbase .= $ENV{HTTP_HOST} . '/';
-        my $specialreplacement = qq{ xinha_config.specialReplacements['href="/'] = 'href="$serverbase'; } . "\n";
-        $specialreplacement .= qq{ xinha_config.specialReplacements['src="/'] = 'src="$serverbase'; } . "\n";
-        $specialreplacement .= qq{ xinha_config.specialReplacements['background="/'] = 'background="$serverbase'; } . "\n";
+        my $specialreplacement =
+          qq{ xinha_config.specialReplacements['href="/'] = 'href="$serverbase'; } . "\n";
+        $specialreplacement .=
+          qq{ xinha_config.specialReplacements['src="/'] = 'src="$serverbase'; } . "\n";
+        $specialreplacement .=
+            qq{ xinha_config.specialReplacements['background="/'] = 'background="$serverbase'; }
+          . "\n";
 
         # I'm the first!  Insert one-time JavaScript
         $html .= <<END;
@@ -174,12 +180,12 @@ END
 
         # setup configuration for each editor
         foreach my $element (@sibs) {
-            my ($param) = $self->param_names( element => $element );
+            my ($param) = $self->param_names(element => $element);
             $html .= qq{      xinha_editors["$param"].config.toolbar = [};
 
             # use custom config string or pre-defined layout
             my $config = $element->class->toolbar_config_string()
-              || $button_layouts{ $element->class->toolbar_config() };
+              || $button_layouts{$element->class->toolbar_config()};
             $html .= $config;
 
             $html .= "];\n";
@@ -202,13 +208,13 @@ END
         -cols    => $self->cols,
         -id      => $param,
     );
-    
+
     return $html;
 }
 
 # we override this method so that it won't escape the HTML
 sub view_data {
-    my ( $self, %arg ) = @_;
+    my ($self, %arg) = @_;
     my ($element) = @arg{qw(element)};
     return "" . ($element->data || '');
 }

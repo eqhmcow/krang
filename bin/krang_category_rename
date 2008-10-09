@@ -39,15 +39,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf
     eval { require Krang::Conf };
@@ -74,19 +77,20 @@ use Krang::ClassLoader 'Site';
 
 my ($help, $man);
 my $verbose = 0;
-pod2usage(2) unless
-  GetOptions(help       => \$help,
-             man        => \$man,
-             'verbose+' => \$verbose,
-            );
-pod2usage(1)             if $help;
+pod2usage(2)
+  unless GetOptions(
+    help       => \$help,
+    man        => \$man,
+    'verbose+' => \$verbose,
+  );
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 pod2usage("Wrong number of options to krang_category_rename.\n")
   if @ARGV != 2;
 my ($from_url, $to_url) = @ARGV;
 $from_url .= '/' if $from_url and $from_url !~ m!/$!;
-$to_url   .= '/' if $to_url   and $to_url   !~ m!/$!;
+$to_url   .= '/' if $to_url   and $to_url !~ m!/$!;
 
 my ($from_cat) = pkg('Category')->find(url => $from_url);
 die "Source category '$from_url' does not exist.\n"
@@ -107,6 +111,7 @@ my ($to_parent) = pkg('Category')->find(url => $to_parent_url);
 
 # parent doesn't exist, create it if possible
 unless ($to_parent) {
+
     # make sure site exists, since this script won't create new sites
     my ($to_site_url, $to_dirs) = $to_parent_url =~ m!^([^/]+)/(.*)$!;
     my ($to_site) = pkg('Site')->find(url => $to_site_url);
@@ -122,19 +127,22 @@ unless ($to_parent) {
       unless $p;
 
     # walk through dirs, creating those that don't exist.
-    for(my $x = 0; $x < @to_dirs; $x++) {
+    for (my $x = 0 ; $x < @to_dirs ; $x++) {
         my $url = $to_site_url . '/' . join('/', @to_dirs[0 .. $x]) . '/';
         my ($cat) = pkg('Category')->find(url => $url);
         unless ($cat) {
             print STDERR "Creating category $url...\n";
-            $cat = pkg('Category')->new(dir => $to_dirs[$x],
-                                        parent_id => $p->category_id);
+            $cat = pkg('Category')->new(
+                dir       => $to_dirs[$x],
+                parent_id => $p->category_id
+            );
             $cat->save();
         }
+
         # pointer advance
         $p = $cat;
     }
-    
+
     # should have a parent now
     ($to_parent) = pkg('Category')->find(url => $to_parent_url);
     die "Failed to create parent.\n"
@@ -142,7 +150,7 @@ unless ($to_parent) {
 }
 
 # adjust parentage
-$from_cat->parent_id($to_parent->category_id) 
+$from_cat->parent_id($to_parent->category_id)
   unless $from_cat->parent_id == $to_parent->category_id;
 
 # adjust dir name

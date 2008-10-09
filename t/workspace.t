@@ -18,10 +18,12 @@ foreach my $instance (pkg('Conf')->instances) {
 BEGIN { use_ok(pkg('Workspace')) }
 
 # create a site and some categories to put stories in
-my $site = pkg('Site')->new(preview_url  => 'storytest.preview.com',
-                            url          => 'storytest.com',
-                            publish_path => '/tmp/storytest_publish',
-                            preview_path => '/tmp/storytest_preview');
+my $site = pkg('Site')->new(
+    preview_url  => 'storytest.preview.com',
+    url          => 'storytest.com',
+    publish_path => '/tmp/storytest_publish',
+    preview_path => '/tmp/storytest_preview'
+);
 isa_ok($site, 'Krang::Site');
 $site->save();
 END { $site->delete() }
@@ -31,9 +33,11 @@ $root_cat->save();
 
 my @cat;
 for (0 .. 10) {
-    push @cat, pkg('Category')->new(site_id   => $site->site_id,
-                                    parent_id => $root_cat->category_id,
-                                    dir       => 'test_' . $_);
+    push @cat, pkg('Category')->new(
+        site_id   => $site->site_id,
+        parent_id => $root_cat->category_id,
+        dir       => 'test_' . $_
+    );
     $cat[-1]->save();
 }
 
@@ -49,10 +53,12 @@ SKIP: {
     # create 10 stories
     my @stories;
     for my $n (0 .. 9) {
-        my $story = pkg('Story')->new(categories => [$cat[$n]],
-                                      title      => "Test$n",
-                                      slug       => "test$n",
-                                      class      => "article");
+        my $story = pkg('Story')->new(
+            categories => [$cat[$n]],
+            title      => "Test$n",
+            slug       => "test$n",
+            class      => "article"
+        );
         $story->save();
         push(@stories, $story);
     }
@@ -62,14 +68,12 @@ SKIP: {
     my @work = pkg('Workspace')->find();
     ok(not grep { not defined $_ } @work);
     foreach my $story (@stories) {
-        ok(grep { $_->isa('Krang::Story') and
-                  $_->story_id == $story->story_id } @work);
+        ok(grep { $_->isa('Krang::Story') and $_->story_id == $story->story_id } @work);
     }
-          
+
     # checkin a story and make sure it's gone from workspace
     $stories[0]->checkin;
     @work = pkg('Workspace')->find();
-    ok(not grep { $_->isa('Krang::Story') and
-                  $_->story_id == $stories[0]->story_id } @work);
-};
+    ok(not grep { $_->isa('Krang::Story') and $_->story_id == $stories[0]->story_id } @work);
+}
 

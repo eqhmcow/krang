@@ -1,3 +1,4 @@
+
 =head1 NAME
 
 Krang::Schedule::Action::send - Scheduler Action class which implements scheduler send functions 
@@ -11,7 +12,7 @@ use strict;
 use warnings;
 use Carp qw(verbose croak);
 use Krang::ClassLoader base => 'Schedule::Action';
-use Krang::ClassLoader Log => qw/ASSERT assert critical debug info/;
+use Krang::ClassLoader Log  => qw/ASSERT assert critical debug info/;
 use Krang::ClassLoader 'Alert';
 
 =head1 SYNOPSIS
@@ -44,8 +45,13 @@ In this class it functions to send scheduled alerts.
 sub execute {
     my $self = shift;
 
-    if (! $self->_object_exists()) { 
-        info(sprintf("%s->execute(): Cannot run schedule id '%i'. %s id='%i' cannot be found. Deleting scheduled job.", __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id));
+    if (!$self->_object_exists()) {
+        info(
+            sprintf(
+                "%s->execute(): Cannot run schedule id '%i'. %s id='%i' cannot be found. Deleting scheduled job.",
+                __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id
+            )
+        );
         $self->delete();
         return;
     }
@@ -66,7 +72,6 @@ Will throw any errors propegated by the Krang::Alert system.
 
 =cut
 
-
 sub _send {
     my $self = shift;
 
@@ -74,11 +79,10 @@ sub _send {
     my $id      = $self->{object_id};
     my $context = $self->{context};
 
-    eval {
-        pkg('Alert')->send(alert_id => $id, @$context);
-    };
+    eval { pkg('Alert')->send(alert_id => $id, @$context); };
 
     if (my $err = $@) {
+
         # log the error
         my $msg = __PACKAGE__ . "->_send(): Attempt to send alert failed: $err";
         die $msg;

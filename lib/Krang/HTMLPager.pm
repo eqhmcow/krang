@@ -7,7 +7,7 @@ use Carp qw(croak);
 use Krang::ClassLoader 'HTMLTemplate';
 use Krang::ClassLoader Conf => qw(KrangRoot DefaultLanguage);
 use Krang::ClassLoader 'MyPref';
-use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Session      => qw(%session);
 use Krang::ClassLoader Localization => qw(localize);
 use File::Spec::Functions qw(catdir);
 
@@ -47,34 +47,33 @@ Krang::HTMLPager - Web-paginate lists of records
 
 =cut
 
-
 use Krang::ClassLoader MethodMaker => (
-                        new_with_init => 'new',
-                        new_hash_init => 'hash_init',
-                        get           => [ qw( row_count ) ],
-                        get_set       => [ qw(
-                                               cgi_query 
-                                               persist_vars 
-                                               use_module 
-                                               use_data
-                                               use_data_size
-                                               cache_key
-                                               find_params 
-                                               columns 
-                                               column_labels
-                                               command_column_commands
-                                               command_column_labels
-                                               columns_sortable 
-                                               columns_sort_map
-                                               columns_hidden
-                                               default_sort_order_desc
-                                               row_handler
-                                               id_handler
-                                               max_page_links
-                                             ) ],
-                       );
-
-
+    new_with_init => 'new',
+    new_hash_init => 'hash_init',
+    get           => [qw( row_count )],
+    get_set       => [
+        qw(
+          cgi_query
+          persist_vars
+          use_module
+          use_data
+          use_data_size
+          cache_key
+          find_params
+          columns
+          column_labels
+          command_column_commands
+          command_column_labels
+          columns_sortable
+          columns_sort_map
+          columns_hidden
+          default_sort_order_desc
+          row_handler
+          id_handler
+          max_page_links
+          )
+    ],
+);
 
 =head1 DESCRIPTION
 
@@ -115,33 +114,34 @@ section "Krang::HTMLPager Properties".
 
 sub init {
     my $self = shift;
-    my %args = ( @_ );
+    my %args = (@_);
 
     # Set up default values
     my %defaults = (
-                    persist_vars => {},
-                    find_params => {},
-                    columns => [],
-                    column_labels => {},
-                    columns_sortable => [],
-                    columns_sort_map => {},
-                    columns_hidden => [],
-                    default_sort_order_desc => 0,
-                    command_column_commands => [],
-                    command_column_labels => {},
-                    max_page_links => 10,
-                   );
+        persist_vars            => {},
+        find_params             => {},
+        columns                 => [],
+        column_labels           => {},
+        columns_sortable        => [],
+        columns_sort_map        => {},
+        columns_hidden          => [],
+        default_sort_order_desc => 0,
+        command_column_commands => [],
+        command_column_labels   => {},
+        max_page_links          => 10,
+    );
 
     # finish the object
     $self->hash_init(%defaults, %args);
 
     # localize column labels
-    %{$self->column_labels} 
-      = map { $_ => localize($self->column_labels->{$_}) } keys %{$self->column_labels};
+    %{$self->column_labels} =
+      map { $_ => localize($self->column_labels->{$_}) } keys %{$self->column_labels};
 
     # localize command column labels
-    %{$self->command_column_labels} 
-      = map { $_ => localize($self->command_column_labels->{$_}) } keys %{$self->command_column_labels};
+    %{$self->command_column_labels} =
+      map { $_ => localize($self->command_column_labels->{$_}) }
+      keys %{$self->command_column_labels};
 
     # Set default row_count
     $self->{row_count} = undef;
@@ -153,8 +153,6 @@ sub init {
 
     return $self;
 }
-
-
 
 =item output()
 
@@ -197,16 +195,15 @@ sub output {
     my $pager_tmpl = $self->make_internal_template();
 
     my $language = $session{language} || DefaultLanguage || 'en';
-    my $t = pkg('HTMLTemplate')->new_scalar_ref(\$pager_tmpl, 
-                                                loop_context_vars=>1,
-                                                path => [ catdir('HTMLPager', $language),
-                                                          'HTMLPager' ],
-					       );
+    my $t = pkg('HTMLTemplate')->new_scalar_ref(
+        \$pager_tmpl,
+        loop_context_vars => 1,
+        path              => [catdir('HTMLPager', $language), 'HTMLPager'],
+    );
     $self->_fill_template($t);
 
     return $t->output();
 }
-
 
 =item fill_template()
 
@@ -226,17 +223,15 @@ responsibility to output that $template_object.
 
 sub fill_template {
     my $self = shift;
-    my $t = shift;
+    my $t    = shift;
 
     # Did we get a template object?
-    croak ("No HTML::Template object specified") unless (ref($t));
+    croak("No HTML::Template object specified") unless (ref($t));
 
     $self->validate_pager();
 
     $self->_fill_template($t);
 }
-
-
 
 =item row_count()
 
@@ -254,7 +249,6 @@ or not any results were found.
 =cut
 
 ### row_count() is implemented via Krang::MethodMaker
-
 
 =item make_internal_template()
 
@@ -276,7 +270,7 @@ sub make_internal_template {
     my $q = $self->cgi_query();
 
     my $pager_tmpl = "";
-    my @columns = @{$self->columns()};
+    my @columns    = @{$self->columns()};
 
     # don't show a label for thumbnail columns since it gets cut off
     my $labels = $self->column_labels() || {};
@@ -296,9 +290,9 @@ sub make_internal_template {
     foreach (0 .. $#columns) {
         $thead .= '<th';
 
-        if ( $_ == 0 ) {
+        if ($_ == 0) {
             $thead .= ' class="f"';
-        } elsif ( $_ == $#columns ) {
+        } elsif ($_ == $#columns) {
             $thead .= ' class="l"';
         }
 
@@ -331,8 +325,9 @@ END
 
     # build loop for data
     my $first_col = '<td class="f"><tmpl_var ' . shift(@columns) . "></td>\n";
-    my $last_col  = '<td class="l"><tmpl_var ' . pop(@columns)   . "></td>\n";
-    $pager_tmpl .= qq{<tr<tmpl_unless __odd__> class="even"</tmpl_unless>>\n}
+    my $last_col  = '<td class="l"><tmpl_var ' . pop(@columns) . "></td>\n";
+    $pager_tmpl .=
+        qq{<tr<tmpl_unless __odd__> class="even"</tmpl_unless>>\n}
       . $first_col
       . join("\n", map { qq{<td><tmpl_var $_></td>} } @columns)
       . $last_col
@@ -354,7 +349,8 @@ END
 EOF
 
     $pager_tmpl .= localize('None found');
-    $pager_tmpl .= '<tmpl_if other_search_place> <a href="javascript:other_search_rm()"><tmpl_var other_search_place></a></tmpl_if>';
+    $pager_tmpl .=
+      '<tmpl_if other_search_place> <a href="javascript:other_search_rm()"><tmpl_var other_search_place></a></tmpl_if>';
     $pager_tmpl .= <<"EOF";
 </p>
 
@@ -400,7 +396,7 @@ sub column_display {
 
     # Store them
     my %cols = @_;
-    while (my($column, $visibility) = each %cols) {
+    while (my ($column, $visibility) = each %cols) {
         $self->{column_display}{$column} = $visibility;
     }
 
@@ -913,15 +909,16 @@ sub calculate_order_by {
     # if we weren't given a cache key and we're called as an object method
     $cache_key ||= ref $self ? $self->_get_cache_key : '';
 
-    if( defined $q->param('krang_pager_sort_field') ) {
+    if (defined $q->param('krang_pager_sort_field')) {
         $order_by = scalar $q->param('krang_pager_sort_field');
+
         # store it in the session if we have a module to key it off of
         $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"} = $order_by if $cache_key;
-    } elsif( $cache_key && $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"} ) {
+    } elsif ($cache_key && $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"}) {
         $order_by = $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"};
-    } elsif( ref $self ) {
-        $order_by = $self->columns_sortable()->[0];  # First sort column
-	$q->param(-name => 'krang_pager_sort_field', -value => $order_by);
+    } elsif (ref $self) {
+        $order_by = $self->columns_sortable()->[0];    # First sort column
+        $q->param(-name => 'krang_pager_sort_field', -value => $order_by);
     }
 
     return $order_by;
@@ -936,11 +933,12 @@ sub calculate_order_desc {
 
     if (defined $q->param('krang_pager_sort_order_desc')) {
         $order_desc = $q->param('krang_pager_sort_order_desc');
+
         # store it in the session if we have a module to key it off of
         $session{"KRANG_${cache_key}_PAGER_SORT_ORDER_DESC"} = $order_desc if $cache_key;
-    } elsif( $cache_key && defined $session{"KRANG_${cache_key}_PAGER_SORT_ORDER_DESC"}) {
+    } elsif ($cache_key && defined $session{"KRANG_${cache_key}_PAGER_SORT_ORDER_DESC"}) {
         $order_desc = $session{"KRANG_${cache_key}_PAGER_SORT_ORDER_DESC"};
-    } elsif( ref $self ) {
+    } elsif (ref $self) {
         $order_desc = $self->default_sort_order_desc ? '1' : '0';
     } else {
         $order_desc = 0;
@@ -953,10 +951,10 @@ sub calculate_limit {
     my $limit;
 
     # Page size is either 100, or user preferred size.
-    my $show_big_view = ($q->param('krang_pager_show_big_view') || '0');
+    my $show_big_view  = ($q->param('krang_pager_show_big_view') || '0');
     my $user_page_size = $self->get_user_page_size();
     my $big_view_size  = $user_page_size == 100 ? 20 : 100;
-    return ($show_big_view) ? ($user_page_size == 100 ? 20 : 100) : $user_page_size ;
+    return ($show_big_view) ? ($user_page_size == 100 ? 20 : 100) : $user_page_size;
 }
 
 sub calculate_current_page_num {
@@ -983,54 +981,56 @@ sub make_sortable_column_html {
     my $q = $self->cgi_query();
 
     # Is column currently selected? If not, attempt to find in cache, or set default
-    my $sort_field = $self->calculate_order_by($q);
+    my $sort_field      = $self->calculate_order_by($q);
     my $sort_order_desc = $self->calculate_order_desc($q);
 
     # If selected, show in bold, with arrow showing current sort order (ascending, descending)
-    my $is_selected = ( $sort_field eq $col );
+    my $is_selected = ($sort_field eq $col);
     if ($is_selected) {
         $col_label = "$col_label";
-        $col_label .= '<img alt="" src="/images/arrow-'. ($sort_order_desc ? 'desc' : 'asc') .'.gif">';
+        $col_label .=
+          '<img alt="" src="/images/arrow-' . ($sort_order_desc ? 'desc' : 'asc') . '.gif">';
     }
 
     # Make link to re-sort
-    my $new_sort_order_desc = ($is_selected && not($sort_order_desc)) ?  '1' : '0';
-    $col_label = "<a href=\"javascript:Krang.Pager.sort('$col','$new_sort_order_desc')\">$col_label</a>";
+    my $new_sort_order_desc = ($is_selected && not($sort_order_desc)) ? '1' : '0';
+    $col_label =
+      "<a href=\"javascript:Krang.Pager.sort('$col','$new_sort_order_desc')\">$col_label</a>";
 
     return $col_label;
 }
 
-
 # Actually run the pager and fill the template here
 sub _fill_template {
     my $self = shift;
-    my $t = shift;
+    my $t    = shift;
 
     my $q = $self->cgi_query();
 
     # Set up get_form_obj_magic_name -- special parameter to find proper <form>
-    my $get_form_obj_magic_name = "krang_pager_". scalar(time);
+    my $get_form_obj_magic_name = "krang_pager_" . scalar(time);
     $t->param(get_form_obj_magic_name => $get_form_obj_magic_name);
 
     # Build up hash of column headers
     my %column_header_labels = ();
     foreach my $col (@{$self->columns()}) {
         my $col_tmpl_name = "colhead_$col";
-        my $col_label = $self->column_labels()->{$col};
+        my $col_label     = $self->column_labels()->{$col};
 
         # Create col header for command_column
-        if ( $col eq 'command_column') {
-            $col_label = ( defined($col_label) ? $col_label : "" );
+        if ($col eq 'command_column') {
+            $col_label = (defined($col_label) ? $col_label : "");
         }
 
         # Create col header for checkbox_column
-        if ( $col eq 'checkbox_column' ) {
-            my $checkall = '<input type="checkbox" id="checkallbox" name="checkallbox" value="1" onclick="Krang.check_all(this,\'krang_pager_rows_checked\')">';
-            $col_label = ( defined($col_label) ? $col_label : $checkall );
+        if ($col eq 'checkbox_column') {
+            my $checkall =
+              '<input type="checkbox" id="checkallbox" name="checkallbox" value="1" onclick="Krang.check_all(this,\'krang_pager_rows_checked\')">';
+            $col_label = (defined($col_label) ? $col_label : $checkall);
         }
 
         # Copy label from column_labels or use column name
-        $col_label = ( defined($col_label) ? $col_label : $col );
+        $col_label = (defined($col_label) ? $col_label : $col);
 
         # Add sorting, if we have any
         if (grep { $_ eq $col } @{$self->columns_sortable()}) {
@@ -1049,18 +1049,21 @@ sub _fill_template {
 
     # Set up persist_vars
     my @pager_persist_data = ();
-    my $cache_key = $self->_get_cache_key;
+    my $cache_key          = $self->_get_cache_key;
 
     while (my ($k, $v) = each(%{$self->persist_vars()})) {
-        push(@pager_persist_data, $q->hidden(
-                                             -name => $k,
-                                             -value => $v,
-                                             -override => 1
-                                            ));
+        push(
+            @pager_persist_data,
+            $q->hidden(
+                -name     => $k,
+                -value    => $v,
+                -override => 1
+            )
+        );
 
         $session{KRANG_PERSIST}{$cache_key}{$k} = $v;
     }
-    
+
     $t->param(pager_persist_data => join("\n", @pager_persist_data));
 }
 
@@ -1069,61 +1072,80 @@ sub get_pager_view {
 
     my $q = $self->cgi_query();
 
-    my $cache_key = $self->_get_cache_key;
+    my $cache_key  = $self->_get_cache_key;
     my $use_module = $self->use_module;
 
-    my $curr_page_num = $self->calculate_current_page_num($q);
-    my $sort_field = $self->calculate_order_by($q);
+    my $curr_page_num   = $self->calculate_current_page_num($q);
+    my $sort_field      = $self->calculate_order_by($q);
     my $sort_order_desc = $self->calculate_order_desc($q);
-    my $limit = $self->calculate_limit($q);
+    my $limit           = $self->calculate_limit($q);
 
     # Count used to calculate page navigation
     my %find_params = %{$self->find_params()};
-    my $found_count = $use_module 
-        ? $use_module->find(%find_params, count=>1)
-        : $self->use_data_size 
-            ? $self->use_data_size
-            : scalar @{$self->use_data};
+    my $found_count =
+        $use_module ? $use_module->find(%find_params, count => 1)
+      : $self->use_data_size ? $self->use_data_size
+      :                        scalar @{$self->use_data};
     my $total_pages = int($found_count / $limit) + (($found_count % $limit) > 0);
-    $total_pages ||= 1; # For the case when 0 == $found_count.
+    $total_pages ||= 1;    # For the case when 0 == $found_count.
 
     # Is the current page beyond the $total_pages?  Bring it back in.
     # This may be the case if a delete operation has reduced the number of pages.
     $curr_page_num = $total_pages if ($curr_page_num > $total_pages);
 
-     # Build page-jumper
+    # Build page-jumper
     my @page_numbers;
     my $max_page_links = $self->max_page_links;
     if ($max_page_links and $total_pages > $max_page_links) {
+
         # compute start and end of sequence to show
-        my $start = ( int(($curr_page_num - 1) / $max_page_links) * 
-                      $max_page_links ) + 1;
+        my $start = (int(($curr_page_num - 1) / $max_page_links) * $max_page_links) + 1;
         my $end   = $start + $max_page_links - 1;
         $end = $total_pages if $end > $total_pages;
 
         # output page numbers and elipses
-        push(@page_numbers, 
-             { page_number => 1,
-               page_number_label => "1" },
-             { page_number => $start - 1,
-               page_number_label => "..." }) if $start != 1;
-        push(@page_numbers,
-          map { { page_number      => $_, 
-                  page_number_label=> $_,
-                  is_current_page  => ($_ eq $curr_page_num) } }
-            ($start..$end));
-        push(@page_numbers, 
-             { page_number => $end + 1,
-               page_number_label => "..." },
-             { page_number => $total_pages,
-               page_number_label => $total_pages }) if $end != $total_pages;
+        push(
+            @page_numbers,
+            {
+                page_number       => 1,
+                page_number_label => "1"
+            },
+            {
+                page_number       => $start - 1,
+                page_number_label => "..."
+            }
+        ) if $start != 1;
+        push(
+            @page_numbers,
+            map {
+                {
+                    page_number       => $_,
+                    page_number_label => $_,
+                    is_current_page   => ($_ eq $curr_page_num)
+                }
+              } ($start .. $end)
+        );
+        push(
+            @page_numbers,
+            {
+                page_number       => $end + 1,
+                page_number_label => "..."
+            },
+            {
+                page_number       => $total_pages,
+                page_number_label => $total_pages
+            }
+        ) if $end != $total_pages;
     } else {
-        if( $total_pages > 1 ) {
-            @page_numbers = 
-              map { { page_number      => $_, 
-                      page_number_label=> $_,
-                      is_current_page  => ($_ eq $curr_page_num) } }
-                (1..$total_pages);
+        if ($total_pages > 1) {
+            @page_numbers =
+              map {
+                {
+                    page_number       => $_,
+                    page_number_label => $_,
+                    is_current_page   => ($_ eq $curr_page_num)
+                }
+              } (1 .. $total_pages);
         }
     }
 
@@ -1139,18 +1161,19 @@ sub get_pager_view {
     $next_page_number = 0 unless ($next_page_number <= $total_pages);
 
     # Retrieve and build rows
-    my $order_by = defined $sort_field
-        ? ( $self->columns_sort_map()->{$sort_field} || $sort_field )
-        : undef;
+    my $order_by =
+      defined $sort_field
+      ? ($self->columns_sort_map()->{$sort_field} || $sort_field)
+      : undef;
     my @found_objects;
-    if( $use_module ) {
+    if ($use_module) {
         my %all_find_params = (
-                               %find_params,
-                               order_by => $order_by,
-                               order_desc => $sort_order_desc,
-                               offset => $offset,
-                               limit => $limit,
-                              );
+            %find_params,
+            order_by   => $order_by,
+            order_desc => $sort_order_desc,
+            offset     => $offset,
+            limit      => $limit,
+        );
         @found_objects = $use_module->find(%all_find_params);
     } else {
         @found_objects = @{$self->use_data};
@@ -1158,9 +1181,9 @@ sub get_pager_view {
 
     # Build TMPL_LOOP data
     my @krang_pager_rows = ();
-    my $row_count = 0;
+    my $row_count        = 0;
     foreach my $fobj (@found_objects) {
-        my %row_data = ( map { $_=>'' } @{$self->columns} );
+        my %row_data = (map { $_ => '' } @{$self->columns});
 
         # Build command_column and checkbox_column
         $self->make_dynamic_columns(\%row_data, $fobj);
@@ -1178,25 +1201,25 @@ sub get_pager_view {
 
     # Build up status/page display
     my $start_row = $offset + 1;
-    my $end_row = $offset + $row_count;
+    my $end_row   = $offset + $row_count;
 
     my %pager_view = (
-                      curr_page_num      => $curr_page_num,
-                      sort_field         => $sort_field,
-                      sort_order_desc    => $sort_order_desc,
-                      show_big_view      => ($q->param('krang_pager_show_big_view') || '0'),
-                      user_page_size     => $self->get_user_page_size,
-                      big_view_page_size => ( $self->get_user_page_size == 100 ? 20 : 100 ),
-                      found_count        => $found_count,
-                      start_row          => $start_row,
-                      end_row            => $end_row,
-                      page_numbers       => \@page_numbers,
-                      prev_page_number   => $prev_page_number,
-                      next_page_number   => $next_page_number,
-                      krang_pager_rows   => \@krang_pager_rows,
-                      plural             => ($found_count > 1 ? 1 : 0),
-                      other_search_place => ($q->param('other_search_place') || ''),
-                     );
+        curr_page_num      => $curr_page_num,
+        sort_field         => $sort_field,
+        sort_order_desc    => $sort_order_desc,
+        show_big_view      => ($q->param('krang_pager_show_big_view') || '0'),
+        user_page_size     => $self->get_user_page_size,
+        big_view_page_size => ($self->get_user_page_size == 100 ? 20 : 100),
+        found_count        => $found_count,
+        start_row          => $start_row,
+        end_row            => $end_row,
+        page_numbers       => \@page_numbers,
+        prev_page_number   => $prev_page_number,
+        next_page_number   => $next_page_number,
+        krang_pager_rows   => \@krang_pager_rows,
+        plural             => ($found_count > 1 ? 1 : 0),
+        other_search_place => ($q->param('other_search_place') || ''),
+    );
 
     # Add column display
     my %column_display = %{$self->column_display()};
@@ -1207,26 +1230,28 @@ sub get_pager_view {
     return \%pager_view;
 }
 
-
 # Build command_column and row_column
 sub make_dynamic_columns {
     my $self = shift;
     my ($row_data, $fobj) = @_;
 
     my $id_handler = $self->id_handler();
-    my $row_id = $id_handler->($fobj);
+    my $row_id     = $id_handler->($fobj);
 
     # Build command_column
     if (exists($row_data->{command_column})) {
         my @command_column_commands = @{$self->command_column_commands()};
-        my %command_column_labels = %{$self->command_column_labels()};
+        my %command_column_labels   = %{$self->command_column_labels()};
 
         # Build HTML for commands
         my @commands_html = ();
         foreach my $command (@command_column_commands) {
-            my $href = "$command('$row_id')";
-            my $link_text = (exists($command_column_labels{$command}) 
-                             ? $command_column_labels{$command} : $command);
+            my $href      = "$command('$row_id')";
+            my $link_text = (
+                exists($command_column_labels{$command})
+                ? $command_column_labels{$command}
+                : $command
+            );
             my $link = qq{<input value="$link_text" onclick="$href" type="button" class="button">};
             push(@commands_html, $link);
         }
@@ -1238,94 +1263,102 @@ sub make_dynamic_columns {
 
     # Build checkbox_column
     if (exists($row_data->{checkbox_column})) {
-        my $html = '<input name="krang_pager_rows_checked" class="hilite-row" value="'. $row_id .'" type="checkbox">';
+        my $html =
+            '<input name="krang_pager_rows_checked" class="hilite-row" value="' 
+          . $row_id
+          . '" type="checkbox">';
         $row_data->{checkbox_column} = $html;
     }
 }
-
 
 # Verify that the pager is valid.  Croak if not.
 sub validate_pager {
     my $self = shift;
 
     # cgi_query
-    croak ("No cgi_query specified") unless (ref($self->cgi_query));
+    croak("No cgi_query specified") unless (ref($self->cgi_query));
 
     # persist_vars
-    croak ("persist_vars is not a hash") unless (ref($self->persist_vars) eq 'HASH');
+    croak("persist_vars is not a hash") unless (ref($self->persist_vars) eq 'HASH');
 
     # use_module
     my $use_module = $self->use_module();
     my $use_data   = $self->use_data();
-    croak ("No use_module or use_data specified") unless ($use_module || $use_data);
-    if( $use_module ) {
+    croak("No use_module or use_data specified") unless ($use_module || $use_data);
+    if ($use_module) {
         eval "require $use_module";
-        croak ("Can't require $use_module: $@") if ($@);
-        croak ("The use_module '$use_module' has no find() method") unless ($use_module->can('find'));
+        croak("Can't require $use_module: $@") if ($@);
+        croak("The use_module '$use_module' has no find() method")
+          unless ($use_module->can('find'));
+
         # find_params
-        croak ("find_params is not a hash") unless (ref($self->find_params) eq 'HASH');
-    } elsif( $use_data ) {
-        croak ("use_data is not an array") unless (ref $use_data eq 'ARRAY');
+        croak("find_params is not a hash") unless (ref($self->find_params) eq 'HASH');
+    } elsif ($use_data) {
+        croak("use_data is not an array") unless (ref $use_data eq 'ARRAY');
     }
 
     # make sure there's something we can use as the cache_key
     croak("You must either provide a 'cache_key' or 'use_module' value")
-        unless $self->use_module or $self->cache_key;
+      unless $self->use_module
+          or $self->cache_key;
 
     # columns
     my $columns = $self->columns();
-    croak ("columns is not an array") unless (ref($columns) eq 'ARRAY');
-    croak ("No columns have been specified") unless (scalar(@$columns));
+    croak("columns is not an array") unless (ref($columns) eq 'ARRAY');
+    croak("No columns have been specified") unless (scalar(@$columns));
 
     # column_labels
     my $column_labels = $self->column_labels();
-    croak ("column_labels is not a hash") unless (ref($column_labels) eq 'HASH');
+    croak("column_labels is not a hash") unless (ref($column_labels) eq 'HASH');
     my @invalid_columns = ();
     foreach my $col_lab (keys(%$column_labels)) {
         push(@invalid_columns, $col_lab) unless (grep { $col_lab eq $_ } @$columns);
     }
-    croak ("column_labels contains invalid columns '". join("', '", @invalid_columns) ."'") 
+    croak("column_labels contains invalid columns '" . join("', '", @invalid_columns) . "'")
       if (@invalid_columns);
 
     # command_column_commands
     my $command_column_commands = $self->command_column_commands();
-    croak ("command_column_commands is not an array") unless (ref($command_column_commands) eq 'ARRAY');
+    croak("command_column_commands is not an array")
+      unless (ref($command_column_commands) eq 'ARRAY');
     if (grep { $_ eq 'command_column' } @$columns) {
-        croak ("No command_column_commands have been specified")
+        croak("No command_column_commands have been specified")
           unless (scalar(@$command_column_commands));
     } else {
-        croak ("command_column_commands have been specified but columns does not contain a command_column") 
-          if (scalar(@$command_column_commands));
+        croak(
+            "command_column_commands have been specified but columns does not contain a command_column"
+        ) if (scalar(@$command_column_commands));
     }
 
     # command_column_labels
     my $command_column_labels = $self->command_column_labels();
-    croak ("command_column_labels is not a hash") unless (ref($command_column_labels) eq 'HASH');
+    croak("command_column_labels is not a hash") unless (ref($command_column_labels) eq 'HASH');
     @invalid_columns = ();
     foreach my $col_lab (keys(%$command_column_labels)) {
         push(@invalid_columns, $col_lab) unless (grep { $col_lab eq $_ } @$command_column_commands);
     }
-    croak ("command_column_labels contains invalid commands '". join("', '", @invalid_columns) ."'") 
+    croak(
+        "command_column_labels contains invalid commands '" . join("', '", @invalid_columns) . "'")
       if (@invalid_columns);
 
     # columns_sortable
     my $columns_sortable = $self->columns_sortable();
-    croak ("columns_sortable is not an array") unless (ref($columns_sortable) eq 'ARRAY');
+    croak("columns_sortable is not an array") unless (ref($columns_sortable) eq 'ARRAY');
     @invalid_columns = ();
     foreach my $col_lab (@$columns_sortable) {
         push(@invalid_columns, $col_lab) unless (grep { $col_lab eq $_ } @$columns);
     }
-    croak ("columns_sortable contains invalid columns '". join("', '", @invalid_columns) ."'") 
+    croak("columns_sortable contains invalid columns '" . join("', '", @invalid_columns) . "'")
       if (@invalid_columns);
 
     # columns_sort_map
     my $columns_sort_map = $self->columns_sort_map();
-    croak ("columns_sort_map is not a hash") unless (ref($columns_sort_map) eq 'HASH');
+    croak("columns_sort_map is not a hash") unless (ref($columns_sort_map) eq 'HASH');
     @invalid_columns = ();
     foreach my $col_lab (keys(%$columns_sort_map)) {
         push(@invalid_columns, $col_lab) unless (grep { $col_lab eq $_ } @$columns_sortable);
     }
-    croak ("columns_sort_map contains non-sortable columns '". join("', '", @invalid_columns) ."'") 
+    croak("columns_sort_map contains non-sortable columns '" . join("', '", @invalid_columns) . "'")
       if (@invalid_columns);
 
     # default_sort_order_desc
@@ -1333,10 +1366,10 @@ sub validate_pager {
     croak("default_sort_order_desc not defined") unless (defined($default_sort_order_desc));
 
     # row_handler
-    croak ("row_handler not a subroutine reference") unless (ref($self->row_handler()) eq 'CODE');
+    croak("row_handler not a subroutine reference") unless (ref($self->row_handler()) eq 'CODE');
 
     # id_handler
-    croak ("id_handler not a subroutine reference") unless (ref($self->id_handler()) eq 'CODE');
+    croak("id_handler not a subroutine reference") unless (ref($self->id_handler()) eq 'CODE');
 
     # DONE!
 }
@@ -1352,9 +1385,9 @@ sub create_colgroup {
         # assign classes to columns when possible
         if ($name =~ /_id$/i or $name =~ /^id$/i) {
             $attr{class} = 'c-id';
-        } elsif (   $name =~ /deployed/i
-                 or $name =~ /published/
-                 or $name =~ /^pub_/)
+        } elsif ($name =~ /deployed/i
+            or $name =~ /published/
+            or $name =~ /^pub_/)
         {
             $attr{class} = 'c-flag';
         } elsif ($name eq 'checkbox_column') {
@@ -1363,12 +1396,11 @@ sub create_colgroup {
             $attr{class} = 'c-date';
         } elsif ($name =~ /thumbnail/) {
             $attr{class} = 'c-thumb';
-        } elsif ($name =~ /status/ or $name =~ /attr/ or $name =~ /is_hidden/)
-        {
+        } elsif ($name =~ /status/ or $name =~ /attr/ or $name =~ /is_hidden/) {
             $attr{class} = 'c-stat';
-        } elsif (   $name =~ /length/
-                 or $name =~ /_count/
-                 or $name =~ /circulation/)
+        } elsif ($name =~ /length/
+            or $name =~ /_count/
+            or $name =~ /circulation/)
         {
             $attr{class} = 'c-sum';
         } elsif ($name =~ /dollars/) {
@@ -1381,7 +1413,7 @@ sub create_colgroup {
             # make a guess about how wide to make the command-column
             my $commands = $self->command_column_commands || [];
             my $labels   = $self->command_column_labels   || {};
-            my $size = 0;
+            my $size     = 0;
             foreach my $command (@$commands) {
                 my $label = $labels->{$command} || $command;
                 $size += length($label);
@@ -1392,12 +1424,14 @@ sub create_colgroup {
             # guess if possible (this is worth doing because truncated
             # command columns are unusable)
             my $module = $self->use_module;
-            if ( $module eq pkg('Template') or $module eq pkg('Media') ) {
+            if ($module eq pkg('Template') or $module eq pkg('Media')) {
+
                 # room for View Detail, Edit
                 $size = 9;
             }
 
             if ($size) {
+
                 # scale upwards to account for visual formatting as buttons
                 # (is there a better way to do this?)
                 $size = int($size * 1.5);
@@ -1407,16 +1441,14 @@ sub create_colgroup {
         }
 
         $html .= "<!-- '$name' column -->\n";
-        $html .= "<col"
-          . (%attr ? " " : "")
-          . join(" ", map { qq{$_="$attr{$_}"} } keys %attr) . ">\n";
+        $html .=
+          "<col" . (%attr ? " " : "") . join(" ", map { qq{$_="$attr{$_}"} } keys %attr) . ">\n";
 
     }
     $html .= "</colgroup>";
 
     return $html;
 }
-
 
 sub _get_cache_key {
     my $self = shift;

@@ -18,7 +18,7 @@ use Test::More;
 # can no longer be 8 bit clean.
 BEGIN {
     plan(skip_all => "Can't be 8-bit clean if using a Charset")
-        if Charset;
+      if Charset;
 }
 
 # skip all tests unless a TestSet1-using instance is available
@@ -31,7 +31,7 @@ BEGIN {
             last;
         }
     }
-    if( $found ) {
+    if ($found) {
         plan(tests => 1290);
     } else {
         plan(skip_all => 'test requires a TestSet1 instance');
@@ -39,9 +39,10 @@ BEGIN {
 }
 
 # a bunch of binary data containing all 256 bytes
-my $bits = join('', map { chr($_) } 0 .. 255) .
-           join('', map { chr($_) } 255 .. 0) .
-           join('', map { chr(int(rand(256))) } 0 .. 1024);
+my $bits =
+    join('', map { chr($_) } 0 .. 255)
+  . join('', map { chr($_) } 255 .. 0)
+  . join('', map { chr(int(rand(256))) } 0 .. 1024);
 
 # create a new template and try to fill it with 8-bit data
 my $template = pkg('Template')->new(filename => 'test' . time . '.tmpl');
@@ -59,9 +60,7 @@ is($template->content, $bits);
 # dataset can handle 8bit template data?
 my $set = pkg('DataSet')->new();
 $set->add(object => $template);
-eval { 
-    $set->write(path => catfile(KrangRoot, 'tmp', 'eight_bit_test.kds'));
-};
+eval { $set->write(path => catfile(KrangRoot, 'tmp', 'eight_bit_test.kds')); };
 ok(not($@), 'writing dataset with eight-bit template');
 print STDERR $@ if $@;
 ok(-e catfile(KrangRoot, 'tmp', 'eight_bit_test.kds'));
@@ -89,22 +88,19 @@ for my $bit (map { chr($_) } (0 .. 255)) {
     ($template) = pkg('Template')->find(template_id => $template->template_id);
     is($template->content, $bits);
     push(@templates, $template);
-    push(@bits, $bits);
+    push(@bits,      $bits);
 }
 
 # dataset can handle the 8bit template data?
 $set = pkg('DataSet')->new();
 $set->add(object => $_) for @templates;
-eval { 
-    $set->write(path => catfile(KrangRoot, 'tmp', 'eight_bit_test.kds'));
-};
+eval { $set->write(path => catfile(KrangRoot, 'tmp', 'eight_bit_test.kds')); };
 ok(not($@), 'writing dataset with eight-bit template');
 print STDERR $@ if $@;
 ok(-e catfile(KrangRoot, 'tmp', 'eight_bit_test.kds'));
 
 # load it in and see if the same data gets through
-$set = pkg('DataSet')->new(path => 
-                           catfile(KrangRoot, 'tmp', 'eight_bit_test.kds'));
+$set = pkg('DataSet')->new(path => catfile(KrangRoot, 'tmp', 'eight_bit_test.kds'));
 $set->import_all(no_update => 0);
 foreach my $template (@templates) {
     ($template) = pkg('Template')->find(template_id => $template->template_id);
@@ -114,24 +110,32 @@ foreach my $template (@templates) {
 
 # make a story, with paragraphs containing 8-bit data
 my $creator = pkg('Test::Content')->new();
-my $site = $creator->create_site(preview_url => 'preview.8bit.com',
-                                 publish_url => 'www.8bit.com',
-                                 preview_path => '/tmp/8bit-prev',
-                                 publish_path => '/tmp/8bit-pub');
-my $cat = $creator->create_category(dir    => '8bit');
+my $site    = $creator->create_site(
+    preview_url  => 'preview.8bit.com',
+    publish_url  => 'www.8bit.com',
+    preview_path => '/tmp/8bit-prev',
+    publish_path => '/tmp/8bit-pub'
+);
+my $cat = $creator->create_category(dir => '8bit');
 
-my $story = pkg('Story')->new(class => 'article',
-                              categories => [$cat],
-                              slug => '8bits',
-                              title => '8 is enough');
+my $story = pkg('Story')->new(
+    class      => 'article',
+    categories => [$cat],
+    slug       => '8bits',
+    title      => '8 is enough'
+);
 my $page = $story->element->child('page');
 
 @bits = ();
 for my $bit (map { chr($_) } (0 .. 255)) {
-    $page->add_child(class => 'pull_quote',
-                     data => ord($bit));
-    my $para = $page->add_child(class => 'paragraph',
-                                data => $bit);
+    $page->add_child(
+        class => 'pull_quote',
+        data  => ord($bit)
+    );
+    my $para = $page->add_child(
+        class => 'paragraph',
+        data  => $bit
+    );
     is($para->data, $bit, 'BIT: ' . ord($bit) . ' is ok.');
     push(@bits, $bit);
 }
@@ -148,16 +152,13 @@ foreach my $para ($story->element->match('//paragraph')) {
 # put it in a dataset
 $set = pkg('DataSet')->new();
 $set->add(object => $story);
-eval { 
-    $set->write(path => catfile(KrangRoot, 'tmp', 'eight_bit_test2.kds'));
-};
+eval { $set->write(path => catfile(KrangRoot, 'tmp', 'eight_bit_test2.kds')); };
 ok(not($@), 'writing dataset with eight-bit template');
 print STDERR $@ if $@;
 ok(-e catfile(KrangRoot, 'tmp', 'eight_bit_test2.kds'));
 
 # load up the dataset and see if the story made it
-$set = pkg('DataSet')->new(path => 
-                           catfile(KrangRoot, 'tmp', 'eight_bit_test2.kds'));
+$set = pkg('DataSet')->new(path => catfile(KrangRoot, 'tmp', 'eight_bit_test2.kds'));
 $set->import_all(no_update => 0);
 
 ($story) = pkg('Story')->find(story_id => $story->story_id);
@@ -165,7 +166,6 @@ foreach my $para ($story->element->match('//paragraph')) {
     my $bit = shift @bits;
     is($para->data, $bit, 'BIT: ' . ord($bit) . ' is ok.');
 }
-
 
 # clean up
 

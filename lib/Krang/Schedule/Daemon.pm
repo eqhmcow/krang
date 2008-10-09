@@ -12,7 +12,8 @@ use Carp qw(croak);
 use Time::Piece;
 use Time::Seconds;
 
-use Krang::ClassLoader Conf => qw(KrangRoot instance instances SchedulerMaxChildren SchedulerDefaultFailureDelay SMTPServer FromAddress);
+use Krang::ClassLoader Conf =>
+  qw(KrangRoot instance instances SchedulerMaxChildren SchedulerDefaultFailureDelay SMTPServer FromAddress);
 use Krang::ClassLoader Log => qw/critical debug info reopen_log/;
 use Krang::ClassLoader 'Schedule';
 use Krang::ClassLoader DB => qw(dbh forget_all_dbhs);
@@ -21,13 +22,12 @@ use Krang::Cache;
 
 my $pidfile = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
 
-use constant CHUNK_SIZE   => 5;
+use constant CHUNK_SIZE     => 5;
 use constant SLEEP_INTERVAL => 5;
 
 my $CHILD_COUNT   = 0;
 my %child_pids    = ();
 my %assigned_jobs = ();
-
 
 # handle SIGTERM
 $SIG{'TERM'} = sub {
@@ -40,12 +40,10 @@ $SIG{'TERM'} = sub {
     unlink $pidfile if -e $pidfile;
 
     info(__PACKAGE__ . " Exiting.");
+
     # get out of here
     exit(0);
 };
-
-
-
 
 =head1 NAME
 
@@ -147,20 +145,23 @@ sub run {
         # make sure there's nothing dead left out there.
         _reap_dead_children() if ($CHILD_COUNT);
 
-        foreach my $instance (pkg('Conf')->instances) {            
+        foreach my $instance (pkg('Conf')->instances) {
+
             # switch instance and reset REMOTE_USER to the system user
             # for this instance, needed for permissions checks
             pkg('Conf')->instance($instance);
             unless ($system_user{$instance}) {
-                ($system_user{$instance})= pkg('User')->find(login => 'system',
-                                                             ids_only => 1);
+                ($system_user{$instance}) = pkg('User')->find(
+                    login    => 'system',
+                    ids_only => 1
+                );
             }
             $ENV{REMOTE_USER} = $system_user{$instance};
 
             my @jobs = _query_for_jobs();
 
             if (@jobs) {
-                debug(sprintf("%s: %i Pending jobs found.", __PACKAGE__, ($#jobs+1)));
+                debug(sprintf("%s: %i Pending jobs found.", __PACKAGE__, ($#jobs + 1)));
             }
 
             if (@jobs) {
@@ -172,9 +173,6 @@ sub run {
     }
 
 }
-
-
-
 
 =item C<< scheduler_pass() >>
 
@@ -196,14 +194,19 @@ sub scheduler_pass {
 
     my @jobs = @_;
 
-#    our $CHILD_COUNT;
+    #    our $CHILD_COUNT;
 
     my $instance = pkg('Conf')->instance();
 
     # cleanup - make sure there's nothing dead left out there.
     _reap_dead_children() if ($CHILD_COUNT);
 
-    info(sprintf("%s->scheduler_pass('%s'): %i jobs found.  Working..", __PACKAGE__, $instance, ($#jobs+1)));
+    info(
+        sprintf(
+            "%s->scheduler_pass('%s'): %i jobs found.  Working..",
+            __PACKAGE__, $instance, ($#jobs + 1)
+        )
+    );
     while (@jobs) {
 
         # allocate first CHUNK_SIZE jobs to be done.
@@ -214,7 +217,14 @@ sub scheduler_pass {
             push @tasks, shift @jobs;
         }
 
-        debug(sprintf("%s->scheduler_pass(): Allocating %i jobs, %i remaining.", __PACKAGE__, ($#tasks + 1), ($#jobs + 1)));
+        debug(
+            sprintf(
+                "%s->scheduler_pass(): Allocating %i jobs, %i remaining.",
+                __PACKAGE__,
+                ($#tasks + 1),
+                ($#jobs + 1)
+            )
+        );
 
         # wait for a child to return.
         if ($CHILD_COUNT >= SchedulerMaxChildren) {
@@ -225,10 +235,11 @@ sub scheduler_pass {
         if ($pid = fork) {
             _parent_work($pid, \@tasks);
         } elsif (defined($pid)) {
+
             # change handling of SIGTERM -- don't act like your parents!
             $SIG{'TERM'} = sub {
-                debug(__PACKAGE__ . ": Child caught SIGTERM.  Exiting."); 
-                exit(0) 
+                debug(__PACKAGE__ . ": Child caught SIGTERM.  Exiting.");
+                exit(0);
             };
             _child_work(\@tasks);
 
@@ -236,7 +247,12 @@ sub scheduler_pass {
             critical(__PACKAGE__ . "->run($instance): Cannot fork children: $!");
         }
 
-        debug(sprintf("%s STATUS: %i children running, %i jobs left to do.", __PACKAGE__, $CHILD_COUNT, ($#jobs+1)));
+        debug(
+            sprintf(
+                "%s STATUS: %i children running, %i jobs left to do.",
+                __PACKAGE__, $CHILD_COUNT, ($#jobs + 1)
+            )
+        );
     }
 
     # all jobs assigned.  Reap dead children.
@@ -245,13 +261,17 @@ sub scheduler_pass {
     }
 
     if ($CHILD_COUNT) {
-        debug(sprintf("%s: All jobs assigned, waiting on %i children to return.", __PACKAGE__, $CHILD_COUNT));
+        debug(
+            sprintf(
+                "%s: All jobs assigned, waiting on %i children to return.",
+                __PACKAGE__, $CHILD_COUNT
+            )
+        );
     } else {
         debug(sprintf("%s: All jobs completed.", __PACKAGE__));
     }
 
 }
-
 
 #
 # same functionality as if the daemon was killed.
@@ -267,7 +287,6 @@ sub stop {
     exit(0);
 
 }
-
 
 #
 # _child_work(\@tasks);
@@ -291,46 +310,89 @@ sub _child_work {
     eval {
 
         # child
-        debug(sprintf("%s: Child PID=%i spawned with Schedule IDs=%s.",
-                      __PACKAGE__, $$, (join ', ', (map { $_->schedule_id } @$tasks))));
+        debug(
+            sprintf(
+                "%s: Child PID=%i spawned with Schedule IDs=%s.",
+                __PACKAGE__, $$, (join ', ', (map { $_->schedule_id } @$tasks))
+            )
+        );
 
         foreach my $t (@$tasks) {
-            debug(sprintf("%s->_child_work('%s'): Child PID=%i running schedule_id=%i",
-                          __PACKAGE__, $instance, $$, $t->schedule_id()));
+            debug(
+                sprintf(
+                    "%s->_child_work('%s'): Child PID=%i running schedule_id=%i",
+                    __PACKAGE__, $instance, $$, $t->schedule_id()
+                )
+            );
             eval { $t->execute(); };
             if (my $err = $@) {
-                # job failed, so, if it didn't delete the schedule object (which would prevent us from doing anything)..
-                if ($t && (my ($still_in_db) = (pkg('Schedule')->find(count => 1, schedule_id => $t->schedule_id)))) {
-                    chomp($err); $err = '"'.$err.'"';
-                    my $delay_btw_tries = $t->failure_delay_sec || SchedulerDefaultFailureDelay || 60;
+
+# job failed, so, if it didn't delete the schedule object (which would prevent us from doing anything)..
+                if (
+                    $t
+                    && (my ($still_in_db) =
+                        (pkg('Schedule')->find(count => 1, schedule_id => $t->schedule_id)))
+                  )
+                {
+                    chomp($err);
+                    $err = '"' . $err . '"';
+                    my $delay_btw_tries = $t->failure_delay_sec
+                      || SchedulerDefaultFailureDelay
+                      || 60;
                     if (defined $t->failure_max_tries) {
                         if ($t->failure_max_tries > 1) {
+
                             # this job hasn't yet reached its maximum # of failures
                             $t->{failure_max_tries}--;
                             $t->{next_run} = (Time::Piece->new + $delay_btw_tries)->mysql_datetime;
                             $t->save;
-                            critical(sprintf("%s->_child_work('%s'): PID %i encountered error below with Schedule %i - TRIES LEFT: %d (NEXT IN %d SEC)\n%s",
-                                             __PACKAGE__, $instance, $$, $t->schedule_id(), $t->failure_max_tries, $delay_btw_tries, $err));
+                            critical(
+                                sprintf(
+                                    "%s->_child_work('%s'): PID %i encountered error below with Schedule %i - TRIES LEFT: %d (NEXT IN %d SEC)\n%s",
+                                    __PACKAGE__,           $instance,
+                                    $$,                    $t->schedule_id(),
+                                    $t->failure_max_tries, $delay_btw_tries,
+                                    $err
+                                )
+                            );
                         } else {
+
                             # this job has reached its maximum # of failures
-                            critical(sprintf("%s->_child_work('%s'): PID %i encountered error below with Schedule %i - GIVING UP!\n%s",
-                                             __PACKAGE__, $instance, $$, $t->schedule_id(), $err));
+                            critical(
+                                sprintf(
+                                    "%s->_child_work('%s'): PID %i encountered error below with Schedule %i - GIVING UP!\n%s",
+                                    __PACKAGE__, $instance, $$, $t->schedule_id(), $err
+                                )
+                            );
+
                             # since we're giving up, notify user if possible
                             if ($t->failure_notify_id) {
-                                critical("WILL ATTEMPT TO NOTIFY USER ".$t->failure_notify_id." VIA EMAIL");
-                                _notify_user($t->failure_notify_id, $t->failure_subject($err), $t->failure_message($err));
+                                critical("WILL ATTEMPT TO NOTIFY USER "
+                                      . $t->failure_notify_id
+                                      . " VIA EMAIL");
+                                _notify_user(
+                                    $t->failure_notify_id,
+                                    $t->failure_subject($err),
+                                    $t->failure_message($err)
+                                );
                             }
                             $t->delete;
-                        } 
+                        }
                     } else {
-                        # this job has no maximum # of failures set, so we don't notify user; we're going to keep trying..
+
+  # this job has no maximum # of failures set, so we don't notify user; we're going to keep trying..
                         $t->{next_run} = (Time::Piece->new + $delay_btw_tries)->mysql_datetime;
                         $t->save;
-                        critical(sprintf("%s->_child_work('%s'): PID %i encountered error below with Schedule %i - WILL KEEP TRYING EVERY %d SEC\n%s",
-                                         __PACKAGE__, $instance, $$, $t->schedule_id(), $delay_btw_tries, $err));
+                        critical(
+                            sprintf(
+                                "%s->_child_work('%s'): PID %i encountered error below with Schedule %i - WILL KEEP TRYING EVERY %d SEC\n%s",
+                                __PACKAGE__,       $instance,        $$,
+                                $t->schedule_id(), $delay_btw_tries, $err
+                            )
+                        );
                     }
                 }
-            }  elsif ($t->success_notify_id) {
+            } elsif ($t->success_notify_id) {
                 _notify_user($t->success_notify_id, $t->success_subject, $t->success_message);
             }
         }
@@ -339,7 +401,7 @@ sub _child_work {
 
     # turn cache off
     Krang::Cache::stop();
-    
+
     die $err if $err;
 
     debug(sprintf("%s: Child PID=%i finished.  Exiting.", __PACKAGE__, $$));
@@ -351,10 +413,11 @@ sub _child_work {
 # helper function - passed a user_id, subject, and msg, send the user an email with the subject & message
 sub _notify_user {
     my ($user_id, $subject, $msg) = @_;
-    if (my $user = (pkg('User')->find( user_id => $user_id ))[0]) {
+    if (my $user = (pkg('User')->find(user_id => $user_id))[0]) {
         if (my $email_to = $user->email) {
-            my $sender = Mail::Sender->new({smtp => SMTPServer, from => FromAddress, on_errors => 'die'});
-            $sender->MailMsg({ to => $email_to, subject => $subject, msg => $msg });
+            my $sender =
+              Mail::Sender->new({smtp => SMTPServer, from => FromAddress, on_errors => 'die'});
+            $sender->MailMsg({to => $email_to, subject => $subject, msg => $msg});
         }
     }
 }
@@ -364,7 +427,7 @@ sub _notify_user {
 #
 # Handles the bookkeeping done by the parent after the fork().
 #
-# This means making PID and scheduleID entries in global hashes, 
+# This means making PID and scheduleID entries in global hashes,
 # incrementing the child counter.
 #
 
@@ -396,19 +459,23 @@ sub _parent_work {
 sub _reap_dead_children {
 
     my $block = shift || 0;
-#    our $CHILD_COUNT;
+
+    #    our $CHILD_COUNT;
 
     debug(__PACKAGE__ . "->_reap_dead_children(): $CHILD_COUNT children out there.");
 
     my $child_pid;
 
     if ($block) {
+
         # blocking, waiting for one to return.
         $child_pid = waitpid(-1, 0);
 
         if ($child_pid == -1 && $CHILD_COUNT) {
-            info(__PACKAGE__ . " ERROR: $CHILD_COUNT processes are supposed to be working, 0 found.");
+            info(__PACKAGE__
+                  . " ERROR: $CHILD_COUNT processes are supposed to be working, 0 found.");
         } elsif ($child_pid > 0) {
+
             # reap it.
             _cleanup_tables($child_pid);
             $CHILD_COUNT--;
@@ -430,7 +497,6 @@ sub _reap_dead_children {
 
 }
 
-
 #
 # _kill_children()
 #
@@ -445,7 +511,7 @@ sub _reap_dead_children {
 
 sub _kill_children {
 
-#    our %child_pids;
+    #    our %child_pids;
 
     _reap_dead_children();
 
@@ -474,13 +540,12 @@ sub _kill_children {
 
 }
 
-
 sub _cleanup_tables {
 
     my $child_pid = shift;
 
-#    our %child_pids;
-#    our %assigned_jobs;
+    #    our %child_pids;
+    #    our %assigned_jobs;
 
     my @sched_ids;
     my $instance = $child_pids{$child_pid}{instance};
@@ -491,10 +556,14 @@ sub _cleanup_tables {
     }
     delete $child_pids{$child_pid};
 
-    debug(sprintf("%s: child PID=%i reaped.  Completed schedule IDs ('%s'): %s", __PACKAGE__, $child_pid, $instance, (join ',', @sched_ids)));
+    debug(
+        sprintf(
+            "%s: child PID=%i reaped.  Completed schedule IDs ('%s'): %s",
+            __PACKAGE__, $child_pid, $instance, (join ',', @sched_ids)
+        )
+    );
 
 }
-
 
 #
 # _cull_running_jobs(\@schedules);
@@ -508,7 +577,7 @@ sub _cull_running_jobs {
 
     my $schedules = shift;
 
-#    our %assigned_jobs;
+    #    our %assigned_jobs;
 
     my $instance = pkg('Conf')->instance();
 
@@ -521,8 +590,6 @@ sub _cull_running_jobs {
 
     return @new_jobs;
 }
-
-
 
 #
 # _query_for_jobs
@@ -537,9 +604,9 @@ sub _query_for_jobs {
     my @schedules;
 
     @schedules = pkg('Schedule')->find(
-                                       next_run_less_than_or_equal => $now->mysql_datetime,
-                                       order_by => 'priority'
-                                      );
+        next_run_less_than_or_equal => $now->mysql_datetime,
+        order_by                    => 'priority'
+    );
 
     return _cull_running_jobs(\@schedules);
 
@@ -585,10 +652,4 @@ O, not in cruelty, not in wrath, The Reaper came that day;
             Henry Wadsworth Longfellow
 
 END
-
-
-
-
-
-
 

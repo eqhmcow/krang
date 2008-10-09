@@ -154,7 +154,9 @@ sub add_history {
     my $version;
     eval {
         $version = $object->version()
-          if (($args{action} eq 'save') || ($args{action} eq 'revert') || ($args{action} eq 'rename'));
+          if ( ($args{action} eq 'save')
+            || ($args{action} eq 'revert')
+            || ($args{action} eq 'rename'));
     };
     $history->{version} = $version if $version;
     $history->{user_id} = $ENV{REMOTE_USER};
@@ -176,9 +178,9 @@ sub add_history {
     $info_string .= " (version " . $history->{version} . ")" if $history->{version};
     $info_string .= " to desk '" . $history->{desk_id} . "'" if $history->{desk_id};
     info(__PACKAGE__ . " - " . $info_string);
-    
+
     # check if event should trigger an alert
-    pkg('Alert')->check_alert( history => $history, object => $object)
+    pkg('Alert')->check_alert(history => $history, object => $object)
       if ($object->isa('Krang::Story') || $object->isa('Krang::Media'));
 }
 
@@ -337,27 +339,27 @@ Override this method to extend the list.
 =cut
 
 sub actions {
-    return qw( 
-        new 
-        save 
-        checkin 
-        checkout 
-        steal 
-        publish 
-        deploy 
-        undeploy 
-        move 
-        revert 
-        delete 
-        rename
-        retire 
-        unretire 
-        trash 
-        untrash 
-        resize
-        crop 
-        rotate 
-        flip
+    return qw(
+      new
+      save
+      checkin
+      checkout
+      steal
+      publish
+      deploy
+      undeploy
+      move
+      revert
+      delete
+      rename
+      retire
+      unretire
+      trash
+      untrash
+      resize
+      crop
+      rotate
+      flip
     );
 }
 

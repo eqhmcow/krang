@@ -9,7 +9,8 @@ use Krang::ClassLoader 'ElementLibrary';
 # get a list of element sets for all instances
 use Krang::ClassLoader Conf => qw(InstanceElementSet);
 our @ELEMENT_SETS;
-BEGIN { 
+
+BEGIN {
     my $old = pkg('Conf')->instance();
     foreach my $instance (pkg('Conf')->instances) {
         pkg('Conf')->instance($instance);
@@ -18,8 +19,7 @@ BEGIN {
     pkg('Conf')->instance($old);
 }
 
-use Devel::Profiler 
-  package_filter => \&package_filter;
+use Devel::Profiler package_filter => \&package_filter;
 
 sub package_filter {
     local $_ = shift;

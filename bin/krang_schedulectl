@@ -32,14 +32,15 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
     $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -90,8 +91,7 @@ if ($command eq 'start') {
     }
 
     if ($running) {
-        die "krang_schedulectl $command: krang_scheduled (pid $pid) already " .
-          "running\n";
+        die "krang_schedulectl $command: krang_scheduled (pid $pid) already " . "running\n";
     }
 
     print "krang_schedulectl $command: starting krang_scheduled\n";
@@ -102,8 +102,7 @@ if ($command eq 'start') {
         print "krang_schedulectl $command: krang_scheduled started\n";
         exit;
     } else {
-        die "krang_schedulectl $command: krang_scheduled could not be " .
-          "started\n";
+        die "krang_schedulectl $command: krang_scheduled could not be " . "started\n";
     }
 }
 
@@ -115,20 +114,18 @@ if ($command eq 'stop') {
         print "krang_schedulectl $command: krang_scheduled stopped\n";
         exit;
     } else {
-        die "krang_schedulectl $command: krang_scheduled could not be " .
-          "stopped\n";
+        die "krang_schedulectl $command: krang_scheduled could not be " . "stopped\n";
     }
 }
 
 if ($command eq 'restart') {
+
     # stop
     if ($running) {
         if (kill 15, $pid) {
-            print "krang_schedulectl $command: waiting for krang_scheduled " .
-              "to stop";
+            print "krang_schedulectl $command: waiting for krang_scheduled " . "to stop";
         } else {
-            die "krang_schedulectl $command: krang_scheduled could not be " .
-              "stopped\n";
+            die "krang_schedulectl $command: krang_scheduled could not be " . "stopped\n";
         }
 
         # wait for stop - check pid file for removal
@@ -145,8 +142,7 @@ if ($command eq 'restart') {
         if ($stopped) {
             print "\nkrang_schedulectl $command: krang_scheduled stopped\n";
         } else {
-            die "\nkrang_schedulectl $command: krang_scheduled not stopped " .
-              "in time\n";
+            die "\nkrang_schedulectl $command: krang_scheduled not stopped " . "in time\n";
         }
 
     }
@@ -161,8 +157,7 @@ if ($command eq 'restart') {
             print "krang_schedulectl $command: krang_scheduled started\n";
             exit;
         } else {
-            die "krang_schedulectl $command: krang_scheduled could not be " .
-              "started\n";
+            die "krang_schedulectl $command: krang_scheduled could not be " . "started\n";
         }
     } else {
         print "krang_schedulectl $command: skipping -- SchedulerMaxChildren set to 0.\n";
@@ -173,7 +168,7 @@ if ($command eq 'restart') {
 usage();
 
 sub usage {
-  print <<END;
+    print <<END;
 usage: krang_schedulectl (start|stop|restart|debug)
 
   start      - start the schedule daemon
@@ -182,11 +177,12 @@ usage: krang_schedulectl (start|stop|restart|debug)
 
 END
 
-  exit;
+    exit;
 }
 
 # make sure logs get created with the right ownership when running as root
 sub setup_logs {
+
     # only worry if we're root
     return if $< != 0 or $> != 0;
 
@@ -196,7 +192,7 @@ sub setup_logs {
 
         # create the file and chown it to KrangUser:KrangGroup
         system("touch", $file);
-        system("chown",  KrangUser . ":" . KrangGroup, $file);
+        system("chown", KrangUser . ":" . KrangGroup, $file);
     }
 }
 

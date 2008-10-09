@@ -36,7 +36,7 @@ use DBI;
 
 use Krang;
 use Krang::ClassLoader Conf => qw(InstanceDBName DBUser DBPass DBHost DBSock KrangRoot);
-use Krang::ClassLoader Log => qw(info debug critical);
+use Krang::ClassLoader Log  => qw(info debug critical);
 use Krang::ClassLoader 'Charset';
 
 =item C<< $dbh = dbh() >>
@@ -67,7 +67,6 @@ specifically tell it:
   my $dbh = dbh(no_cache => 1);
 
 =cut
-
 
 our %DBH;
 
@@ -123,11 +122,10 @@ database connection.
 
 =cut
 
-
 sub forget_dbh () {
     my $name = InstanceDBName;
-    croak("Unable to forget dbh, InstanceDBName is undefined.\n" . 
-          "Maybe you forgot to call pkg('Conf')->instance()?")
+    croak(  "Unable to forget dbh, InstanceDBName is undefined.\n"
+          . "Maybe you forgot to call pkg('Conf')->instance()?")
       unless defined $name;
 
     # delete from cache
@@ -150,6 +148,5 @@ sub forget_all_dbhs () {
 =back
 
 =cut
-
 
 1;

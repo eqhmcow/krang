@@ -12,9 +12,9 @@ use File::Spec::Functions qw(catfile catdir);
 use Test::More qw(no_plan);
 
 # basic functionality
-is(pkg('Story'), 'Krang::Story');
+is(pkg('Story'),      'Krang::Story');
 is(pkg('CGI::Story'), 'Krang::CGI::Story');
-is(pkg('Bogus'), 'Krang::Bogus');
+is(pkg('Bogus'),      'Krang::Bogus');
 
 # load an addon with a class override for Krang::CGI::About
 pkg('AddOn')->install(src => catfile(KrangRoot, 't', 'addons', 'AboutPlus-1.00.tar.gz'));
@@ -34,8 +34,8 @@ SKIP: {
     # try restarting the server, skipping if that doesn't work
     local $ENV{CGI_MODE} = 1;
 
-    restart_krang() or
-        skip "Krang servers couldn't be restarted, skipping tests.", 7;
+    restart_krang()
+      or skip "Krang servers couldn't be restarted, skipping tests.", 7;
 
     # get creds
     my $mech = pkg('Test::Web')->new();

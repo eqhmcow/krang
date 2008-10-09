@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Test::More qw(no_plan);
 use Krang::ClassLoader 'Script';
-BEGIN {use_ok(pkg('Message'));}
+BEGIN { use_ok(pkg('Message')); }
 
 use Krang::ClassLoader Message => qw(add_message get_messages clear_messages);
 
@@ -37,7 +37,7 @@ package Test::Module1;
 use Krang::ClassLoader Message => qw(add_message get_messages clear_messages);
 add_message("test1");
 add_message("test2", test => 'zumthing');
-Test::More::is(get_messages(), 5);
+Test::More::is(get_messages(),      5);
 Test::More::is((get_messages())[3], "Now for something completely different.");
 Test::More::is((get_messages())[4], "Now for zumthing completely different.");
 

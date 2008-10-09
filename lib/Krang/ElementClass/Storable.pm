@@ -9,7 +9,7 @@ use MIME::Base64 qw(encode_base64 decode_base64);
 use Carp qw( croak );
 
 sub thaw_data {
-    my ($class, %arg) = @_;
+    my ($class,   %arg)  = @_;
     my ($element, $data) = @arg{qw(element data)};
     if (defined $data and length $data) {
         eval { $element->data(thaw(decode_base64($data))) };
@@ -30,7 +30,8 @@ sub freeze_data {
 sub check_data {
     my ($class, %arg) = @_;
     croak("Storable element classes require refs in data().")
-      unless not defined $arg{data} or ref($arg{data});
+      unless not defined $arg{data}
+          or ref($arg{data});
 }
 
 =head1 NAME

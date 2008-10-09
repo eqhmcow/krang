@@ -118,7 +118,7 @@ our $CACHE_SIZE = 1000;
 
 our %CACHE_POS;
 our @CACHE;
-our $CACHE_ON    = 0;
+our $CACHE_ON = 0;
 our $CACHE_LOADS;
 our $CACHE_HITS;
 our $CACHE_FILL = 0;
@@ -127,7 +127,7 @@ our @CACHE_STACK;
 use constant KEY   => 0;
 use constant VALUE => 1;
 
-sub start { 
+sub start {
     $CACHE_ON++;
     if ($CACHE_ON == 1) {
         $CACHE_LOADS = 0;
@@ -137,11 +137,11 @@ sub start {
     push(@CACHE_STACK, [caller]);
 }
 
-sub stop { 
+sub stop {
     $CACHE_ON-- if $CACHE_ON;
     if ($CACHE_ON == 0) {
-        %CACHE_POS = (); 
-        @CACHE = ();
+        %CACHE_POS = ();
+        @CACHE     = ();
     }
     if (@CACHE_STACK) {
         my $frame = pop(@CACHE_STACK);
@@ -153,7 +153,7 @@ sub stop {
 
 sub active { $CACHE_ON ? 1 : 0 }
 
-sub size { 
+sub size {
     return $CACHE_SIZE unless @_;
     $CACHE_SIZE = shift;
     _cull() if $CACHE_FILL > $CACHE_SIZE;
@@ -193,7 +193,7 @@ sub get {
 sub set {
     return unless $CACHE_ON;
     my $key = $_[0] . $_[1];
-    push(@CACHE, [ $key, $_[2] ]);
+    push(@CACHE, [$key, $_[2]]);
     $CACHE_POS{$key} = $#CACHE;
     $CACHE_LOADS++;
     $CACHE_FILL++;

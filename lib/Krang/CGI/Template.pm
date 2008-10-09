@@ -149,7 +149,6 @@ sub add {
     return $t->output();
 }
 
-
 =item add_checkin
 
 Saves changes to the template object the end-user enacted on the 'Add'
@@ -261,7 +260,6 @@ sub add_save_stay {
     $self->header_type('redirect');
     return "Redirect: <a href=\"$url\">$url</a>";
 }
-
 
 =item checkin_selected
 
@@ -607,15 +605,19 @@ sub revert_version {
     $q->param(reverted_to_version => $selected_version);
 
     # Perform revert & display result
-    my $template = $session{template};
+    my $template           = $session{template};
     my $pre_revert_version = $template->version;
-    my $result = $template->revert($selected_version);
+    my $result             = $template->revert($selected_version);
     if ($result->isa('Krang::Template')) {
-	add_message("message_revert_version", new_version => $template->version, old_version => $selected_version);
+        add_message(
+            "message_revert_version",
+            new_version => $template->version,
+            old_version => $selected_version
+        );
     } else {
-	my %errors = $self->_save($template);
-	add_alert("message_revert_version_no_save", old_version => $selected_version);
-	return $self->edit(%errors);
+        my %errors = $self->_save($template);
+        add_alert("message_revert_version_no_save", old_version => $selected_version);
+        return $self->edit(%errors);
     }
 
     # Redirect to edit
@@ -773,9 +775,10 @@ sub _do_simple_search {
       defined($q->param('search_filter'))
       ? $q->param('search_filter')
       : $session{KRANG_PERSIST}{pkg('Template')}{search_filter};
-    my $search_filter_check_full_text = defined($q->param('search_filter')) ?
-      $q->param('search_filter_check_full_text') :
-        $session{KRANG_PERSIST}{pkg('Template')}{search_filter_check_full_text};
+    my $search_filter_check_full_text =
+      defined($q->param('search_filter'))
+      ? $q->param('search_filter_check_full_text')
+      : $session{KRANG_PERSIST}{pkg('Template')}{search_filter_check_full_text};
 
     # ensure that $search_filter is at the very least defined.
     $search_filter = '' unless ($search_filter);
@@ -789,16 +792,18 @@ sub _do_simple_search {
     # find live or retired stories?
     my %include_options = $retired ? (include_live => 0, include_retired => 1) : ();
 
-    my $find_params = {simple_search => $search_filter, 
-                       simple_search_check_full_text => $search_filter_check_full_text,
-                       may_see => 1, 
-                       %include_options};
+    my $find_params = {
+        simple_search                 => $search_filter,
+        simple_search_check_full_text => $search_filter_check_full_text,
+        may_see                       => 1,
+        %include_options
+    };
     my $persist_vars = {
         rm => ($retired ? 'list_retired' : 'search'),
-        search_filter      => $search_filter,
+        search_filter                 => $search_filter,
         search_filter_check_full_text => $search_filter_check_full_text,
-        $include           => 1,
-        do_advanced_search => 0,
+        $include                      => 1,
+        do_advanced_search            => 0,
     };
 
     # setup pager
@@ -818,7 +823,7 @@ sub _do_simple_search {
     # get counter params
     $t->param(row_count => $pager->row_count());
 
-    $t->param(search_filter => $search_filter);
+    $t->param(search_filter                 => $search_filter);
     $t->param(search_filter_check_full_text => $search_filter_check_full_text);
 
     return $t->output();
@@ -908,13 +913,15 @@ sub _do_advanced_search {
     }
 
     # search_full_text_string
-    my $search_full_text_string = defined($q->param('search_full_text_string')) ?
-      $q->param('search_full_text_string') : $session{KRANG_PERSIST}{pkg('Template')}{search_full_text_string};
+    my $search_full_text_string =
+      defined($q->param('search_full_text_string'))
+      ? $q->param('search_full_text_string')
+      : $session{KRANG_PERSIST}{pkg('Template')}{search_full_text_string};
 
     if ($search_full_text_string) {
-        $find_params->{full_text_string} = $search_full_text_string;
+        $find_params->{full_text_string}         = $search_full_text_string;
         $persist_vars->{search_full_text_string} = $search_full_text_string;
-        $t->param( search_full_text_string => $search_full_text_string);
+        $t->param(search_full_text_string => $search_full_text_string);
     }
 
     # Run pager
@@ -1068,9 +1075,9 @@ sub list_active {
     # Set up output
     my $template = $self->load_tmpl('list_active.tmpl', associate => $q);
     $template->param(
-        pager_html            => $pager_tmpl->output,
-        row_count             => $pager->row_count,
-        may_checkin_all       => $may_checkin_all,
+        pager_html      => $pager_tmpl->output,
+        row_count       => $pager->row_count,
+        may_checkin_all => $may_checkin_all,
     );
     return $template->output;
 }
@@ -1296,11 +1303,11 @@ sub search_row_handler {
         } else {
             $pager->column_display(status => 1);
             if ($template->checked_out) {
-                $row->{status} = 
-                  localize('Live')
+                $row->{status} =
+                    localize('Live')
                   . ' <br/> '
-                  . localize('Checked out by')
-                  . '<b>' . (pkg('User')->find(user_id => $template->checked_out_by))[0]->login . '</b>';
+                  . localize('Checked out by') . '<b>'
+                  . (pkg('User')->find(user_id => $template->checked_out_by))[0]->login . '</b>';
             } else {
                 $row->{status} = localize('Live');
             }
@@ -1332,8 +1339,9 @@ sub search_row_handler {
               . qq|')" type="button" class="button">|
               if $may_edit_and_retire;
             if ($template->checked_out) {
-                $row->{status} = localize('Checked out by')
-                  . ' <b>' . (pkg('User')->find(user_id => $template->checked_out_by))[0]->login . '</b>';
+                $row->{status} =
+                  localize('Checked out by') . ' <b>'
+                  . (pkg('User')->find(user_id => $template->checked_out_by))[0]->login . '</b>';
             } else {
                 $row->{status} = '&nbsp;';
             }
@@ -1355,7 +1363,7 @@ sub update_template {
     # make sure template is still checked out to us (and hasn't been saved in another window)
     if (my $id = $template->template_id) {
         if (my ($template_in_db) = pkg('Template')->find(template_id => $id)) {
-            if (  !$template_in_db->checked_out
+            if (   !$template_in_db->checked_out
                 || $template_in_db->checked_out_by ne $ENV{REMOTE_USER}
                 || $template_in_db->version > $template->version)
             {

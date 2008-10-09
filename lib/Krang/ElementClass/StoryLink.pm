@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader base => 'ElementClass';
-use Krang::ClassLoader Log => qw(debug info critical);
+use Krang::ClassLoader Log  => qw(debug info critical);
 use Krang::ClassLoader Conf => qw(PreviewSSL);
 use Krang::ClassLoader 'URL';
 use Krang::ClassLoader Localization => qw(localize);
@@ -13,21 +13,20 @@ use Krang::ClassLoader Localization => qw(localize);
 use Storable qw(nfreeze);
 use MIME::Base64 qw(encode_base64);
 
-use Krang::ClassLoader MethodMaker => 
-  hash => [ qw( find ) ];
+use Krang::ClassLoader MethodMaker => hash => [qw( find )];
 
 sub new {
-    my $pkg = shift;
-    my %args = ( 
-                lazy_loaded => 1,
-                @_
-               );
+    my $pkg  = shift;
+    my %args = (
+        lazy_loaded => 1,
+        @_
+    );
 
     return $pkg->SUPER::new(%args);
 }
 
 sub input_form {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
@@ -38,19 +37,23 @@ sub input_form {
     if ($story) {
         my $story_id = $story->story_id;
         my ($story) = pkg('Story')->find(story_id => $story_id);
-        $html .= qq{<div style="padding-bottom: 2px; margin-bottom: 2px; border-bottom: solid #333333 1px">}
-               . localize('Title:') . ' "' . $story->title . qq{"<br>}
-               . localize('URL:')   . qq{ <a href="javascript:Krang.preview('story',$story_id)">}
-                                    . pkg('Widget')->can('format_url')->(url => $story->url, length => 30)
-                                    . qq{</a></div>};
+        $html .=
+          qq{<div style="padding-bottom: 2px; margin-bottom: 2px; border-bottom: solid #333333 1px">}
+          . localize('Title:') . ' "'
+          . $story->title
+          . qq{"<br>}
+          . localize('URL:')
+          . qq{ <a href="javascript:Krang.preview('story',$story_id)">}
+          . pkg('Widget')->can('format_url')->(url => $story->url, length => 30)
+          . qq{</a></div>};
     }
 
-
-    $html .= scalar $query->button(-name    => "find_story_$param",
-                                   -value   => localize("Find Story"),
-                                   -onClick => "find_story('$param')",
-				   -class   => "button",
-                                  );
+    $html .= scalar $query->button(
+        -name    => "find_story_$param",
+        -value   => localize("Find Story"),
+        -onClick => "find_story('$param')",
+        -class   => "button",
+    );
 
     # Add hard find parameters
     my $find = encode_base64(nfreeze(scalar($self->find())));
@@ -63,7 +66,7 @@ sub input_form {
 # due to the unusual way that story links get their data, a story link
 # is invalid only if required and it doesn't already have a value.
 sub validate {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     if ($self->{required} and not defined $element->data) {
         return (0, localize($self->display_name) . ' ' . localize('requires a value.'));
@@ -71,10 +74,8 @@ sub validate {
     return 1;
 }
 
-
-
 sub view_data {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
@@ -84,9 +85,14 @@ sub view_data {
     my $story = $element->data();
     if ($story) {
         my $story_id = $story->story_id;
-        $html = localize('Title:') . ' "' . $story->title . qq{"<br>}
-              . localize('URL:'  ) . qq{ <a href="javascript:Krang.preview('story',$story_id)">}
-                                   . $story->url . qq{</a>};
+        $html =
+            localize('Title:') . ' "'
+          . $story->title
+          . qq{"<br>}
+          . localize('URL:')
+          . qq{ <a href="javascript:Krang.preview('story',$story_id)">}
+          . $story->url
+          . qq{</a>};
     }
 
     return $html;
@@ -94,8 +100,7 @@ sub view_data {
 
 # data isn't loaded from the query.  Instead it arrives indirectly as
 # a result of the find_story() routine.
-sub load_query_data { } 
-
+sub load_query_data { }
 
 # store ID of object in the database
 sub freeze_data {
@@ -109,7 +114,7 @@ sub freeze_data {
 # load object by ID, ignoring failure since the object might have been
 # deleted
 sub thaw_data {
-    my ($self, %arg) = @_;
+    my ($self,    %arg)  = @_;
     my ($element, $data) = @arg{qw(element data)};
     return $element->data(undef) unless $data;
     my ($story) = pkg('Story')->find(story_id => $data);
@@ -128,7 +133,6 @@ sub freeze_data_xml {
     $set->add(object => $story, from => $element->object) if $story;
 }
 
-
 # translate the incoming story ID into a real ID
 sub thaw_data_xml {
     my ($self, %arg) = @_;
@@ -136,10 +140,14 @@ sub thaw_data_xml {
 
     my $import_id = $data->[0];
     return unless $import_id;
-    my $story_id = $set->map_id(class => pkg('Story'),
-                                id    => $import_id);
-    $self->thaw_data(element => $element,
-                     data    => $story_id);
+    my $story_id = $set->map_id(
+        class => pkg('Story'),
+        id    => $import_id
+    );
+    $self->thaw_data(
+        element => $element,
+        data    => $story_id
+    );
 }
 
 # overriding Krang::ElementClass::template_data
@@ -151,8 +159,10 @@ sub template_data {
     my $self = shift;
     my %args = @_;
 
-    return pkg('URL')->real_url(object    => $args{element}->data,
-                                publisher => $args{publisher});
+    return pkg('URL')->real_url(
+        object    => $args{element}->data,
+        publisher => $args{publisher}
+    );
 }
 
 #
@@ -179,8 +189,6 @@ sub fill_template {
     $tmpl->param(\%params);
 
 }
-
-
 
 =head1 NAME
 

@@ -107,7 +107,7 @@ sub check_perl {
     my ($pkg, $mode) = @_;
 
     # make sure we were built with PerlIO layers
-    unless( $Config{useperlio} ) {
+    unless ($Config{useperlio}) {
         die <<END;
 
 Krang needs a Perl that was built with PerlIO layer support.
@@ -118,6 +118,7 @@ END
     }
 
     return unless $mode eq 'install';
+
     # check that Perl is right for this build
     my %params = $pkg->build_params();
 
@@ -147,7 +148,6 @@ END
     }
 }
 
-
 =item C<check_mysql()>
 
 The C<mysql> shell is available and MySQL is v4.0.13 or higher.
@@ -169,22 +169,19 @@ END
     # check the version of MySQL
     no warnings qw(exec);
     my $mysql_version = `mysql -V 2>&1`;
-    die "\n\nUnable to determine MySQL version using 'mysql -V'.\n" .
-      "Error was '$!'.\n\n"
-        unless defined $mysql_version and length $mysql_version;
+    die "\n\nUnable to determine MySQL version using 'mysql -V'.\n" . "Error was '$!'.\n\n"
+      unless defined $mysql_version and length $mysql_version;
     chomp $mysql_version;
     my ($major_version, $minor_version) = $mysql_version =~ /\s(4|5)\.(\d+\.\d+)/;
 
-    die "\n\nMySQL version 4 not found.  'mysql -V' returned:" .
-      "\n\n\t$mysql_version\n\n"
-        unless defined $major_version;
-    if( $major_version == 4 ) {
-        die "\n\nMySQL version too old.  Krang requires v4.0.13 or higher.\n" .
-          "'mysql -V' returned:\n\n\t$mysql_version\n\n"
-            unless $minor_version >= 0.13;
+    die "\n\nMySQL version 4 not found.  'mysql -V' returned:" . "\n\n\t$mysql_version\n\n"
+      unless defined $major_version;
+    if ($major_version == 4) {
+        die "\n\nMySQL version too old.  Krang requires v4.0.13 or higher.\n"
+          . "'mysql -V' returned:\n\n\t$mysql_version\n\n"
+          unless $minor_version >= 0.13;
     }
 }
-
 
 =item C<< check_libperl(lib_files => \@libs, includes => \@incs, mode => $mode) >>
 
@@ -200,7 +197,7 @@ sub check_libperl {
 
     # add $Config{archlib} since lots of distros place it in there
     my $extra_dir = catdir($Config{archlib}, 'CORE');
-    if( -d $extra_dir ) {
+    if (-d $extra_dir) {
         opendir(DIR, $extra_dir) or die "Could not open $extra_dir for reading: $!";
         push(@files, grep { not -d $_ } readdir(DIR));
         closedir(DIR);
@@ -217,7 +214,6 @@ END
     }
 }
 
-
 =item C<< check_libmysqlclient(lib_files => \@libs, includes => \@incs, mode => $mode) >>
 
 Checks to see that the Perl libraries are installed.  The default
@@ -231,7 +227,7 @@ sub check_libmysqlclient {
 
     # add /usr/lib/mysql since lots of distros place it in there
     my $extra_dir = catdir('', 'usr', 'lib', 'mysql');
-    if( -d $extra_dir ) {
+    if (-d $extra_dir) {
         opendir(DIR, $extra_dir) or die "Could not open $extra_dir for reading: $!";
         push(@files, grep { not -d $_ } readdir(DIR));
         closedir(DIR);
@@ -247,8 +243,6 @@ Install the MySQL client development libraries and try again.
 END
     }
 }
-
-
 
 =item C<< check_expat(lib_files => \@libs, includes => \@incs, mode => $mode) >>
 
@@ -282,6 +276,7 @@ sub check_libjpeg {
         module => 'Imager',
         name   => 'libjpeg',
         lib    => 'jpeg',
+
         # not sure why this fails to compile on Linux, but Imager has no problem with it...
         #h      => 'jpeglib.h',
     );
@@ -359,8 +354,10 @@ sub find_bin {
     my $bin = $args{bin};
     my $dir;
 
-    my %additional_paths = (catdir('/', 'sbin') => 1,
-                            catdir('/', 'usr', 'sbin') => 1);
+    my %additional_paths = (
+        catdir('/', 'sbin') => 1,
+        catdir('/', 'usr', 'sbin') => 1
+    );
 
     my @PATH = split(':', ($ENV{PATH} || ""));
 
@@ -383,7 +380,6 @@ sub find_bin {
 
 }
 
-
 =item C<< check_ip(ip => $ip) >>
 
 Called by the installation system to check whether an IP address is
@@ -404,13 +400,11 @@ sub check_ip {
         my $ip = $1;
         push(@ip_addrs, $ip);
     }
-    unless (grep {$_ eq $IPAddress} @ip_addrs) {
+    unless (grep { $_ eq $IPAddress } @ip_addrs) {
         return 0;
     }
     return 1;
 }
-
-
 
 =item C<< $gid = create_krang_group(options => \%options) >>
 
@@ -436,17 +430,17 @@ sub create_krang_group {
 
     my $groupadd_bin = $pkg->find_bin(bin => 'groupadd');
 
-    my $KrangGroup   = $options{KrangGroup};
+    my $KrangGroup = $options{KrangGroup};
 
     print "Creating UNIX group ('$KrangGroup')\n";
-    my ($gname,$gpasswd,$gid,$gmembers) = getgrnam($KrangGroup);
+    my ($gname, $gpasswd, $gid, $gmembers) = getgrnam($KrangGroup);
 
     unless (defined($gid)) {
         my $groupadd = $groupadd_bin;
         $groupadd .= " $KrangGroup";
         system($groupadd) && die("Can't add group: $!");
 
-        ($gname,$gpasswd,$gid,$gmembers) = getgrnam($KrangGroup);
+        ($gname, $gpasswd, $gid, $gmembers) = getgrnam($KrangGroup);
         print "  Group created (gid $gid).\n";
 
     } else {
@@ -455,8 +449,6 @@ sub create_krang_group {
 
     return $gid;
 }
-
-
 
 =item C<< $uid = create_krang_user(group_id => $gid, options => \%options) >>
 
@@ -492,11 +484,12 @@ sub create_krang_user {
     my $InstallPath = $options{InstallPath};
 
     # Get KrangGroup info.
-    my ($gname,$gpasswd,$gid,$gmembers) = getgrnam($KrangGroup);
+    my ($gname, $gpasswd, $gid, $gmembers) = getgrnam($KrangGroup);
 
     # Create user, if necessary
     print "Creating UNIX user ('$KrangUser')\n";
-    my ($uname,$upasswd,$uid,$ugid,$uquota,$ucomment,$ugcos,$udir,$ushell,$uexpire) = getpwnam($KrangUser);
+    my ($uname, $upasswd, $uid, $ugid, $uquota, $ucomment, $ugcos, $udir, $ushell, $uexpire) =
+      getpwnam($KrangUser);
 
     unless (defined($uid)) {
         my $useradd = $useradd_bin;
@@ -505,17 +498,18 @@ sub create_krang_user {
         system($useradd) && die("Can't add user: $!");
 
         # Update user data
-        ($uname,$upasswd,$uid,$ugid,$uquota,$ucomment,$ugcos,$udir,$ushell,$uexpire) = getpwnam($KrangUser);
+        ($uname, $upasswd, $uid, $ugid, $uquota, $ucomment, $ugcos, $udir, $ushell, $uexpire) =
+          getpwnam($KrangUser);
         print "  User created (uid $uid).\n";
     } else {
         print "  User already exists (uid $uid).\n";
     }
 
     # Sanity check - make sure the user is a member of the group.
-    ($gname,$gpasswd,$gid,$gmembers) = getgrnam($KrangGroup);
+    ($gname, $gpasswd, $gid, $gmembers) = getgrnam($KrangGroup);
 
-    my @group_members = ( split(/\s+/, $gmembers) );
-    my $user_is_group_member = ( grep { $_ eq $KrangUser } @group_members );
+    my @group_members = (split(/\s+/, $gmembers));
+    my $user_is_group_member = (grep { $_ eq $KrangUser } @group_members);
 
     unless (($ugid eq $gid) or $user_is_group_member) {
         $pkg->krang_usermod(options => \%options);
@@ -524,7 +518,6 @@ sub create_krang_user {
     return $uid;
 
 }
-
 
 =item C<< krang_usermod(options => \%options) >>
 
@@ -539,7 +532,6 @@ This sub will die with an error if it cannot make --KrangUser a member
 of --KrangGroup.
 
 =cut
-
 
 sub krang_usermod {
     my ($pkg, %args) = @_;
@@ -577,19 +569,18 @@ results of the build.  The default is KRANG_ROOT/lib.
 
 sub build_perl_module {
     my ($pkg, %arg) = @_;
-    my $name        = $arg{name};
-    my $dest_dir    = $arg{dest_dir} || catdir($ENV{KRANG_ROOT}, 'lib');
+    my $name = $arg{name};
+    my $dest_dir = $arg{dest_dir} || catdir($ENV{KRANG_ROOT}, 'lib');
 
     # load expect unless we're building it
     my $use_expect = ($name =~ /IO-Tty/ or $name =~ /Expect/) ? 0 : 1;
     _load_expect() if $use_expect;
 
     my $trash_dir = catdir(cwd, '..', 'trash');
- 
-    print "\n\n************************************************\n\n",
-          " Building $name",
-          "\n\n************************************************\n\n";
-         
+
+    print "\n\n************************************************\n\n", " Building $name",
+      "\n\n************************************************\n\n";
+
     # Net::FTPServer needs this to not try to install /etc/ftp.conf
     local $ENV{NOCONF} = 1 if $name =~ /Net-FTPServer/;
 
@@ -607,59 +598,58 @@ sub build_perl_module {
 
         $make_cmd = './Build';
     } else {
-        $cmd = "$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir INSTALLMAN3DIR=' ' INSTALLMAN1DIR=' '";
+        $cmd =
+          "$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir INSTALLMAN3DIR=' ' INSTALLMAN1DIR=' '";
         $make_cmd = 'make';
     }
-    
+
     # We only want the libs, not the executables or man pages
     if ($use_expect) {
         print "Running $cmd...\n";
-        my $command =
-          Expect->spawn($cmd);
-        
+        my $command = Expect->spawn($cmd);
+
         # setup command to answer questions modules ask
         my @responses = qw(n n n n n y ! /tmp 0007 y n n n y);
         while (
-               my $match = $command->expect(
-                  undef,
-                 'ParserDetails.ini? [Y]',
-                 'remove gif support? [Y/n]',
-                 'mech-dump utility? [y]',
-                 'configuration (y|n) ? [no]',
-                 'unicode entities? [no]',
-                 'Do you want to skip these tests? [y]',
-                 "('!' to skip)",
-                 "UUID state storage",
-                 "default umask",
-                 "install Inline::C",
-                 "the 'runtests' utility",
-                 "optional module",
-                 "mandatory module",
-                 "Really skip",
-                                           )
-              )
-          {
-              $command->send( $responses[ $match - 1 ] . "\n" );
-          }
+            my $match = $command->expect(
+                undef,
+                'ParserDetails.ini? [Y]',
+                'remove gif support? [Y/n]',
+                'mech-dump utility? [y]',
+                'configuration (y|n) ? [no]',
+                'unicode entities? [no]',
+                'Do you want to skip these tests? [y]',
+                "('!' to skip)",
+                "UUID state storage",
+                "default umask",
+                "install Inline::C",
+                "the 'runtests' utility",
+                "optional module",
+                "mandatory module",
+                "Really skip",
+            )
+          )
+        {
+            $command->send($responses[$match - 1] . "\n");
+        }
         $command->soft_close();
-        if ( $command->exitstatus() != 0 ) {
+        if ($command->exitstatus() != 0) {
             die "$make_cmd failed: $?";
         }
-    
+
         print "Running $make_cmd...\n";
-        $command = Expect->spawn($make_cmd);
+        $command   = Expect->spawn($make_cmd);
         @responses = qw(n);
-        while ( my $match = $command->expect( undef, 
-                                              'Mail::Sender? (y/N)', 
-                                            ) ) {
-            $command->send($responses[ $match - 1 ] . "\n");
+        while (my $match = $command->expect(undef, 'Mail::Sender? (y/N)',)) {
+            $command->send($responses[$match - 1] . "\n");
         }
         $command->soft_close();
-        if ( $command->exitstatus() != 0 ) {
+        if ($command->exitstatus() != 0) {
             die "$make_cmd failed: $?";
         }
 
     } else {
+
         # do it without Expect for IO-Tty and Expect installation.
         # Fortunately they don't ask any questions.
         print "Running $cmd...\n";
@@ -677,12 +667,12 @@ Called to build OSSP mm for shared memory allocation in Apache.
 =cut
 
 sub build_mm {
-    my ($self, %arg) = @_;
-    my ($mm_dir, $mm_bin) = @arg{ qw(mm_dir mm_bin) };
+    my ($self,   %arg)    = @_;
+    my ($mm_dir, $mm_bin) = @arg{qw(mm_dir mm_bin)};
 
     print "\n\n************************************************\n\n",
-          "  Building OSSP mm - Shared Memory Allocation",
-	  "\n\n************************************************\n\n";
+      "  Building OSSP mm - Shared Memory Allocation",
+      "\n\n************************************************\n\n";
 
     my $mm_params = "--prefix=$mm_bin --exec-prefix=$mm_bin --disable-shared";
 
@@ -690,8 +680,8 @@ sub build_mm {
     chdir($mm_dir) or die "Unable to chdir($mm_dir): $!";
 
     system("./configure $mm_params") == 0 or die "MM configure failed: $!";
-    system("make") == 0 or die "MM make failed: $!";
-    system("make install") == 0 or die "MM make install failed: $!";
+    system("make") == 0                   or die "MM make failed: $!";
+    system("make install") == 0           or die "MM make install failed: $!";
 
     chdir($olddir);
 }
@@ -704,26 +694,23 @@ Called to build mod_ssl to patch Apache.
 
 sub build_mod_ssl {
     my ($self, %arg) = @_;
-    my ($build_dir, $mod_ssl_dir, $apache_dir) = @arg{ qw(build_dir mod_ssl_dir apache_dir) };
+    my ($build_dir, $mod_ssl_dir, $apache_dir) = @arg{qw(build_dir mod_ssl_dir apache_dir)};
 
-    print "\n\n************************************************\n\n",
-          "  Building MOD_SSL",
-          "\n\n************************************************\n\n";
+    print "\n\n************************************************\n\n", "  Building MOD_SSL",
+      "\n\n************************************************\n\n";
 
-    my $trash = catfile($build_dir, 'mod_ssl_target');
+    my $trash      = catfile($build_dir, 'mod_ssl_target');
     my $apache_src = catfile($build_dir, $apache_dir);
     mkdir($trash);
-    my $mod_ssl_params = "--prefix=$trash ".
-                         "--with-apache=$apache_src";
-    
+    my $mod_ssl_params = "--prefix=$trash " . "--with-apache=$apache_src";
+
     my $olddir = cwd;
     chdir($mod_ssl_dir) or die "Unable to chdir($mod_ssl_dir): $!";
-    
+
     system("./configure $mod_ssl_params") == 0 or die "MOD_SSL configure failed: $!";
 
     chdir($olddir) or die "Unable to chdir($olddir): $!";
 }
-
 
 =item C<< build_apache_modperl(apache_dir => $dir, modperl_dir => $dir) >>
 
@@ -736,16 +723,15 @@ Apache installation in C<apache/>.
 
 sub build_apache_modperl {
     my ($pkg, %arg) = @_;
-    my ($apache_dir, $mod_perl_dir, $mod_ssl_params)
-      = @arg{ qw(apache_dir mod_perl_dir mod_ssl_params) };
+    my ($apache_dir, $mod_perl_dir, $mod_ssl_params) =
+      @arg{qw(apache_dir mod_perl_dir mod_ssl_params)};
     _load_expect();
 
-    print "\n\n************************************************\n\n",
-          "  Building Apache/mod_perl",
-          "\n\n************************************************\n\n";
+    print "\n\n************************************************\n\n", "  Building Apache/mod_perl",
+      "\n\n************************************************\n\n";
 
     # gather params
-    my $apache_params = $pkg->apache_build_parameters(%arg);
+    my $apache_params   = $pkg->apache_build_parameters(%arg);
     my $mod_perl_params = $pkg->mod_perl_build_parameters(%arg);
 
     # build mod_perl
@@ -753,21 +739,15 @@ sub build_apache_modperl {
     chdir($mod_perl_dir) or die "Unable to chdir($mod_perl_dir): $!";
     print "Calling '$^X Makefile.PL $mod_perl_params'...\n";
 
-    my $command =
-      Expect->spawn("$^X Makefile.PL $mod_perl_params");
+    my $command = Expect->spawn("$^X Makefile.PL $mod_perl_params");
 
     # setup command to answer questions modules ask
     my @responses = qw(y n);
-    while (my $match = $command->expect(
-                                        undef,
-                                        'Configure mod_perl with',
-                                        'Shall I build httpd',
-                                       )
-          ) {
-        $command->send( $responses[ $match - 1 ] . "\n" );
+    while (my $match = $command->expect(undef, 'Configure mod_perl with', 'Shall I build httpd',)) {
+        $command->send($responses[$match - 1] . "\n");
     }
     $command->soft_close();
-    if ( $command->exitstatus() != 0 ) {
+    if ($command->exitstatus() != 0) {
         die "mod_perl Makefile.PL failed: " . $command->exitstatus();
     }
 
@@ -777,7 +757,7 @@ sub build_apache_modperl {
       or die "mod_perl make install failed: $?";
 
     # build Apache
-    chdir($old_dir) or die $!;
+    chdir($old_dir)    or die $!;
     chdir($apache_dir) or die "Unable to chdir($apache_dir): $!";
     print "Calling './configure $apache_params $mod_ssl_params'.\n";
     system("./configure $apache_params $mod_ssl_params") == 0
@@ -806,14 +786,13 @@ C<configure> script by C<build_apache_modperl()>.
 
 sub apache_build_parameters {
     my $KrangRoot = $ENV{KRANG_ROOT};
-    return "--prefix=${KrangRoot}/apache ".
-           "--activate-module=src/modules/perl/libperl.a ".
-           "--disable-shared=perl ".
-           "--enable-module=rewrite      --enable-shared=rewrite ".
-           "--enable-module=proxy        --enable-shared=proxy ".
-           "--enable-module=mime_magic   --enable-shared=mime_magic ";
+    return "--prefix=${KrangRoot}/apache "
+      . "--activate-module=src/modules/perl/libperl.a "
+      . "--disable-shared=perl "
+      . "--enable-module=rewrite      --enable-shared=rewrite "
+      . "--enable-module=proxy        --enable-shared=proxy "
+      . "--enable-module=mime_magic   --enable-shared=mime_magic ";
 }
-
 
 =item C<mod_perl_build_parameters(apache_dir => $dir, modperl_dir => $dir)>
 
@@ -826,11 +805,11 @@ sub mod_perl_build_parameters {
     my ($pkg, %arg) = @_;
     my $KrangRoot = $ENV{KRANG_ROOT};
     my $trash = catdir(cwd, '..', 'trash');
-    return "LIB=$KrangRoot/lib " .
-           "PREFIX=$trash " .
-	   "APACHE_SRC=$arg{apache_dir}/src " .
-   	   "USE_APACI=1 " .
-	   "EVERYTHING=1";
+    return "LIB=$KrangRoot/lib "
+      . "PREFIX=$trash "
+      . "APACHE_SRC=$arg{apache_dir}/src "
+      . "USE_APACI=1 "
+      . "EVERYTHING=1";
 }
 
 =item C<finish_installation(options => \%options)>
@@ -841,7 +820,7 @@ contains all the options passed to C<krang_install> (ex: InstallPath).
 
 =cut
 
-sub finish_installation {}
+sub finish_installation { }
 
 =item C<finish_upgrade()>
 
@@ -850,7 +829,7 @@ here.  The default implementation does nothing.
 
 =cut
 
-sub finish_upgrade {}
+sub finish_upgrade { }
 
 =item C<< post_install_message(options => \%options) >>
 
@@ -931,8 +910,6 @@ EOREPORT
 
 }
 
-
-
 =item C<guess_platform()>
 
 Called to guess whether this module should handle building on this
@@ -968,7 +945,7 @@ sub build_params {
     # load.  So, fall back to parsing by hand...
     open(DB, $db_file) or die "Unable to open '$db_file': $!\n";
     my ($platform, $perl, $arch, $ssl);
-    while(<DB>) {
+    while (<DB>) {
         chomp;
         next if /^\s*#/;
         if (/^\s*platform\s+["']?([^'"]+)["']?/i) {
@@ -984,10 +961,12 @@ sub build_params {
     # check if SSL was built
     $ssl = -e catfile($ENV{KRANG_ROOT}, 'apache', 'libexec', 'libssl.so');
 
-    return ( Platform => $platform,
-             Perl     => $perl,
-             Arch     => $arch,
-             SSL      => $ssl);
+    return (
+        Platform => $platform,
+        Perl     => $perl,
+        Arch     => $arch,
+        SSL      => $ssl
+    );
 }
 
 =back
@@ -1027,6 +1006,7 @@ sub _check_libs {
 }
 
 sub _load_expect {
+
     # load Expect - don't load at compile time because this module is
     # used during install when Expect isn't needed
     eval "require Expect";
@@ -1048,9 +1028,11 @@ sub _get_ssl_report {
     # Squash uninitialized values
     return ("", "", "") unless (($options->{SSLEngine} || "") eq "on");
 
-    return ("   SSL files           :  $options->{InstallPath}/conf/\n",
+    return (
+        "   SSL files           :  $options->{InstallPath}/conf/\n",
         "     https://$options->{HostName}:$options->{ApacheSSLPort}/\n",
-        "\n   Provided test SSL key and cert, make sure to generate valid ones\n\n");
+        "\n   Provided test SSL key and cert, make sure to generate valid ones\n\n"
+    );
 }
 
 1;

@@ -106,7 +106,7 @@ use warnings;
 
 # Krang Modules
 use Krang::ClassLoader Conf => qw(assertions loglevel
-                                  KrangUser KrangGroup KrangRoot);
+  KrangUser KrangGroup KrangRoot);
 
 # Module Dependencies
 use Carp qw(verbose croak);
@@ -121,7 +121,7 @@ use constant LogFile => "logs/krang.log";
 
 # declare exportable functions
 use Exporter;
-our @ISA = qw(Exporter);
+our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw(debug info critical assert affirm should shouldnt ASSERT reopen_log);
 
 # log levels and acceptable function calls
@@ -135,13 +135,14 @@ our @LOG_LEVEL_REGEX;
 # Package ref to log object
 our $LOG;
 
-
 # instantiate a new log object so we are ready to go after compliation
 BEGIN {
 
-    our %valid_functions = (debug   	=> 3,
-                            info    	=> 2,
-                            critical	=> 1);
+    our %valid_functions = (
+        debug    => 3,
+        info     => 2,
+        critical => 1
+    );
 
     our %valid_levels = reverse %valid_functions;
 
@@ -151,8 +152,8 @@ BEGIN {
     my $log = File::Spec->catfile(KrangRoot, LogFile);
 
     my $log_exists = (-e $log) ? 1 : 0;
-    open(LOG, ">>", $log) or
-      croak("Unable to open logfile, $log: $!\n");
+    open(LOG, ">>", $log)
+      or croak("Unable to open logfile, $log: $!\n");
     $LOG->{path} = $log;
 
     # make sure LOG isn't buffered
@@ -172,7 +173,7 @@ BEGIN {
     # if we have a string
     my $level = pkg('Conf')->loglevel();
     croak("Value required for LogLevel directive in 'krang.conf'.")
-        unless defined $level and length $level;
+      unless defined $level and length $level;
 
     # handle default log level
     my @parts = split(',', $level);
@@ -180,22 +181,20 @@ BEGIN {
     croak("Invalid LogLevel '$level': must begin with a number.")
       unless $LOG_LEVEL_DEFAULT =~ /^\d+$/;
     croak("Invalid LogLevel: '$level' : numbers must be valid log levels.")
-        unless exists $valid_levels{$LOG_LEVEL_DEFAULT};
+      unless exists $valid_levels{$LOG_LEVEL_DEFAULT};
 
     # parse out extended log levels
     for (@parts) {
         if (m!^\s*/([^=\s]+)/\s*=\s*(\d+)\s*$!) {
             my ($regex, $val) = ($1, $2);
-            croak("Invalid LogLevel: '$level' : " .
-                  "numbers must be valid log levels.")
+            croak("Invalid LogLevel: '$level' : " . "numbers must be valid log levels.")
               unless exists $valid_levels{$val};
-            push(@LOG_LEVEL_REGEX, [ qr/$regex/ => $val ]);
+            push(@LOG_LEVEL_REGEX, [qr/$regex/ => $val]);
         } elsif (m!([\w:]+)\s*=\s*(\d+)\s*$!) {
             my ($module, $val) = ($1, $2);
-            croak("Invalid LogLevel: '$level' : " .
-                  "numbers must be valid log levels.")
+            croak("Invalid LogLevel: '$level' : " . "numbers must be valid log levels.")
               unless exists $valid_levels{$val};
-            $LOG_LEVEL_PER_MODULE{$module} =  $val;
+            $LOG_LEVEL_PER_MODULE{$module} = $val;
         } else {
             croak("Unable to parse LogLevel '$level': bad token '$_'");
         }
@@ -215,14 +214,16 @@ BEGIN {
         }
 
     } else {
-         eval 'sub debug    ($) { __PACKAGE__->log(level => "debug",    message => shift); }';
+        eval 'sub debug    ($) { __PACKAGE__->log(level => "debug",    message => shift); }';
         eval 'sub info     ($) { __PACKAGE__->log(level => "info",     message => shift); }';
     }
 
     # turn assertions on or off based on KRANG_ASSERT or Assertions
     # conf setting
-    my $assert_on = exists $ENV{KRANG_ASSERT} ? $ENV{KRANG_ASSERT} :
-      pkg('Conf')->assertions();
+    my $assert_on =
+      exists $ENV{KRANG_ASSERT}
+      ? $ENV{KRANG_ASSERT}
+      : pkg('Conf')->assertions();
 
     # set PERL_NDEBUG to control Carp::Assert
     $ENV{PERL_NDEBUG} = not $assert_on;
@@ -269,8 +270,8 @@ sub log {
     my %args = @_;
 
     # check for the required arguments
-    my $level = $args{level};
-    my $message = $args{message};    
+    my $level   = $args{level};
+    my $message = $args{message};
     croak("Required argument level parameter was not passed.")
       unless $level;
     croak("Required argument message parameter was not passed.")
@@ -297,7 +298,7 @@ sub log {
 
     # check caller against defined log level setters
     my $log_level = $LOG_LEVEL_DEFAULT;
-    my $i = 0;
+    my $i         = 0;
     my $pkg;
     do {
         $pkg = (caller($i++))[0];
@@ -322,7 +323,8 @@ sub log {
     my $timestamp = "[" . localtime()->strftime('%D %T') . "] ";
 
     # print message to file
-    $message = $timestamp . "[" . (pkg('Conf')->instance || 'none') . "] [" . lc($level_PV) . "] $message";
+    $message =
+      $timestamp . "[" . (pkg('Conf')->instance || 'none') . "] [" . lc($level_PV) . "] $message";
 
     # make sure message ends in a newline
     $message .= "\n" unless $message =~ /\n\z/;
@@ -364,7 +366,6 @@ L<Carp::Assert>.
 
 =cut
 
-
 =item * C<< reopen_log() >>
 
 Closes and reopens the logfile.  This call should be used in the event that the running code is forking child processes.  Child processes cannot share the filehandle held by their parent, and need to make this call to C<reopen_log> to regain logging ability.
@@ -377,8 +378,8 @@ sub reopen_log {
 
     close(LOG);
 
-    open(LOG, ">>", $LOG->{path}) or
-      croak("Unable to open logfile, $LOG->{path}: $!\n");
+    open(LOG, ">>", $LOG->{path})
+      or croak("Unable to open logfile, $LOG->{path}: $!\n");
 
     # make sure LOG isn't buffered
     my $fh = select(LOG);
@@ -387,7 +388,6 @@ sub reopen_log {
 
     debug(__PACKAGE__ . "->reopen_log(): Logfile reopened.");
 }
-
 
 =back
 
@@ -406,7 +406,6 @@ sub reopen_log {
 L<Krang>, L<Krang::Conf>, L<Time::Piece>
 
 =cut
-
 
 my $quote = <<END;
 But, Mousie, thou art no thy lane

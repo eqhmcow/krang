@@ -16,7 +16,7 @@ use Carp qw(croak);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Group';
-use Krang::ClassLoader Conf => qw(Charset);
+use Krang::ClassLoader Conf         => qw(Charset);
 use Krang::ClassLoader Localization => qw(localize);
 
 use Krang::ClassLoader base => 'CGI::ElementEditor';
@@ -126,14 +126,12 @@ sub new_story {
 
     # sort the type by their display name, not their real name
     @types = sort {
-        lc localize(pkg('ElementLibrary')->top_level( name => $a )->display_name)
-        cmp 
-        lc localize(pkg('ElementLibrary')->top_level( name => $b )->display_name)
+        lc localize(pkg('ElementLibrary')->top_level(name   => $a)->display_name) cmp
+          lc localize(pkg('ElementLibrary')->top_level(name => $b)->display_name)
     } @types;
 
-    my %type_labels = 
-      map { ($_, localize(pkg('ElementLibrary')->top_level(name => $_)->display_name)) }
-        @types;
+    my %type_labels =
+      map { ($_, localize(pkg('ElementLibrary')->top_level(name => $_)->display_name)) } @types;
 
     $template->param(
         type_selector => scalar $query->popup_menu(
@@ -167,22 +165,32 @@ sub new_story {
     foreach my $story_type (@types) {
 
         my $class      = pkg('ElementLibrary')->top_level(name => $story_type);
-	my $slug_entry = $class->slug_use(); 
+        my $slug_entry = $class->slug_use();
         my $cat_entry  = $class->category_input();
 
-        die ("Invalid slug_use() returned by class '$story_type': must be 'require', 'encourage', 'discourage', or 'prohibit'")
-          unless ($slug_entry eq 'require' || $slug_entry eq 'encourage' || $slug_entry eq 'discourage' || $slug_entry eq 'prohibit');
-        die ("Invalid cat_entry() returned by class '$story_type': must be 'require', 'optional', 'prohibit'")
+        die(
+            "Invalid slug_use() returned by class '$story_type': must be 'require', 'encourage', 'discourage', or 'prohibit'"
+          )
+          unless ($slug_entry eq 'require'
+            || $slug_entry eq 'encourage'
+            || $slug_entry eq 'discourage'
+            || $slug_entry eq 'prohibit');
+        die(
+            "Invalid cat_entry() returned by class '$story_type': must be 'require', 'optional', 'prohibit'"
+          )
           unless ($cat_entry eq 'require' || $cat_entry eq 'optional' || $cat_entry eq 'prohibit');
 
         if ($story_type eq $selected_type) {
-	    $slug_entry_for_selected_type = $slug_entry;
-	    $cat_entry_for_selected_type = $cat_entry;
+            $slug_entry_for_selected_type = $slug_entry;
+            $cat_entry_for_selected_type  = $cat_entry;
         }
 
-        push @slug_and_cat_entry_by_type, { story_type => $story_type,
-                                            slug_entry => $slug_entry,
-                                            cat_entry  => $cat_entry};
+        push @slug_and_cat_entry_by_type,
+          {
+            story_type => $story_type,
+            slug_entry => $slug_entry,
+            cat_entry  => $cat_entry
+          };
     }
     $template->param(slug_and_cat_entry_by_type_loop => \@slug_and_cat_entry_by_type);
 
@@ -202,10 +210,10 @@ sub new_story {
 
     # set initial slug-display information (in case a type has already been selected)
     if ($selected_type) {
-	$template->param('show_slug'    => 1) unless ($slug_entry_for_selected_type eq 'prohibit');
-	$template->param('require_slug' => 1) if ($slug_entry_for_selected_type eq 'require');
-	$template->param('show_cat'     => 1) unless ($cat_entry_for_selected_type eq 'prohibit');
-	$template->param('require_cat'  => 1) if ($cat_entry_for_selected_type eq 'require');
+        $template->param('show_slug' => 1) unless ($slug_entry_for_selected_type eq 'prohibit');
+        $template->param('require_slug' => 1) if ($slug_entry_for_selected_type eq 'require');
+        $template->param('show_cat' => 1) unless ($cat_entry_for_selected_type eq 'prohibit');
+        $template->param('require_cat' => 1) if ($cat_entry_for_selected_type eq 'require');
     }
 
     return $template->output();
@@ -254,20 +262,22 @@ sub create {
     push(@bad, 'type'),  add_alert('missing_type')  unless $type;
     push(@bad, 'title'), add_alert('missing_title') unless $title;
     if ($type) {
-        push(@bad, 'slug') 
-          unless $self->process_slug_input
-            (slug => $slug, 
-             type => $type, 
-             cat_idx => $cat_idx);
-        
-        push(@bad, 'category_id') 
-          unless @category_ids = $self->process_category_input
-            (category_id => $category_id,
-             type        => $type,
-             slug        => $slug,
-             cover_date  => $cover_date);
+        push(@bad, 'slug')
+          unless $self->process_slug_input(
+            slug    => $slug,
+            type    => $type,
+            cat_idx => $cat_idx
+          );
+
+        push(@bad, 'category_id')
+          unless @category_ids = $self->process_category_input(
+            category_id => $category_id,
+            type        => $type,
+            slug        => $slug,
+            cover_date  => $cover_date
+          );
     }
-    push(@bad, 'cover_date'),  add_alert('missing_cover_date') unless $cover_date;
+    push(@bad, 'cover_date'), add_alert('missing_cover_date') unless $cover_date;
     return $self->new_story(bad => \@bad) if @bad;
 
     # create the object
@@ -277,7 +287,7 @@ sub create {
             class      => $type,
             title      => $title,
             slug       => $slug,
-            categories => [ @category_ids ],
+            categories => [@category_ids],
             cover_date => $cover_date
         );
     };
@@ -347,8 +357,8 @@ sub check_in_and_save {
 
     # handle exception
     if ($@) {
-	$self->add_save_alert($story, $@);
-	return $self->edit;
+        $self->add_save_alert($story, $@);
+        return $self->edit;
     }
 
     add_message(
@@ -418,7 +428,7 @@ sub checkout_and_edit {
 
         $query->delete('story_id');
         $session{story} = $story;
-        
+
         # this hack catches Edit -> View -> Edit (!) cases so they don't overwrite cancel info
         unless ($query->param('version') && $query->param('return_params') eq 'rm') {
             $self->_cancel_edit_goes_to('story.pl?rm=find', $story->checked_out_by);
@@ -473,8 +483,8 @@ sub edit {
     # set fields shown everywhere
     $template->param(
         story_id => $story->story_id || "N/A",
-        type     => localize($story->element->display_name),
-        url      => $story->url
+        type => localize($story->element->display_name),
+        url  => $story->url
         ? format_url(
             url    => $story->url,
             linkto => "javascript:preview_and_stay()",
@@ -489,6 +499,7 @@ sub edit {
 
         # if we got here from a top-level edit...
         if ($query->param('returning_from_root')) {
+
             # maintain query's title & slug, even if empty
             $template->param(
                 title => $query->param('title') || '',
@@ -531,7 +542,7 @@ sub edit {
         }
         $template->param(contribs_loop => \@contribs_loop);
 
-        # figure out where to position 'replace' radio-button (use primary cat unless user selected something else)
+# figure out where to position 'replace' radio-button (use primary cat unless user selected something else)
         my @categories = $story->categories;
         my $selected_for_replace_id =
           ($query->param('category_to_replace_id') || (@categories && $categories[0]->category_id));
@@ -550,10 +561,10 @@ sub edit {
             push(
                 @category_loop,
                 {
-                    auto_category        => $template->param('auto_category'), # so it's usable within loop
-                    site                 => $site,
-                    category             => $dir,
-                    category_id          => $cat->category_id,
+                    auto_category => $template->param('auto_category'), # so it's usable within loop
+                    site          => $site,
+                    category      => $dir,
+                    category_id   => $cat->category_id,
                     selected_for_replace => ($cat->category_id == $selected_for_replace_id)
                 }
             );
@@ -602,7 +613,8 @@ sub edit {
     # permissions
     my %admin_perms = pkg('Group')->user_admin_permissions();
     $template->param(may_publish => $admin_perms{may_publish});
-    $template->param(may_edit_schedule => $admin_perms{admin_scheduler} || $admin_perms{admin_jobs});
+    $template->param(may_edit_schedule => $admin_perms{admin_scheduler}
+          || $admin_perms{admin_jobs});
 
     # get desks for checkin selector
     my $last_desk_id = $story->last_desk_id;
@@ -635,7 +647,7 @@ sub edit {
     $template->param(cancel_changes_owner     => $self->_cancel_edit_changes_owner);
     $template->param(cancel_goes_to_workspace => $self->_cancel_edit_goes_to_workspace);
 
-    $template->param(editing_unsaved_copy     => 1) unless $story->story_id;
+    $template->param(editing_unsaved_copy => 1) unless $story->story_id;
 
     return $template->output();
 }
@@ -769,31 +781,36 @@ sub revert {
     my $self = shift;
     $self->make_sure_story_is_still_ours() || return '';
 
-    my $query   = $self->query;
+    my $query            = $self->query;
     my $selected_version = $query->param('version');
-    my $story   = $session{story};
+    my $story            = $session{story};
     croak("Unable to load story from session!")
-	unless $story;
+      unless $story;
 
     # clean query
     $query->delete_all();
 
     # perform the revert & display result
     my $pre_revert_slug = $story->slug;
-    my $result = $story->revert($selected_version);
+    my $result          = $story->revert($selected_version);
     if ($result->isa('Krang::Story')) {
-	add_message('reverted_story', new_version => $story->version, old_version => $selected_version);
+        add_message(
+            'reverted_story',
+            new_version => $story->version,
+            old_version => $selected_version
+        );
     } else {
-	# there was an error. if slug has changed, leave change in query but undo it in actual object 
-	# (this way, calls to process_slug_input() will see that slug has changed and do dupe-URL check)
-	add_alert('reverted_story_no_save', old_version => $selected_version);
-	if ($story->slug ne $pre_revert_slug) {
-	    $query->param(reverted_to_slug => $story->slug);
-	    $story->slug($pre_revert_slug);
-	}
+
+    # there was an error. if slug has changed, leave change in query but undo it in actual object
+    # (this way, calls to process_slug_input() will see that slug has changed and do dupe-URL check)
+        add_alert('reverted_story_no_save', old_version => $selected_version);
+        if ($story->slug ne $pre_revert_slug) {
+            $query->param(reverted_to_slug => $story->slug);
+            $story->slug($pre_revert_slug);
+        }
     }
 
-    $query->param(reverted_to_version => $selected_version); # persist to edit screen
+    $query->param(reverted_to_version => $selected_version);    # persist to edit screen
     return $self->edit();
 }
 
@@ -986,8 +1003,8 @@ sub db_save {
     my $story = $session{story};
     eval { $story->save() };
     if ($@) {
-	$self->add_save_alert($story, $@);
-	return $self->edit;
+        $self->add_save_alert($story, $@);
+        return $self->edit;
     }
 
     add_message(
@@ -1001,7 +1018,7 @@ sub db_save {
     delete $session{story};
 
     # return to workspace
-    $self->redirect_to_workspace;    
+    $self->redirect_to_workspace;
 }
 
 =item db_save_and_stay
@@ -1019,11 +1036,11 @@ sub db_save_and_stay {
     return $output if length $output;
 
     # save story to the database
-    my $story  = $session{story};
+    my $story = $session{story};
     eval { $story->save() };
     if ($@) {
-	$self->add_save_alert($story, $@);
-	return $self->edit;
+        $self->add_save_alert($story, $@);
+        return $self->edit;
     }
 
     add_message(
@@ -1033,14 +1050,14 @@ sub db_save_and_stay {
         version  => $story->version
     );
 
-    # if story wasn't ours to begin with, Cancel should now 
+    # if story wasn't ours to begin with, Cancel should now
     # redirect to our Workspace since we created a new version
     $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER})
       if $self->_cancel_edit_changes_owner;
 
     # if previous version was a copy, no longer mention that
-    $self->query->delete('reverted_to_version'); 
-    
+    $self->query->delete('reverted_to_version');
+
     # return to edit
     $self->query->delete('version');    # it doesn't matter what version it was before the save
     return $self->edit();
@@ -1129,8 +1146,8 @@ sub save_and_publish {
 
     # handle exception
     if ($@) {
-	$self->add_save_alert($story, $@);
-	return $self->edit;
+        $self->add_save_alert($story, $@);
+        return $self->edit;
     }
 
     add_message(
@@ -1443,16 +1460,18 @@ sub add_category {
       unless $category;
 
     # make sure it passes validation check
-    my $validate = $story->class->validate_category(category => $category,
-                                                    slug => $story->slug,
-                                                    title => $story->title,
-                                                    cover_date => $story->cover_date);
+    my $validate = $story->class->validate_category(
+        category   => $category,
+        slug       => $story->slug,
+        title      => $story->title,
+        cover_date => $story->cover_date
+    );
     unless ($validate == 1) {
         add_alert('bad_category', explanation => $validate || '');
         return $self->edit();
     }
 
-    # add it to list 
+    # add it to list
     push(@categories, $category);
 
     # and, assuming update_categories() succeeds...
@@ -1557,10 +1576,12 @@ sub replace_category {
       unless $new_category;
 
     # make sure new one passes validation check
-    my $validate = $story->class->validate_category(category => $new_category,
-                                                    slug => $story->slug,
-                                                    title => $story->title,
-                                                    cover_date => $story->cover_date);
+    my $validate = $story->class->validate_category(
+        category   => $new_category,
+        slug       => $story->slug,
+        title      => $story->title,
+        cover_date => $story->cover_date
+    );
     unless ($validate == 1) {
         add_alert('bad_category', explanation => $validate || '');
         return $self->edit();
@@ -1944,9 +1965,11 @@ sub _do_find {
         $persist_vars{search_filter} = $search_filter;
         $template->param(search_filter => $search_filter);
 
-        my $check_full_text = defined ($q->param('search_filter')) ?
-          $q->param('search_filter_check_full_text') : $session{KRANG_PERSIST}{pkg('Story')}{search_filter_check_full_text};
-        $find_params{simple_search_check_full_text} = $check_full_text;
+        my $check_full_text =
+          defined($q->param('search_filter'))
+          ? $q->param('search_filter_check_full_text')
+          : $session{KRANG_PERSIST}{pkg('Story')}{search_filter_check_full_text};
+        $find_params{simple_search_check_full_text}  = $check_full_text;
         $persist_vars{search_filter_check_full_text} = $check_full_text;
         $template->param(search_filter_check_full_text => $check_full_text);
     }
@@ -2066,9 +2089,9 @@ sub list_active {
     # Set up output
     my $template = $self->load_tmpl('list_active.tmpl', associate => $q);
     $template->param(
-        pager_html            => $pager_tmpl->output,
-        row_count             => $pager->row_count,
-        may_checkin_all       => $may_checkin_all,
+        pager_html      => $pager_tmpl->output,
+        row_count       => $pager->row_count,
+        may_checkin_all => $may_checkin_all,
     );
     return $template->output;
 }
@@ -2115,7 +2138,7 @@ sub checkout_selected {
 
     my $was_checked_out;
     foreach my $story_id (@story_checkout_list) {
-        my ($s) = pkg('Story')->find(story_id=>$story_id);
+        my ($s) = pkg('Story')->find(story_id => $story_id);
         unless ($was_checked_out = $s->checked_out) {
             $s->checkout();
         }
@@ -2128,9 +2151,9 @@ sub checkout_selected {
         # Redirect to Workplace
         return $self->redirect_to_workspace;
     } else {
-        ($session{story}) = pkg('Story')->find(story_id=>$story_checkout_list[0]);
+        ($session{story}) = pkg('Story')->find(story_id => $story_checkout_list[0]);
         add_message('selected_stories_checkout_one');
-        
+
         # Redirect to Edit
         $self->_cancel_edit_goes_to('story.pl?rm=find', $was_checked_out && $ENV{REMOTE_USER});
         return $self->edit();
@@ -2182,17 +2205,19 @@ sub steal_selected {
     foreach my $story_id (@story_ids) {
         my ($s) = pkg('Story')->find(story_id => $story_id);
         if ($s->checked_out_by ne $ENV{REMOTE_USER}) {
-	    # this story was checked out to someone else; steal it and keep track of victim
+
+            # this story was checked out to someone else; steal it and keep track of victim
             my ($victim) = pkg('User')->find(user_id => $s->checked_out_by);
             my $victim_name = $q->escapeHTML($victim->first_name . ' ' . $victim->last_name);
-	    add_history(object => $s, action => 'steal');
-            $s->checkin(); 
-	    $s->checkout();    
+            add_history(object => $s, action => 'steal');
+            $s->checkin();
+            $s->checkout();
             $victims{$victim_name} = $victim->user_id;
             push @stolen_ids, $story_id;
         } else {
+
             # this story was already ours!
-            push @owned_ids, $story_id;    
+            push @owned_ids, $story_id;
         }
     }
 
@@ -2215,7 +2240,7 @@ sub steal_selected {
         if (@owned_ids) {
             (@owned_ids > 1)
               ? add_message('multiple_stories_yours', ids => join(' & ', @owned_ids))
-              : add_message('one_story_yours',        id  => $owned_ids[0]);
+              : add_message('one_story_yours', id => $owned_ids[0]);
         }
         if (@stolen_ids) {
             (@stolen_ids > 1)
@@ -2230,14 +2255,14 @@ sub steal_selected {
 
     # if user selected one story, and it's editable....
     if ((@story_ids == 1) && ($single_story->may_edit)) {
-        
+
         # open it (after storing cancel info)
         ($session{story}) = $single_story;
-        $self->_cancel_edit_goes_to('story.pl?rm=list_active', 
-                                    %victims ? (values %victims)[0] : $ENV{REMOTE_USER});
-        return $self->edit; 
+        $self->_cancel_edit_goes_to('story.pl?rm=list_active',
+            %victims ? (values %victims)[0] : $ENV{REMOTE_USER});
+        return $self->edit;
     } else {    # otherwise send user to Workspace
-        # otherwise go to Workspace
+                # otherwise go to Workspace
         return $self->redirect_to_workspace;
     }
 }
@@ -2247,18 +2272,18 @@ sub steal_selected {
 ###########################
 
 # handle edit save errors (used by db_save, db_save_and_stay, and revert)
-sub add_save_alert  {
+sub add_save_alert {
     my ($self, $story, $error) = @_;
     if (ref($error) and $error->isa('Krang::Story::DuplicateURL')) {
         $self->alert_duplicate_url(error => $error, class => $story->class);
     } elsif (ref($error) and $error->isa('Krang::Story::MissingCategory')) {
         add_alert('missing_category_on_save');
     } else {
+
         # rethrow
         die($error);
     }
 }
-    
 
 # Pager row handler for story find run-mode
 sub find_story_row_handler {
@@ -2274,8 +2299,8 @@ sub find_story_row_handler {
     ) ? 0 : 1;
 
     # Columns:
-    $row->{story_id}   = $story->story_id();
-    $row->{title}      = $story->title;
+    $row->{story_id} = $story->story_id();
+    $row->{title}    = $story->title;
 
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url(
@@ -2285,7 +2310,8 @@ sub find_story_row_handler {
 
     # cover_date
     my $tp = $story->cover_date();
-    $row->{cover_date} = (ref($tp)) ? $tp->strftime(localize('%m/%d/%Y %I:%M %p')) : localize('[n/a]');
+    $row->{cover_date} =
+      (ref($tp)) ? $tp->strftime(localize('%m/%d/%Y %I:%M %p')) : localize('[n/a]');
 
     # type and version
     if ($show_type_and_version) {
@@ -2294,15 +2320,16 @@ sub find_story_row_handler {
     }
 
     # command column
-    $row->{commands_column} = qq|<input value="|
+    $row->{commands_column} =
+        qq|<input value="|
       . localize('View Detail')
       . qq|" onclick="view_story('|
-      . $story->story_id 
-      . qq|')" type="button" class="button">|
-      . ' '
+      . $story->story_id
+      . qq|')" type="button" class="button">| . ' '
       . qq|<input value="|
       . localize('View Log')
-      . qq|" onclick="view_story_log('| . $story->story_id 
+      . qq|" onclick="view_story_log('|
+      . $story->story_id
       . qq|')" type="button" class="button">|;
 
     # short-circuit for trashed stories
@@ -2339,24 +2366,26 @@ sub find_story_row_handler {
         } else {
             $pager->column_display(status => 1);
             if ($story->checked_out) {
-                $row->{status} = 
-                  localize('Live')
+                $row->{status} =
+                    localize('Live')
                   . ' <br/> '
-                  . localize('Checked out by')
-                  . ' <b>' . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login . '</b>';
+                  . localize('Checked out by') . ' <b>'
+                  . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login . '</b>';
             } elsif ($story->desk_id) {
                 $row->{status} =
-                  localize('Live')
+                    localize('Live')
                   . ' <br/> '
-                  . localize('On')
-                  . ' <b>' . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name . '</b> '
+                  . localize('On') . ' <b>'
+                  . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name . '</b> '
                   . localize('Desk');
             } else {
                 $row->{status} = localize('Live');
             }
-            $row->{pub_status} = $story->published_version ? '<b>'.localize('P').'</b>' : '&nbsp;'; 
-        }     
+            $row->{pub_status} =
+              $story->published_version ? '<b>' . localize('P') . '</b>' : '&nbsp;';
+        }
     } else {
+
         # Find Story screen
         $pager->column_display(status => 1);
         if ($story->retired) {
@@ -2375,20 +2404,21 @@ sub find_story_row_handler {
               . qq|" onclick="retire_story('|
               . $story->story_id
               . qq|')" type="button" class="button">|
-                  if $may_edit_and_retire;
+              if $may_edit_and_retire;
             if ($story->checked_out) {
-                $row->{status} = 
-                  localize('Checked out by')
-                  . ' <b>' . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login . '</b>';
+                $row->{status} =
+                  localize('Checked out by') . ' <b>'
+                  . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login . '</b>';
             } elsif ($story->desk_id) {
                 $row->{status} =
-                  localize('On')
-                  . ' <b>' . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name . '</b> '
+                    localize('On') . ' <b>'
+                  . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name . '</b> '
                   . localize('Desk');
             } else {
                 $row->{status} = '&nbsp;';
-                }        
-            $row->{pub_status} = $story->published_version ? '<b>'.localize('P').'</b>' : '&nbsp;'; 
+            }
+            $row->{pub_status} =
+              $story->published_version ? '<b>' . localize('P') . '</b>' : '&nbsp;';
         }
     }
 
@@ -2419,7 +2449,7 @@ sub list_active_row_handler {
     $row->{title} = $q->escapeHTML($story->title);
 
     # commands column
-    $row->{commands_column} = 
+    $row->{commands_column} =
         qq|<input value="|
       . localize('View Detail')
       . qq|" onclick="view_story('|
@@ -2513,33 +2543,39 @@ sub process_category_input {
     my $cat_id = $args{category_id};
 
     if ($class->category_input eq 'prohibit') {
+
         # this type doesn't allow manual selection for category, so auto-select
         return $class->auto_category_ids(%args);
     } elsif ($cat_id) {
+
         # user made a manual selection for category, so validate it
         my ($category) = pkg('Category')->find(category_id => $cat_id);
         my $validate = $class->validate_category(category => $category, %args);
         if ($validate == 1) {
+
             # a return code of 1 means success
-            return $cat_id; 
+            return $cat_id;
         } else {
+
             # anything else is an error passed on to the user
             add_alert('bad_category', explanation => $validate || '');
             return;
         }
     } else {
+
         # user left category blank
         if ($class->category_input eq 'require') {
+
             # and this type requires manual selection
             add_alert('missing_category');
             return;
         } else {
+
             # and this type autoselects category when blank
             return $class->auto_category_ids(%args);
         }
     }
 }
-
 
 sub process_slug_input {
 
@@ -2610,9 +2646,10 @@ sub alert_duplicate_url {
 
     # figure out how our story builds its URL (to remind user)
     my $attribs = localize(join(', ', $class->url_attributes));
-    my $url_attributes = $attribs
-                       ? $attribs . ' ' . localize('and site/category')
-	               : localize('site/category');
+    my $url_attributes =
+        $attribs
+      ? $attribs . ' ' . localize('and site/category')
+      : localize('site/category');
 
     # find clashing stories/categories, and add alert
     if ($error->stories) {

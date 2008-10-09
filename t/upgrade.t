@@ -8,20 +8,20 @@ use Krang::ClassLoader 'Script';
 my $upmod_path;
 
 BEGIN {
+
     # Path to uprade modules
-    $upmod_path = $ENV{KRANG_ROOT} ."/upgrade";
+    $upmod_path = $ENV{KRANG_ROOT} . "/upgrade";
     unshift(@INC, $upmod_path);
 }
 
 find_and_test_upgrade_modules();
 
 sub find_and_test_upgrade_modules {
+
     # Find upgrade modules
 
-    opendir(DIR, $upmod_path) || die ("Unable to open upgrade directory '$upmod_path': $!");
-    my @upmodules = (grep {
-        (-f "$upmod_path/$_") && (/^V(\d+)\_(\d+)\.pm$/)
-    } readdir(DIR));
+    opendir(DIR, $upmod_path) || die("Unable to open upgrade directory '$upmod_path': $!");
+    my @upmodules = (grep { (-f "$upmod_path/$_") && (/^V(\d+)\_(\d+)\.pm$/) } readdir(DIR));
     closedir(DIR);
 
     # Test upgrade modules
@@ -29,7 +29,6 @@ sub find_and_test_upgrade_modules {
         test_upgrade_module($upmod);
     }
 }
-
 
 sub test_upgrade_module {
     my $module = shift;
@@ -51,5 +50,4 @@ sub test_upgrade_module {
     # IS it a sub-class of Krang::Upgrade?
     isa_ok($upgrade, "Krang::Upgrade");
 }
-
 

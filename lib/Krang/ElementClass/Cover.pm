@@ -12,7 +12,6 @@ sub slug_use {
     return 'discourage';
 }
 
-
 =head1 NAME
 
 Krang::ElementClass::Cover - cover element base class

@@ -59,15 +59,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -89,37 +92,42 @@ use Krang::ClassFactory qw(pkg);
 use Getopt::Long;
 use Pod::Usage;
 my ($help, $man);
-my $format   = 'png';
-my $output   = "element.$format";
-my $contribs = 50;
-my $modules = 1;
+my $format          = 'png';
+my $output          = "element.$format";
+my $contribs        = 50;
+my $modules         = 1;
 my $class_to_render = "";
-my $direction = 'right';
-pod2usage(2) unless
-  GetOptions(help         => \$help,
-             man          => \$man,
-             'format=s'   => \$format,
-             'output=s'   => \$output,
-             'modules=i'  => \$modules,
-             'class=s'    => \$class_to_render,
-             'direction=s'=> \$direction,
-            );
+my $direction       = 'right';
+pod2usage(2)
+  unless GetOptions(
+    help          => \$help,
+    man           => \$man,
+    'format=s'    => \$format,
+    'output=s'    => \$output,
+    'modules=i'   => \$modules,
+    'class=s'     => \$class_to_render,
+    'direction=s' => \$direction,
+  );
 
-pod2usage(1)             if $help;
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'ElementLibrary';
 use GraphViz;
 
-my $g = GraphViz->new(rankdir => ($direction eq 'down' ? 0 : 1),
-                      concentrate => 1,
-                      node => { fontname => "courier",
-                                fontsize => 10,
-                             },
-                      edge => { fontname => "courier",
-                                fontsize => 8,
-                              });
+my $g = GraphViz->new(
+    rankdir => ($direction eq 'down' ? 0 : 1),
+    concentrate => 1,
+    node        => {
+        fontname => "courier",
+        fontsize => 10,
+    },
+    edge => {
+        fontname => "courier",
+        fontsize => 8,
+    }
+);
 
 our %EDGES;
 
@@ -127,9 +135,11 @@ my @top_names = pkg('ElementLibrary')->top_levels();
 @top_names = ($class_to_render) if $class_to_render;
 foreach my $top_name (@top_names) {
     my $top = pkg('ElementLibrary')->top_level(name => $top_name);
-    $g->add_node($top->name, 
-                 shape => 'ellipse',
-                 rank  => 'top_levels');
+    $g->add_node(
+        $top->name,
+        shape => 'ellipse',
+        rank  => 'top_levels'
+    );
     my @children = $top->children();
     _render_element_inheritence($top) if $modules;
     _render_children($top, @children);
@@ -137,23 +147,28 @@ foreach my $top_name (@top_names) {
 
 sub _render_element_inheritence {
     my $element = shift;
-    my $class = ref($element);
+    my $class   = ref($element);
     if ($class =~ /^Krang/) {
-        $g->add_node($class, 
-                     rank  => 'krang_direct',
-                     shape => 'box',
-                     color => 'red');
+        $g->add_node(
+            $class,
+            rank  => 'krang_direct',
+            shape => 'box',
+            color => 'red'
+        );
     } else {
-        $g->add_node($class, 
-                     rank  => 'set_direct', 
-                     shape => 'box',
-                     color => 'green');
+        $g->add_node(
+            $class,
+            rank  => 'set_direct',
+            shape => 'box',
+            color => 'green'
+        );
     }
-                     
-    $g->add_edge($class => $element->name, 
-                 weight => .5, 
-                 color  => 'grey')
-      unless $EDGES{$class}{$element->name}++;
+
+    $g->add_edge(
+        $class => $element->name,
+        weight => .5,
+        color  => 'grey'
+    ) unless $EDGES{$class}{$element->name}++;
     _render_class_inheritence($class);
 }
 
@@ -162,13 +177,16 @@ sub _render_class_inheritence {
     no strict 'refs';
     my @parents = @{"${class}::ISA"};
     for my $parent (@parents) {
-        $g->add_node($parent, 
-                     shape => 'box',
-                     color => 'grey',);
-        $g->add_edge($parent => $class, 
-                     weight => .5,
-                     color  => 'grey')
-          unless $EDGES{$parent}{$class}++;
+        $g->add_node(
+            $parent,
+            shape => 'box',
+            color => 'grey',
+        );
+        $g->add_edge(
+            $parent => $class,
+            weight  => .5,
+            color   => 'grey'
+        ) unless $EDGES{$parent}{$class}++;
         _render_class_inheritence($parent);
     }
 }
@@ -177,26 +195,27 @@ sub _render_children {
     my ($parent, @children) = @_;
     foreach my $element (@children) {
         _render_element_inheritence($element) if $modules;
-        $g->add_node($element->name, 
-                     shape => 'ellipse',
-                     color => 'blue',
-                    );
+        $g->add_node(
+            $element->name,
+            shape => 'ellipse',
+            color => 'blue',
+        );
 
         my $label;
         if ($element->min == 1 and $element->max == 1) {
             $label = "1";
         } elsif ($element->max) {
-            $label = $element->min . " .. "  .$element->max;
+            $label = $element->min . " .. " . $element->max;
         } else {
             $label = $element->min . " .. *";
         }
-                       
-        $g->add_edge($parent->name, $element->name, 
-                     label  => $label, 
-                     weight => 2,
-                     style  => 'bold',
-                    )
-          unless $EDGES{$parent->name}{$element->name}++;
+
+        $g->add_edge(
+            $parent->name, $element->name,
+            label  => $label,
+            weight => 2,
+            style  => 'bold',
+        ) unless $EDGES{$parent->name}{$element->name}++;
         if ($element->children) {
             _render_children($element, $element->children);
         }

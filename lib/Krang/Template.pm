@@ -464,7 +464,7 @@ sub delete {
 
     # Is user allowed to delete objects from the trashbin?
     Krang::Template::NoDeleteAccess->throw(
-        message  => "Not allowed to delete templates",
+        message     => "Not allowed to delete templates",
         template_id => $self->template_id
     ) unless pkg('Group')->user_admin_permissions('admin_delete');
 
@@ -795,16 +795,22 @@ sub find {
                 qw( simple_search
                   below_category_id
                   may_see
-                  may_edit 
+                  may_edit
                   full_text_string )
             )
           );
 
-        if ($arg eq 'template_id' && (ref($args{$arg}) || "")eq 'ARRAY' && scalar(@{$args{$arg}}) > 0) {
+        if (   $arg eq 'template_id'
+            && (ref($args{$arg}) || "") eq 'ARRAY'
+            && scalar(@{$args{$arg}}) > 0)
+        {
             my $tmp = join(" OR ", map { "t.template_id = ?" } @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
-        } elsif ($arg eq 'category_id' && (ref($args{$arg}) || "") eq 'ARRAY' && scalar(@{$args{$arg}}) > 0) {
+        } elsif ($arg eq 'category_id'
+            && (ref($args{$arg}) || "") eq 'ARRAY'
+            && scalar(@{$args{$arg}}) > 0)
+        {
             my $tmp = join(" OR ", map { "t.category_id = ?" } @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
@@ -822,11 +828,13 @@ sub find {
             foreach my $phrase ($self->_search_text_to_phrases($args{$arg})) {
                 $where_clause .= ' AND ' if $where_clause;
                 if ($phrase =~ /^\s(.*)\s$/) {
+
                     # user wants full-word match: replace spaces w/ MySQL word boundaries
                     $where_clause .= '(t.content RLIKE CONCAT( "[[:<:]]", ?, "[[:>:]]" ))';
                     push(@params, $1);
                 } else {
-                    # user wants regular substring match 
+
+                    # user wants regular substring match
                     $where_clause .= '(t.content LIKE ?)';
                     push(@params, "%${phrase}%");
                 }
@@ -834,20 +842,22 @@ sub find {
         } elsif ($arg eq 'simple_search') {
             foreach my $phrase ($self->_search_text_to_phrases($args{$arg})) {
                 my $numeric = ($phrase =~ /^\d+$/) ? 1 : 0;
-                if( !$numeric ) {
-                    $phrase =~ s/_/\\_/g; # escape any literal 
-                    $phrase =~ s/%/\\%/g; # SQL wildcard chars
+                if (!$numeric) {
+                    $phrase =~ s/_/\\_/g;    # escape any literal
+                    $phrase =~ s/%/\\%/g;    # SQL wildcard chars
                 }
                 $where_clause .= " AND " if $where_clause;
                 $where_clause .= '(' . ($numeric ? "t.template_id = ?" : "t.url LIKE ?");
                 push @params, ($numeric ? $phrase : "%" . $phrase . "%");
                 if ($simple_full_text) {
                     if ($phrase =~ /^\s(.*)\s$/) {
+
                         # user wants full-word match: replace spaces w/ MySQL word boundaries
                         $where_clause .= ' OR t.content RLIKE CONCAT( "[[:<:]]", ?, "[[:>:]]" )';
                         push(@params, $1);
                     } else {
-                        # user wants regular substring match 
+
+                        # user wants regular substring match
                         $where_clause .= ' OR t.content LIKE ?';
                         push(@params, "%${phrase}%");
                     }
@@ -1010,20 +1020,22 @@ sub find {
     return $count ? $templates[0] : @templates;
 }
 
-# this private helper method takes a search string and returns 
-# an array of phrases - e.g. ONE TWO THREE returns (ONE, TWO, 
+# this private helper method takes a search string and returns
+# an array of phrases - e.g. ONE TWO THREE returns (ONE, TWO,
 # THREE) whereas "ONE TWO" THREE returns (ONE TWO, THREE)
 sub _search_text_to_phrases {
     my ($self, $text) = @_;
     my @phrases;
+
     # first add any quoted text as multi-word phrase(s)
     while ($text =~ s/([\'\"])([^\1]*?)\1//) {
         my $phrase = $2;
         $phrase =~ s/\s+/ /;
         push @phrases, $phrase;
     }
+
     # then split remaining text into one-word phrases
-    push @phrases, (split/\s+/, $text);
+    push @phrases, (split /\s+/, $text);
     return @phrases;
 }
 

@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader base => 'ElementClass::Storable';
-use Krang::ClassLoader Log => qw(debug info);
+use Krang::ClassLoader Log  => qw(debug info);
 use Krang::ClassLoader 'ListGroup';
 use Krang::ClassLoader 'List';
 use Krang::ClassLoader 'ListItem';
@@ -12,16 +12,16 @@ use Krang::ClassLoader Localization => qw(localize);
 
 use Carp qw(croak);
 
-use Krang::ClassLoader MethodMaker => 
-  get_set => [ qw( size multiple list_group ) ];
+use Krang::ClassLoader MethodMaker => get_set => [qw( size multiple list_group )];
 
 sub new {
-    my $pkg = shift;
-    my %args = ( size      => 5,
-                 multiple  => 0,
-                 list_group    => '',
-                 @_
-               );
+    my $pkg  = shift;
+    my %args = (
+        size       => 5,
+        multiple   => 0,
+        list_group => '',
+        @_
+    );
 
     return $pkg->SUPER::new(%args);
 }
@@ -29,18 +29,18 @@ sub new {
 sub check_data {
     my ($class, %arg) = @_;
     croak("ListGroup element class requires an array-ref in data().")
-      unless not defined $arg{data} or 
-        (ref($arg{data}) and ref($arg{data}) eq 'ARRAY');
+      unless not defined $arg{data}
+          or (ref($arg{data}) and ref($arg{data}) eq 'ARRAY');
 }
 
 sub input_form {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
     my $jparam;
 
-    my ($lg) = pkg('ListGroup')->find( name => $self->list_group() );
+    my ($lg) = pkg('ListGroup')->find(name => $self->list_group());
 
     my ($all_pulldowns, $html_output);
 
@@ -48,11 +48,12 @@ sub input_form {
     # lists for each one.
     my $list_index = 0;
 
-    my @lists = pkg('List')->find( list_group_id => $lg->list_group_id );
+    my @lists = pkg('List')->find(list_group_id => $lg->list_group_id);
 
     my $element_data = $element->data();
 
     if ($#lists > 0) {
+
         # if there is more than one list (e.g. multidimensional), need
         # to use javascript to manage everything.
 
@@ -73,16 +74,17 @@ sub input_form {
 END
 
         # grab the list of items for the first list in the listgroup:
-        my $x = 0;
-        my @root_items = pkg('ListItem')->find( list_id => $root_list->list_id,
-                                                no_parent => 1,
-                                              );
+        my $x          = 0;
+        my @root_items = pkg('ListItem')->find(
+            list_id   => $root_list->list_id,
+            no_parent => 1,
+        );
         foreach my $item (@root_items) {
             $self->_add_item(\$html_output, $item, "${jparam}_data[$x]", $jparam);
             $x++;
         }
 
-	my $not_found = localize("Couldn't find");
+        my $not_found = localize("Couldn't find");
 
         # setup function to update lists
         $html_output .= <<END;
@@ -122,34 +124,35 @@ function ${jparam}_update( e, which ) {
 
 </script>
 END
-        ;
 
     }
 
-
-
     foreach my $list (@lists) {
+
         # now iterate over the lists, building out everything.
 
         my (@items, @values, %labels);
 
         my $list_param = $param . '_' . $list_index;
 
-        my %params = (-name    => $list_param,
-                      -size    => $self->size(),
-                      -default => ($self->multiple ?
-                                   ($element->data || []) :
-                                   (($element->data && $element->data->[$list_index]) || ""))
-                     );
+        my %params = (
+            -name    => $list_param,
+            -size    => $self->size(),
+            -default => (
+                $self->multiple
+                ? ($element->data || [])
+                : (($element->data && $element->data->[$list_index]) || "")
+            )
+        );
 
         # only populate scrolling listbox for the first list - the
         # rest will be done w/ javascript.
 
         my %find_params = (list_id => $list->list_id);
-        $find_params{parent_list_item_id} = $element->data()->[($list_index - 1)] 
+        $find_params{parent_list_item_id} = $element->data()->[($list_index - 1)]
           if ($list_index && $element->data());
 
-        @items = pkg('ListItem')->find( %find_params );
+        @items = pkg('ListItem')->find(%find_params);
 
         @values = map { $_->list_item_id } @items;
         %labels = map { $_->list_item_id => $_->data } @items;
@@ -158,13 +161,13 @@ END
             $params{-multiple} = 'true';
         }
 
-        $params{-values}  = \@values;
-        $params{-labels}  = \%labels;
+        $params{-values} = \@values;
+        $params{-labels} = \%labels;
 
         # make the jscript call if it is multidimensional
         if ($#lists > 0) {
-            $params{-onclick}  = "${jparam}_update(this, $list_index);";
-            $params{-onkeyup}  = "${jparam}_update(this, $list_index);";
+            $params{-onclick} = "${jparam}_update(this, $list_index);";
+            $params{-onkeyup} = "${jparam}_update(this, $list_index);";
         }
 
         my $pulldown = scalar $query->scrolling_list(%params);
@@ -172,11 +175,9 @@ END
         $pulldown =~ s!<select!<select id="${param}_${list_index}"!i;
 
         if ($#lists > 1) {
-            $all_pulldowns .= sprintf( "<strong>%s</strong><BR>\n%s<BR>\n",
-                                       $list->name, $pulldown );
+            $all_pulldowns .= sprintf("<strong>%s</strong><BR>\n%s<BR>\n", $list->name, $pulldown);
         } else {
-            $all_pulldowns .= sprintf( "%s",
-                                       $pulldown );
+            $all_pulldowns .= sprintf("%s", $pulldown);
         }
 
         $list_index++;
@@ -193,7 +194,7 @@ END
 sub _add_item {
     my $self = shift;
     my ($html, $item, $pre, $jparam, $stop) = @_;
-    my $id = $item->list_item_id;
+    my $id   = $item->list_item_id;
     my $data = $item->data;
     $data =~ s!\\!\\\\!g;
     $data =~ s!"!\\"!g;
@@ -206,7 +207,7 @@ sub _add_item {
     my @sub_items = pkg('ListItem')->find(parent_list_item_id => $id);
     if (@sub_items) {
         my $x = -1;
-        $$html .= $pre. qq{["sub"] = new Array();\n};
+        $$html .= $pre . qq{["sub"] = new Array();\n};
         foreach my $item (@sub_items) {
             $x++;
             $self->_add_item($html, $item, $pre . qq{["sub"][$x]}, $jparam, ($stop || 0) + 1);
@@ -216,11 +217,10 @@ sub _add_item {
     }
 }
 
-
 # param name is based on xpath & the field index
 
 sub load_query_data {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my $param = $element->xpath;
 
@@ -243,29 +243,33 @@ sub template_data {
 
     my @chosen;
     foreach my $e (@{$element->data}) {
-        my $i = (pkg('ListItem')->find( list_item_id => $e ))[0] || '';
+        my $i = (pkg('ListItem')->find(list_item_id => $e))[0] || '';
         push(@chosen, $i->data) if $i;
     }
     return join(', ', @chosen);
 }
 
 # Customized to look for array content in Nth list
-sub validate { 
-    my ($self, %arg) = @_;
+sub validate {
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
     # Find Nth list
     my $i = 0;
-    while (defined($query->param($param."_".$i))) {
+    while (defined($query->param($param . "_" . $i))) {
+
         # Look for next param
         $i++;
     }
-    my $nth_list_param = $param . "_" . ($i-1);
+    my $nth_list_param = $param . "_" . ($i - 1);
     my @values = $query->param($nth_list_param);
 
     if ($self->{required} and (not scalar(@values))) {
-        return (0, localize('List') . ' ' .  localize($self->display_name) . ' ' . localize('requires a value.'));
+        return (0,
+                localize('List') . ' '
+              . localize($self->display_name) . ' '
+              . localize('requires a value.'));
     }
     return 1;
 }
@@ -275,14 +279,13 @@ sub view_data {
     my $element = $arg{element};
     return "" unless $element->data;
 
-    my @chosen; 
+    my @chosen;
     foreach my $e (@{$element->data}) {
-        my $i = (pkg('ListItem')->find( list_item_id => $e ))[0] || '';
+        my $i = (pkg('ListItem')->find(list_item_id => $e))[0] || '';
         push(@chosen, $i->data) if $i;
     }
     return join("<br>", @chosen);
 }
-
 
 # Add ListItems to DataSet.  Remove listitems which no longer exist
 sub freeze_data_xml {
@@ -296,22 +299,21 @@ sub freeze_data_xml {
     foreach my $list_item_id (@$element_data) {
         my ($li) = pkg('ListItem')->find(list_item_id => $list_item_id);
         unless ($li) {
-            info ("Can't find list item for list_item_id '$list_item_id'.  Dropping it from KDS.");
+            info("Can't find list item for list_item_id '$list_item_id'.  Dropping it from KDS.");
             next;
         }
         my $element_id = $element->element_id();
-        debug ("Adding list_item_id '$list_item_id' associated with element_id '$element_id' to KDS");
+        debug(
+            "Adding list_item_id '$list_item_id' associated with element_id '$element_id' to KDS");
         $set->add(object => $li, from => $element->object);
-        push(@real_element_data, $list_item_id); # Only valid list_item_ids
+        push(@real_element_data, $list_item_id);    # Only valid list_item_ids
     }
 
     # Update element data and export
     $element->data(\@real_element_data);
     my $data = $element->freeze_data();
-    $writer->dataElement(data => 
-                         (defined $data and length $data) ? $data : '');
+    $writer->dataElement(data => (defined $data and length $data) ? $data : '');
 }
-
 
 # Map to incoming ListItems
 sub thaw_data_xml {
@@ -324,18 +326,16 @@ sub thaw_data_xml {
     # Expect an arrayref of IDs.  Map these to new IDs.  Set as arrayref in data()
     my @element_data = ();
     foreach my $list_item_id (@{$element->data}) {
-        my $real_list_item_id = $set->map_id( class => pkg('ListItem'),
-                                              id    => $list_item_id );
-        debug ("Mapping list_item_id '$list_item_id' => '$real_list_item_id'");
+        my $real_list_item_id = $set->map_id(
+            class => pkg('ListItem'),
+            id    => $list_item_id
+        );
+        debug("Mapping list_item_id '$list_item_id' => '$real_list_item_id'");
         push(@element_data, $real_list_item_id);
     }
 
     $element->data(\@element_data);
 }
-
-
-
-
 
 =head1 NAME
 

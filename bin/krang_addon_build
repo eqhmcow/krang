@@ -59,15 +59,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     eval { require Krang::Conf };
     warn << "END" and exit(1) if $@;
@@ -83,7 +86,7 @@ $@
 END
 
     # add in $KRANG_ROOT/platform for platform build modules
-    my $plib    = catdir($ENV{KRANG_ROOT}, "platform");
+    my $plib = catdir($ENV{KRANG_ROOT}, "platform");
     $ENV{PERL5LIB} = "$ENV{PERL5LIB}:${plib}";
     unshift @INC, $plib;
 }
@@ -93,62 +96,60 @@ use File::Temp qw(tempdir);
 
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Conf => qw(KrangRoot);
+
 # use first instance if one isn't set.  AddOns are installation wide anyway.
 BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'AddOn';
 
 # options
-my ( @modules, @skip_modules, $platform, $help, $man );
+my (@modules, @skip_modules, $platform, $help, $man);
 GetOptions(
     'module=s'      => \@modules,
     'skip-module=s' => \@skip_modules,
     'platform=s'    => \$platform,
     'help'          => \$help,
     'man'           => \$man,
-  )
-  or pod2usage(2);
+) or pod2usage(2);
 pod2usage(1) if $help;
-pod2usage( -verbose => 2 ) if $man;
+pod2usage(-verbose => 2) if $man;
 
 # get addon name
 my $name;
 if (@ARGV == 1) {
     $name = $ARGV[0];
 } else {
-    pod2usage("Bad arguments to krang_addon_build: '" . 
-              join(' ', @ARGV) . "'\n");
+    pod2usage("Bad arguments to krang_addon_build: '" . join(' ', @ARGV) . "'\n");
 }
 
 # find the addon
 my ($addon) = pkg('AddOn')->find(name => $name);
-die("Can't find addon named '$name'!  The following addons are installed:\n" .
-    join("\n", map { "\t" . $_->name . " v" . $_->version } 
-         pkg('AddOn')->find()) . "\n")
+die("Can't find addon named '$name'!  The following addons are installed:\n"
+      . join("\n", map { "\t" . $_->name . " v" . $_->version } pkg('AddOn')->find()) . "\n")
   unless $addon;
 
 # setup path variables
 my $root      = KrangRoot;
-my $src_dir   = catdir( $root, 'addons', $name, 'src' );
-my $dest_dir  = catdir( $root, 'addons', $name, 'lib' );
-my $build_dir = tempdir(DIR => catdir( $root, 'tmp' ));
+my $src_dir   = catdir($root, 'addons', $name, 'src');
+my $dest_dir  = catdir($root, 'addons', $name, 'lib');
+my $build_dir = tempdir(DIR => catdir($root, 'tmp'));
 
 # stop early if src doesn't exist
 exit 0 unless -e $src_dir;
 
 # setup platform
 opendir(DIR, catdir($root, 'platform')) or die $!;
-my @platforms = 
-  grep { -e catfile($root, 'platform', $_, 'Platform.pm') }
-  readdir(DIR);
-    
+my @platforms =
+  grep { -e catfile($root, 'platform', $_, 'Platform.pm') } readdir(DIR);
+
 if ($platform) {
     unless (-d catdir($root, 'platform', $platform)) {
-        die "Platform '$platform' is not supported.  " . 
-          "Available platforms are:\n\n\t"
-            . join("\n\t", @platforms) . "\n\n";
+        die "Platform '$platform' is not supported.  "
+          . "Available platforms are:\n\n\t"
+          . join("\n\t", @platforms) . "\n\n";
     }
 } else {
+
     # look for a platform that wants to handle this
     my $found;
     foreach my $plat (@platforms) {
@@ -157,17 +158,17 @@ if ($platform) {
         die "Unable to load platform modules '$pkg': $@\n" if $@;
 
         if ($pkg->guess_platform) {
-            $found = 1;
+            $found    = 1;
             $platform = $plat;
             print "Building for platform '$plat'.\n";
             last;
         }
     }
-    die "Unable to automatically determine your platform, you must\n".
-        "provide one on the command line using the --platform option.\n".
-        "Available platforms are:\n\n\t".
-          join("\n\t", @platforms) . "\n\n"
-            unless $found;
+    die "Unable to automatically determine your platform, you must\n"
+      . "provide one on the command line using the --platform option.\n"
+      . "Available platforms are:\n\n\t"
+      . join("\n\t", @platforms) . "\n\n"
+      unless $found;
 }
 
 # load the platform build module, reference via $pkg
@@ -179,13 +180,13 @@ die "Unable to load platform modules '$pkg': $@\n" if $@;
 # $pkg->verify_dependencies(mode => 'build');
 
 # get list of files to build, considering --module and --skip-module opts
-opendir( SRC, $src_dir ) or die "Can't open $src_dir for reading: $!";
+opendir(SRC, $src_dir) or die "Can't open $src_dir for reading: $!";
 my @files = sort readdir(SRC);
 
 if (@modules) {
-    @files = grep { contains( \@modules, $_ ) } @files;
+    @files = grep { contains(\@modules, $_) } @files;
 } elsif (@skip_modules) {
-    @files = grep { !contains( \@skip_modules, $_ ) } @files;
+    @files = grep { !contains(\@skip_modules, $_) } @files;
 }
 
 # loop through files, unpacking and calling build_perl_module()
@@ -209,9 +210,9 @@ sub build_module {
     my $file = shift;
 
     # unpack distribution
-    my $dist_file = catfile( $src_dir, $file );
+    my $dist_file = catfile($src_dir, $file);
     print "Unpacking $dist_file...\n";
-    chdir $build_dir or die "Unable to chdir($build_dir): $!";
+    chdir $build_dir                  or die "Unable to chdir($build_dir): $!";
     system("tar zxf $dist_file") == 0 or die "Couldn't unpack file: $?";
 
     $dist_file =~ m!([^/]+)\.(tar\.|t)gz!;
@@ -229,7 +230,7 @@ sub build_module {
 
 # returns true if list contains a string which contains the target string
 sub contains {
-    my ( $list, $string ) = @_;
-    return grep { index( $string, $_ ) > -1 } @{$list};
+    my ($list, $string) = @_;
+    return grep { index($string, $_) > -1 } @{$list};
 }
 

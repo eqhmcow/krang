@@ -3,23 +3,22 @@ use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::ClassLoader base => 'ElementClass::Storable';
+use Krang::ClassLoader base         => 'ElementClass::Storable';
 use Krang::ClassLoader Localization => qw(localize);
-use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Session      => qw(%session);
 use Carp qw(croak);
 
-use Krang::ClassLoader MethodMaker => 
-  get_set => [ qw( size maxlength start_year end_year ) ];
+use Krang::ClassLoader MethodMaker => get_set => [qw( size maxlength start_year end_year )];
 use Time::Piece;
 
 sub new {
-    my $pkg = shift;
-    my %args = ( 
-                start_year => localtime()->year - 30,
-                end_year => localtime()->year + 10,
-                @_
-               );
-    
+    my $pkg  = shift;
+    my %args = (
+        start_year => localtime()->year - 30,
+        end_year   => localtime()->year + 10,
+        @_
+    );
+
     return $pkg->SUPER::new(%args);
 }
 
@@ -31,20 +30,20 @@ sub default {
 }
 
 sub input_form {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my $date = $element->data();
     return $self->_date_input($query, $element->xpath, $date);
 }
 
-sub param_names { 
+sub param_names {
     my $element = $_[2];
-    my $xpath = $element->xpath;
+    my $xpath   = $element->xpath;
     return ($xpath . "_month", $xpath . "_day", $xpath . "_year");
 }
 
 sub validate {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my $param = $element->xpath();
 
@@ -68,7 +67,7 @@ sub validate {
 }
 
 sub load_query_data {
-    my ($self, %arg) = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my $param = $element->xpath;
 
@@ -89,7 +88,7 @@ sub view_data {
     my $date_separator = '/';
 
     unless ($session{language} eq 'en') {
-	($date_format, $date_separator) = localize('NUMERIC_DATE_FORMAT');
+        ($date_format, $date_separator) = localize('NUMERIC_DATE_FORMAT');
     }
 
     return $element->data->$date_format($date_separator);
@@ -101,7 +100,7 @@ sub _date_input {
     my ($self, $query, $name, $date) = @_;
 
     my %month_labels = {
-        ''  => ' ',
+        '' => ' ',
         1  => 'Jan',
         2  => 'Feb',
         3  => 'Mar',
@@ -117,31 +116,32 @@ sub _date_input {
     };
 
     unless ($session{language} eq 'en') {
-	@month_labels{1..12} = localize('MONTH_LABELS');
+        @month_labels{1 .. 12} = localize('MONTH_LABELS');
     }
 
-    my $m_sel = $query->popup_menu(-name      => $name . "_month",
-                                   -default   => $date ? $date->mon : 0,
-                                   -values    => [ '', 1 .. 12 ],
-                                   -labels    => \%month_labels,
-				  );
-    my $d_sel = $query->popup_menu(-name      => $name . "_day",
-                                   -default   => $date ? $date->mday : 0,
-                                   -values    => [ '', 1 .. 31 ],
-                                   -labels    => { '' => ' ' },
-                                  );
-    my $y_sel = $query->popup_menu(-name      => $name . "_year",
-                                   -default   => $date ? $date->year : 0,
-                                   -values    => [ '', 
-                                                   $self->start_year ..
-                                                   $self->end_year ],
-                                   -labels    => { '' => ' ' });
-
+    my $m_sel = $query->popup_menu(
+        -name => $name . "_month",
+        -default => $date ? $date->mon : 0,
+        -values => ['', 1 .. 12],
+        -labels => \%month_labels,
+    );
+    my $d_sel = $query->popup_menu(
+        -name => $name . "_day",
+        -default => $date ? $date->mday : 0,
+        -values => ['', 1 .. 31],
+        -labels => {''  => ' '},
+    );
+    my $y_sel = $query->popup_menu(
+        -name => $name . "_year",
+        -default => $date ? $date->year : 0,
+        -values => ['', $self->start_year .. $self->end_year],
+        -labels => {''  => ' '}
+    );
 
     if ($session{language} eq 'en') {
-	return $m_sel . "&nbsp;" . $d_sel . "&nbsp;" . $y_sel;
+        return $m_sel . "&nbsp;" . $d_sel . "&nbsp;" . $y_sel;
     } else {
-	return join '&nbsp;', ($m_sel, $d_sel, $y_sel)[localize('DATE_ORDER')];
+        return join '&nbsp;', ($m_sel, $d_sel, $y_sel)[localize('DATE_ORDER')];
     }
 }
 
@@ -154,7 +154,7 @@ sub template_data {
     my ($self, %arg) = @_;
     return "" unless $arg{element}->data;
     $arg{element}->data->strftime(localize('%b %e, %Y'));
-} 
+}
 
 sub thaw_data_xml {
     my ($self, %arg) = @_;
@@ -166,7 +166,7 @@ sub thaw_data_xml {
       unless $data =~ /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/;
 
     my $format = "%Y-%m-%dT%H:%M:%SZ";
-    my $time = Time::Piece->strptime($data,$format);
+    my $time = Time::Piece->strptime($data, $format);
 
     return $element->data($time);
 }
@@ -176,18 +176,12 @@ sub freeze_data_xml {
     my ($element, $writer) = @arg{'element', 'writer'};
     my $data = $element->data;
     return $writer->dataElement(data => '') unless $data;
-    
+
     # build XML
-    my $xml = $writer->dataElement(data => 
-                                   $data->strftime("%Y-%m-%dT%H:%M:%SZ"));
+    my $xml = $writer->dataElement(data => $data->strftime("%Y-%m-%dT%H:%M:%SZ"));
 
     return $xml;
 }
-
-
-
-
-
 
 =head1 NAME
 

@@ -34,7 +34,8 @@ sub check_kids {
     isa_ok($class, "Krang::ElementClass");
     ok($class->name, $class->name . " found");
     for ($class->children()) {
-        is($class->child($_->name), $_, scalar($class->name . "->child(" . $_->name . ") == " . $_->name . ")") );
+        is($class->child($_->name),
+            $_, scalar($class->name . "->child(" . $_->name . ") == " . $_->name . ")"));
         check_kids($_);
     }
 }

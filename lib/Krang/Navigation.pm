@@ -4,10 +4,10 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader 'Desk';
-use Krang::ClassLoader Conf => qw(EnableFTP FTPHostName FTPPort EnableBugzilla);
+use Krang::ClassLoader Conf    => qw(EnableFTP FTPHostName FTPPort EnableBugzilla);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'NavigationNode';
-use Krang::ClassLoader Log => qw(debug info critical);
+use Krang::ClassLoader Log          => qw(debug info critical);
 use Krang::ClassLoader Localization => qw(localize);
 use Carp qw(croak);
 use CGI;
@@ -76,20 +76,21 @@ sub fill_template {
 
     my $instance = pkg('Conf')->instance;
 
-    my %perms = ( desk  => { pkg('Group')->user_desk_permissions()  },
-                  asset => { pkg('Group')->user_asset_permissions() },
-                  admin => { pkg('Group')->user_admin_permissions() },
-                );
+    my %perms = (
+        desk  => {pkg('Group')->user_desk_permissions()},
+        asset => {pkg('Group')->user_asset_permissions()},
+        admin => {pkg('Group')->user_admin_permissions()},
+    );
 
     $TREE{$instance} = $pkg->initialize_tree($instance, \%perms);
 
     $template->param(nav_content => $pkg->render($TREE{$instance}, \%perms));
 
     # set global admin if all admin perms are on
-    $template->param(nav_global_admin => 1) 
-      unless grep { not $perms{admin}{$_} } 
-             grep { $_ ne 'admin_users_limited' } 
-             keys %{$perms{admin}};
+    $template->param(nav_global_admin => 1)
+      unless grep { not $perms{admin}{$_} }
+          grep { $_ ne 'admin_users_limited' }
+          keys %{$perms{admin}};
 }
 
 # render the navigation menu held in the navigation tree
@@ -103,16 +104,14 @@ sub render {
     return if $condition and not $condition->($perms);
 
     # handle root
-    return join('', map { $pkg->render($_, $perms, $depth+1, ++$index) }
-                      $node->daughters)
+    return join('', map { $pkg->render($_, $perms, $depth + 1, ++$index) } $node->daughters)
       unless $node->mother;
 
     # recurse and build up kids
-    my $i = 1;
-    my $kids =
-      join("</dt>\n<dt>", grep { defined }
-                   map { $pkg->render($_, $perms, $depth+1, $index + $i++) }
-                         $node->daughters);
+    my $i    = 1;
+    my $kids = join("</dt>\n<dt>",
+        grep { defined }
+          map { $pkg->render($_, $perms, $depth + 1, $index + $i++) } $node->daughters);
 
     # get link for node
     my $link = $node->link;
@@ -120,10 +119,9 @@ sub render {
 
     # format name with link
     my $name =
-      ($link ?
-       qq{<a href="} . $link . qq{" class="nav_link">} : "") .
-      localize($node->name) .
-      ($link ? qq{</a>} : '');
+        ($link ? qq{<a href="} . $link . qq{" class="nav_link">} : "")
+      . localize($node->name)
+      . ($link ? qq{</a>} : '');
 
     my $class = lc($node->name);
     $class =~ s/\s+/_/g;
@@ -133,21 +131,23 @@ sub render {
     my $opened_panels = $pkg->_get_opened_panels();
 
     if ($depth == 1) {
-        my $opened_style = $opened_panels->{$index -1} ? '' : ' style="display:none"';
+        my $opened_style = $opened_panels->{$index - 1} ? '' : ' style="display:none"';
         if ($index == 1) {
-            $pre = qq{<div class="first nav_panel"><h2 class="$class"><span>$name</span></h2><div$opened_style><dl>\n<dt>};
+            $pre =
+              qq{<div class="first nav_panel"><h2 class="$class"><span>$name</span></h2><div$opened_style><dl>\n<dt>};
         } else {
-            $pre = qq{<div class="nav_panel"><h2 class="$class"><span>$name</span></h2><div$opened_style><dl>\n<dt>};
+            $pre =
+              qq{<div class="nav_panel"><h2 class="$class"><span>$name</span></h2><div$opened_style><dl>\n<dt>};
         }
         $post = qq{</dt>\n</dl></div></div>\n\n};
     } elsif ($depth == 2) {
-        if( $kids ) {
+        if ($kids) {
             $pre = qq{<b>$name</b></dt>\n<dt>};
         } else {
             $pre = $name;
         }
     } else {
-       $pre = $name;
+        $pre = $name;
     }
 
     # all done, paste it together
@@ -175,27 +175,27 @@ sub default_tree {
     $node->name('Stories');
     $node->condition(sub { shift->{asset}{story} ne 'hide' });
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('New Story');
     $sub->link('story.pl');
     $sub->condition(sub { shift->{asset}{story} ne 'read-only' });
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Find Stories');
     $sub->link('story.pl?rm=find');
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Active Stories');
     $sub->link('story.pl?rm=list_active');
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Retired Stories');
     $sub->link('story.pl?rm=list_retired');
 
-    my @desks = pkg('Desk')->find(order_by => 'order');
+    my @desks                 = pkg('Desk')->find(order_by => 'order');
     my $user_desk_permissions = $perms->{desk};
-    my $show_desk_section = grep { $user_desk_permissions->{$_->desk_id} ne 'hide' } @desks;
-    if( $show_desk_section ) {
+    my $show_desk_section     = grep { $user_desk_permissions->{$_->desk_id} ne 'hide' } @desks;
+    if ($show_desk_section) {
         $sub = $node->new_daughter();
         $sub->name('Desks');
 
@@ -213,24 +213,24 @@ sub default_tree {
     $node->name('Media');
     $node->condition(sub { shift->{asset}{media} ne 'hide' });
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('New Media');
     $sub->link('media.pl?rm=add_media');
     $sub->condition(sub { shift->{asset}{media} ne 'read-only' });
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Find Media');
     $sub->link('media.pl');
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Active Media');
-    $sub->link('media.pl?rm=list_active');    
+    $sub->link('media.pl?rm=list_active');
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Retired Media');
     $sub->link('media.pl?rm=list_retired');
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Bulk Upload');
     $sub->link('media_bulk_upload.pl');
     $sub->condition(sub { shift->{asset}{media} ne 'read-only' });
@@ -240,43 +240,49 @@ sub default_tree {
     $node->name('Templates');
     $node->condition(sub { shift->{asset}{template} ne 'hide' });
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('New Template');
     $sub->link('template.pl?rm=add');
     $sub->condition(sub { shift->{asset}{template} ne 'read-only' });
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Find Templates');
     $sub->link('template.pl');
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Active Templates');
     $sub->link('template.pl?rm=list_active');
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Retired Templates');
     $sub->link('template.pl?rm=list_retired');
 
     # setup template FTP link (which is dynamic) unless it's disabled
-    if( EnableFTP ) {
-        $sub  = $node->new_daughter();
+    if (EnableFTP) {
+        $sub = $node->new_daughter();
         $sub->name('FTP');
         $sub->link(
-           sub {
-               my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
-               return "ftp://" . $user->login . '@' . 
-                       FTPHostName . ':' . FTPPort .  '/' . $ENV{KRANG_INSTANCE} .
-                       '/template';
-           });
+            sub {
+                my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
+                return "ftp://"
+                  . $user->login . '@'
+                  . FTPHostName . ':'
+                  . FTPPort . '/'
+                  . $ENV{KRANG_INSTANCE}
+                  . '/template';
+            }
+        );
         $sub->condition(sub { shift->{asset}{template} ne 'read-only' });
     }
 
     # admin block
     my $admin_node = $root->new_daughter();
     $admin_node->name('Admin');
-    $admin_node->condition(sub { grep { !$_->condition or 
-                                        $_->condition->(@_) } 
-                                   $admin_node->daughters() });
+    $admin_node->condition(
+        sub {
+            grep { !$_->condition or $_->condition->(@_) } $admin_node->daughters();
+        }
+    );
 
     $node = $admin_node;
     $sub  = $node->new_daughter();
@@ -284,42 +290,42 @@ sub default_tree {
     $sub->link('user.pl');
     $sub->condition(sub { $_[0]->{admin}{admin_users} or $_[0]->{admin}{admin_users_limited} });
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Groups');
     $sub->link('group.pl');
     $sub->condition(sub { shift->{admin}{admin_groups} });
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Desks');
     $sub->link('desk_admin.pl');
     $sub->condition(sub { shift->{admin}{admin_desks} });
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Contributors');
     $sub->link('contributor.pl');
     $sub->condition(sub { shift->{admin}{admin_contribs} });
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Sites');
     $sub->link('site.pl');
     $sub->condition(sub { shift->{admin}{admin_sites} });
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Categories');
     $sub->link('category.pl');
     $sub->condition(sub { shift->{admin}{admin_categories} });
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Lists');
     $sub->link('list_group.pl');
     $sub->condition(sub { shift->{admin}{admin_lists} });
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Jobs');
     $sub->link('schedule.pl?rm=list_all');
     $sub->condition(sub { shift->{admin}{admin_jobs} });
 
-    $sub  = $node->new_daughter();
+    $sub = $node->new_daughter();
     $sub->name('Submit a Bug');
     $sub->link('bug.cgi');
     $sub->condition(sub { EnableBugzilla });
@@ -328,9 +334,9 @@ sub default_tree {
     $sub->name('Scheduler');
     $sub->link('schedule.pl?advanced_schedule=1&amp;rm=edit_admin');
     $sub->condition(
-        sub { 
-            shift->{admin}{admin_scheduler} 
-                && pkg('AddOn')->find(condition => 'EnableAdminSchedulerActions')
+        sub {
+            shift->{admin}{admin_scheduler}
+              && pkg('AddOn')->find(condition => 'EnableAdminSchedulerActions');
         }
     );
 
@@ -338,10 +344,10 @@ sub default_tree {
 }
 
 sub _get_opened_panels {
-    my $pkg = shift;
+    my $pkg     = shift;
     my %cookies = CGI::Cookie->fetch();
-    my $cookie = $cookies{'KRANG_NAV_ACCORDION_OPEN_PANELS'};
-    my $value = '';
+    my $cookie  = $cookies{'KRANG_NAV_ACCORDION_OPEN_PANELS'};
+    my $value   = '';
     $value = $cookie->value if $cookie;
 
     my %opened = map { $_ => 1 } split(',', $value);

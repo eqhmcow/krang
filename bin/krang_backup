@@ -63,15 +63,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -92,7 +95,7 @@ END
 use Krang;
 use Krang::ClassFactory qw(pkg);
 
-# use first instance if one isn't set. 
+# use first instance if one isn't set.
 use Krang::ClassLoader Conf => qw(KrangRoot InstanceDBName DBUser DBPass DBHost);
 BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 
@@ -106,14 +109,15 @@ use Cwd qw(cwd);
 my ($single_instance, $help, $man, $compress);
 my $verbose = 0;
 
-pod2usage(2) unless
-  GetOptions('instance=s'   => \$single_instance,
-	     'help'         => \$help,
-             'man'          => \$man,
-             'verbose+'     => \$verbose,
-             'compress'     => \$compress,
-            );
-pod2usage(1)             if $help;
+pod2usage(2)
+  unless GetOptions(
+    'instance=s' => \$single_instance,
+    'help'       => \$help,
+    'man'        => \$man,
+    'verbose+'   => \$verbose,
+    'compress'   => \$compress,
+  );
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 # figure out filename
@@ -125,12 +129,16 @@ if (@ARGV == 1) {
 } elsif (@ARGV) {
     pod2usage("Too many arguments to $0.");
 } else {
-    my ($y, $m, $d) = (localtime)[5,4,3];
-    $file = sprintf('krang-%s%s%04d%02d%02d.%s', 
-                    hostname, ($single_instance ? "-$single_instance-" : '-'), 
-		    ($y+1900), ($m+1), $d, ($compress ?'kba.gz':'kba'));
-} 
-die "File '$file' already exists.\n" if -e $file;
+    my ($y, $m, $d) = (localtime)[5, 4, 3];
+    $file = sprintf(
+        'krang-%s%s%04d%02d%02d.%s',
+        hostname,
+        ($single_instance ? "-$single_instance-" : '-'),
+        ($y + 1900),
+        ($m + 1), $d, ($compress ? 'kba.gz' : 'kba')
+    );
+}
+die "File '$file' already exists.\n"             if -e $file;
 print STDERR "Creating backup in '$file'...\n\n" if $verbose;
 
 # make backup directory if needed
@@ -143,42 +151,57 @@ foreach my $instance ($single_instance ? ($single_instance) : pkg('Conf')->insta
     pkg('Conf')->instance($instance);
 
     my $dump_file = catfile($dir, InstanceDBName . '.sql');
-    my $cmd = MYSQL_DUMP . ' -u' . DBUser .
-      (DBPass ? (' -p' . DBPass) : '') . 
-      (DBHost ? (' -h' . DBHost) : '') .
-      ' -e -l ' . ($single_instance ? '' : '--databases ') .
-      InstanceDBName . ">>$dump_file";
+    my $cmd =
+        MYSQL_DUMP . ' -u' 
+      . DBUser
+      . (DBPass ? (' -p' . DBPass) : '')
+      . (DBHost ? (' -h' . DBHost) : '')
+      . ' -e -l '
+      . ($single_instance ? '' : '--databases ')
+      . InstanceDBName
+      . ">>$dump_file";
+
     # in case any addons are using InnoDB tables
     $cmd = "echo 'SET foreign_key_checks=0;' > $dump_file; $cmd";
-    print STDERR "Dumping " . InstanceDBName . " database with command:" .
-      "\n\t$cmd\n\n"
-        if $verbose;
-    system($cmd) && die "Dump of the MySQL database failed.  Please correct the error and try your backup again.\n";
+    print STDERR "Dumping " . InstanceDBName . " database with command:" . "\n\t$cmd\n\n"
+      if $verbose;
+    system($cmd)
+      && die
+      "Dump of the MySQL database failed.  Please correct the error and try your backup again.\n";
 }
 
 # if backing up a single instance, store its krang.conf block as data/backup/<INSTANCE_DB>.conf
 if ($single_instance) {
-    print STDERR "Copying $single_instance block from krang.conf to $dir/".InstanceDBName.".conf\n\n"
-	if $verbose;
-    open KRANG_CONF, "< ".catfile(KrangRoot,'conf','krang.conf');
-    open INSTANCE_CONF, "> $dir/".InstanceDBName.".conf";
+    print STDERR "Copying $single_instance block from krang.conf to $dir/"
+      . InstanceDBName
+      . ".conf\n\n"
+      if $verbose;
+    open KRANG_CONF, "< " . catfile(KrangRoot, 'conf', 'krang.conf');
+    open INSTANCE_CONF, "> $dir/" . InstanceDBName . ".conf";
     print INSTANCE_CONF "BACKUP CREATED IN KRANG V" . $Krang::VERSION . "\n\n";
     my $found_instance;
     while (<KRANG_CONF>) {
-	$found_instance = 1 if ($_ =~ /^\s*<Instance $single_instance>/i);
-	print INSTANCE_CONF "$_" if $found_instance;
-	last if ($found_instance && ($_ =~ /\s*<\/Instance>/i));
+        $found_instance = 1 if ($_ =~ /^\s*<Instance $single_instance>/i);
+        print INSTANCE_CONF "$_" if $found_instance;
+        last if ($found_instance && ($_ =~ /\s*<\/Instance>/i));
     }
 }
-close (KRANG_CONF);
-close (INSTANCE_CONF);
+close(KRANG_CONF);
+close(INSTANCE_CONF);
 
 # create .kba tar file
 my $full_file = rel2abs($file);
-my $cmd = "tar cp" . ($verbose > 1 ? "v" : "") . 
-  "f $full_file --exclude $full_file --exclude $file " . 
-  ($compress ? "--gzip " : "") .  
-  ($single_instance ? "data/media/$single_instance data/templates/$single_instance data/backup/".InstanceDBName.".* " : ".");
+my $cmd =
+    "tar cp"
+  . ($verbose > 1 ? "v" : "")
+  . "f $full_file --exclude $full_file --exclude $file "
+  . ($compress ? "--gzip " : "")
+  . (
+    $single_instance
+    ? "data/media/$single_instance data/templates/$single_instance data/backup/"
+      . InstanceDBName . ".* "
+    : "."
+  );
 
 print STDERR "Creating backup archive with command:\n\t$cmd\n\n"
   if $verbose;

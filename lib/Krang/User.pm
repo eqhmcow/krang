@@ -77,7 +77,6 @@ calculated and compared i.e.:
 
 =cut
 
-
 #
 # Pragmas/Module Dependencies
 ##############################
@@ -91,18 +90,19 @@ use warnings;
 ###################
 use Carp qw(croak);
 use Digest::MD5 qw(md5_hex);
-use Exception::Class
-  ('Krang::User::Duplicate' => {fields => 'duplicates'},
-   'Krang::User::Dependency' => {fields => 'dependencies'},
-   'Krang::User::InvalidGroup' => {fields => 'group_id'},
-   'Krang::User::MissingGroup' );
+use Exception::Class (
+    'Krang::User::Duplicate'    => {fields => 'duplicates'},
+    'Krang::User::Dependency'   => {fields => 'dependencies'},
+    'Krang::User::InvalidGroup' => {fields => 'group_id'},
+    'Krang::User::MissingGroup'
+);
 
 require Exporter;
 
 # Internal Modules
 ###################
-use Krang::ClassLoader DB => qw(dbh);
-use Krang::ClassLoader Log => qw/critical debug info/;
+use Krang::ClassLoader DB   => qw(dbh);
+use Krang::ClassLoader Log  => qw/critical debug info/;
 use Krang::ClassLoader Conf => qw/PasswordChangeTime PasswordChangeCount/;
 use Krang::ClassLoader 'UUID';
 use Krang::Cache;
@@ -111,56 +111,56 @@ use Krang::Cache;
 # Package Variables
 ####################
 
-# In Krang v3.04 we've converted package constants, lexicals & globals into 
-# methods so that subclasses need not copy them, and can extend them without 
-# needing to know what they contain, and so that non-over-ridden methods here 
+# In Krang v3.04 we've converted package constants, lexicals & globals into
+# methods so that subclasses need not copy them, and can extend them without
+# needing to know what they contain, and so that non-over-ridden methods here
 # can see their subclassed values.
-# 
-# This way, for instance, by adding a new field to USER_RW, a subclass 
+#
+# This way, for instance, by adding a new field to USER_RW, a subclass
 # need not override save(), find() and deserialize_xml() at all.
 # They can all see the new field name in their loops, and just work.
 
 # Read-only fields
-sub USER_RO { 
+sub USER_RO {
     return qw(
-     user_id 
-     user_uuid
-   );
+      user_id
+      user_uuid
+    );
 }
 
 # Read-write fields
-sub USER_RW { 
+sub USER_RW {
     return qw(
-     email
-     first_name
-     last_name
-     login
-     mobile_phone
-     phone
-     hidden
-     password_changed
-     force_pw_change
-   );
+      email
+      first_name
+      last_name
+      login
+      mobile_phone
+      phone
+      hidden
+      password_changed
+      force_pw_change
+    );
 }
 
 # user_user_group table fields
 sub USER_USER_GROUP {
     return qw(
-     user_id
-     group_id
-   );
+      user_id
+      group_id
+    );
 }
 
 # valid short logins :)
-sub SHORT_NAMES	{
+sub SHORT_NAMES {
     return qw(
-     adam
-     admin
-     arobin
-     matt
-     sam
-     krang
-   );
+      adam
+      admin
+      arobin
+      matt
+      sam
+      krang
+    );
 }
 
 sub SALT {
@@ -172,7 +172,7 @@ SALT
 
 sub user_args {
     my $self = shift;
-    return map {$_ => 1} $self->USER_RW(), qw/group_ids password/;
+    return map { $_ => 1 } $self->USER_RW(), qw/group_ids password/;
 }
 
 sub user_cols {
@@ -182,13 +182,12 @@ sub user_cols {
 
 # Constructor/Accessor/Mutator setup
 use Krang::ClassLoader MethodMaker => new_with_init => 'new',
-			new_hash_init => 'hash_init',
-			get => [USER_RO],
-			get_set => [USER_RW],
-			list => 'group_ids';
+  new_hash_init                    => 'hash_init',
+  get                              => [USER_RO],
+  get_set                          => [USER_RW],
+  list                             => 'group_ids';
 
-
-sub id_meth { 'user_id' }
+sub id_meth   { 'user_id' }
 sub uuid_meth { 'user_uuid' }
 
 =head1 INTERFACE
@@ -279,8 +278,11 @@ sub init {
     for my $arg (keys %args) {
         push @bad_args, $arg unless grep $arg eq $_, $self->user_args;
     }
-    croak(__PACKAGE__ . "->init(): The following constructor args are " .
-          "invalid: '" . join("', '", @bad_args) . "'") if @bad_args;
+    croak(  __PACKAGE__
+          . "->init(): The following constructor args are "
+          . "invalid: '"
+          . join("', '", @bad_args) . "'")
+      if @bad_args;
 
     # required arg check...
     for (qw/login password/) {
@@ -292,7 +294,7 @@ sub init {
     $args{hidden} = 0 unless exists $args{hidden};
 
     $self->{user_uuid} = pkg('UUID')->new();
-    
+
     $self->hash_init(%args);
 
     # set password
@@ -300,7 +302,6 @@ sub init {
 
     return $self;
 }
-
 
 =item * $user_id = Krang::User->check_auth( $login, $password )
 
@@ -316,10 +317,8 @@ sub check_auth {
     my ($user) = pkg('User')->find(login => $login);
     return 0 unless $user;
 
-    return md5_hex($self->SALT, $password) eq $user->{password} ?
-      $user->{user_id} : 0;
+    return md5_hex($self->SALT, $password) eq $user->{password} ? $user->{user_id} : 0;
 }
-
 
 =item * $match = $user->check_pass( $password )
 
@@ -328,8 +327,7 @@ sub check_auth {
 sub check_pass {
     my ($user, $pass) = @_;
 
-    return md5_hex($user->SALT, $pass) eq $user->{password} ?
-      $user->{user_id} : 0;
+    return md5_hex($user->SALT, $pass) eq $user->{password} ? $user->{user_id} : 0;
 }
 
 =item * $success = $user->delete()
@@ -346,8 +344,8 @@ dependent check.  See $user->dependent_check().
 
 sub delete {
     my $self = shift;
-    my $id = shift || $self->{user_id};
-    my $dbh = dbh();
+    my $id   = shift || $self->{user_id};
+    my $dbh  = dbh();
 
     # don't delete if the user has something checked out
     if (ref $self) {
@@ -356,24 +354,22 @@ sub delete {
         $self->dependent_check($id);
     }
 
-    $dbh->do("DELETE FROM user WHERE user_id = ?", undef, $id);
-    $dbh->do("DELETE FROM user_group_permission WHERE user_id = ?",
-             undef, $id);
-    $dbh->do("DELETE FROM user_category_permission_cache WHERE user_id = ?",
-             undef, $id);
-    $dbh->do("DELETE FROM alert WHERE user_id = ?", undef, $id);
+    $dbh->do("DELETE FROM user WHERE user_id = ?",                           undef, $id);
+    $dbh->do("DELETE FROM user_group_permission WHERE user_id = ?",          undef, $id);
+    $dbh->do("DELETE FROM user_category_permission_cache WHERE user_id = ?", undef, $id);
+    $dbh->do("DELETE FROM alert WHERE user_id = ?",                          undef, $id);
 
     # we also need to delete all send schedule entries that might refer to this
     # user in it's context
     my $schedule_class = pkg('Schedule');
     eval "require $schedule_class";
     croak "Could not load $schedule_class: $@" if $@;
-    
+
     my @scheduled = pkg('Schedule')->find(action => 'send');
     foreach my $schedule (@scheduled) {
-        if( $schedule->context ) {
+        if ($schedule->context) {
             my %context = @{$schedule->context};
-            if( exists $context{user_id} and $context{user_id} == $id ) {
+            if (exists $context{user_id} and $context{user_id} == $id) {
                 $schedule->delete();
             }
         }
@@ -381,7 +377,6 @@ sub delete {
 
     return 1;
 }
-
 
 =item * $user->dependent_check()
 
@@ -442,7 +437,6 @@ sub dependent_class_list {
     return (pkg('Media'), pkg('Story'), pkg('Template'));
 }
 
-
 =item * $user->duplicate_check()
 
 This method checks the database to see if any existing site objects possess any
@@ -464,14 +458,14 @@ thusly:
 =cut
 
 sub duplicate_check {
-    my $self = shift;
-    my $id = $self->{user_id};
+    my $self  = shift;
+    my $id    = $self->{user_id};
     my $query = <<SQL;
 SELECT user_id, login
 FROM user
 WHERE login = ?
 SQL
-    my @params = map {$self->{$_}} qw/login/;
+    my @params = map { $self->{$_} } qw/login/;
 
     # alter query if save() has already been called
     if ($id) {
@@ -498,14 +492,13 @@ SQL
         }
     }
 
-    Krang::User::Duplicate->throw(message => 'This object duplicates one or ' .
-                                  'more User objects',
-                                  duplicates => \%info)
-        if $duplicates;
+    Krang::User::Duplicate->throw(
+        message    => 'This object duplicates one or ' . 'more User objects',
+        duplicates => \%info
+    ) if $duplicates;
 
     return $duplicates;
 }
-
 
 =item * @users = Krang::User->find( %params )
 
@@ -597,36 +590,38 @@ sub find {
     my $self = shift;
     my %args = @_;
     my ($fields, @params);
-    my @lookup_cols = $self->user_cols;
+    my @lookup_cols  = $self->user_cols;
     my $where_clause = '';
     push @lookup_cols, 'group_ids';
 
-    # check the cache if we're looking for a single user    
+    # check the cache if we're looking for a single user
     my $cache_worthy = (keys(%args) == 1 and exists $args{user_id}) ? 1 : 0;
     if ($cache_worthy) {
         my $user = Krang::Cache::get('Krang::User' => $args{user_id});
         return ($user) if $user;
     }
-        
+
     # are we looking up group ids as well
     my $groups = exists $args{group_ids} ? 1 : 0;
 
     # grab ascend/descending, limit, and offset args
     my $ascend = delete $args{order_desc} ? 'DESC' : 'ASC';
-    my $limit = delete $args{limit} || '';
-    my $offset = delete $args{offset} || '';
+    my $limit    = delete $args{limit}    || '';
+    my $offset   = delete $args{offset}   || '';
     my $order_by = delete $args{order_by} || 'user_id';
     $order_by = ($order_by eq 'group_id' ? "ug." : "u.") . $order_by;
 
     # set search fields
-    my $count = delete $args{count} || '';
+    my $count    = delete $args{count}    || '';
     my $ids_only = delete $args{ids_only} || '';
 
     # set bool to determine whether to use $row or %row for binding below
     my $single_column = $ids_only || $count ? 1 : 0;
 
-    croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
-          "Only one can be present.") if ($count && $ids_only);
+    croak(  __PACKAGE__
+          . "->find(): 'count' and 'ids_only' were supplied. "
+          . "Only one can be present.")
+      if ($count && $ids_only);
 
     # build list of fields to select
     if ($count) {
@@ -634,54 +629,59 @@ sub find {
     } elsif ($ids_only) {
         $fields = 'u.user_id';
     } else {
-        $fields = join(", ", map {"u.$_"} $self->user_cols);
+        $fields = join(", ", map { "u.$_" } $self->user_cols);
     }
 
     # set up WHERE clause and @params, croak unless the args are in
     # USER_RO or USER_RW
     my @invalid_cols;
     for my $arg (keys %args) {
+
         # don't use element
         next if $arg eq 'password';
 
         my $like = 1 if $arg =~ /_like$/;
-        ( my $lookup_field = $arg ) =~
-          s/^(.+)_like$/($arg eq 'group' ? 'ug' : 'u'). $1/e;
+        (my $lookup_field = $arg) =~ s/^(.+)_like$/($arg eq 'group' ? 'ug' : 'u'). $1/e;
 
-        push @invalid_cols, $arg unless $arg eq 'simple_search'
-          or grep $lookup_field eq $_, @lookup_cols;
+        push @invalid_cols, $arg
+          unless $arg eq 'simple_search'
+              or grep $lookup_field eq $_, @lookup_cols;
 
         my $and = defined $where_clause && $where_clause ne '' ? ' AND' : '';
 
-        if (($arg eq 'user_id' || $arg eq 'group_ids') &&
-            ref $args{$arg} eq 'ARRAY') {
+        if (($arg eq 'user_id' || $arg eq 'group_ids')
+            && ref $args{$arg} eq 'ARRAY')
+        {
             my $field = $arg eq 'user_id' ? "u.user_id" : "ug.group_id";
-            my $tmp = join(" OR ", map {"$field = ?"} @{$args{$arg}});
+            my $tmp = join(" OR ", map { "$field = ?" } @{$args{$arg}});
             $where_clause .= "$and ($tmp)";
             push @params, @{$args{$arg}};
         } elsif ($arg eq 'simple_search') {
             my @words = split(/\s+/, $args{$arg});
             for (@words) {
-		$where_clause .= ($where_clause ? " AND " : '') .
-                                 "concat(u.first_name, ' ', u.last_name, ' ', u.login) LIKE ?";
+                $where_clause .= ($where_clause ? " AND " : '')
+                  . "concat(u.first_name, ' ', u.last_name, ' ', u.login) LIKE ?";
                 push @params, "%" . $_ . "%";
             }
         } else {
+
             # prepend 'u' or 'ug'
-            $lookup_field = ($arg eq 'group_id' ? "ug." : "u.") .
-              $lookup_field;
+            $lookup_field = ($arg eq 'group_id' ? "ug." : "u.") . $lookup_field;
             if (not defined $args{$arg}) {
                 $where_clause .= "$and $lookup_field IS NULL";
             } else {
-                $where_clause .= $like ? "$and $lookup_field LIKE ?" :
-                  "$and $lookup_field = ?";
+                $where_clause .=
+                  $like
+                  ? "$and $lookup_field LIKE ?"
+                  : "$and $lookup_field = ?";
                 push @params, $args{$arg};
             }
         }
     }
 
-    croak("The following passed search parameters are invalid: '" .
-          join("', '", @invalid_cols) . "'") if @invalid_cols;
+    croak(
+        "The following passed search parameters are invalid: '" . join("', '", @invalid_cols) . "'")
+      if @invalid_cols;
 
     # revise $from and/or $where_clause
     my $from = "user u";
@@ -696,7 +696,7 @@ sub find {
     my $query = "SELECT distinct $fields FROM $from";
 
     # add WHERE and ORDER BY clauses, if any
-    $query .= " WHERE $where_clause" if $where_clause;
+    $query .= " WHERE $where_clause"        if $where_clause;
     $query .= " ORDER BY $order_by $ascend" if $order_by;
 
     # add LIMIT clause, if any
@@ -718,12 +718,13 @@ sub find {
     if ($single_column) {
         $sth->bind_col(1, \$row);
     } else {
-        $sth->bind_columns(\( @$row{@{$sth->{NAME_lc}}} ));
+        $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
     }
 
     # construct user objects from results
     my $id = 0;
     while ($sth->fetch()) {
+
         # if we just want count or ids
         if ($single_column) {
             push @users, $row;
@@ -734,7 +735,7 @@ sub find {
 
     # associate group_ids with user objects
     unless ($count or $ids_only) {
-        my %user_hash = map {$_->{user_id} => $_} @users;
+        my %user_hash = map { $_->{user_id} => $_ } @users;
         _add_group_ids(\%user_hash, $dbh);
     }
 
@@ -745,7 +746,6 @@ sub find {
     # return number of rows if count, otherwise an array of ids or objects
     return $count ? $users[0] : @users;
 }
-
 
 =item * $md5_digest = $user->password()
 
@@ -768,6 +768,7 @@ sub password {
     return $self->{password} unless @_;
     my $pass = $_[1] ? $_[0] : md5_hex($self->SALT, $_[0]);
     if ((ref $self) && $pass) {
+
         # record that this password was updated
         my $old_pw = $self->{password};
         $self->{password} = $pass;
@@ -777,30 +778,29 @@ sub password {
         # store the old one in the old_passwords table if this is an
         # actual user with an old pw and not a temp user stored in the
         # session while being created by the UI
-        if( PasswordChangeCount && $old_pw && $self->user_id ) {
+        if (PasswordChangeCount && $old_pw && $self->user_id) {
+
             # get all of our old password and remove the oldest ones
             # if we have too many
-            my $sth = dbh()->prepare_cached(
-                'SELECT password FROM old_password WHERE user_id = ? ORDER BY timestamp DESC'
-            );
+            my $sth =
+              dbh()
+              ->prepare_cached(
+                'SELECT password FROM old_password WHERE user_id = ? ORDER BY timestamp DESC');
             $sth->execute($self->user_id);
             my $old_pws = $sth->fetchall_arrayref();
-            if( scalar @$old_pws > (PasswordChangeCount -1) ) {
+            if (scalar @$old_pws > (PasswordChangeCount - 1)) {
+
                 # delete any we don't want
-                foreach my $i ((PasswordChangeCount -2)..$#$old_pws) {
+                foreach my $i ((PasswordChangeCount - 2) .. $#$old_pws) {
                     dbh->do(
-                        'DELETE FROM old_password WHERE user_id = ? AND password = ?', 
-                        undef, 
-                        $self->user_id, 
-                        $old_pws->[0]->[0],
-                    ); 
+                        'DELETE FROM old_password WHERE user_id = ? AND password = ?',
+                        undef, $self->user_id, $old_pws->[0]->[0],
+                    );
                 }
             }
 
             # remember the latest old one
-            $sth = dbh->prepare_cached(
-                'INSERT INTO old_password (user_id, password) VALUES (?,?)'
-            );
+            $sth = dbh->prepare_cached('INSERT INTO old_password (user_id, password) VALUES (?,?)');
             $sth->execute($self->user_id, $old_pw);
         }
     }
@@ -820,16 +820,18 @@ croaks if its database query affects no rows in the database.
 
 sub save {
     my $self = shift;
-    
+
     my %args = @_;
     my $update_cache = exists $args{update_cache} ? $args{update_cache} : 1;
 
     my $id = $self->{user_id} || 0;
-    my @save_fields = grep {$_ ne 'user_id'} $self->user_cols;
+    my @save_fields = grep { $_ ne 'user_id' } $self->user_cols;
 
     # saving with the cache on is verboten
     if (Krang::Cache::active()) {
-        croak("Cannot save users while cache is on!  This cache was started at " . join(', ', @{$Krang::Cache::CACHE_STACK[-1]}) . ".");
+        croak(  "Cannot save users while cache is on!  This cache was started at "
+              . join(', ', @{$Krang::Cache::CACHE_STACK[-1]})
+              . ".");
     }
 
     # check for duplicates
@@ -844,23 +846,29 @@ sub save {
 
     # the object has already been saved once if $id
     if ($id) {
-        $query = "UPDATE user SET " . join(", ", map {"$_ = ?"} @save_fields) .
-          " WHERE user_id = ?";
+        $query =
+          "UPDATE user SET " . join(", ", map { "$_ = ?" } @save_fields) . " WHERE user_id = ?";
     } else {
+
         # build insert query
-        $query = "INSERT INTO user (" . join(',', @save_fields) .
-          ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
+        $query =
+            "INSERT INTO user ("
+          . join(',', @save_fields)
+          . ") VALUES (?"
+          . ", ?" x (scalar @save_fields - 1) . ")";
     }
 
     # bind parameters
-    my @params = map {$self->{$_}} @save_fields;
+    my @params = map { $self->{$_} } @save_fields;
 
     # need user_id for updates
     push @params, $id if $id;
 
     # croak if no rows are affected
-    croak(__PACKAGE__ . "->save(): Unable to save user object " .
-          ($id ? "id '$id' " : '') . "to the DB.")
+    croak(  __PACKAGE__
+          . "->save(): Unable to save user object "
+          . ($id ? "id '$id' " : '')
+          . "to the DB.")
       unless $dbh->do($query, undef, @params);
 
     $self->{user_id} = $dbh->{mysql_insertid} unless $id;
@@ -869,13 +877,12 @@ sub save {
     # remove and add group associations
     eval {
         $dbh->do("LOCK TABLES user_group_permission WRITE");
-        $dbh->do("DELETE FROM user_group_permission WHERE user_id = ?",
-                 undef, ($id));
+        $dbh->do("DELETE FROM user_group_permission WHERE user_id = ?", undef, ($id));
 
         # associate user with groups, if any
         foreach my $gid (@{$self->{group_ids}}) {
-            $dbh->do( qq/ INSERT INTO user_group_permission (user_id,group_id) VALUES (?,?) /,
-                      undef, $id, $gid );
+            $dbh->do(qq/ INSERT INTO user_group_permission (user_id,group_id) VALUES (?,?) /,
+                undef, $id, $gid);
         }
 
         $dbh->do("UNLOCK TABLES");
@@ -897,7 +904,6 @@ sub save {
     return $self;
 }
 
-
 # looks up associate group_ids with the given User object
 sub _add_group_ids {
     my ($users_href, $dbh) = @_;
@@ -907,14 +913,13 @@ WHERE user_id = ?
 SQL
     my $sth = $dbh->prepare($query);
 
-    while (my($id, $obj) = each %$users_href) {
+    while (my ($id, $obj) = each %$users_href) {
         my $gid;
         $sth->execute($id);
         $sth->bind_col(1, \$gid);
         push @{$obj->{group_ids}}, $gid while $sth->fetch();
     }
 }
-
 
 # validate 'group_ids' field
 # returns either an exception or a hash of group_ids and permission_types
@@ -923,21 +928,25 @@ sub _validate_group_ids {
     my (@bad_groups, %types);
 
     my $rgroup_ids = $self->{group_ids};
+
     # Throw exception if no groups
-    Krang::User::MissingGroup->throw( message => 'No groups specified for this user')
-        unless (defined($rgroup_ids) and @$rgroup_ids);
+    Krang::User::MissingGroup->throw(message => 'No groups specified for this user')
+      unless (defined($rgroup_ids) and @$rgroup_ids);
 
     foreach my $group_id (@$rgroup_ids) {
+
         # lazy load Group so using User won't load element
         # sets, which is sometimes bad
         eval "require " . pkg('Group') or die $@;
-        my ($found_group) = pkg('Group')->find(group_id=>$group_id, count=>1);
-        push (@bad_groups, $group_id) unless ($found_group);
+        my ($found_group) = pkg('Group')->find(group_id => $group_id, count => 1);
+        push(@bad_groups, $group_id) unless ($found_group);
     }
 
     # Throw exception if bad groups
-    Krang::User::InvalidGroup->throw( message => 'Invalid group_id in object',
-                                      group_id => \@bad_groups ) if @bad_groups;
+    Krang::User::InvalidGroup->throw(
+        message  => 'Invalid group_id in object',
+        group_id => \@bad_groups
+    ) if @bad_groups;
 }
 
 =item * $user->serialize_xml(writer => $writer, set => $set)
@@ -947,43 +956,42 @@ Serialize as XML.  See Krang::DataSet for details.
 =cut
 
 sub serialize_xml {
-    my ($self, %args) = @_;
-    my ($writer, $set) = @args{qw(writer set)};
+    my ($self,   %args) = @_;
+    my ($writer, $set)  = @args{qw(writer set)};
     local $_;
-    
+
     # open up <template> linked to schema/template.xsd
-    $writer->startTag('user',
-                      "xmlns:xsi" =>
-                        "http://www.w3.org/2001/XMLSchema-instance",
-                      "xsi:noNamespaceSchemaLocation" =>
-                        'user.xsd');
+    $writer->startTag(
+        'user',
+        "xmlns:xsi"                     => "http://www.w3.org/2001/XMLSchema-instance",
+        "xsi:noNamespaceSchemaLocation" => 'user.xsd'
+    );
 
-    $writer->dataElement( user_id => $self->{user_id} );
-    $writer->dataElement( user_uuid => $self->{user_uuid} )
+    $writer->dataElement(user_id   => $self->{user_id});
+    $writer->dataElement(user_uuid => $self->{user_uuid})
       if $self->{user_uuid};
-    $writer->dataElement( login => $self->{login} );
-    $writer->dataElement( password => $self->{password} );
-    $writer->dataElement( first_name => $self->{first_name} );
-    $writer->dataElement( last_name => $self->{last_name} );
-    $writer->dataElement( email => $self->{email} );
-    $writer->dataElement( phone => $self->{phone} );
-    $writer->dataElement( mobile_phone => $self->{mobile_phone} );
-    $writer->dataElement( hidden => $self->{hidden} );
-
+    $writer->dataElement(login        => $self->{login});
+    $writer->dataElement(password     => $self->{password});
+    $writer->dataElement(first_name   => $self->{first_name});
+    $writer->dataElement(last_name    => $self->{last_name});
+    $writer->dataElement(email        => $self->{email});
+    $writer->dataElement(phone        => $self->{phone});
+    $writer->dataElement(mobile_phone => $self->{mobile_phone});
+    $writer->dataElement(hidden       => $self->{hidden});
 
     # lazy load Group so using User won't load element
     # sets, which is sometimes bad
     eval "require " . pkg('Group') or die $@;
 
     my $group_ids = $self->{group_ids};
-    foreach my $group_id ( @$group_ids ) {
-        $writer->dataElement( group_id => $group_id );
-        $set->add(object => (pkg('Group')->find( group_id => $group_id))[0], from => $self);
-    } 
+    foreach my $group_id (@$group_ids) {
+        $writer->dataElement(group_id => $group_id);
+        $set->add(object => (pkg('Group')->find(group_id => $group_id))[0], from => $self);
+    }
 
     # get alerts for this user
-    my @alerts = pkg('Alert')->find( user_id => $self->{user_id} );
-    foreach my $alert ( @alerts ) {
+    my @alerts = pkg('Alert')->find(user_id => $self->{user_id});
+    foreach my $alert (@alerts) {
         $set->add(object => $alert, from => $self);
     }
 
@@ -1004,25 +1012,26 @@ sub deserialize_xml {
     my ($pkg, %args) = @_;
     my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
 
-    my %fields = map { ($_,1) } USER_RW;
+    my %fields = map { ($_, 1) } USER_RW;
 
     # parse it up
-    my $data = pkg('XML')->simple(xml           => $xml,
-                                  suppressempty => 1,
-                                  forcearray => ['group_id'] );
-    
+    my $data = pkg('XML')->simple(
+        xml           => $xml,
+        suppressempty => 1,
+        forcearray    => ['group_id']
+    );
 
     # is there an existing object?
     my $user;
 
     # start with UUID lookup
     if (not $args{no_uuid} and $data->{user_uuid}) {
-        ($user) = $pkg->find(user_uuid  => $data->{user_uuid});
+        ($user) = $pkg->find(user_uuid => $data->{user_uuid});
 
         # if not updating this is fatal
-        Krang::DataSet::DeserializationFailed->throw(message =>
-                  "A user object with the UUID '$data->{user_uuid}' already"
-                  . " exists and no_update is set.")
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A user object with the UUID '$data->{user_uuid}' already"
+              . " exists and no_update is set.")
           if $user and $no_update;
     }
 
@@ -1031,30 +1040,34 @@ sub deserialize_xml {
         ($user) = pkg('User')->find(login => $data->{login});
 
         # if not updating this is fatal
-        Krang::DataSet::DeserializationFailed->throw(message =>
-                      "A user object with the login '$data->{login}' already "
-                      . "exists and no_update is set.")
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A user object with the login '$data->{login}' already "
+              . "exists and no_update is set.")
           if $user and $no_update;
     }
 
     if ($user) {
-        debug (__PACKAGE__."->deserialize_xml : found user");
+        debug(__PACKAGE__ . "->deserialize_xml : found user");
 
         # update simple fields
         $user->{$_} = $data->{$_} for keys %fields;
-        $user->password($data->{password}, 1);     
+        $user->password($data->{password}, 1);
     } else {
-        $user = pkg('User')->new ( password => $data->{password}, encrypted => 1, (map { ($_,$data->{$_}) } keys %fields));
+        $user = pkg('User')->new(
+            password  => $data->{password},
+            encrypted => 1,
+            (map { ($_, $data->{$_}) } keys %fields)
+        );
     }
 
     # preserve UUID if available
-    $user->{user_uuid} = $data->{user_uuid} 
+    $user->{user_uuid} = $data->{user_uuid}
       if $data->{user_uuid} and not $args{no_uuid};
 
     my @group_ids = @{$data->{group_id}};
     my @new_group_ids;
     foreach my $g (@group_ids) {
-        push (@new_group_ids, $set->map_id(class => pkg('Group'), id => $g));
+        push(@new_group_ids, $set->map_id(class => pkg('Group'), id => $g));
     }
     $user->group_ids(@new_group_ids);
 
@@ -1083,18 +1096,18 @@ sub may_delete_user {
       unless ref($user) && $user->isa('Krang::User');
 
     # get our groups...
-    my %curr_user_group_id = map {$_ => 1} $self->group_ids;
-    my %curr_user_group_for
-      = map { $_ => pkg('Group')->find(group_id => $_) } keys %curr_user_group_id;
+    my %curr_user_group_id = map { $_ => 1 } $self->group_ids;
+    my %curr_user_group_for =
+      map { $_ => pkg('Group')->find(group_id => $_) } keys %curr_user_group_id;
 
     # ... and the targeted user's groups
     my @target_user_group_ids = $user->group_ids;
 
     # verify if we may manage any group the targeted user is in
     for my $gid (@target_user_group_ids) {
-	return unless $curr_user_group_id{$gid};
+        return unless $curr_user_group_id{$gid};
 
-	return 1 if $curr_user_group_for{$gid}->admin_users_limited;
+        return 1 if $curr_user_group_for{$gid}->admin_users_limited;
     }
 
     return;
@@ -1123,7 +1136,6 @@ sub current_user_group_ids {
 L<Krang>, L<Krang::DB>
 
 =cut
-
 
 my $quip = <<END;
 Epitaph on a tyrant

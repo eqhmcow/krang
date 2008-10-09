@@ -19,7 +19,6 @@ Krang::CGI::Site...
 
 =cut
 
-
 use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
@@ -29,20 +28,19 @@ use Krang::ClassLoader base => 'CGI';
 use Carp qw(verbose croak);
 use Krang::ClassLoader 'History';
 use Krang::ClassLoader 'HTMLPager';
-use Krang::ClassLoader Log => qw/critical debug info/;
+use Krang::ClassLoader Log     => qw/critical debug info/;
 use Krang::ClassLoader Message => qw/add_message add_alert/;
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw/%session/;
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader Widget => qw/autocomplete_values/;
 
-our @history_param_list = ('rm',
-                           'krang_pager_curr_page_num',
-                           'krang_pager_show_big_view',
-                           'krang_pager_sort_field',
-                           'krang_pager_sort_order_desc',);
+our @history_param_list = (
+    'rm',                        'krang_pager_curr_page_num',
+    'krang_pager_show_big_view', 'krang_pager_sort_field',
+    'krang_pager_sort_order_desc',
+);
 our @obj_fields = ('url', 'preview_url', 'publish_path', 'preview_path');
-
 
 ##############################
 #####  OVERRIDE METHODS  #####
@@ -53,31 +51,33 @@ sub setup {
 
     $self->start_mode('search');
 
-    $self->run_modes([qw/add
-			add_cancel
-			add_save
-			add_save_stay
-			delete
-			delete_selected
-			edit
-			edit_cancel
-			edit_save
-			edit_save_stay
-			search
-			view
-			view_edit
-			view_return
-            autocomplete
-			/]);
+    $self->run_modes(
+        [
+            qw/add
+              add_cancel
+              add_save
+              add_save_stay
+              delete
+              delete_selected
+              edit
+              edit_cancel
+              edit_save
+              edit_save_stay
+              search
+              view
+              view_edit
+              view_return
+              autocomplete
+              /
+        ]
+    );
 
     $self->tmpl_path('Site/');
 }
 
-
 sub teardown {
     my $self = shift;
 }
-
 
 =head1 INTERFACE
 
@@ -97,7 +97,7 @@ This screen allows the end-user to add a new Site object.
 
 sub add {
     my $self = shift;
-    my $q = $self->query();
+    my $q    = $self->query();
     my %args = @_;
     my $site;
 
@@ -106,18 +106,22 @@ sub add {
     if ($q->param('errors')) {
         $site = $session{site};
     } else {
-        $site = pkg('Site')->new(url => undef,
-                                 preview_url => undef,
-                                 preview_path => undef,
-                                 publish_path => undef);
+        $site = pkg('Site')->new(
+            url          => undef,
+            preview_url  => undef,
+            preview_path => undef,
+            publish_path => undef
+        );
     }
 
     # add site to session
     $session{site} = $site;
 
-    my $t = $self->load_tmpl('edit.tmpl',
-                             associate => $q,
-                             loop_context_vars => 1);
+    my $t = $self->load_tmpl(
+        'edit.tmpl',
+        associate         => $q,
+        loop_context_vars => 1
+    );
 
     $t->param($self->get_tmpl_params($site));
 
@@ -125,8 +129,6 @@ sub add {
 
     return $t->output();
 }
-
-
 
 =item add_cancel
 
@@ -136,12 +138,10 @@ Cancels edit of site object on "Add" screen and returns to 'search' run mode.
 
 sub add_cancel {
     my $self = shift;
-    my $q = $self->query();
+    my $q    = $self->query();
     add_message('message_add_cancelled');
     return $self->search();
 }
-
-
 
 =item add_save
 
@@ -153,7 +153,7 @@ fails.
 
 sub add_save {
     my $self = shift;
-    my $q = $self->query();
+    my $q    = $self->query();
     my $site = $session{site};
     croak("No object in session") unless ref $site;
 
@@ -173,8 +173,6 @@ sub add_save {
     return $self->search();
 }
 
-
-
 =item add_save_stay
 
 Validates changes to the site from the 'Add' screen, saves the updated object
@@ -184,7 +182,7 @@ to the database, and returns to the 'Edit' screen.
 
 sub add_save_stay {
     my $self = shift;
-    my $q = $self->query();
+    my $q    = $self->query();
     my $site = $session{site};
     croak("No object in session") unless ref $site;
 
@@ -204,8 +202,6 @@ sub add_save_stay {
     return $self->edit(site_id => $site->site_id);
 }
 
-
-
 =item delete
 
 Deletes the user from 'Edit' screen and redirects to 'search' run mode.
@@ -217,17 +213,18 @@ It expects a 'site_id' query param.
 sub delete {
     my $self = shift;
 
-    my $q = $self->query();
+    my $q       = $self->query();
     my $site_id = $q->param('site_id');
     return $self->search() unless $site_id;
     my ($site) = pkg('Site')->find(site_id => $site_id);
-    eval {$site->delete();};
+    eval { $site->delete(); };
     if ($@) {
-        if (ref $@ and ($@->isa('Krang::Site::Dependency') or $@->isa('Krang::Category::Dependent'))) {
+        if (ref $@
+            and ($@->isa('Krang::Site::Dependency') or $@->isa('Krang::Category::Dependent')))
+        {
             my $url = $site->url;
             info("Unable to delete site id '$site_id': $url\n$@");
-            add_alert('error_deletion_failure',
-                        urls => $url,);
+            add_alert('error_deletion_failure', urls => $url,);
             return $self->search();
         } else {
             croak($@);
@@ -238,8 +235,6 @@ sub delete {
 
     return $self->search();
 }
-
-
 
 =item delete_selected
 
@@ -254,7 +249,7 @@ array of 'site_id's signifying the user objects to be deleted.
 sub delete_selected {
     my $self = shift;
 
-    my $q = $self->query();
+    my $q                = $self->query();
     my @site_delete_list = ($q->param('krang_pager_rows_checked'));
     $q->delete('krang_pager_rows_checked');
 
@@ -265,9 +260,11 @@ sub delete_selected {
     my (@bad_sites, @good_sites);
     my (@sites) = pkg('Site')->find(site_id => [@site_delete_list]);
     for (@sites) {
-        eval {$_->delete();};
+        eval { $_->delete(); };
         if ($@) {
-            if (ref $@ and ($@->isa('Krang::Site::Dependency') or $@->isa('Krang::Category::Dependent'))) {
+            if (ref $@
+                and ($@->isa('Krang::Site::Dependency') or $@->isa('Krang::Category::Dependent')))
+            {
                 push @bad_sites, $_->url;
                 info(ref $@);
             } else {
@@ -280,17 +277,13 @@ sub delete_selected {
 
     if (@bad_sites) {
         info("Failed attempt to delete site(s): " . join(", ", @bad_sites));
-        add_alert('error_deletion_failure',
-                    urls => join(", ", @bad_sites));
+        add_alert('error_deletion_failure', urls => join(", ", @bad_sites));
     } else {
-        add_message('message_selected_deleted',
-                    urls => join(", ", @good_sites));
+        add_message('message_selected_deleted', urls => join(", ", @good_sites));
     }
 
     return $self->search();
 }
-
-
 
 =item edit
 
@@ -306,11 +299,11 @@ fields, so errant values are preserved for correction.
 =cut
 
 sub edit {
-    my $self = shift;
-    my %args = @_;
-    my $q = $self->query();
+    my $self    = shift;
+    my %args    = @_;
+    my $q       = $self->query();
     my $site_id = $q->param('site_id') || '';
-    my $site = $session{site};
+    my $site    = $session{site};
 
     if ($site_id) {
         ($site) = pkg('Site')->find(site_id => $site_id);
@@ -319,8 +312,7 @@ sub edit {
     croak("No pkg('Site') object found matching site_id '$site_id'")
       unless defined $site;
 
-    my $t = $self->load_tmpl("edit.tmpl",
-                             associate => $q);
+    my $t = $self->load_tmpl("edit.tmpl", associate => $q);
 
     $t->param(%args) if %args;
 
@@ -328,8 +320,6 @@ sub edit {
 
     return $t->output();
 }
-
-
 
 =item edit_cancel
 
@@ -340,12 +330,10 @@ mode.
 
 sub edit_cancel {
     my $self = shift;
-    my $q = $self->query();
+    my $q    = $self->query();
     add_message('message_edit_cancelled');
     return $self->search();
 }
-
-
 
 =item edit_save
 
@@ -357,7 +345,7 @@ it fails.
 
 sub edit_save {
     my $self = shift;
-    my $q = $self->query();
+    my $q    = $self->query();
     my $site = $session{site};
     croak("No object in session") unless ref $site;
 
@@ -380,8 +368,6 @@ sub edit_save {
     return $self->search();
 }
 
-
-
 =item edit_save_stay
 
 Validates changes to the site from the 'Edit' screen, saves the updated object
@@ -391,7 +377,7 @@ to the database, and returns to the 'Edit' screen.
 
 sub edit_save_stay {
     my $self = shift;
-    my $q = $self->query();
+    my $q    = $self->query();
     my $site = $session{site};
     croak("No object in session") unless ref $site;
 
@@ -414,8 +400,6 @@ sub edit_save_stay {
     return $self->edit();
 }
 
-
-
 =item search
 
 Displays a list of Site objects based on the passed search criteria.  If no
@@ -430,57 +414,47 @@ simple searches.
 
 sub search {
     my $self = shift;
-    my $q = $self->query();
-    my $t = $self->load_tmpl("list_view.tmpl",
-                             associate => $q,
-                             loop_context_vars => 1);
+    my $q    = $self->query();
+    my $t    = $self->load_tmpl(
+        "list_view.tmpl",
+        associate         => $q,
+        loop_context_vars => 1
+    );
 
-    $t->param(history_return_params =>
-              $self->make_history_return_params(@history_param_list));
+    $t->param(history_return_params => $self->make_history_return_params(@history_param_list));
 
     # simple search
     my $search_filter = $q->param('search_filter');
-    if(! defined $search_filter ) {
+    if (!defined $search_filter) {
         $search_filter = $session{KRANG_PERSIST}{pkg('Site')}{search_filter}
-            || '';
+          || '';
     }
 
     # setup pager
-    my $pager = pkg('HTMLPager')->new(cgi_query => $q,
-                                      persist_vars => {
-                                                       rm => 'search',
-                                                       search_filter =>
-                                                       $search_filter,
-                                                      },
-                                      use_module => pkg('Site'),
-                                      find_params =>
-                                      {simple_search => $search_filter},
-                                      columns => [
-                                                  'site_id',
-                                                  'url',
-                                                  'preview_url',
-                                                  'command_column',
-                                                  'checkbox_column',
-                                                 ],
-                                      column_labels => {
-					                site_id => 'ID',
-                                                        url => 'URL',
-                                                        preview_url =>
-                                                        'Preview URL',
-                                                       },
-                                      columns_sortable =>
-                                      [qw(site_id url preview_url)],
-                                      columns_sort_map => {},
-                                      command_column_commands =>
-                                      [qw(view_site edit_site)],
-                                      command_column_labels =>
-                                      {
-                                       view_site => 'View Detail',
-                                       edit_site => 'Edit',
-                                      },
-                                      row_handler => sub { $self->search_row_handler(@_) },
-                                      id_handler  => sub { return $_[0]->site_id},
-                                     );
+    my $pager = pkg('HTMLPager')->new(
+        cgi_query    => $q,
+        persist_vars => {
+            rm            => 'search',
+            search_filter => $search_filter,
+        },
+        use_module    => pkg('Site'),
+        find_params   => {simple_search => $search_filter},
+        columns       => ['site_id', 'url', 'preview_url', 'command_column', 'checkbox_column',],
+        column_labels => {
+            site_id     => 'ID',
+            url         => 'URL',
+            preview_url => 'Preview URL',
+        },
+        columns_sortable        => [qw(site_id url preview_url)],
+        columns_sort_map        => {},
+        command_column_commands => [qw(view_site edit_site)],
+        command_column_labels   => {
+            view_site => 'View Detail',
+            edit_site => 'Edit',
+        },
+        row_handler => sub { $self->search_row_handler(@_) },
+        id_handler  => sub { return $_[0]->site_id },
+    );
 
     # fill the template
     $t->param(
@@ -494,8 +468,6 @@ sub search {
     return $t->output();
 }
 
-
-
 =item view
 
 View the attributes of the site object.
@@ -503,9 +475,9 @@ View the attributes of the site object.
 =cut
 
 sub view {
-    my $self = shift;
-    my $q = $self->query();
-    my $t = $self->load_tmpl('view.tmpl');
+    my $self    = shift;
+    my $q       = $self->query();
+    my $t       = $self->load_tmpl('view.tmpl');
     my $site_id = $q->param('site_id');
     my ($site) = pkg('Site')->find(site_id => $site_id);
     croak("No pkg('Site') object found matching site_id '$site_id'")
@@ -516,8 +488,6 @@ sub view {
 
     return $t->output();
 }
-
-
 
 #############################
 #####  PRIVATE METHODS  #####
@@ -534,45 +504,51 @@ sub get_tmpl_params {
     return \%site_tmpl;
 }
 
-
 # Given an array of parameter names, return HTML hidden
 # input fields suitible for setting up a return link
 sub make_history_return_params {
-    my $self = shift;
-    my @history_return_param_list = ( @_ );
+    my $self                      = shift;
+    my @history_return_param_list = (@_);
 
     my $q = $self->query();
 
     my @history_return_params_hidden = ();
     foreach my $hrp (@history_return_param_list) {
+
         # Store param name
-        push(@history_return_params_hidden,
-             $q->hidden(-name => 'history_return_params',
-                        -value => $hrp,
-                        -override => 1));
+        push(
+            @history_return_params_hidden,
+            $q->hidden(
+                -name     => 'history_return_params',
+                -value    => $hrp,
+                -override => 1
+            )
+        );
 
         # Store param value
         my $pval = $q->param($hrp);
         $pval = '' unless (defined($pval));
-        push(@history_return_params_hidden,
-             $q->hidden(-name => 'history_return_params',
-                        -value => $pval,
-                        -override => 1));
+        push(
+            @history_return_params_hidden,
+            $q->hidden(
+                -name     => 'history_return_params',
+                -value    => $pval,
+                -override => 1
+            )
+        );
     }
 
     my $history_return_params = join("\n", @history_return_params_hidden);
     return $history_return_params;
 }
 
-
 # Handles rows for search run mode
 sub search_row_handler {
     my ($self, $row, $site, $pager) = @_;
-    $row->{site_id} = $site->site_id();
-    $row->{url} = $site->url();
+    $row->{site_id}     = $site->site_id();
+    $row->{url}         = $site->url();
     $row->{preview_url} = $site->preview_url();
 }
-
 
 # validate
 sub validate {
@@ -581,7 +557,7 @@ sub validate {
     my %errors;
 
     # check all fields
-    for my $name (@obj_fields) {    
+    for my $name (@obj_fields) {
         my $val = $site->{$name};
         if (not length $val) {
             add_alert("error_invalid_$name");
@@ -589,12 +565,13 @@ sub validate {
             next;
         }
 
-        if ($name eq 'url' or $name eq 'preview_url') {            
+        if ($name eq 'url' or $name eq 'preview_url') {
+
             # check for http://
             if ($val =~ m!https?://!) {
                 add_alert("error_${name}_has_http");
                 $errors{"error_invalid_$name"} = 1;
-            } 
+            }
 
             # check for /s
             if ($val =~ m!/!) {
@@ -610,6 +587,7 @@ sub validate {
         }
 
         if ($name eq 'publish_path' or $name eq 'preview_path') {
+
             # must be an absolute UNIX path
             if ($val !~ m!^/!) {
                 add_alert("error_${name}_not_absolute");
@@ -617,13 +595,11 @@ sub validate {
             }
         }
 
-
     }
 
     $self->query->param('errors', 1) if keys %errors;
     return %errors;
 }
-
 
 # update site object
 sub update_site {
@@ -636,14 +612,13 @@ sub update_site {
     }
 }
 
-
 # does the actual saving of the object to the DB
 sub _save {
     my ($self, $site) = @_;
     my $q = $self->query();
     my %errors;
 
-    eval {$site->save};
+    eval { $site->save };
 
     if ($@) {
         if (ref $@ && $@->isa('Krang::Site::Duplicate')) {

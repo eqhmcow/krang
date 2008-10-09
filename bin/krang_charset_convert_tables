@@ -130,8 +130,9 @@ GetOptions(
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
-die "You must supply a --to encoding!\n"   unless $to;
-die "You cannot use --only-table and --skip-table at the same time!\n" if (@only_tables && @skip_tables);
+die "You must supply a --to encoding!\n" unless $to;
+die "You cannot use --only-table and --skip-table at the same time!\n"
+  if (@only_tables && @skip_tables);
 
 # which instances are we going to use
 @instances = $all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE});
@@ -140,35 +141,36 @@ die "You cannot use --only-table and --skip-table at the same time!\n" if (@only
 my %do_these   = @only_tables ? map { $_ => 1 } @only_tables : ();
 my %skip_these = @skip_tables ? map { $_ => 1 } @skip_tables : ();
 
-print "* * * TEST MODE - NO ACTUAL CHANGES WILL BE WRITTEN TO THE DATABASE * * *\n\n" 
-    if $test_mode;
+print "* * * TEST MODE - NO ACTUAL CHANGES WILL BE WRITTEN TO THE DATABASE * * *\n\n"
+  if $test_mode;
 
 foreach my $instance (@instances) {
     pkg('Conf')->instance($instance);
     my $db_name = pkg('Conf')->get('InstanceDBName');
     print "Converting instance '$instance', DB '$db_name'\n" if $v;
-    my $dbh = dbh();
+    my $dbh        = dbh();
     my $to_charset = pkg('Charset')->mysql_charset($to);
 
     my @tables;
     my $sth = $dbh->prepare_cached('SHOW TABLES');
     $sth->execute();
-    while( my $row = $sth->fetchrow_arrayref) {
+    while (my $row = $sth->fetchrow_arrayref) {
         push(@tables, $row->[0]);
     }
 
     foreach my $table (@tables) {
-        next if %do_these && !$do_these{$table};
+        next if %do_these   && !$do_these{$table};
         next if %skip_these && $skip_these{$table};
         print "  Altering $table\n" if $v;
         my @cols;
         $sth = $dbh->prepare_cached("DESCRIBE $table");
         $sth->execute();
-        while(my $row = $sth->fetchrow_arrayref) {
+        while (my $row = $sth->fetchrow_arrayref) {
+
             # only do this for text and char columns
             my $type = $row->[1];
             next unless $type =~ /(var)?char/i or $type =~ /text/i;
-            next if $table eq 'rate_limit_hits' and $row->[0] eq 'action'; # skip this one
+            next if $table eq 'rate_limit_hits' and $row->[0] eq 'action';    # skip this one
             my %info = (
                 name    => $row->[0],
                 type    => $type,
@@ -180,13 +182,15 @@ foreach my $instance (@instances) {
         }
 
         foreach my $col (@cols) {
-            print "    Changing '$col->{name}' column to 'binary' and then to '$to_charset'\n" if $v;
+            print "    Changing '$col->{name}' column to 'binary' and then to '$to_charset'\n"
+              if $v;
             foreach my $charset ('binary', $to_charset) {
-                my $sql = "ALTER TABLE $table MODIFY "
-                    . "`$col->{name}` $col->{type} CHARACTER SET $charset " 
-                    . $col->{null} 
-                    . ($col->{default} ? "DEFAULT $col->{default}" : '')
-                    . " $col->{extra}";
+                my $sql =
+                    "ALTER TABLE $table MODIFY "
+                  . "`$col->{name}` $col->{type} CHARACTER SET $charset "
+                  . $col->{null}
+                  . ($col->{default} ? "DEFAULT $col->{default}" : '')
+                  . " $col->{extra}";
                 $dbh->do($sql) unless $test_mode;
             }
         }
@@ -194,10 +198,10 @@ foreach my $instance (@instances) {
         # now change the default charset of the whole table
         print "    Changing default charset to $to_charset\n" if $v;
         $dbh->do("ALTER TABLE $table DEFAULT CHARACTER SET $to_charset") unless $test_mode;
-        
+
     }
 }
 print " Done\n";
 
-print "\n\n* * * TEST MODE - NO ACTUAL CHANGES WERE WRITTEN TO THE DATABASE * * *\n\n" 
-    if ($test_mode && $v);
+print "\n\n* * * TEST MODE - NO ACTUAL CHANGES WERE WRITTEN TO THE DATABASE * * *\n\n"
+  if ($test_mode && $v);

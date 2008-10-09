@@ -34,7 +34,7 @@ Shows the About Krang screen listing version numbers and credits.
 sub setup {
     my $self = shift;
     $self->mode_param('rm');
-    $self->start_mode('show');    
+    $self->start_mode('show');
     $self->run_modes(show => 'show');
     $self->tmpl_path('About/');
 }
@@ -46,19 +46,18 @@ The only available run-mode, displays the about screen.
 =cut
 
 sub show {
-    my $self = shift;
+    my $self     = shift;
     my $template = $self->load_tmpl('about.tmpl');
 
-    $template->param(version   => pkg('Info')->version,
-                     server_ip => pkg('Conf')->get('ApacheAddr'),
-                     cgi_mode => $ENV{CGI_MODE},
-                    );
-    
+    $template->param(
+        version   => pkg('Info')->version,
+        server_ip => pkg('Conf')->get('ApacheAddr'),
+        cgi_mode  => $ENV{CGI_MODE},
+    );
+
     my @addons = sort { lc($a->name) cmp lc($b->name) } pkg('AddOn')->find();
-    $template->param(addons => [ map { { name => $_->name,
-                                         version => $_->version } } @addons ])
+    $template->param(addons => [map { {name => $_->name, version => $_->version} } @addons])
       if @addons;
-    
 
     return $template->output();
 }

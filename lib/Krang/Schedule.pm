@@ -200,12 +200,12 @@ use constant SCHEDULE_RW_NOTIFY => qw(
 # Lexicals
 ###########
 my %repeat2seconds = (
-    daily  => ONE_DAY,
-    hourly => ONE_HOUR,
-    weekly => ONE_WEEK,
-    monthly => '',
+    daily    => ONE_DAY,
+    hourly   => ONE_HOUR,
+    weekly   => ONE_WEEK,
+    monthly  => '',
     interval => '',
-    never  => ''
+    never    => ''
 );
 
 my %schedule_cols = map { $_ => 1 } SCHEDULE_RO, SCHEDULE_RW, SCHEDULE_RW_NOTIFY;
@@ -325,7 +325,7 @@ If set to 1, the schedule will not be executed. Defaults to 0.
 # de facto constructor:
 # It croaks if an unexpected argument is passed or if fields necessary for a
 # particular schedule type are not passed.  The rules are as follows:
-# -if a 'repeat' value of never or interval is passed, a 'date' arg must be 
+# -if a 'repeat' value of never or interval is passed, a 'date' arg must be
 #  supplied with a values that is a Time::Piece object
 # -for all other acceptable values for 'repeat', the 'minute' arg must be
 #  supplied
@@ -340,8 +340,12 @@ sub init {
     my $self = shift;
     my %args = @_;
     my @bad_args;
-    my ($date, $day_of_month, $day_of_week, $day_interval, $hour, $minute, $expires, $test_date, $priority) =
-      map { $args{$_} } qw/date day_of_month day_of_week day_interval hour minute expires test_date priority/;
+    my (
+        $date,   $day_of_month, $day_of_week, $day_interval, $hour,
+        $minute, $expires,      $test_date,   $priority
+      )
+      = map { $args{$_} }
+      qw/date day_of_month day_of_week day_interval hour minute expires test_date priority/;
 
     # per default a schedule is active
     $args{inactive} = 0 unless defined($args{inactive});
@@ -412,7 +416,8 @@ sub init {
         $self->{minute} = $minute;
 
         if ($repeat =~ /daily|weekly|monthly/) {
-            croak(__PACKAGE__ . "->init():'hour' argument required for daily, weekly, and monthly tasks")
+            croak(__PACKAGE__
+                  . "->init():'hour' argument required for daily, weekly, and monthly tasks")
               unless defined($hour);
             $self->{hour} = $hour;
         }
@@ -464,7 +469,7 @@ sub init {
     }
 
     $self->{next_run} =
-        ($repeat eq 'never' or $repeat eq 'interval')
+      ($repeat eq 'never' or $repeat eq 'interval')
       ? $date
       : $self->_calc_next_run();
 
@@ -476,7 +481,7 @@ sub init {
 
     # but hash_init updates next run, which interval doesn't need
     if ($repeat eq 'interval') {
-       $self->{next_run} = $self->{initial_date};
+        $self->{next_run} = $self->{initial_date};
     }
 
     # determine priority
@@ -494,8 +499,7 @@ sub _notify {
     # NOTE - appropriate fields must be defined for repeats.
     if ($which eq 'repeat') {
         if ($new eq 'interval') {
-            croak(__PACKAGE__
-                  . "->repeat(): cannot make 'interval' without day_interval set.")
+            croak(__PACKAGE__ . "->repeat(): cannot make 'interval' without day_interval set.")
               unless (exists($self->{day_interval}));
         } elsif ($new eq 'monthly') {
             croak(__PACKAGE__
@@ -648,12 +652,12 @@ sub _calc_next_run {
         $now = localtime unless $now;
     }
 
-    $repeat      = $self->repeat()      unless $repeat;
+    $repeat       = $self->repeat()       unless $repeat;
     $day_of_month = $self->day_of_month() unless $day_of_month;
-    $day_of_week = $self->day_of_week() unless $day_of_week;
+    $day_of_week  = $self->day_of_week()  unless $day_of_week;
     $day_interval = $self->day_interval() unless $day_interval;
-    $hour        = $self->hour()        unless $hour;
-    $minute      = $self->minute()      unless $minute;
+    $hour         = $self->hour()         unless $hour;
+    $minute       = $self->minute()       unless $minute;
 
     # sanity check
     $skip_match = 0 unless (defined($args{skip_match}));
@@ -663,7 +667,8 @@ sub _calc_next_run {
 
     my $next = $now;
 
-    if ( $repeat ne 'interval') {
+    if ($repeat ne 'interval') {
+
         # first off, reset seconds to 0.
         if ($next->second > 0) {
             $next += (ONE_MINUTE - $next->second);
@@ -682,7 +687,11 @@ sub _calc_next_run {
         }
 
         # align hours -- all except hourly
-        if ($repeat eq 'daily' || $repeat eq 'weekly' || $repeat eq 'monthly' || $repeat eq 'interval') {
+        if (   $repeat eq 'daily'
+            || $repeat eq 'weekly'
+            || $repeat eq 'monthly'
+            || $repeat eq 'interval')
+        {
             if ($next->hour > $hour) {
 
                 # never roll the clock back.  Roll to the next day.
@@ -704,35 +713,36 @@ sub _calc_next_run {
                 $next += (($day_of_week - $next->day_of_week) * ONE_DAY);
             }
         }
-    
+
         # align day of month -- monthly only
         if ($repeat eq 'monthly') {
-        
+
             # we need to jump thru some hoops to get a negative day_of_month positive
             if ($day_of_month < 0) {
-                my $this_last_day = $self->_last_day_of_month( $next->mon, $next->year );
+                my $this_last_day = $self->_last_day_of_month($next->mon, $next->year);
                 my $pos_day = $this_last_day + ($day_of_month + 1);
-                if ($next->day_of_month > $pos_day ) {
+                if ($next->day_of_month > $pos_day) {
+
                     # we'll roll to next month, so...
                     my $next_month = $next;
-                    while ( $next_month->mon == $next->mon ) {
-                            $next_month += ONE_DAY;
+                    while ($next_month->mon == $next->mon) {
+                        $next_month += ONE_DAY;
                     }
-                    my $next_last_day = $self->_last_day_of_month( $next_month->mon, $next_month->year );
+                    my $next_last_day =
+                      $self->_last_day_of_month($next_month->mon, $next_month->year);
                     $pos_day = $next_last_day + ($day_of_month + 1);
                 }
                 $day_of_month = $pos_day;
             }
 
-
             if ($next->day_of_month > $day_of_month) {
 
                 # never roll the clock back.  Roll to the next month.
-                    my $mon = $next->mon;
-                    while ( $next->mon == $mon ) {
-                            $next += ONE_DAY;
-                    }
-                    $next += (($day_of_month - 1) * ONE_DAY);
+                my $mon = $next->mon;
+                while ($next->mon == $mon) {
+                    $next += ONE_DAY;
+                }
+                $next += (($day_of_month - 1) * ONE_DAY);
 
             } elsif ($next->day_of_month < $day_of_month) {
                 $next += (($day_of_month - $next->day_of_month) * ONE_DAY);
@@ -740,9 +750,10 @@ sub _calc_next_run {
         }
 
     } else {
+
         # we have an interval
         $next = Time::Piece->from_mysql_datetime($self->initial_date);
-        while ( $next < $now ) {
+        while ($next < $now) {
             $next += ($day_interval * ONE_DAY);
         }
     }
@@ -762,14 +773,13 @@ sub _last_day_of_month {
     my $t = Time::Piece->strptime("$month/1/$year 12", "%m/%d/%Y %H");
 
     # add_months() not added until T::P 1.13, so we do it the long way
-    while ( $t->mon == $month ) {
-            $t += ONE_DAY;
+    while ($t->mon == $month) {
+        $t += ONE_DAY;
     }
-    $t -= ONE_DAY; # take one back;
-    
+    $t -= ONE_DAY;    # take one back;
+
     return $t->day_of_month;
 }
-
 
 =item C<< $sched->delete >>
 
@@ -1113,7 +1123,7 @@ sub serialize_xml {
         "xsi:noNamespaceSchemaLocation" => 'schedule.xsd'
     );
 
-    foreach ('schedule_id', 'object_type', 'object_id', 'action','repeat') {
+    foreach ('schedule_id', 'object_type', 'object_id', 'action', 'repeat') {
         $writer->dataElement($_ => $self->{$_});
     }
     my $next_run = $self->{next_run} || '';
@@ -1128,13 +1138,13 @@ sub serialize_xml {
 
     # an expiration date is optional
     my $expires = $self->{expires};
-    if( $expires ) {
+    if ($expires) {
         $expires =~ s/\s/T/;
         $writer->dataElement(expires => $expires);
     }
 
-    $writer->dataElement(hour         => $self->{hour}) if defined $self->{hour};
-    $writer->dataElement(minute       => $self->{minute})
+    $writer->dataElement(hour => $self->{hour}) if defined $self->{hour};
+    $writer->dataElement(minute => $self->{minute})
       if defined $self->{minute};
     $writer->dataElement(day_of_week => $self->{day_of_week})
       if defined $self->{day_of_week};
@@ -1142,8 +1152,12 @@ sub serialize_xml {
       if defined $self->{day_of_month};
     $writer->dataElement(day_interval => $self->{day_interval})
       if defined $self->{day_interval};
-    
-    foreach ('priority', 'inactive', 'failure_max_tries', 'failure_delay_sec', 'failure_notify_id', 'success_notify_id') {
+
+    foreach (
+        'priority',          'inactive',          'failure_max_tries',
+        'failure_delay_sec', 'failure_notify_id', 'success_notify_id'
+      )
+    {
         $writer->dataElement($_ => $self->{$_}) if defined($self->{$_});
     }
 
@@ -1219,9 +1233,9 @@ sub deserialize_xml {
     );
 
     $initial_date = Time::Piece->from_mysql_datetime($initial_date);
-    $search_params{hour}        = $data->{hour}        if $data->{hour};
-    $search_params{minute}      = $data->{minute}      if $data->{minute};
-    $search_params{day_of_week} = $data->{day_of_week} if $data->{day_of_week};
+    $search_params{hour}         = $data->{hour}         if $data->{hour};
+    $search_params{minute}       = $data->{minute}       if $data->{minute};
+    $search_params{day_of_week}  = $data->{day_of_week}  if $data->{day_of_week};
     $search_params{day_of_month} = $data->{day_of_month} if $data->{day_of_month};
     $search_params{day_interval} = $data->{day_interval} if $data->{day_interval};
 
@@ -1384,7 +1398,7 @@ sub _object_checked_out {
 # _allowable_object_types
 #
 # Returns a hash of allowable object types that actions can be scheduled for.
-# 
+#
 
 sub _allowable_object_types {
     my $self = shift;

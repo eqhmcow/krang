@@ -72,19 +72,20 @@ Will croak if validation cannot be performed.
 sub validate {
     my ($self, %arg) = @_;
     my $path = $arg{path};
-    croak("Missing required path parameter") unless $path;
+    croak("Missing required path parameter")       unless $path;
     croak("Specified path '$path' does not exist") unless -e $path;
 
     # pull the schema name out of the SchemaLocation directive
     open(XML, $path) or die "Unable to open $path: $!";
     my $xsd;
-    while(defined(my $line = <XML>)) {
+    while (defined(my $line = <XML>)) {
         next unless $line =~ /noNamespaceSchemaLocation\s*=\s*"(.*?)"/;
         $xsd = $1;
         last;
     }
     close XML or die $!;
-    return (0, "$path is missing noNamespaceSchemaLocation attribute necessary for schema validation.")
+    return (0,
+        "$path is missing noNamespaceSchemaLocation attribute necessary for schema validation.")
       unless $xsd;
 
     my $full_xsd_path;
@@ -99,9 +100,10 @@ sub validate {
     $full_xsd_path = catfile(KrangRoot, 'schema', $xsd) unless ($full_xsd_path);
 
     # run the file through the schema validator
-    my $validator = XML::Validator::Schema->new(file => $full_xsd_path,
-                                                cache => 1,
-                                               );
+    my $validator = XML::Validator::Schema->new(
+        file  => $full_xsd_path,
+        cache => 1,
+    );
 
     # explicitely use Expat. It's not worth the risk to use the
     # ParserFactory.

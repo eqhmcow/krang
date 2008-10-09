@@ -91,18 +91,21 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # add in $KRANG_ROOT/platform for platform build modules
-    my $plib    = catdir($ENV{KRANG_ROOT}, "platform");
+    my $plib = catdir($ENV{KRANG_ROOT}, "platform");
     $ENV{PERL5LIB} = "$ENV{PERL5LIB}:${plib}";
     unshift @INC, $plib;
 }
@@ -113,41 +116,40 @@ use File::Copy qw(copy);
 
 # setup path variables
 my $KrangRoot       = $ENV{KRANG_ROOT};
-my $src_dir         = catdir( $ENV{KRANG_ROOT}, 'src' );
-my $dest_dir        = catdir( $ENV{KRANG_ROOT}, 'lib' );
-my $apache_dest_dir = catdir( $ENV{KRANG_ROOT}, 'apache' );
-my $build_dir       = tempdir(DIR     => catdir( $ENV{KRANG_ROOT}, 'tmp' ));
+my $src_dir         = catdir($ENV{KRANG_ROOT}, 'src');
+my $dest_dir        = catdir($ENV{KRANG_ROOT}, 'lib');
+my $apache_dest_dir = catdir($ENV{KRANG_ROOT}, 'apache');
+my $build_dir       = tempdir(DIR => catdir($ENV{KRANG_ROOT}, 'tmp'));
 
 # a few useful constants
 my $apache_dir = opendir(my $APACHE_DIR, catdir($KrangRoot, 'src', 'Apache-MOD_PERL'));
 my @apache_pkg = grep { /^apache|^mm|^mod_/ } readdir($APACHE_DIR);
-my $APACHE     = catfile('Apache-MOD_PERL', (grep { /apache/   } @apache_pkg)[0]);
-my $MOD_PERL   = catfile('Apache-MOD_PERL', (grep { /mod_perl/ } @apache_pkg)[0]);
-my $MOD_SSL    = catfile('Apache-MOD_PERL', (grep { /mod_ssl/  } @apache_pkg)[0]);
-my $MM         = catfile('Apache-MOD_PERL', (grep { /mm/       } @apache_pkg)[0]);
-my $MM_BIN       = catfile($KrangRoot, 'apache', 'mm');
-my $LIBAPREQ     = 'libapreq';
+my $APACHE   = catfile('Apache-MOD_PERL', (grep { /apache/ } @apache_pkg)[0]);
+my $MOD_PERL = catfile('Apache-MOD_PERL', (grep { /mod_perl/ } @apache_pkg)[0]);
+my $MOD_SSL  = catfile('Apache-MOD_PERL', (grep { /mod_ssl/ } @apache_pkg)[0]);
+my $MM       = catfile('Apache-MOD_PERL', (grep { /mm/ } @apache_pkg)[0]);
+my $MM_BIN = catfile($KrangRoot, 'apache', 'mm');
+my $LIBAPREQ = 'libapreq';
 
 # options
 my $skip_apache      = 0;
 my $skip_all_modules = 0;
 my $with_ssl         = 0;
 my $ssl_base         = '';
-my ( @modules, @skip_modules, $rebuild, $help, $man );
+my (@modules, @skip_modules, $rebuild, $help, $man);
 GetOptions(
-       'no-apache'      => \$skip_apache,
-       'with-ssl'       => \$with_ssl,
-       'with-openssl=s' => \$ssl_base,
-       'module=s'       => \@modules,
-       'skip-module=s'  => \@skip_modules,
-       'no-modules'     => \$skip_all_modules,
-       'rebuild'        => \$rebuild,
-       'help'           => \$help,
-       'man'            => \$man,
-      )
-  or pod2usage(2);
+    'no-apache'      => \$skip_apache,
+    'with-ssl'       => \$with_ssl,
+    'with-openssl=s' => \$ssl_base,
+    'module=s'       => \@modules,
+    'skip-module=s'  => \@skip_modules,
+    'no-modules'     => \$skip_all_modules,
+    'rebuild'        => \$rebuild,
+    'help'           => \$help,
+    'man'            => \$man,
+) or pod2usage(2);
 pod2usage(1) if $help;
-pod2usage( -verbose => 2 ) if $man;
+pod2usage(-verbose => 2) if $man;
 
 # set env for Apache build with SSL
 $ENV{LD_LIBRARY_PATH} = catdir($MM_BIN, 'lib');
@@ -161,11 +163,12 @@ my @platforms;
 while (my $f = readdir DIR) {
     push @platforms, $f if (-e catfile($KrangRoot, 'platform', $f, 'Platform.pm'));
 }
+
 #my @platforms = grep { $_ !~ /^\.\.?$/ and $_ !~ /CVS/ } sort readdir DIR;
 
 # do we just want to rebuild some modules
 if (!$skip_all_modules && @modules) {
-    $rebuild = 1;
+    $rebuild     = 1;
     $skip_apache = 1;
     my %modules = map { $_ => 1 } @modules;
     foreach my $required qw(Expect IO-Tty) {
@@ -174,21 +177,22 @@ if (!$skip_all_modules && @modules) {
 }
 
 # check that we're not trying to build on top of an existing build
-die "A build of Krang already exists here.  Run 'make clean' to remove it".
-  "\nbefore trying again.\n" 
-  if -e catfile($KrangRoot, 'data', 'build.db') and !$rebuild;
-
+die "A build of Krang already exists here.  Run 'make clean' to remove it"
+  . "\nbefore trying again.\n"
+  if -e catfile($KrangRoot, 'data', 'build.db')
+      and !$rebuild;
 
 if (@ARGV) {
     $platform = shift;
 
     # check for bad platform
     unless (-d catdir($KrangRoot, 'platform', $platform)) {
-        die "Platform '$platform' is not supported.  " . 
-          "Available platforms are:\n\n\t"
-            . join("\n\t", @platforms) . "\n\n";
+        die "Platform '$platform' is not supported.  "
+          . "Available platforms are:\n\n\t"
+          . join("\n\t", @platforms) . "\n\n";
     }
 } else {
+
     # look for a platform that wants to handle this
     my $found;
     foreach my $plat (@platforms) {
@@ -198,16 +202,16 @@ if (@ARGV) {
         die "Unable to load platform modules '$pkg': $@\n" if $@;
 
         if ($pkg->guess_platform) {
-            $found = 1;
+            $found    = 1;
             $platform = $plat;
             print "Building for platform '$plat'.\n";
             last;
         }
     }
-    die "Unable to automatically determine your platform, you must\n".
-      "provide one on the command line.  Available platforms are:\n\n\t".
-        join("\n\t", @platforms) . "\n\n"
-          unless $found;
+    die "Unable to automatically determine your platform, you must\n"
+      . "provide one on the command line.  Available platforms are:\n\n\t"
+      . join("\n\t", @platforms) . "\n\n"
+      unless $found;
 }
 
 # load the platform build module, reference via $pkg
@@ -220,35 +224,35 @@ $pkg->verify_dependencies(mode => 'build');
 
 # if we have rebuild and we were previously built with-ssl, then
 # the rebuild should be with-ssl too
-if( $rebuild ) {
+if ($rebuild) {
     my %build_params = $pkg->build_params;
     $with_ssl = 1 if $build_params{SSL};
 }
 
 # get list of files to build, considering --module, --skip-module and --no-module opts
-opendir( SRC, $src_dir ) or die "Can't open $src_dir for reading: $!";
+opendir(SRC, $src_dir) or die "Can't open $src_dir for reading: $!";
 my @files;
-unless( $skip_all_modules ) {
+unless ($skip_all_modules) {
     @files = sort readdir(SRC);
 
     if (@modules) {
-        @files = grep { contains( \@modules, $_ ) } @files;
+        @files = grep { contains(\@modules, $_) } @files;
     } elsif (@skip_modules) {
-        @files = grep { !contains( \@skip_modules, $_ ) } @files;
+        @files = grep { !contains(\@skip_modules, $_) } @files;
     }
 
     # shuffle some to the back to get proper build order
     foreach my $distribution qw(DBD-mysql Image-BioChrome Linux-Pid) {
-        my ($file) = grep( /$distribution/, @files );
-        @files = grep( !/$distribution/, @files );
+        my ($file) = grep(/$distribution/, @files);
+        @files = grep(!/$distribution/, @files);
         push @files, $file if $file;
     }
 
     # shuffle Expect, IO-Tty, Test-Harness and Test-Simple to the front
     # since they're needed by later build steps
     foreach my $distribution qw(Test-Harness Test-Simple Module-Build Expect IO-Tty) {
-        my ($file) = grep( /$distribution/, @files );
-        @files = grep( !/$distribution/, @files );
+        my ($file) = grep(/$distribution/, @files);
+        @files = grep(!/$distribution/, @files);
         unshift @files, $file if $file;
     }
 
@@ -268,17 +272,20 @@ unless ($skip_apache) {
     chdir $build_dir or die "Unable to chdir($build_dir): $!";
 
     my $mod_ssl_params = '';    # pass to Apache build
-    my $apache_dir = '';
+    my $apache_dir     = '';
 
     if ($with_ssl) {
+
         # build mm
         my $mm_gz = catfile($src_dir, $MM);
         system("tar zxf $mm_gz") == 0 or die "Couldn't unpack file: $!";
         my ($mm_dir) = $mm_gz =~ m!/([^/]+)\.tar\.gz$!;
         die "Can't find mm dir '$mm_dir'." unless -d $mm_dir;
 
-        $pkg->build_mm(mm_dir => $mm_dir,
-                   mm_bin => $MM_BIN);
+        $pkg->build_mm(
+            mm_dir => $mm_dir,
+            mm_bin => $MM_BIN
+        );
 
         # build mod_ssl
         my $mod_ssl_gz = catfile($src_dir, $MOD_SSL);
@@ -292,14 +299,17 @@ unless ($skip_apache) {
         ($apache_dir) = $apache_gz =~ m!/([^/]+)\.tar\.gz$!;
         die "Can't find Apache dir '$apache_dir'." unless -d $apache_dir;
 
-        $pkg->build_mod_ssl(build_dir   => $build_dir,
-                    mod_ssl_dir => $mod_ssl_dir,
-                    apache_dir  => $apache_dir);
+        $pkg->build_mod_ssl(
+            build_dir   => $build_dir,
+            mod_ssl_dir => $mod_ssl_dir,
+            apache_dir  => $apache_dir
+        );
 
         # pass to apache build
-        $mod_ssl_params = "--enable-module=ssl       --enable-shared=ssl ".
-                          "--disable-rule=SSL_COMPAT --enable-rule=SSL_SDBM ".
-                  "--enable-module=setenvif  --enable-shared=setenvif";
+        $mod_ssl_params =
+            "--enable-module=ssl       --enable-shared=ssl "
+          . "--disable-rule=SSL_COMPAT --enable-rule=SSL_SDBM "
+          . "--enable-module=setenvif  --enable-shared=setenvif";
     }
 
     unless ($apache_dir) {
@@ -314,19 +324,20 @@ unless ($skip_apache) {
     my ($mod_perl_dir) = $mod_perl_gz =~ m!/([^/]+)\.tar\.gz$!;
     die "Can't find Mod_perl dir '$mod_perl_dir'." unless -d $mod_perl_dir;
 
-    $pkg->build_apache_modperl(apache_dir       => $apache_dir,
-                               mod_perl_dir     => $mod_perl_dir,
-                               mod_ssl_params   => $mod_ssl_params);
+    $pkg->build_apache_modperl(
+        apache_dir     => $apache_dir,
+        mod_perl_dir   => $mod_perl_dir,
+        mod_ssl_params => $mod_ssl_params
+    );
 
     # move SSL dirs from KrangRoot/apache/conf/ to KrangRoot/conf/
-    move_ssl_dirs()
+    move_ssl_dirs();
 }
 
 # build libapreq now that mod_perl is in place
-if ( my ($libapreq) = grep /^$LIBAPREQ/, @files ) {
+if (my ($libapreq) = grep /^$LIBAPREQ/, @files) {
     build_module($libapreq);
 }
-
 
 # drop a build.db file describing the build, used by krang_makedist
 # and krang_install
@@ -354,9 +365,9 @@ sub build_module {
     my $file = shift;
 
     # unpack distribution
-    my $dist_file = catfile( $src_dir, $file );
+    my $dist_file = catfile($src_dir, $file);
     print "Unpacking $dist_file...\n";
-    chdir $build_dir or die "Unable to chdir($build_dir): $!";
+    chdir $build_dir                  or die "Unable to chdir($build_dir): $!";
     system("tar zxf $dist_file") == 0 or die "Couldn't unpack file: $?";
 
     $dist_file =~ m!([^/]+)\.(tar\.|t)gz!;
@@ -372,27 +383,25 @@ sub build_module {
     system("rm -rf $dist_dir") == 0 or die "Error cleaning $dist_dir: $?";
 }
 
-
-
 # returns true if list contains a string which contains the target string
 sub contains {
-    my ( $list, $string ) = @_;
-    return grep { index( $string, $_ ) > -1 } @{$list};
+    my ($list, $string) = @_;
+    return grep { index($string, $_) > -1 } @{$list};
 }
 
 sub move_ssl_dirs {
     my @ssl_dirs = qw(ssl.crl ssl.crt ssl.csr ssl.key ssl.prm);
-    
+
     my $apache_conf_dir = catdir($KrangRoot, 'apache', 'conf');
-    my $krang_conf_dir  = catdir($KrangRoot, 'conf');
+    my $krang_conf_dir = catdir($KrangRoot, 'conf');
 
     for my $ssldir (@ssl_dirs) {
         my $ap_dir = catdir($apache_conf_dir, $ssldir);
-        my $kdir   = catdir($krang_conf_dir, $ssldir);
+        my $kdir   = catdir($krang_conf_dir,  $ssldir);
 
         warn "Apache SSL dir '$ap_dir' does not exist", next
           unless -d $ap_dir;
-        
+
         rename $ap_dir => $kdir
           or warn "Can't move '$ap_dir' to '$kdir': $!";
     }
@@ -404,31 +413,31 @@ sub move_ssl_dirs {
     my $dummy_key = catfile($KrangRoot, 'conf', 'ssl.key', 'snakeoil-rsa.key');
 
     my $ok_to_replace = 0;
-    if( ! -e $crt ) {
+    if (!-e $crt) {
         $ok_to_replace = 1;
     } else {
         my $contents = `cat $crt`;
-        if( $contents =~ /THIS FILE HAS TO BE REPLACED BY A REAL SERVER CERTIFICATE/ ) {
+        if ($contents =~ /THIS FILE HAS TO BE REPLACED BY A REAL SERVER CERTIFICATE/) {
             $ok_to_replace = 1;
             unlink($crt) or warn "Could not remove placeholder crt: $!";
         }
     }
-    if( $ok_to_replace ) {
+    if ($ok_to_replace) {
         copy($dummy_crt, $crt) or warn "Can't copy '$dummy_crt' to '$crt': $!";
     }
 
     $ok_to_replace = 0;
-    if( ! -e $key ) {
+    if (!-e $key) {
         $ok_to_replace = 1;
     } else {
         my $contents = `cat $key`;
-        if( $contents =~ /THIS FILE HAS TO BE REPLACED BY A REAL SERVER PRIVATE KEY/ ) {
+        if ($contents =~ /THIS FILE HAS TO BE REPLACED BY A REAL SERVER PRIVATE KEY/) {
             $ok_to_replace = 1;
             unlink($key) or warn "Could not remove placeholder key: $!";
         }
     }
 
-    if( $ok_to_replace ) {
+    if ($ok_to_replace) {
         copy($dummy_key, $key) or warn "Can't copy '$dummy_key' to '$key': $!";
     }
 }

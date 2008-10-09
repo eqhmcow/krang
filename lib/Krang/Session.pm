@@ -3,7 +3,7 @@ use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader DB  => qw(dbh);
 use Krang::ClassLoader Log => qw(critical);
 use Krang::ClassLoader 'MyPref';
 
@@ -62,7 +62,7 @@ following routines.
 our %session;
 our $tied = 0;
 require Exporter;
-our @ISA = ('Exporter');
+our @ISA       = ('Exporter');
 our @EXPORT_OK = ('%session');
 
 =over 4
@@ -78,10 +78,12 @@ new session.
 sub create {
     my $pkg = shift;
     my $dbh = dbh();
-    tie %session, 'Apache::Session::MySQL', undef, 
-      { Handle     => $dbh,
-        LockHandle => $dbh }
-        or croak("Unable to create new session.");
+    tie %session, 'Apache::Session::MySQL', undef,
+      {
+        Handle     => $dbh,
+        LockHandle => $dbh
+      }
+      or croak("Unable to create new session.");
     $tied = 1;
 
     my $session_id = $session{_session_id};
@@ -99,22 +101,23 @@ will croak().
 =cut
 
 sub load {
-    my $pkg = shift;
+    my $pkg        = shift;
     my $session_id = shift;
-    my $dbh = dbh();
+    my $dbh        = dbh();
 
     # check if the session even exists
-    my ($exists) = $dbh->selectrow_array('SELECT 1 FROM sessions WHERE id = ?',
-                                         undef, $session_id);
+    my ($exists) = $dbh->selectrow_array('SELECT 1 FROM sessions WHERE id = ?', undef, $session_id);
     croak("Session '$session_id' does not exist!")
       unless $exists;
 
     # try to tie the session
     eval {
-        tie %session, 'Apache::Session::MySQL', $session_id, 
-          { Handle     => $dbh,
-            LockHandle => $dbh }
-            or croak("Unable to create new session.");
+        tie %session, 'Apache::Session::MySQL', $session_id,
+          {
+            Handle     => $dbh,
+            LockHandle => $dbh
+          }
+          or croak("Unable to create new session.");
         $tied = 1;
     };
 
@@ -139,16 +142,14 @@ session is valid and 0 if not.
 =cut
 
 sub validate {
-    my $pkg = shift;
+    my $pkg        = shift;
     my $session_id = shift;
-    my $dbh = dbh();
-    
-    my ($exists) = $dbh->selectrow_array('SELECT 1 from sessions where id = ?',
-                                         undef, $session_id);
+    my $dbh        = dbh();
+
+    my ($exists) = $dbh->selectrow_array('SELECT 1 from sessions where id = ?', undef, $session_id);
 
     return $exists ? 1 : 0;
 }
-
 
 =item C<< Krang::Session->unload() >>
 
@@ -163,7 +164,7 @@ C<load()>.
 
 sub unload {
     $_[0]->persist_to_mypref();
-    untie %session if $tied; 
+    untie %session if $tied;
     $tied = 0;
 }
 
@@ -179,15 +180,17 @@ specified, or the current session will be deleted.
 =cut
 
 sub delete {
-    my $pkg = shift;
+    my $pkg        = shift;
     my $session_id = shift;
-    my $dbh = dbh();
+    my $dbh        = dbh();
 
     if ($session_id) {
-        tie my %doomed, 'Apache::Session::MySQL', $session_id, 
-          { Handle     => $dbh,
-            LockHandle => $dbh }
-            or croak("Unable to create new session.");
+        tie my %doomed, 'Apache::Session::MySQL', $session_id,
+          {
+            Handle     => $dbh,
+            LockHandle => $dbh
+          }
+          or croak("Unable to create new session.");
         tied(%doomed)->delete();
         untie(%doomed);
     } elsif ($tied) {
@@ -207,5 +210,4 @@ sub persist_to_mypref {
 }
 
 1;
-
 

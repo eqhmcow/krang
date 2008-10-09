@@ -70,22 +70,23 @@ the media to be uploaded.  Only matching files will be uploaded.
 
 =cut
 
-
-
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
 use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -110,33 +111,31 @@ use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Media';
 
-
 use Getopt::Long;
 use Pod::Usage;
 
-
 my ($help, $man, $path);
-my $user = "admin";
-my $password = "";
+my $user          = "admin";
+my $password      = "";
 my $force_checkin = 0;
-my $makecats = 0;
-my $verbose = 0;
-my $grep = "";
+my $makecats      = 0;
+my $verbose       = 0;
+my $grep          = "";
 
-pod2usage(2) unless
-  GetOptions(
-             'path=s' => \$path,
-             'user=s' => \$user,
-             'grep=s' => \$grep,
-             'password=s' => \$password,
-	     'verbose+' => \$verbose,
-	     'force-checkin' => \$force_checkin,
-             'makecats' => \$makecats,
-             'help' => \$help,
-             'man' => \$man,
-            );
+pod2usage(2)
+  unless GetOptions(
+    'path=s'        => \$path,
+    'user=s'        => \$user,
+    'grep=s'        => \$grep,
+    'password=s'    => \$password,
+    'verbose+'      => \$verbose,
+    'force-checkin' => \$force_checkin,
+    'makecats'      => \$makecats,
+    'help'          => \$help,
+    'man'           => \$man,
+  );
 
-pod2usage(1)             if $help || !$path;
+pod2usage(1) if $help || !$path;
 pod2usage(-verbose => 2) if $man;
 
 # Does path exist?
@@ -147,24 +146,20 @@ print "Found media directory '$path'\n" if $verbose;
 print "Starting upload media\n" if $verbose;
 my @sites = pkg('Site')->find();
 if ($verbose) {
-    print "Found sites: ".join(", ", (map {$_->url} @sites))."\n" if @sites;
+    print "Found sites: " . join(", ", (map { $_->url } @sites)) . "\n" if @sites;
     print "No sites found in instance\n" unless @sites;
 }
 foreach my $s (@sites) {
     my $media_dir = catdir($path, $s->url);
     if (-d $media_dir) {
-        my ($root_cat) = pkg('Category')->find(url => $s->url."/");
+        my ($root_cat) = pkg('Category')->find(url => $s->url . "/");
         upload_media($path, $root_cat);
     }
 }
 
-
 # Done!
 print "Upload media complete\n" if $verbose;
 exit(0);
-
-
-
 
 ####  PRIVATE METHODS  ####
 #
@@ -172,33 +167,35 @@ exit(0);
 # Recursive function to upload and decend
 sub upload_media {
     my $media_dir = shift;
-    my $category = shift;
+    my $category  = shift;
 
     my $fs_path = catdir($media_dir, $category->url);
 
     # Get list of files and directories
-    print "Opening '".$category->url."'\n" if $verbose;
+    print "Opening '" . $category->url . "'\n" if $verbose;
     opendir(MEDIADIR, "$fs_path") || die("Can't open '$fs_path': " . $!);
     my @found = (readdir(MEDIADIR));
     closedir(MEDIADIR);
 
     my @files = grep { (-f catfile($fs_path, $_)) } (@found);
-    my @dirs = grep { not(/^\.{1,2}$/) and 
-                        not(/^\.svn$/) and 
-                          not(/^CVS$/) and 
-                            (-d catfile($fs_path, $_)) } (@found);
+    my @dirs =
+      grep { not(/^\.{1,2}$/) and not(/^\.svn$/) and not(/^CVS$/) and (-d catfile($fs_path, $_)) }
+      (@found);
 
-    print "Found dirs: '". join("', '", @dirs) ."'\n" if ($verbose > 1);
-    print "Found files: '". join("', '", @files) ."'\n" if ($verbose > 1);
+    print "Found dirs: '" . join("', '",  @dirs) . "'\n"  if ($verbose > 1);
+    print "Found files: '" . join("', '", @files) . "'\n" if ($verbose > 1);
 
     # From Krang core media.sql file
-    my %types = ( image => 1,
-                  text => 2,
-                  javascript => 10,
-                  stylesheet => 11 );
+    my %types = (
+        image      => 1,
+        text       => 2,
+        javascript => 10,
+        stylesheet => 11
+    );
 
     # Upload media files in this dir
     foreach my $f (@files) {
+
         # Does file match grep pattern (if specified)?
         if ($grep) {
             my $fq_f = catfile($category->url, $f);
@@ -209,30 +206,34 @@ sub upload_media {
         }
 
         # Try to find media.
-        my ($m) = pkg('Media')->find( category_id => $category->category_id,
-                                      filename => $f );
+        my ($m) = pkg('Media')->find(
+            category_id => $category->category_id,
+            filename    => $f
+        );
 
         # Create it if we can't find it.
-        $m = pkg('Media')->new( title => $f,
-                                category_id => $category->category_id ) unless ($m);
+        $m = pkg('Media')->new(
+            title       => $f,
+            category_id => $category->category_id
+        ) unless ($m);
 
-        # Do we have access?  
+        # Do we have access?
 
         if ($m->checked_out()) {
             my ($checked_out_user) = pkg('User')->find(user_id => $m->checked_out_by);
             my $cou_login = $checked_out_user->login();
             unless ($cou_login eq 'system') {
-		if ($force_checkin) {
-		    $m->checkin;
-		    if ($m->checked_out) {
-			print STDERR "*** UNABLE TO CHECK IN '$f' ***\n";
-		    } else {
-			print "Checked in '$f' (was checked out by '$cou_login')\n" if $verbose;
-		    }
-		} else {
-		    print "  Skipping '$f' (checked out by '$cou_login')\n" if $verbose;
-		    next;
-		}
+                if ($force_checkin) {
+                    $m->checkin;
+                    if ($m->checked_out) {
+                        print STDERR "*** UNABLE TO CHECK IN '$f' ***\n";
+                    } else {
+                        print "Checked in '$f' (was checked out by '$cou_login')\n" if $verbose;
+                    }
+                } else {
+                    print "  Skipping '$f' (checked out by '$cou_login')\n" if $verbose;
+                    next;
+                }
             }
         }
 
@@ -244,31 +245,37 @@ sub upload_media {
         print "    Opening '$fq_filename' for read\n" if $verbose > 1;
         my $media_fh;
         open($media_fh, "<$fq_filename") || die("Can't open '$fq_filename': $!");
-        $m->upload_file( filehandle => $media_fh, 
-                         filename => $f );
+        $m->upload_file(
+            filehandle => $media_fh,
+            filename   => $f
+        );
         close($media_fh);
 
         # Figure out media type
-        my $media_type_id = 1;  # Image, by default
+        my $media_type_id = 1;    # Image, by default
         if ($f =~ /\.(gif|jpg|jpeg)$/i) {
+
             # Image
             $media_type_id = $types{image};
-            print "  media_type_id $media_type_id for extention '$1'\n" 
+            print "  media_type_id $media_type_id for extention '$1'\n"
               if ($verbose > 1);
         } elsif ($f =~ /\.(js)$/i) {
+
             # Javascript
             $media_type_id = $types{javascript};
-            print "  media_type_id $media_type_id for extention '$1'\n" 
+            print "  media_type_id $media_type_id for extention '$1'\n"
               if ($verbose > 1);
         } elsif ($f =~ /\.(css)$/i) {
+
             # CSS stylesheet
             $media_type_id = $types{stylesheet};
-            print "  media_type_id $media_type_id for extention '$1'\n" 
+            print "  media_type_id $media_type_id for extention '$1'\n"
               if ($verbose > 1);
         } elsif ($f =~ /\.(txt)$/i) {
+
             # Text by default
             $media_type_id = $types{text};
-            print "  media_type_id $media_type_id for extention '$1'\n" 
+            print "  media_type_id $media_type_id for extention '$1'\n"
               if ($verbose > 1);
         }
 
@@ -286,16 +293,19 @@ sub upload_media {
     # For each sub-directory, verify category exists and decend if so
     foreach my $d (@dirs) {
         my $new_cat_path = catdir($category->url, $d);
-        my ($c) = pkg('Category')->find(url=>$new_cat_path."/");
+        my ($c) = pkg('Category')->find(url => $new_cat_path . "/");
         if ($c) {
             upload_media($media_dir, $c);
         } elsif ($makecats) {
+
             # Create missing directory
             my $newcat;
             eval {
-                $newcat = pkg('Category')->new( dir => $d,
-                                                parent_id => $category->category_id );
-                $newcat->save(); 
+                $newcat = pkg('Category')->new(
+                    dir       => $d,
+                    parent_id => $category->category_id
+                );
+                $newcat->save();
             };
             if ($@) {
                 print "  Unable to create '$new_cat_path' ($@)\n";
@@ -309,8 +319,8 @@ sub upload_media {
     }
 }
 
-
 sub element_lib_path {
+
     # Try addons/
     my $libdir = catdir(KrangRoot, 'addons', InstanceElementSet, 'element_lib', InstanceElementSet);
     return $libdir if (-d $libdir);

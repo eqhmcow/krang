@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use base 'Tree::DAG_Node';
-use Krang::ClassLoader MethodMaker => get_set => [ qw(link condition) ];
+use Krang::ClassLoader MethodMaker => get_set => [qw(link condition)];
 
 =head1 NAME
 

@@ -71,7 +71,6 @@ C<< $r->notes() >> and logs them with Krang::Log.
 
 =cut
 
-
 use Apache::Constants qw(:response);
 use Apache::Cookie;
 use Apache::SizeLimit;
@@ -87,7 +86,8 @@ use Krang::ClassLoader 'CGI::Login';
 use Krang::ClassLoader 'ErrorHandler';
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader 'HTMLTemplate';
-use Krang::ClassLoader Conf => qw(KrangRoot PasswordChangeTime ApacheMaxSize Secret ApacheMaxUnsharedSize ForceStaticBrowserCaching DefaultLanguage);
+use Krang::ClassLoader Conf =>
+  qw(KrangRoot PasswordChangeTime ApacheMaxSize Secret ApacheMaxUnsharedSize ForceStaticBrowserCaching DefaultLanguage);
 use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader 'AddOn';
 use Krang;
@@ -95,19 +95,16 @@ use Krang::ClassLoader 'Session' => qw(%session);
 
 BEGIN { pkg('AddOn')->call_handler('InitHandler') }
 
-
-if( ApacheMaxSize ) {
+if (ApacheMaxSize) {
     Apache::SizeLimit->set_max_process_size(ApacheMaxSize);
-} elsif(! defined ApacheMaxSize) {
-    Apache::SizeLimit->set_max_process_size(64000); # 64MB by default
+} elsif (!defined ApacheMaxSize) {
+    Apache::SizeLimit->set_max_process_size(64000);    # 64MB by default
 }
 Apache::SizeLimit->set_max_unshared_size(ApacheMaxUnsharedSize) if ApacheMaxUnsharedSize;
-
 
 ##########################
 ####  PUBLIC METHODS  ####
 ##########################
-
 
 =head1 INTERFACE
 
@@ -125,11 +122,10 @@ sub unprotected_uri {
     my $self = shift;
 
     # Just the login.pl, by default
-    my @uris = ( $self->login_uri );
+    my @uris = ($self->login_uri);
 
     return @uris;
 }
-
 
 =item login_uri()
 
@@ -143,15 +139,11 @@ sub login_uri {
     return qw(login.pl);
 }
 
-
-
 =pod
 
 =back
 
 =cut
-
-
 
 # Re-write the incoming request, based on Krang Instance rules:
 #
@@ -162,16 +154,18 @@ sub login_uri {
 #
 sub trans_handler ($$) {
     my $self = shift;
-    my ($r) = @_;
-    my $uri = $r->uri;
+    my ($r)  = @_;
+    my $uri  = $r->uri;
 
     # if it's a request for a /static file then strip off the static
     # prefix that looks like "/static/XXXX" where "XXXX" is the install_id
-    if( $uri =~ /^\/static\// ) {
+    if ($uri =~ /^\/static\//) {
+
         # if we have it configured to do so
-        if( ForceStaticBrowserCaching ) {
+        if (ForceStaticBrowserCaching) {
+
             # make it expire waaaaay in the future
-            $r->err_header_out('Expires' => 'Mon, 28 Jul 2014 23:30:00 GMT');
+            $r->err_header_out('Expires'       => 'Mon, 28 Jul 2014 23:30:00 GMT');
             $r->err_header_out('Cache-Control' => 'max-age=315360000');
         }
 
@@ -181,12 +175,12 @@ sub trans_handler ($$) {
         $r->filename($file);
         return OK;
     }
-    
+
     return OK if $r->prev && $r->prev->uri =~ /^\/static\//;
 
     # Only handle main requests, unless this is a request for bug.pl
     # which happens on redirects from ISEs
-    unless ( $r->is_initial_req() or $uri =~ /\/bug\.cgi/) {
+    unless ($r->is_initial_req() or $uri =~ /\/bug\.cgi/) {
         return DECLINED;
     }
 
@@ -195,12 +189,12 @@ sub trans_handler ($$) {
     $instance_name = '' unless (defined($instance_name));
     my $flavor = $r->dir_config('flavor');
 
-    # Are we in the context of an Instance server?    
+    # Are we in the context of an Instance server?
     if ($flavor eq 'instance') {
         unless (length($instance_name)) {
             my $error = "No instance name set for this Krang instance";
-            critical ($error);
-            die ($error);
+            critical($error);
+            die($error);
         }
 
         # Set current instance, or die trying
@@ -219,15 +213,14 @@ sub trans_handler ($$) {
         return OK;
     }
 
-
     ## We're now in the context of a "root"-flavored instance... directory city, baby.
     if (length($instance_name)) {
 
         # We have an instance name.  We should be in a matching path
         unless ($uri =~ /^\/$instance_name/) {
             my $error = "Expected uri like '/$instance_name\*', got '$uri' instead";
-            critical ($error);
-            die ($error);
+            critical($error);
+            die($error);
         }
 
         # Set current instance, or die trying
@@ -251,6 +244,7 @@ sub trans_handler ($$) {
         return OK;
 
     } else {
+
         # allow xinha requests through
         if ($uri =~ /xinha/i) {
             my $filename = pkg('File')->find("htdocs/$uri");
@@ -274,7 +268,7 @@ sub trans_handler ($$) {
 
         # We're looking at the root.  Set handler to show list of instances
         $r->handler("perl-script");
-        $r->push_handlers(PerlHandler => \&instance_menu); 
+        $r->push_handlers(PerlHandler => \&instance_menu);
 
         return DECLINED;
 
@@ -307,27 +301,26 @@ sub access_handler ($$) {
 
     my $bd = HTTP::BrowserDetect->new($r->header_in('User-Agent'));
     foreach my $browser (keys %allow_browsers) {
-        if( $bd->$browser ) {
+        if ($bd->$browser) {
             $allow_browsers{$browser} =~ /(\d)+(\.\d+)?/;
             my ($major, $minor) = ($1, $2);
             $minor ||= ".0";
-            if( 
-                $bd->major > $major 
-                or
-                ( $bd->major == $major && $bd->minor >= $minor )
-            ) {
+            if ($bd->major > $major
+                or ($bd->major == $major && $bd->minor >= $minor))
+            {
                 $r->cgi_env("KRANG_BROWSER_ENGINE" => $engine_of{$browser});
                 return OK;
             }
         }
     }
-    
+
     # failure
     debug("Unsupported browser detected: " . $r->header_in('User-Agent'));
-    $r->custom_response(FORBIDDEN,  "<h1>Unsupported browser detected.</h1><p>This application requires Firefox 1.5+, Safari 1.3+, Internet Explorer 6+, Mozilla 1.7+, Netscape 7+ or Konqueror 1+.</p>");
+    $r->custom_response(FORBIDDEN,
+        "<h1>Unsupported browser detected.</h1><p>This application requires Firefox 1.5+, Safari 1.3+, Internet Explorer 6+, Mozilla 1.7+, Netscape 7+ or Konqueror 1+.</p>"
+    );
     return FORBIDDEN;
 }
-
 
 # Attempt to retrieve user identity from session cookie.
 # Set REMOTE_USER and KRANG_SESSION_ID if successful.
@@ -336,38 +329,41 @@ sub authen_handler ($$) {
     my ($r) = @_;
 
     # If the request (or redirected request) was for a static item, let it through
-    return OK if $r->uri =~ /^\/static\// or ( $r->prev && $r->prev->uri =~ /^\/static\// );
+    return OK if $r->uri =~ /^\/static\// or ($r->prev && $r->prev->uri =~ /^\/static\//);
 
     # Only handle main requests, unless request is for bug.pl (which happens on ISE redirects)
     return DECLINED unless $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/;
 
     # Get Krang instance name
-    my $instance  = pkg('Conf')->instance();
+    my $instance = pkg('Conf')->instance();
 
     # Get cookies
     my %cookies = Apache::Cookie->new($r)->parse;
 
     # If there's no ID or no session cookie, redirect to Login
     unless ($cookies{$instance}) {
+
         # no cookie, redirect to login
         debug("No cookie found, passing Authen without user login");
         return OK;
     }
 
     # Validate authen cookie
-    my %cookie = $cookies{$instance}->value;
+    my %cookie     = $cookies{$instance}->value;
     my $session_id = $cookie{session_id};
-    my $hash = md5_hex($cookie{user_id} . $cookie{instance} . $session_id . Secret());
+    my $hash       = md5_hex($cookie{user_id} . $cookie{instance} . $session_id . Secret());
     if ($cookie{hash} ne $hash or $cookie{instance} ne pkg('Conf')->instance()) {
 
         # invalid cookie, send to login
-        critical("Invalid cookie found, possible breakin attempt from IP " . 
-                 $r->connection->remote_ip . ".  Passing Authen without user login.");
+        critical("Invalid cookie found, possible breakin attempt from IP "
+              . $r->connection->remote_ip
+              . ".  Passing Authen without user login.");
         return OK;
     }
 
-    # A non-PERL request (e.g. image), bug, or help file: let it through (we are already authenticated)
+ # A non-PERL request (e.g. image), bug, or help file: let it through (we are already authenticated)
     if ($r->uri !~ /(\.pl|\/|$instance)$/ || $r->uri =~ /\/bug\.cgi$/ || $r->uri =~ /\/help\.pl$/) {
+
         # We are authenticated:  Setup REMOTE_USER
         $r->connection->user($cookie{user_id});
         return OK;
@@ -393,9 +389,10 @@ sub authen_handler ($$) {
 
     # Get session_id for window_id
     if ($window_id) {
+
         # existing window
         $session_id = $cookie{"wid_$window_id"};
-        
+
         # if there's no $session_id for this window, logout happened in other window
         undef $window_id unless $session_id;
     }
@@ -405,18 +402,21 @@ sub authen_handler ($$) {
 
         # new window ID
         $window_id = $cookie{next_wid}++;
+
         # new session
         $session_id = pkg('Session')->create();
+
         # store mapping between new window ID and new session ID in cookie
         $cookie{"wid_$window_id"} = $session_id;
 
         # put language pref in new session
         $session{language} = pkg('MyPref')->get('language', $cookie{user_id})
-                          || DefaultLanguage || 'en';
+          || DefaultLanguage
+          || 'en';
 
         # if there are more than $max_active_windows windows then we need to get rid
         # of the LRU
-        if(keys %cookie > $max_active_windows) {
+        if (keys %cookie > $max_active_windows) {
             info("Too many window/session combinations.");
             my @ids = grep { $_ =~ /^wid_/ } keys %cookie;
             @ids = map { $_ =~ /^wid_(\d+)/; $1; } @ids;
@@ -464,63 +464,63 @@ sub authen_handler ($$) {
     return OK;
 }
 
-
 # Authorization
 sub authz_handler ($$) {
     my $self = shift;
     my ($r) = @_;
 
     # If the request (or redirected request) was for a static item, let it through
-    return OK if $r->uri =~ /^\/static\// or ( $r->prev && $r->prev->uri =~ /^\/static\// );
+    return OK if $r->uri =~ /^\/static\// or ($r->prev && $r->prev->uri =~ /^\/static\//);
 
     # Only handle main requests, unless this is a request for bug.pl
     # which happens on redirects from ISEs
     return DECLINED unless $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/;
 
-    my $path      = $r->uri();
-    my $instance  = pkg('Conf')->instance();
-    my $flavor    = $r->dir_config('flavor');
+    my $path     = $r->uri();
+    my $instance = pkg('Conf')->instance();
+    my $flavor   = $r->dir_config('flavor');
 
     # always allow access to the specified apps
     my @unprotected_uri = $self->unprotected_uri();
     foreach my $uu (@unprotected_uri) {
-        if (($flavor eq 'root'     and $path =~ m!^/$instance/$uu!) or 
-            ($flavor eq 'instance' and $path =~ m!^/$uu!)
-           ) {
+        if (   ($flavor eq 'root' and $path =~ m!^/$instance/$uu!)
+            or ($flavor eq 'instance' and $path =~ m!^/$uu!))
+        {
             return OK;
         }
     }
 
     # always allow access to the CSS file and images - needed before
     # login to display the login screen
-    return OK if $path =~ m!krang_login$! 
-      or $path =~ m!\.(gif|jpg|jpeg|png|css|js|ico)$!;
-    
+    return OK
+      if $path =~ m!krang_login$!
+          or $path =~ m!\.(gif|jpg|jpeg|png|css|js|ico)$!;
+
     # If user is logged in
     if (my $user_id = $r->connection->user) {
+
         # if we are enforcing changes in pw and the user's not
         # already trying to change their pw
-        if( PasswordChangeTime && $path !~ /my_pref\.pl/ ) {
+        if (PasswordChangeTime && $path !~ /my_pref\.pl/) {
+
             # check the last time the user changed their pw
             eval "require pkg('User')";
             my ($user) = pkg('User')->find(user_id => $user_id);
-            if( $user->force_pw_change ) {
-                return $self->_redirect_to_change_pw($r, $flavor, $instance)
+            if ($user->force_pw_change) {
+                return $self->_redirect_to_change_pw($r, $flavor, $instance);
             } else {
-                return OK 
+                return OK;
             }
         } else {
+
             # if we're logged in, we're good
-            return OK 
+            return OK;
         }
     }
 
     # No user?  Not a request to login?  Redirect the user to login!
     return $self->_redirect_to_login($r, $flavor, $instance);
 }
-
-
-
 
 #############################
 ####  INTERNAL HANDLERS  ####
@@ -535,19 +535,22 @@ sub instance_menu {
     @instances = pkg('Conf')->instances();
 
     # if there's only one instance, just go there
-    if( scalar @instances == 1 ) {
+    if (scalar @instances == 1) {
         $r->headers_out->{Location} = '/' . $instances[0] . '/';
         return REDIRECT;
-    # else, show the menu
+
+        # else, show the menu
     } else {
-        my $template = pkg('HTMLTemplate')->new(filename => 'instance_menu.tmpl',
-                                                cache    => 1);
+        my $template = pkg('HTMLTemplate')->new(
+            filename => 'instance_menu.tmpl',
+            cache    => 1
+        );
 
         foreach my $instance (@instances) {
             pkg('Conf')->instance($instance);
             push(
-                @loop, 
-                { 
+                @loop,
+                {
                     InstanceName        => $instance,
                     InstanceDisplayName => (pkg('Conf')->InstanceDisplayName || $instance),
                 }
@@ -563,10 +566,9 @@ sub instance_menu {
 
 }
 
-
 sub log_handler ($$) {
     my $pkg = shift;
-    my $r = shift;
+    my $r   = shift;
 
     # in Apache::Registry mode this is where we collect die() and
     # warn()s since they don't get caught by Krang::ErrorHandler
@@ -578,7 +580,9 @@ sub log_handler ($$) {
 
     # must make sure the cache is off at the end of the request
     if (Krang::Cache::active()) {
-        critical("Cache still on in log handler!  This cache was started at " . join(', ', @{$Krang::Cache::CACHE_STACK[-1]}) . ".");
+        critical("Cache still on in log handler!  This cache was started at "
+              . join(', ', @{$Krang::Cache::CACHE_STACK[-1]})
+              . ".");
         Krang::Cache::stop() while (Krang::Cache::active());
     }
 
@@ -589,10 +593,10 @@ sub log_handler ($$) {
 # publish path
 sub siteserver_trans_handler ($$) {
     my $self = shift;
-    my ($r) = @_;
+    my ($r)  = @_;
     my $host = $r->hostname;
     my $port = $r->get_server_port;
-    
+
     # add in port number if necessary
     $host .= ":$port" unless $port == 80;
 
@@ -605,7 +609,7 @@ sub siteserver_trans_handler ($$) {
         foreach my $site (@sites) {
             my $url         = $site->url;
             my $preview_url = $site->preview_url;
-            
+
             # is it a match?
             if ($url eq $host) {
                 $path = $site->publish_path;
@@ -626,13 +630,11 @@ sub siteserver_trans_handler ($$) {
     # Set up DOCUMENT_ROOT
     $r->document_root($path);
 
-    # map the URI to a filename    
+    # map the URI to a filename
     my $filename = catfile($path, $r->uri);
     $r->filename($filename);
     return OK;
 }
-
-
 
 ###########################
 ####  PRIVATE METHODS  ####
@@ -659,7 +661,7 @@ sub _redirect_to_workspace {
     my $self = shift;
     my ($r, $instance, $window_id) = @_;
 
-    my $app     = "workspace.pl?window_id=$window_id";
+    my $app = "workspace.pl?window_id=$window_id";
     my $new_uri = $r->dir_config('flavor') eq 'instance' ? "/$app" : "/$instance/$app";
 
     return $self->_do_redirect($r, $new_uri);
@@ -684,6 +686,5 @@ sub _do_redirect {
 
     return REDIRECT;
 }
-
 
 1;

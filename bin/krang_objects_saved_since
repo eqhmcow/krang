@@ -29,15 +29,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -67,22 +70,23 @@ pod2usage(1) unless (($#ARGV == 0) && ($ARGV[0] !~ /\-*help/i) && ($ARGV[0] !~ /
 my $date_and_time = $ARGV[0];
 unless ($date_and_time =~ /^\d\d\d\d\-\d\d\-\d\d\-\d\d\:\d\d:\d\d$/) {
     print "\nArgument must be in the format YYYY-MM-DD-HH:MM:SS\n\n";
-    exit (1);
+    exit(1);
 }
 
-# format datetime like MySQL's timestamp 
-$date_and_time =~ s/\-(\d\d)\:/ $1\:/; 
+# format datetime like MySQL's timestamp
+$date_and_time =~ s/\-(\d\d)\:/ $1\:/;
 
 # perform the search
 print "\nSearching history table...\n";
 my $dbh = dbh();
-my $sql = "SELECT object_id, object_type from history where action='SAVE' and timestamp >= '$date_and_time'";
+my $sql =
+  "SELECT object_id, object_type from history where action='SAVE' and timestamp >= '$date_and_time'";
 my $sth = $dbh->prepare($sql);
 $sth->execute();
 
 # sort the results
 my %results;
-while(my $row = $sth->fetchrow_hashref) {
+while (my $row = $sth->fetchrow_hashref) {
     $results{$row->{object_type}}{$row->{object_id}} = 1;
 }
 
@@ -90,8 +94,8 @@ while(my $row = $sth->fetchrow_hashref) {
 print "\n";
 if (%results) {
     foreach my $key (keys %results) {
-	print "$key " . join(', ', sort keys %{$results{$key}}) . "\n\n";
-    } 
+        print "$key " . join(', ', sort keys %{$results{$key}}) . "\n\n";
+    }
 } else {
     print "NONE FOUND!\n\n";
 }

@@ -81,14 +81,15 @@ use Getopt::Long;
 use Pod::Usage;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
     $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -110,25 +111,26 @@ END
     # $VERBOSE can effect use options and such.  also so errors get
     # detected as quick as possible - people are waiting out there!
     our $kds;
-    our $VERBOSE              = 0;
+    our $VERBOSE = 0;
     our ($help, $man);
-    our $patch_options        = '-p1';
-    our $force                = 0;
-    GetOptions("help"                   => \$help,
-	       "man"                    => \$man,
-	       "verbose+"               => \$VERBOSE,
-               "patch-options=s"        => \$patch_options,
-               "force"                  => \$force,
-	      ) or  pod2usage(2);
+    our $patch_options = '-p1';
+    our $force         = 0;
+    GetOptions(
+        "help"            => \$help,
+        "man"             => \$man,
+        "verbose+"        => \$VERBOSE,
+        "patch-options=s" => \$patch_options,
+        "force"           => \$force,
+    ) or pod2usage(2);
 
-    pod2usage(1)             if $help;
+    pod2usage(1) if $help;
     pod2usage(-verbose => 2) if $man;
 
     # get $kds
     $kds = shift @ARGV;
     pod2usage("Missing required template dataset parameter")
       unless defined $kds;
-};
+}
 
 our (%filename_map, $VERBOSE);
 our ($in, $out, $err);
@@ -166,11 +168,11 @@ sub main {
     # backup old .kds
     my $bak = "$kds\.bak";
     my @cmd = ("cp", $kds, $bak);
-    run(\@cmd, \$in, \$out, \$err) or
-      die("Unable to copy '$kds' to '$bak': $!");
+    run(\@cmd, \$in, \$out, \$err)
+      or die("Unable to copy '$kds' to '$bak': $!");
 
     # write out  .kds file
-    eval {$set->write(path => $kds);};
+    eval { $set->write(path => $kds); };
     die $@ if $@;
 
     # delete backup
@@ -178,7 +180,6 @@ sub main {
 
     exit 0;
 }
-
 
 # perform the patch
 sub do_patch {
@@ -215,19 +216,19 @@ sub do_patch {
 
     # evaluate patch status
     if (($err >> 8) != 0) {
-        die "\nPatch didn't complete 100% successfully.  Try again with --force if you want to ignore the problems described above.\n"
+        die
+          "\nPatch didn't complete 100% successfully.  Try again with --force if you want to ignore the problems described above.\n"
           unless $force;
         print STDERR "Patch found problems, but --force is set.  Continuing.\n"
           if $VERBOSE;
     }
 }
 
-
 # read the diff from STDIN
 sub read_diff {
     our ($diff, @filenames);
 
-    while(<STDIN>) {
+    while (<STDIN>) {
         $diff .= $_;
 
         # collect filenames in the diff
@@ -246,7 +247,6 @@ sub read_diff {
       if $VERBOSE;
 }
 
-
 # get all templates from a server
 sub extract {
     my ($dir, $kds) = @_;
@@ -254,13 +254,12 @@ sub extract {
     mkpath([$dir]) unless -d $dir;
 
     my @cmd = ("tar", "-C" => $dir, "-xf" => $kds, "template_*.xml");
-    run(\@cmd, \$in, \$out, \$err) or
-      die("Unable to extract '$kds' to '$dir': $!");
+    run(\@cmd, \$in, \$out, \$err)
+      or die("Unable to extract '$kds' to '$dir': $!");
 
     # DEBUG
     print STDERR "Extracted '$kds' to '$dir'\n" if $VERBOSE;
 }
-
 
 sub build_set {
     my ($dir) = @_;
@@ -269,9 +268,9 @@ sub build_set {
 
     while (my ($k, $v) = each %filename_map) {
         my $xmlfile = "template_$v\.xml";
-        my $fpath = catfile($dir, $k);
+        my $fpath   = catfile($dir, $k);
         my $xmlpath = catfile($dir, $xmlfile);
-        my $xml = XMLin($xmlpath);
+        my $xml     = XMLin($xmlpath);
         my $tmpl;
 
         local $/ = undef;
@@ -284,11 +283,9 @@ sub build_set {
 
         # fix datetime fields for deserialization
         my $fmt = '%FT%T';
-        $xml->{creation_date} =
-          Time::Piece->strptime($xml->{creation_date}, $fmt);
-        $xml->{deploy_date} =
-          Time::Piece->strptime($xml->{deploy_date}, $fmt)
-              if $xml->{deploy_date};
+        $xml->{creation_date} = Time::Piece->strptime($xml->{creation_date}, $fmt);
+        $xml->{deploy_date}   = Time::Piece->strptime($xml->{deploy_date},   $fmt)
+          if $xml->{deploy_date};
 
         # add object to dataset
         my $obj = bless($xml, 'Krang::Template');
@@ -301,7 +298,6 @@ sub build_set {
     return $set;
 }
 
-
 sub write_out {
     my ($dir) = @_;
     my @files;
@@ -312,9 +308,9 @@ sub write_out {
 
     for (@files) {
         my $fpath = catfile($dir, $_);
-        my $xml = XMLin($fpath);
+        my $xml   = XMLin($fpath);
         my $npath = catfile($dir, $xml->{filename});
-        my $data = $xml->{content} || '';
+        my $data  = $xml->{content} || '';
 
         # build map of .tmpl filenames to .xml filenames
         $filename_map{$xml->{filename}} = $xml->{template_id};

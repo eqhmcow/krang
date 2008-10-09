@@ -85,15 +85,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -116,23 +119,26 @@ use Krang::ClassFactory qw(pkg);
 use Getopt::Long;
 use Pod::Usage;
 
-our ($help, $man, $list, $no_update, $verbose, $file, @skip, @skip_classes,
-     $no_uuid, $uuid_only, $skip_dependencies);
+our ($help, $man, $list, $no_update, $verbose, $file, @skip, @skip_classes, $no_uuid, $uuid_only,
+    $skip_dependencies);
+
 BEGIN {
     $verbose = 0;
     pod2usage(2)
-      unless GetOptions(help        => \$help,
-                        man         => \$man,
-                        'verbose+'  => \$verbose,
-                        list        => \$list,
-                        'no-update' => \$no_update,
-                        'no-uuid'   => \$no_uuid,
-                        'uuid-only' => \$uuid_only,
-                        'skip=s'    => \@skip,
-			'skip_dependencies' => \$skip_dependencies);
-   pod2usage(1)             if $help;
+      unless GetOptions(
+        help                => \$help,
+        man                 => \$man,
+        'verbose+'          => \$verbose,
+        list                => \$list,
+        'no-update'         => \$no_update,
+        'no-uuid'           => \$no_uuid,
+        'uuid-only'         => \$uuid_only,
+        'skip=s'            => \@skip,
+        'skip_dependencies' => \$skip_dependencies
+      );
+    pod2usage(1) if $help;
     pod2usage(-verbose => 2) if $man;
-    
+
     # get input file
     $file = shift(@ARGV);
     pod2usage("Missing filename command-line parameter!\n")
@@ -142,7 +148,8 @@ BEGIN {
     warn "Specified file '$file' does not exist.\n" and exit(1)
       unless -e $file;
     warn "Input filename must end in .kds or .kds.gz\n" and exit(1)
-      unless $file =~ /\.kds$/ or $file =~ /\.kds\.gz$/;
+      unless $file =~ /\.kds$/
+          or $file =~ /\.kds\.gz$/;
 
     # make sure that's it
     pod2usage("Unrecognized options to krang_export: '" . join(' ', @ARGV) . "'\n")
@@ -154,17 +161,17 @@ BEGIN {
         $class =~ s!ies$!y!;
         $class =~ s!s$!!;
         $class = pkg($class);
-        die "Unrecognized type '$skip' found in --skip option.  Should be 'sites' or 'categories'.\n" 
-          unless $class eq pkg('Site') or $class eq pkg('Category');
+        die
+          "Unrecognized type '$skip' found in --skip option.  Should be 'sites' or 'categories'.\n"
+          unless $class eq pkg('Site')
+              or $class eq pkg('Category');
         push(@skip_classes, $class);
     }
-     
+
     # open file for later processing.  this has to happen before
     # Krang::Script loads and su's to KrangUser
     open(SOURCE, '<', $file) or warn "Unable to open '$file': $!" and exit(1);
 }
-
-
 
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader Conf => qw(KrangRoot);
@@ -183,20 +190,23 @@ use File::Temp qw(tempfile);
 use File::Copy qw(copy);
 
 # copy file someplace Krang can open it
-my (undef, $tempfile) = tempfile(DIR => catdir(KrangRoot, 'tmp'),
-                               SUFFIX => 
-                               ($file =~ /\.gz$/ ? '.kds.gz' : '.kds'),
-                               CLEANUP => 1);
-copy(\*SOURCE, $tempfile) 
+my (undef, $tempfile) = tempfile(
+    DIR => catdir(KrangRoot, 'tmp'),
+    SUFFIX => ($file =~ /\.gz$/ ? '.kds.gz' : '.kds'),
+    CLEANUP => 1
+);
+copy(\*SOURCE, $tempfile)
   or die "Unable to copy '$file' to '$tempfile': $!";
 close SOURCE;
 print STDERR "Copied '$file' to '$tempfile'.\n" if $verbose > 1;
 $file = $tempfile;
 
 # open up the dataset
-my $set = pkg('DataSet')->new(path            => $file, 
-                              import_callback => \&import_callback,
-			      skip_dependencies => $skip_dependencies || 0);
+my $set = pkg('DataSet')->new(
+    path              => $file,
+    import_callback   => \&import_callback,
+    skip_dependencies => $skip_dependencies || 0
+);
 
 # produce a listing?
 if ($list) {
@@ -213,27 +223,26 @@ my %classes = map { ($_->[0], 1) } $set->list;
 my %max_id;
 foreach my $class (keys %classes) {
     my $id_field = $class->id_meth;
-    my ($max) = $class->find(ids_only   => 1, 
-                             order_by   => $id_field, 
-                             order_desc => 1, 
-                             limit      => 1);
+    my ($max) = $class->find(
+        ids_only   => 1,
+        order_by   => $id_field,
+        order_desc => 1,
+        limit      => 1
+    );
     $max_id{$class} = $max || 0;
 }
 
-
-    
-
 # do the import
 eval {
-    $set->import_all(($no_update    ? (no_update    => 1)              : ()),
-                     ($no_uuid      ? (no_uuid      => 1)              : ()),
-                     ($uuid_only    ? (uuid_only    => 1)              : ()),
-                     (@skip_classes ? (skip_classes => \@skip_classes) : ())
-                    );
+    $set->import_all(
+        ($no_update    ? (no_update    => 1)              : ()),
+        ($no_uuid      ? (no_uuid      => 1)              : ()),
+        ($uuid_only    ? (uuid_only    => 1)              : ()),
+        (@skip_classes ? (skip_classes => \@skip_classes) : ())
+    );
 };
 if ($@ and ref $@ and $@->isa('Krang::DataSet::ImportRejected')) {
-    print STDERR "Import failed for the following reasons:\n\n",
-      $@->message, "\n";
+    print STDERR "Import failed for the following reasons:\n\n", $@->message, "\n";
     exit 1;
 } elsif ($@) {
     die $@;
@@ -243,16 +252,21 @@ print "Import completed.\n";
 exit 0;
 
 sub import_callback {
-    my %arg = @_;
+    my %arg    = @_;
     my $object = $arg{object};
-    
+
     if ($verbose) {
         my ($class, $id) = pkg('DataSet')->_obj2id($object);
         if ($id > $max_id{$class}) {
             print STDERR "Imported $class => $id\n";
-        } elsif (grep { $_ eq $class } @skip_classes) {
+        } elsif (
+            grep {
+                $_ eq $class
+            } @skip_classes
+          )
+        {
             print STDERR "Skipped $class => $id\n";
-        } else {            
+        } else {
             print STDERR "Updated $class => $id\n";
         }
     }

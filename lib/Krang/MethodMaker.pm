@@ -86,7 +86,7 @@ sub get_set_with_notify {
         my $method = $_->{method};
         my $attr   = $_->{attr};
         foreach my $slot (@$attr) {
-            no strict 'subs'; # allow $foo->$bar()
+            no strict 'subs';    # allow $foo->$bar()
             $meths{$slot} = sub {
                 return $_[0]->{$slot}
                   if @_ == 1;
@@ -100,10 +100,9 @@ sub get_set_with_notify {
             };
         }
     }
-    
+
     $class->install_methods(%meths);
 }
-
 
 =item get
 

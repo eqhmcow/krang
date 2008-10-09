@@ -32,15 +32,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -84,7 +87,7 @@ usage() unless @ARGV;
 my $command = shift @ARGV;
 
 if ($command eq 'start') {
-    unless( EnableFTP ) {
+    unless (EnableFTP) {
         print "FTP has been disabled.\n";
         exit(0);
     }
@@ -118,6 +121,7 @@ if ($command eq 'stop') {
 }
 
 if ($command eq 'restart') {
+
     # stop
     if ($running) {
         if (kill 15, $pid) {
@@ -145,7 +149,7 @@ if ($command eq 'restart') {
 
     }
 
-    unless( EnableFTP ) {
+    unless (EnableFTP) {
         print "FTP has been disabled.\n";
         exit(0);
     }
@@ -166,7 +170,7 @@ if ($command eq 'restart') {
 usage();
 
 sub usage {
-  print <<END;
+    print <<END;
 usage: krang_ftpctl (start|stop|restart|debug)
 
   start      - start the ftp server
@@ -175,20 +179,21 @@ usage: krang_ftpctl (start|stop|restart|debug)
 
 END
 
-  exit;
+    exit;
 }
 
 # make sure logs get created with the right ownership when running as root
 sub setup_logs {
+
     # only worry if we're root
     return if $< != 0 or $> != 0;
-    
+
     foreach my $log (qw(ftp.log krang.log)) {
         my $file = catfile(KrangRoot, 'logs', $log);
         next if -e $file;
 
         # create the file and chown it to KrangUser:KrangGroup
         system("touch", $file);
-        system("chown",  KrangUser . ":" . KrangGroup, $file);
+        system("chown", KrangUser . ":" . KrangGroup, $file);
     }
 }

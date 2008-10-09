@@ -54,11 +54,11 @@ DB.
 sub browser2db_map {
     return {
         'bold'         => 'strong',
-        'italic'       => 'em'    ,
-        'underline'    => 'u'     ,
+        'italic'       => 'em',
+        'underline'    => 'u',
         'line-through' => 'strike',
-        'sub'          => 'sub'   ,
-        'super'        => 'sup'   ,
+        'sub'          => 'sub',
+        'super'        => 'sup',
     };
 }
 
@@ -84,32 +84,37 @@ sub db2browser {
     my $t = HTML::TreeBuilder->new_from_content($arg{html});
     $t->elementify;
 
-    while(my $orig = $t->look_down("_tag" => $regexp)) {
+    while (my $orig = $t->look_down("_tag" => $regexp)) {
 
         # remember style for the will-be-span
-        my %style = ( %{$map->{$orig->tag}} );
+        my %style = (%{$map->{$orig->tag}});
 
-        my $child = undef;
+        my $child          = undef;
         my $content_parent = $orig;
 
         # maybe first child of this markup tag is another markup tag;
         # if so, pack it in the same span with multiple style properties
-        while ($child = $content_parent->look_down(sub {
-                  $_[0]->tag ne $content_parent->tag and $_[0]->tag =~ $regexp
-              })) {
+        while (
+            $child = $content_parent->look_down(
+                sub {
+                    $_[0]->tag ne $content_parent->tag and $_[0]->tag =~ $regexp;
+                }
+            )
+          )
+        {
 
             # consider only first child
             last unless $child->pindex == 0;
 
             # remember additional style for will-be-span
-            %style = ( %style, %{$map->{$child->tag}} );
+            %style = (%style, %{$map->{$child->tag}});
 
             # recurse
             $content_parent = $child;
         }
 
         # build the span's style attrib
-        my $style = join('; ', map {"$_: $style{$_}"} keys %style);
+        my $style = join('; ', map { "$_: $style{$_}" } keys %style);
 
         # create the span,
         my $repl = HTML::Element->new('span', 'style' => $style);
@@ -148,8 +153,13 @@ sub browser2db {
     $t->elementify;
 
     # look for SPAN tags with a style attrib
-    while (my $span = $t->look_down("_tag" => "span",
-                                    "style" => qr{.+})) {
+    while (
+        my $span = $t->look_down(
+            "_tag"  => "span",
+            "style" => qr{.+}
+        )
+      )
+    {
 
         my $repl  = undef;
         my $child = undef;

@@ -5,105 +5,105 @@ use warnings;
 # all valid configuration directives must be listed here
 our @VALID_DIRECTIVES;
 @VALID_DIRECTIVES = map { lc($_) } qw(
-ApacheAddr
-ApachePort
-ApacheMaxSize
-ApacheMaxUnsharedSize
-Assertions
-AvailableLanguages
-BadLoginCount
-BadLoginWait
-BadLoginNotify
-BugzillaComponent
-BugzillaEmail
-BugzillaPassword
-BugzillaServer
-Charset
-ContactEmail
-ContactURL
-CustomCSS
-DefaultLanguage
-DBPass
-DBUser
-DBHost
-DBSock
-EnableTemplateCache
-EnableBugzilla
-EnableFTP
-EnableSiteServer
-EnableSSL
-ForceStaticBrowserCaching
-FromAddress
-FTPAddress
-FTPPort
-FTPHostName
-HostName
-InstanceApacheAddr
-InstanceApachePort
-InstanceDBName
-InstanceDisplayName
-InstanceElementSet
-InstanceHostName
-InstanceSSLCertificateFile
-InstanceSSLCertificateKeyFile
-InstanceSSLCertificateChainFile
-InstanceSSLCACertificateFile
-InstanceSSLCARevocationFile
-InstanceSSLPort
-KrangGroup
-KrangRoot
-KrangUser
-LogLevel
-PasswordChangeTime
-PasswordChangeCount
-PreviewSSL
-RewriteLogLevel
-SavedVersionsPerMedia
-SavedVersionsPerStory
-SavedVersionsPerTemplate
-SchedulerDefaultFailureDelay
-SchedulerMaxChildren
-Secret
-SiteServerAddr
-SiteServerPort
-SMTPServer
-Skin
-SSLApachePort
-SSLPassPhraseDialog
-SSLRandomSeedStartup
-SSLRandomSeedConnect
-SSLSessionCacheTimeout
-SSLProtocol
-SSLCipherSuite
-SSLVerifyClient
-SSLVerifyDepth
-SSLLogLevel
-TrashMaxItems
+  ApacheAddr
+  ApachePort
+  ApacheMaxSize
+  ApacheMaxUnsharedSize
+  Assertions
+  AvailableLanguages
+  BadLoginCount
+  BadLoginWait
+  BadLoginNotify
+  BugzillaComponent
+  BugzillaEmail
+  BugzillaPassword
+  BugzillaServer
+  Charset
+  ContactEmail
+  ContactURL
+  CustomCSS
+  DefaultLanguage
+  DBPass
+  DBUser
+  DBHost
+  DBSock
+  EnableTemplateCache
+  EnableBugzilla
+  EnableFTP
+  EnableSiteServer
+  EnableSSL
+  ForceStaticBrowserCaching
+  FromAddress
+  FTPAddress
+  FTPPort
+  FTPHostName
+  HostName
+  InstanceApacheAddr
+  InstanceApachePort
+  InstanceDBName
+  InstanceDisplayName
+  InstanceElementSet
+  InstanceHostName
+  InstanceSSLCertificateFile
+  InstanceSSLCertificateKeyFile
+  InstanceSSLCertificateChainFile
+  InstanceSSLCACertificateFile
+  InstanceSSLCARevocationFile
+  InstanceSSLPort
+  KrangGroup
+  KrangRoot
+  KrangUser
+  LogLevel
+  PasswordChangeTime
+  PasswordChangeCount
+  PreviewSSL
+  RewriteLogLevel
+  SavedVersionsPerMedia
+  SavedVersionsPerStory
+  SavedVersionsPerTemplate
+  SchedulerDefaultFailureDelay
+  SchedulerMaxChildren
+  Secret
+  SiteServerAddr
+  SiteServerPort
+  SMTPServer
+  Skin
+  SSLApachePort
+  SSLPassPhraseDialog
+  SSLRandomSeedStartup
+  SSLRandomSeedConnect
+  SSLSessionCacheTimeout
+  SSLProtocol
+  SSLCipherSuite
+  SSLVerifyClient
+  SSLVerifyDepth
+  SSLLogLevel
+  TrashMaxItems
 );
 
 our @REQUIRED_DIRECTIVES = qw(
-ApacheAddr 
-ApachePort
-BugzillaComponent
-BugzillaEmail
-BugzillaPassword
-BugzillaServer
-FromAddress
-HostName 
-KrangGroup 
-KrangUser 
-LogLevel 
-Secret
-SMTPServer
+  ApacheAddr
+  ApachePort
+  BugzillaComponent
+  BugzillaEmail
+  BugzillaPassword
+  BugzillaServer
+  FromAddress
+  HostName
+  KrangGroup
+  KrangUser
+  LogLevel
+  Secret
+  SMTPServer
 );
 
 our @REQUIRED_INSTANCE_DIRECTIVES = qw(
-DBPass 
-DBUser
-InstanceDBName
-InstanceDisplayName
-InstanceElementSet
-InstanceHostName 
+  DBPass
+  DBUser
+  InstanceDBName
+  InstanceDisplayName
+  InstanceElementSet
+  InstanceHostName
 );
 
 use Krang::Platform;
@@ -159,11 +159,12 @@ our $INSTANCE_CONF;
 # internal routine to load the conf file.  Called by a BEGIN during
 # startup, and used during testing.
 sub _load {
+
     # find a default conf file
     my $conf_file;
     if (exists $ENV{KRANG_CONF}) {
         $conf_file = $ENV{KRANG_CONF};
-    } else { 
+    } else {
         $conf_file = catfile($ENV{KRANG_ROOT}, "conf", "krang.conf");
     }
 
@@ -179,9 +180,10 @@ CROAK
 
     # load conf file into package global
     eval {
-        our $CONF = Config::ApacheFormat->new(valid_directives => 
-                                              \@VALID_DIRECTIVES,
-                                              valid_blocks => [ 'instance' ]);
+        our $CONF = Config::ApacheFormat->new(
+            valid_directives => \@VALID_DIRECTIVES,
+            valid_blocks     => ['instance']
+        );
         $CONF->read($conf_file);
     };
     croak("Unable to read config file '$conf_file'.  Error was: $@")
@@ -190,7 +192,7 @@ CROAK
       unless $CONF;
 
     # mix in KrangRoot
-    my $extra = qq(KrangRoot "$ENV{KRANG_ROOT}"\n);
+    my $extra    = qq(KrangRoot "$ENV{KRANG_ROOT}"\n);
     my $extra_fh = IO::Scalar->new(\$extra);
     $CONF->read($extra_fh);
 }
@@ -244,13 +246,13 @@ Case-insensitive.
 
 # export config getters on demand
 sub import {
-    my $pkg = shift;
+    my $pkg     = shift;
     my $callpkg = caller(0);
-    
+
     foreach my $name (@_) {
-        no strict 'refs'; # needed for glob refs
+        no strict 'refs';    # needed for glob refs
         *{"$callpkg\::$name"} = sub () { $pkg->get($name) };
-    } 
+    }
 }
 
 =item C<< $current_instance = Krang::Conf->instance() >>
@@ -270,9 +272,10 @@ state.
 sub instance {
     my $pkg = shift;
     return $INSTANCE unless @_;
-    
+
     my $instance = shift;
     if (defined $instance) {
+
         # get a handle on the block
         my $block;
         eval { $block = $CONF->block(instance => $instance); };
@@ -283,13 +286,14 @@ sub instance {
         $INSTANCE      = $instance;
         $INSTANCE_CONF = $block;
     } else {
+
         # clear state
         undef $INSTANCE;
         undef $INSTANCE_CONF;
     }
 
     return $INSTANCE;
-}   
+}
 
 =item C<< @instances = Krang::Conf->instances() >>
 
@@ -317,7 +321,7 @@ sub check {
 
     # check required directives
     foreach my $dir (@REQUIRED_DIRECTIVES) {
-        _broked("Missing required $dir directive") 
+        _broked("Missing required $dir directive")
           unless defined $CONF->get($dir);
     }
 
@@ -337,23 +341,23 @@ sub check {
         # being overridden in addons via class.conf
         my $element_set = $block->get('InstanceElementSet');
         opendir(my $dir, catdir($ENV{KRANG_ROOT}, 'addons'));
-        my @addons = map  { catdir($ENV{KRANG_ROOT}, 'addons', $_) }
-                     grep { $_ !~ /^\./ and $_ ne 'CVS' } 
-                     readdir($dir);
+        my @addons = map { catdir($ENV{KRANG_ROOT}, 'addons', $_) }
+          grep { $_ !~ /^\./ and $_ ne 'CVS' } readdir($dir);
 
         my $found = 0;
         foreach my $libdir ($ENV{KRANG_ROOT}, @addons) {
             $found = 1, last
               if -d catdir($libdir, 'element_lib', $element_set);
         }
-        _broked("Instance '$instance' is looking for InstanceElementSet ".
-                "'$element_set' which is not installed") unless $found;
+        _broked("Instance '$instance' is looking for InstanceElementSet "
+              . "'$element_set' which is not installed")
+          unless $found;
     }
 
     # make sure KrangUser and KrangGroup exist
-    _broked("KrangUser '" . $CONF->get("KrangUser") . "' does not exist") 
+    _broked("KrangUser '" . $CONF->get("KrangUser") . "' does not exist")
       unless getpwnam($CONF->get("KrangUser"));
-    _broked("KrangGroup '" . $CONF->get("KrangGroup") . "' does not exist") 
+    _broked("KrangGroup '" . $CONF->get("KrangGroup") . "' does not exist")
       unless getgrnam($CONF->get("KrangGroup"));
 
     # make sure all instances have their own DB
@@ -361,17 +365,18 @@ sub check {
     foreach my $instance ($pkg->instances()) {
         my $block = $CONF->block(instance => $instance);
         if ($seen{$block->get("InstanceDBName")}) {
-            _broked("More than one instance is using the '" . 
-                    $block->get("InstanceDBName") . "' database");
+            _broked("More than one instance is using the '"
+                  . $block->get("InstanceDBName")
+                  . "' database");
         }
         $seen{$block->get("InstanceDBName")} = 1;
     }
 
     # make sure that if EnableSSL is true, that we were built with-sslmonitor
-    if( $CONF->get('EnableSSL') ) {
+    if ($CONF->get('EnableSSL')) {
         my %params = Krang::Platform->build_params();
         _broked("EnableSSL cannot be true if you did not build Krang --with-ssl")
-            unless( $params{SSL} );
+          unless ($params{SSL});
     }
 }
 
@@ -379,13 +384,12 @@ sub _broked {
     warn("Error found in krang.conf: $_[0].\n");
     exit(1);
 }
- 
+
 # run the check ASAP, unless we're in upgrade mode
 __PACKAGE__->check() unless ($ENV{KRANK_CONF_NOCHECK});
 
 =back
 
 =cut
-
 
 1;
