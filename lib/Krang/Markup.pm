@@ -123,7 +123,8 @@ sub tidy_up_after_treebuilder {
     my $body = $tree->find_by_tag_name('body')->as_HTML('<>&', undef, {});
 
     # chop implicit body tag
-    $body =~ s/<\/?body>//g;
+    $body =~ s/^\s*<body>//is;
+    $body =~ s/<\/body>\s*$//is;
 
     # chop newline added by HTML::Element's as_HTML() method
     $body =~ s/\n$//;
