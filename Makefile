@@ -104,7 +104,7 @@ TIDY_ARGS = --backup-and-modify-in-place --indent-columns=4 --cuddled-else --max
 tidy:
 	- find lib/Krang/ -name '*.pm' | xargs perltidy $(TIDY_ARGS)
 	- find t/ -name '*.t' | xargs perltidy $(TIDY_ARGS)
-	- perltidy $(TIDY_ARGS) bin/
+	- perltidy $(TIDY_ARGS) bin/*
 
 tidy_modified:
 	svn -q status | grep '^\(M\|A\).*\.\(pm\|pl\|t\)$$' | cut -c 8- | xargs perltidy $(TIDY_ARGS)
