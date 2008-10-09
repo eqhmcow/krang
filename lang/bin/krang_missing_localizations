@@ -355,6 +355,8 @@ sub cache_template_strings {
 
     my $content = join '', @$lines;
 
+    $dir = 'templates/'. $dir;
+
     # <tmpl_lang ...> strings
     my $line_num = 1;
     while ($content =~ /$tmpl_lang_re/g) {
