@@ -65,7 +65,7 @@ sub xinha_toolbar {
      );
 
     # mix in the formatblock
-    my $toolbar = $arg{formatblock}
+    my $toolbar = $arg{include_formatblock}
       ? '"formatblock", "space",' . $default
       : $default;
 

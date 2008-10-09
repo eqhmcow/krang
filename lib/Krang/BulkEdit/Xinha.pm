@@ -167,7 +167,8 @@ sub edit {
         serverbase  => $serverbase,
         crumbs      => \@crumbs,
         bulk_done_with_this_element => localize('Done Bulk Editing '.$curr_loc),
-        toolbar     => pkg("BulkEdit::Xinha::Config")->xinha_toolbar(formatblock => $formatblock),
+        toolbar     => pkg("BulkEdit::Xinha::Config")->xinha_toolbar(
+                           include_formatblock => $formatblock),
     );
 }
 
