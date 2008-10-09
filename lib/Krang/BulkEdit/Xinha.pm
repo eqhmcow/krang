@@ -12,8 +12,6 @@ use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader Log          => qw(debug);
 use Krang::ClassLoader Message      => qw(add_message);
 
-use Encode qw(decode_utf8);
-
 =head1 NAME
 
 Krang::BulkEdit::Xinha - Class for Xinha-based bulk editing
@@ -358,7 +356,8 @@ sub make_formatblock {
         $display_name_for{p} = localize('Paragraph');
     }
 
-    # format as JavaScript object litteral
+    # format as JavaScript object litteral (element order matters in this case,
+    # so don't use JSON::Any to convert a Perl Hash into a JavaScript litteral!
     my $formatblock = join(',', map { "'$display_name_for{$_}' : '$_'" }
                            sort { $a cmp $b }
                            grep { $allowed_in_formatblock{$_} }
