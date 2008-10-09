@@ -54,22 +54,21 @@ will be prepended.
 sub xinha_toolbar {
     my ($pkg, %arg) = @_;
 
-    my $default = q(
-        "bold", "italic", "underline", "separator",
-        "insertorderedlist", "insertunorderedlist", "separator",
-        "inserthorizontalrule", "createlink", "separator",
-        "subscript", "superscript", "separator",
-        "copy", "cut", "paste", "separator",
-        "htmlmode", "separator",
-        "undo", "redo"
-     );
+    my @formatblock = qw(
+        bold                 italic              underline separator
+        insertorderedlist    insertunorderedlist separator
+        inserthorizontalrule createlink          separator
+        subscript            superscript         separator
+        copy                 cut                 paste     separator
+        htmlmode             separator
+        undo                 redo
+    );
 
-    # mix in the formatblock
-    my $toolbar = $arg{include_formatblock}
-      ? '"formatblock", "space",' . $default
-      : $default;
+    if ($arg{include_formatblock}) {
+        unshift @formatblock, qw( formatblock space );
+    }
 
-    return '[' . $toolbar . ']';
+    return JSON::Any->objToJson(\@formatblock);
 }
 
 =item pkg('BulkEdit::Xinha::Config')->html_scrubber(html => $html);
