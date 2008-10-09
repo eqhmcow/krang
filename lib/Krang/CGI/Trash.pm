@@ -277,44 +277,25 @@ sub _register_msg {
     my @restored = @$restored;
     my @failed   = @$failed;
 
+    my $func = 'add_message';
+
     if (@failed) {
-        if (@restored) {
-            add_alert(
-                'restored_with_some_exceptions',
-                restored_phrase => (
-                    scalar(@restored) > 1 ? localize('These items have been')
-                    : localize('This item has been')
-                ),
-                restored_list => join('<br/>', @restored),
-                failed_phrase => (
-                    scalar(@failed) > 1 ? localize('These items')
-                    : localize('This item')
-                ),
-                failed_list => join('<br/>', @failed),
-            );
+        if (@failed == 1) {
+            add_alert('not_restored_item', item => $failed[0]);
         } else {
-            add_alert(
-                'restored_with_exceptions_only',
-                failed_phrase => (
-                    scalar(@failed) > 1
-                    ? localize('These items')
-                    : localize('This item')
-                ),
-                failed_list => join '<br/>',
-                @failed,
-            );
+            add_alert('not_restored_items', items => join('<br/>', @failed));
         }
-    } else {
-        add_message(
-            'restored_without_exceptions',
-            restored_phrase => (
-                scalar(@restored) > 1
-                ? localize('These items have been')
-                : localize('This item has been')
-            ),
-            restored_list => join '<br/>',
-            @restored,
-        );
+        $func = 'add_alert';
+    }
+
+    if (@restored) {
+        no strict 'refs';
+        if (@restored == 1) {
+            $func->('restored_item', item => $restored[0]);
+        } else {
+            $func->('restored_items', items => join('<br/>', @restored));
+        }
+        use strict 'refs';
     }
 }
 
@@ -327,15 +308,14 @@ sub _format_msg {
     my $type    = $object->moniker;
     my $id_meth = $object->id_meth;
     my $id      = $object->$id_meth;
+    my $msg     = ucfirst($type) . ' ' . $id . ' &ndash; ' . $object->url;
 
     # Success
     unless ($ex) {
-        my ($msg) = $object->retired ? (localize('The retired') . " $type") : ucfirst($type);
-        $msg .= " $id " . localize('has been restored.');
+        $msg .= ' (retired)' if $object->retired;
         return $msg;
     }
 
-    my $msg     = ucfirst($type) . ' ' . $id . ' ' . $object->url;
     my $ex_type = $ex->moniker;
 
     # No restore permission
@@ -346,26 +326,24 @@ sub _format_msg {
     if ($ex_type eq 'duplicateurl') {
         if ($ex->can('categories') and $ex->categories) {
             my @cats = @{$ex->categories};
-            return $msg 
+            return $msg
               . '<br/>('
-              . localize('URL conflict with')
-              . ' <br/>'
-              . join('<br/>', map { "Category $_->{id} $_->{url}" } @cats) . ' )';
+              . localize('Reason: URL conflict with Category ')
+              . join(', ', map { $_->{id} } @cats) . ' )';
         } elsif ($ex->can('stories') and $ex->stories) {
             my @stories = @{$ex->stories};
-            return $msg 
+            return $msg
               . '<br/>('
-              . localize('URL conflict with')
-              . ' <br/>'
-              . join('<br/>', map { "Story $_->{id} $_->{url}" } @stories) . ' )';
+              . localize('Reason: URL conflict with Story ')
+              . join(', ', map { $_->{id} } @stories) . ' )';
         } elsif (my $id = $ex->$id_meth) {
-            return $msg 
+            return $msg
               . '<br/>('
-              . localize('URL conflict with') . ' '
-              . ucfirst($type) . ' '
+              . localize('Reason: URL conflict with') . ' '
+              . localize(ucfirst($type)) . ' '
               . $id . ')';
         } else {
-            return $msg . '<br/>(' . localize('URL conflict - no further information)');
+            return $msg . '<br/>(' . localize('Reason: URL conflict - no further information)');
         }
     }
 
