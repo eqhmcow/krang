@@ -330,11 +330,12 @@ inputs you will need to override this method.
 
 sub param_names { $_[2]->xpath(); }
 
-=item C<< @data = $class->bulk_edit_data(element => $element) >>
+=item C<< $data = $class->bulk_edit_data(element => $element) >>
 
-Return an array of text blocks suitable for bulk editing.  This method
-must work for all classes that set bulk_edit to 1 or to 'textarea'.
-The default implementation just returns $element->data.
+This method may be used to filter a bulk-edited element's data just
+before concatenating it with its siblings' data. It must work for all
+classes that set bulk_edit to 1, 'textarea' or 'xinha'.  The default
+implementation just returns $element->data.
 
 =cut
 
