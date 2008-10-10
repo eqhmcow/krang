@@ -6,6 +6,7 @@ use warnings;
 
 use Krang::ClassLoader base => 'ElementClass::TopLevel';
 use Krang::ClassLoader 'ElementLibrary';
+use Carp qw(croak);
 
 =head1 NAME
 
