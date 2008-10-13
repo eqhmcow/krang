@@ -157,7 +157,7 @@ in...
 sub html_scrubber {
     my ($pkg, %arg) = @_;
 
-    my @block_elements  = (qw(p h1 h2 h3 h4 h5 h6 ol ul hr li));
+    my @block_elements  = (qw(p h1 h2 h3 h4 h5 h6 ol ul hr li pre));
     my @inline_elements = (qw(a br em strong strike u sub sup));
 
     my $scrubber = HTML::Scrubber->new(
