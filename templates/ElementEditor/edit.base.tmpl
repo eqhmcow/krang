@@ -86,7 +86,7 @@
       xinha_config.specialReplacements['src="/'] = 'src="<tmpl_var serverbase>'; 
       xinha_config.specialReplacements['background="/'] = 'background="<tmpl_var serverbase>';
 
-      xinha_editors   = HTMLArea.makeEditors(xinha_editors, xinha_config, xinha_plugins);
+      xinha_editors = HTMLArea.makeEditors(xinha_editors, xinha_config, xinha_plugins);
 
       Krang.ElementEditor.add_save_hook(function() {
           __htmlareas.each(function(xinha) {
@@ -95,8 +95,9 @@
               });
 
       xinha_editors["bulk_data"].config.toolbar     = [ <tmpl_var toolbar>     ];
+        <tmpl_if formatblock>
       xinha_editors["bulk_data"].config.formatblock = { <tmpl_var formatblock> };
-
+        </tmpl_if>
       HTMLArea.startEditors(xinha_editors);
   }
 
