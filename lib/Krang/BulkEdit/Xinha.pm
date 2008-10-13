@@ -12,6 +12,11 @@ use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader Log          => qw(debug);
 use Krang::ClassLoader Message      => qw(add_message);
 
+use HTML::TreeBuilder;
+use HTML::Element;
+
+use Carp qw(croak);
+
 =head1 NAME
 
 Krang::BulkEdit::Xinha - Class for Xinha-based bulk editing
@@ -123,20 +128,28 @@ sub edit {
 
     # get children to put in Xinha
     my %names = map { $_ => 1 } @{$arg{child_names}};
+
     my @children = grep { $names{$_->name} } $element->children;
 
     # put the configured html tag around them
     my $full_text = '';
     foreach my $child (@children) {
         my $tag  = $child->class->bulk_edit_tag;
-        my $text = $child->data;
-        next unless $text;
-        if ($tag) {
-            $text = "<$tag>$text</$tag>";
-        } else {
-            $text = "<p>$text</p>";
-        }
-        $full_text .= $text;
+        my $html = $child->data;
+
+        # no empty elements
+        next unless $html;
+
+        # our default tag
+        $tag ||= 'p';
+
+        # maybe filter the data
+        my $data = ref($child->before_bulk_edit) eq 'CODE'
+          ? $child->before_bulk_edit->(element => $child)
+            : $child->data;
+
+        # concat it
+        $full_text .= "<$tag>$data</$tag>";
     }
 
     # make formatblock selector, using the elementclass's display_name
@@ -227,7 +240,7 @@ sub save {
 
         $pkg->add_element(
             tag              => $tag,
-            parent           => $element,
+            element          => $element,
             block            => $block,
             elementclass_for => $elementclass_for,
             elementclass_re  => $elementclass_re
@@ -254,8 +267,9 @@ sub save {
 # add a Krang element
 sub add_element {
     my ($pkg, %arg) = @_;
-    my $block = $arg{block};
-    my $tag   = $arg{tag};
+    my $block   = $arg{block};
+    my $tag     = $arg{tag};
+    my $element = $arg{element};
 
     my @html = ();
 
@@ -283,11 +297,22 @@ sub add_element {
         # remove left over junk
         pkg("Markup::$ENV{KRANG_BROWSER_ENGINE}")->remove_junk(\$html);
 
+        # look up the elementclass for HTML tag
+        my $class = $arg{elementclass_for}->{$tag} || $arg{elementclass_for}->{p};
+
+        # maybe change the element's class
+        ($class, $html) = $element->bulk_save_change(class => $class, data => $html);
+
         # make a new Krang element for this tag's content
-        $arg{parent}->add_child(
-            class => ($arg{elementclass_for}->{$tag} || $arg{elementclass_for}->{p}),
-            data => $html,
-        );
+        my $child = $element->add_child(class => $class);
+
+        # maybe filter the element's html before storing it
+        my $data = 
+          ref($child->class->before_bulk_save) eq 'CODE'
+            ? $child->class->before_bulk_save->(data => $html)
+              : $html;
+
+        $child->data($data);
 
         debug("Making element for HTML tag '" . $tag . "' with data: $html");
     }
@@ -314,7 +339,8 @@ sub extract_children {
     my $html = $arg{html};
 
     # chop the block's tag
-    $html =~ s/<\/?$arg{tag}>//g;
+    $html =~ s!^\s*<$arg{tag}>!!;
+    $html =~ s!</$arg{tag}>\s*$!!;
 
     # chop newline added by HTML::Element's as_HTML() method
     $html =~ s/\n$//;
@@ -323,7 +349,8 @@ sub extract_children {
     return $html;
 }
 
-# make the format selector in Xinha's toolbar
+# make the format selector in Xinha's toolbar. When overriding this
+# method it is save to return the empty string
 sub make_formatblock {
     my ($self, %arg) = @_;
 
@@ -340,6 +367,7 @@ sub make_formatblock {
         'h6'      => 1,
         'p'       => 1,
         'address' => 1,
+        'pre'     => 1,
     );
 
     my %display_name_for = ();

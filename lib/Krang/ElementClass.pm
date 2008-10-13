@@ -72,6 +72,8 @@ use Krang::ClassLoader MethodMaker => new_with_init => 'new',
       max
       bulk_edit
       bulk_edit_tag
+      before_bulk_edit
+      before_bulk_save
       required
       reorderable
       hidden
@@ -150,6 +152,60 @@ its 'name' attribute set to 'paragraph' will be used. If none is
 found, Krang croaks.
 
 See L<Krang::BulkEdit::Xinha>.
+
+=item before_bulk_edit
+
+This attribute may be used in conjunction with Xinha-based bulk
+editing (see bulk_edit above). It takes a coderef allowing to
+modify the element's data just before passing it to Xinha. The coderef
+receives the element object as its sole argument (see the example
+below).
+
+ B<Example:>
+
+ (Prepending 'Correction: ' before to element's data when bulk editing it)
+
+    pkg('ElementClass::Textarea')->new(
+        name          => 'correction',
+        cols          => 30,
+        rows          => 4,
+        bulk_edit     => 'xinha',
+        bulk_edit_tag => 'pre',
+        before_bulk_edit => sub {
+            my (%arg) = @_;
+            my $element = $arg{element};
+            return "Correction: " . $element->data;
+        },
+
+This kind of "before edit modification" may be used together with the
+attribute C<before_bulk_save>.
+
+=item before_bulk_save
+
+This attribute takes a coderef as its value which is passed the data
+about to be saved in the element's data slot.  It may be used to
+modify the data coming from Xinha's bulk edit area just before saving
+it.
+
+ B<Example:>
+
+ (Stripping 'Correction: ' before saving the element's data
+
+            pkg('ElementClass::Textarea')->new(
+                name          => 'correction',
+                cols          => 30,
+                rows          => 4,
+                bulk_edit     => 'xinha',
+                bulk_edit_tag => 'pre',
+                before_bulk_save => sub {
+                    my (%arg) = @_;
+                    my $data = $arg{data};
+                    $data =~ s/^Correction: //;
+                    return $data;
+                },
+
+This kind of "before save modification" may be used together with the
+attribute C<before_bulk_edit>.
 
 =item required
 
@@ -370,6 +426,24 @@ implementation returns the contents of C<< $element->data >> with all
 HTML tags escaped for display.
 
 =cut
+
+=item C<< $parent->bulk_save_change->(class => $child_class, data => $data) >>
+
+This method is called in L<Krang::BulkEdit::Xinha> when bulk saving an
+element just before adding a new child. It is passed the elementclass
+(not its name) the new child would normally belong to, the data it
+would receive and the parent element. Based on these parameters the
+name of a sibling class may be calculated, and the data modified. If
+either of the arguments has been modified, this method must return a
+list containing the (new) class (or its name) and the (modified)
+data.
+
+=cut
+
+sub bulk_save_change {
+    my ($self, %arg) = @_;
+    return;
+}
 
 sub view_data {
     my ($self, %arg) = @_;
@@ -1210,6 +1284,8 @@ sub init {
     $args{max}           = 0     unless exists $args{max};
     $args{bulk_edit}     = 0     unless exists $args{bulk_edit};
     $args{bulk_edit_tag} = undef unless exists $args{bulk_edit_tag};
+    $args{before_bulk_edit} = undef unless exists $args{before_bulk_edit};
+    $args{before_bulk_save} = undef unless exists $args{before_bulk_save};
     $args{required}      = 0     unless exists $args{required};
     $args{children}      = []    unless exists $args{children};
     $args{hidden}        = 0     unless exists $args{hidden};

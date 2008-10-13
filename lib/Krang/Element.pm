@@ -1196,6 +1196,9 @@ BEGIN {
         min
         max
         bulk_edit
+        bulk_edit_tag
+        before_bulk_edit
+        before_bulk_save
         required
         reorderable
         hidden
@@ -1224,6 +1227,7 @@ BEGIN {
         view_data
         bulk_edit_data
         bulk_edit_filter
+        bulk_save_change
         check_data
         default_schedules
         freeze_data_xml
