@@ -84,30 +84,44 @@ sub new {
                 name => "leadin_covers",
                 find => {class => 'cover'}
             ),
-
             pkg('ElementClass::MediaLink')->new(
                 name => "photo_image_only",
                 find => {media_type_id => 1}
             ),
-
             pkg('ElementClass::Text')->new(
                 name          => 'xinha_bulk_edit_header_1',
                 bulk_edit     => 'xinha',
                 bulk_edit_tag => 'h1'
             ),
-
             pkg('ElementClass::Text')->new(
                 name          => 'xinha_bulk_edit_header_2',
                 bulk_edit     => 'xinha',
                 bulk_edit_tag => 'h2'
             ),
-
             pkg('ElementClass::Textarea')->new(
                 name          => 'xinha_paragraph',
                 cols          => 30,
                 rows          => 4,
                 bulk_edit     => 'xinha',
                 bulk_edit_tag => 'p'
+            ),
+            pkg('ElementClass::Textarea')->new(
+                name             => 'correction',
+                cols             => 30,
+                rows             => 4,
+                bulk_edit        => 'xinha',
+                bulk_edit_tag    => 'pre',
+                before_bulk_edit => sub {
+                    my (%arg) = @_;
+                    my $element = $arg{element};
+                    return "Correction: " . $element->data;
+                },
+                before_bulk_save => sub {
+                    my (%arg) = @_;
+                    my $data = $arg{data};
+                    $data =~ s/^Correction: //;
+                    return $data;
+                },
             ),
         ],
         @_
@@ -138,6 +152,18 @@ sub view_data {
         return "&quot;$data&quot;";
     }
     return '';
+}
+
+sub bulk_save_change {
+    my ($self, %arg) = @_;
+
+    if (   $arg{class}->name eq 'xinha_bulk_edit_paragraph'
+        && $arg{data} =~ /^\s*<strong>(.{1,50})<\/strong>/)
+    {
+        return ('xinha_bulk_edit_header_2', $1);
+    }
+
+    return ($arg{class}, $arg{data});
 }
 
 1;
