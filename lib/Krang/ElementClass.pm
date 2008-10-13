@@ -427,7 +427,7 @@ HTML tags escaped for display.
 
 =cut
 
-=item C<< $parent->bulk_save_change->(class => $child_class, data => $data) >>
+=item C<< $parent->bulk_save_change(class => $child_class, data => $data) >>
 
 This method is called in L<Krang::BulkEdit::Xinha> when bulk saving an
 element just before adding a new child. It is passed the elementclass
