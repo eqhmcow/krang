@@ -53,8 +53,7 @@ other_search_rm = function() {
 
   unretire_media = function(id)
   {
-    if (confirm(Krang.L10N.loc('Are you SURE you want to unretire this Media?')))
-      Krang.Form.submit('find_media', { rm: 'unretire', media_id: id });
+    Krang.Form.submit('find_media', { rm: 'unretire', media_id: id });
   }
 </tmpl_if>
 </script>

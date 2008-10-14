@@ -22,9 +22,9 @@ Krang.onload( function() {
         alert( Krang.L10N.loc('Nothing selected to restore!') );
       } else {
         if (num_rows_checked > 1) {
-	  question = Krang.L10N.loc('Are you SURE you want to restore these items?');
+	  question = Krang.L10N.loc('Are you SURE you want to restore the checked items?');
         } else {
-	  question = Krang.L10N.loc('Are you SURE you want to restore this item?');
+	  question = Krang.L10N.loc('Are you SURE you want to restore the checked item?');
         }
         if (confirm(question)) {
           Krang.Form.submit( 'krang_pager_form', { rm : 'restore_checked' }, { to_top : false } );

@@ -328,13 +328,15 @@ sub _format_msg {
             my @cats = @{$ex->categories};
             return $msg
               . '<br/>('
-              . localize('Reason: URL conflict with Category ')
+              . localize('Reason: URL conflict with Category')
+              . ' '
               . join(', ', map { $_->{id} } @cats) . ' )';
         } elsif ($ex->can('stories') and $ex->stories) {
             my @stories = @{$ex->stories};
             return $msg
               . '<br/>('
-              . localize('Reason: URL conflict with Story ')
+              . localize('Reason: URL conflict with Story')
+              . ' '
               . join(', ', map { $_->{id} } @stories) . ' )';
         } elsif (my $id = $ex->$id_meth) {
             return $msg

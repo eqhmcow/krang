@@ -5,6 +5,7 @@ use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Message => qw(add_alert);
 use Krang::ClassLoader DB      => qw(dbh);
 use Krang::ClassLoader 'User';
+use Krang::ClassLoader Localization => qw(localize);
 use Digest::MD5 qw(md5_hex);
 
 use Krang::User;
@@ -12,11 +13,12 @@ my $SALT = $Krang::User::SALT;
 
 sub check_pw {
     my ($class, $pw, @info) = @_;
-
+    use Krang::Log qw(critical);
+critical($pw);
     my $valid = 0;
     if (length $pw < 6) {
         add_alert('password_too_short');
-    } elsif (!($pw =~ /\d/ && $pw =~ /[^\d]/)) {
+    } elsif (!($pw =~ /\d/ && $pw =~ /\D/)) {
         add_alert('password_too_simple');
     } elsif (_pw_is_used($pw, $info[0])) {
         add_alert('password_currently_used');
@@ -64,7 +66,7 @@ sub _pw_was_used {
 
 sub _password_spec {
     return
-      "Password must be at least 6 characters long and include at least one number and one letter.";
+      localize("Password must be at least 6 characters long and include at least one number and one letter.");
 }
 
 1;

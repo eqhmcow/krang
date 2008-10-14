@@ -626,7 +626,7 @@ sub send {
               . localize($alert->action)
               . (
                 $alert->object_id
-                ? ' ' . localize($alert->object_type) . ' #' . $alert->object_id
+                ? ' ' . localize(ucfirst($alert->object_type)) . ' #' . $alert->object_id
                 : ''
               ) . "'";
         }

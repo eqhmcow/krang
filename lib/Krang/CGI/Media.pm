@@ -139,7 +139,7 @@ published or deleted (depending on the user's permission set).
 sub find {
     my $self = shift;
 
-    $self->query->param('other_search_place' => 'Search Retired Media');
+    $self->query->param('other_search_place' => localize('Search Retired Media'));
 
     my %args = (
         tmpl_file         => 'list_view.tmpl',
@@ -164,7 +164,7 @@ user's permission set).
 sub list_retired {
     my $self = shift;
 
-    $self->query->param('other_search_place' => 'Search Live Media');
+    $self->query->param('other_search_place' => localize('Search Live Media'));
 
     my %args = (
         tmpl_file         => 'list_retired.tmpl',

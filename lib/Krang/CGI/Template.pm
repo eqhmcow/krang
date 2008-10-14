@@ -695,7 +695,7 @@ object, or select a set of objects to be deployed or deleted
 sub search {
     my $self = shift;
 
-    $self->query->param('other_search_place' => 'Search Retired Templates');
+    $self->query->param('other_search_place' => localize('Search Retired Templates'));
 
     my %args = (
         tmpl_file         => 'list_view.tmpl',
@@ -724,7 +724,7 @@ user's permission set).
 sub list_retired {
     my $self = shift;
 
-    $self->query->param('other_search_place' => 'Search Live Templates');
+    $self->query->param('other_search_place' => localize('Search Live Templates'));
 
     my %args = (
         tmpl_file         => 'list_retired.tmpl',
