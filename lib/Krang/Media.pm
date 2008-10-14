@@ -1474,10 +1474,9 @@ sub find {
             }
 
             # add contrib ids to object
-            my $sth2 =
-              $dbh->prepare(
+            my $sth2 = $dbh->prepare(
                 'select contrib_id, contrib_type_id from media_contrib where media_id = ? order by ord'
-              );
+            );
             $sth2->execute($row->{media_id});
             $obj->{contrib_ids} = [];
             while (my ($contrib_id, $contrib_type_id) = $sth2->fetchrow_array()) {
@@ -2008,7 +2007,8 @@ sub delete {
     pkg('Publisher')->new->unpublish_media(media => $self);
 
     # and "unpreview", too
-    debug __PACKAGE__ . '->delete(): '
+    debug __PACKAGE__
+      . '->delete(): '
       . "calling \$previewer = pkg('Publisher')->new->_set_preview_mode "
       . "&& \$previewer->unpublish_media(media => $self)";
     my $previewer = pkg('Publisher')->new;
