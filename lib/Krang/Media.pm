@@ -2007,6 +2007,14 @@ sub delete {
     # unpublish
     pkg('Publisher')->new->unpublish_media(media => $self);
 
+    # and "unpreview", too
+    debug __PACKAGE__ . '->delete(): '
+      . "calling \$previewer = pkg('Publisher')->new->_set_preview_mode "
+      . "&& \$previewer->unpublish_media(media => $self)";
+    my $previewer = pkg('Publisher')->new;
+    $previewer->_set_preview_mode();
+    $previewer->unpublish_media(media => $self);
+
     # first delete history for this object
     pkg('History')->delete(object => $self);
 

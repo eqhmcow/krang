@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Ported fix from David Kaufman to unpreview a media object when it
+is deleted (instead of just unpublishing it). [David Kaufman]
+
+=item *
+
 Refactored bulk edit in its own classes.  The legacy textarea-based
 bulk editing is in L<Krang::BulkEdit::Textarea>.  Xinha-based bulk
 editing is provided by L<Krang::BulkEdit::Xinha>. This module largely
