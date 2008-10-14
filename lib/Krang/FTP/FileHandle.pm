@@ -252,7 +252,5 @@ L<Krang::FTP::FileHandle::Handle>
 
 =cut
 
-=cut
-
 1;
 

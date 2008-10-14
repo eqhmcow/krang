@@ -39,6 +39,8 @@ Creates a new Krang::FTP::FileHandle::Handle object.  Takes 4 required
 arguments: the Krang::Media or Krang::Template object, and the $type ("media" 
 or "template") of the represented object.
 
+=back
+
 =cut
 
 sub new {
