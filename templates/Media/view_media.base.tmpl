@@ -94,17 +94,17 @@ Krang.onload( function() {
 <tmpl_if is_root>
 
   <tr class="even">
-  <td class="f"><tmpl_lang Type></th>
+  <th class="f"><tmpl_lang Type></th>
   <td class="l"><tmpl_var escape=html type></td>
   </tr>
 
   <tr>
-  <td class="f"><tmpl_lang Title></th>
+  <th class="f"><tmpl_lang Title></th>
   <td class="l"><tmpl_var escape=html title></td>
   </tr>
 
   <tr class="even">
-  <td class="f"><tmpl_lang File Name></th>
+  <th class="f"><tmpl_lang File Name></th>
   <td class="l">
     <a href="javascript:Krang.preview('media','<tmpl_var escape=html media_id>')"><tmpl_var escape=html filename></a>
     <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
@@ -112,7 +112,7 @@ Krang.onload( function() {
   </tr>
 
   <tr class="f">
-  <td class="f"><tmpl_lang Current Version></th>
+  <th class="f"><tmpl_lang Current Version></th>
   <td class="l"><tmpl_var escape=html version>&nbsp;&nbsp;
                 (<tmpl_lang Published Version>: <tmpl_if published_version><tmpl_var published_version><tmpl_else>None</tmpl_if>)
   </td>
