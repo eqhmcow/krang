@@ -120,7 +120,40 @@ my %skip_localize = ();
     q{pkg('Desk')->find( desk_id => $desk_id ))[0]->name},
     q{pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name},
     q{pkg('Desk')->find(desk_id => $story->desk_id))[0]->name},
-} = (); #' keep Emacs cperl-mode happy
+    q{$_->display_name},
+    q{$a->display_name},
+    q{$alert->object_type},
+    q{$args{element}->display_name},
+    q{$b->display_name},
+    q{$child->display_name},
+    q{$class->display_name},
+    q{$desk_labels{$a}},
+    q{$desk_labels{$b}},
+    q{$element->class->child($name)->display_name},
+    q{$element->display_name},
+    q{$kid->display_name},
+    q{$contrib_types{$c->selected_contrib_type()}},
+    q{$label . ' Log},
+    q{$obj->class->display_name},
+    q{$object->element->display_name},
+    q{$object_type},
+    q{$old[$_]->display_name},
+    q{$self->action_label($history->action},
+    q{$self->display_name},
+    q{$story->element->display_name},
+    q{Delete ' . $element->display_name},
+    q{Done Bulk Editing ' . $curr_loc},
+    q{Done Bulk Editing ' . $element->class->child($name)->display_name},
+    q{Done With ' . $element->display_name},
+    q{pkg('Desk')->find(desk_id => $alert->desk_id))[0]->name},
+    q{pkg('Desk')->find(desk_id => $desk_id))[0]->name},
+    q{pkg('Desk')->find(desk_id => $history->desk_id))[0]->name},
+    q{pkg('ElementLibrary')->top_level(name   => $a)->display_name},
+    q{pkg('ElementLibrary')->top_level(name => $_)->display_name},
+    q{pkg('ElementLibrary')->top_level(name => $b)->display_name},
+    q{ucfirst($alert->object_type},
+    q{ucfirst($type},
+} = ();
 
 # skip some message keys only known at runtime
 my %skip_messages = ();
@@ -135,7 +168,10 @@ my %skip_messages = ();
     q{error_${name}_has_path},
     q{error_${name}_not_absolute},
     q{error_invalid_$name},
-} = (); #' keep Emacs cperl-mode happy
+    q{$args{message}},
+    q{image_flipped_$direction},
+    q{image_rotated_$direction},
+} = ();
 
 # where to find what
 my %lexicon_for = (
