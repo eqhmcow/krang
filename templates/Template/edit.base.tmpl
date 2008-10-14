@@ -161,7 +161,7 @@ Krang.onload( function() {
   <th><tmpl_lang File Name></th>
   <td><tmpl_var escape=html filename></td>
   <th><tmpl_lang Deployed Version></th>
-  <td><tmpl_unless deployed_version>[n/a]<tmpl_else><tmpl_var escape=html deployed_version></tmpl_unless></td>
+  <td><tmpl_unless deployed_version><tmpl_lang [N/A]><tmpl_else><tmpl_var escape=html deployed_version></tmpl_unless></td>
   </tr>
 
   <tr><!--:FIXME(db2)-->

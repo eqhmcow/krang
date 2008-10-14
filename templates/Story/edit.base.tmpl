@@ -238,7 +238,7 @@ preview_and_stay = function() {
 
   <tr>
   <td class="f"><tmpl_lang Published Version></td>
-  <td class="l"><tmpl_unless published_version>[n/a]<tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
+  <td class="l"><tmpl_unless published_version><tmpl_lang [N/A]><tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
   </tr>
 
   <tr>

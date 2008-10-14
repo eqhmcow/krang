@@ -86,7 +86,7 @@ Krang.onload( function() {
 
 <tr>
 <td class="f">Deployed Version</td>
-<td class="l"><tmpl_unless deployed_version>[n/a]<tmpl_else><tmpl_var escape=html deployed_version></tmpl_unless></td>
+<td class="l"><tmpl_unless deployed_version><tmpl_lang [N/A]><tmpl_else><tmpl_var escape=html deployed_version></tmpl_unless></td>
 </tr>
 
 </tbody>
