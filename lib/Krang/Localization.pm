@@ -10,8 +10,6 @@ use Krang::ClassLoader Session      => qw(%session);
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader 'ConfigApacheFormat';
 
-use I18N::LangTags qw(is_language_tag);
-use I18N::LangTags::List;
 use File::Spec::Functions qw(catfile catdir splitdir canonpath);
 use File::Temp qw(tempdir tempfile);
 use File::Path;
@@ -37,10 +35,9 @@ Krang::Localization - Krang localization module
    use Krang::ClassLoader Localization => qw(localize);
    $localized_string = localize('some string');
 
-   # All AvailableLanguages set in conf/krang.conf
-   # are available via the exported %LANG hash, with keys being the
-   # RFC3066-style language tags and values being the corresponding
-   # language names.
+   # All AvailableLanguages set in conf/krang.conf are available via
+   # the exported %LANG hash, with keys being arbitrary language tags
+   # and values being the corresponding language names.
    my $lang = $LANG{en}; # yields 'English';
 
    # install a localization distribution
@@ -182,18 +179,15 @@ sub debug_template_localization {
 
 Returns a Krang::ConfigApacheFormat object representing a lexicon
 mapping English to the language indicated the methods
-argument. $language must be a valid RFC3066-style language tag.
+argument.
 
-Croaks if $language is not a valid language tag or if no lexicon for
-the given language is found in the package hash %L10N.
+Croaks if no lexicon for the given language is found in the package
+hash %L10N.
 
 =cut
 
 sub get_lexicon {
     my ($pkg, $lang) = @_;
-
-    croak "'$lang' is not a valid language tag"
-      unless is_language_tag($lang);
 
     my $lexicon = $L10N{$lang};
 
@@ -205,9 +199,6 @@ sub _load_localization {
     for my $lang (grep { $_ ne 'en' } AvailableLanguages) {
 
         next unless defined($lang) and length($lang);
-
-        croak("$lang is not a RFC3066-style language tag")
-          unless is_language_tag($lang);
 
         # read also addon lexicons
         my @files = reverse pkg('File')->find_all(catfile('lang', $lang, 'perl.dict'));
@@ -221,11 +212,11 @@ sub _load_localization {
         $L10N{$lang} = $l10n;
 
         # fill the exported %LANG hash
-        $LANG{$lang} = I18N::LangTags::List::name($lang);
+        $LANG{$lang} = $l10n->get('Language Name');
     }
 
     # don't forget the default language
-    $LANG{en} = I18N::LangTags::List::name('en');
+    $LANG{en} = 'English';
 }
 
 BEGIN { _load_localization() }

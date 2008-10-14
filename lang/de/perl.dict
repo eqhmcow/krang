@@ -1,4 +1,13 @@
 ### -*- mode: text; coding: utf-8 -*-
+
+#
+# Special entry specifying the language's name as it will appear in language selectors
+#
+"Language Name"  "Deutsch"
+
+#
+# The lexicon
+#
 "(new password)"                 "(neues Passwort)"
 "(repeat)"                       "(wiederholen)"
 "Please be descriptive and use lots of keywords."   "Verwenden Sie bitte aussagekräftige Schlüsselworte."
