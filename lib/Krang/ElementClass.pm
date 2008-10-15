@@ -963,7 +963,7 @@ sub fill_template {
         {
 
             my $loop_idx =
-              $element_count{$name} ? $element_count{$name}++ : ($element_count{$name} = 1);
+              $element_count{$name} ? ++$element_count{$name} : ($element_count{$name} = 1);
             my $loop_entry = $self->_fill_loop_iteration(
                 tmpl               => $tmpl,
                 child              => $child,
