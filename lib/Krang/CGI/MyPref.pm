@@ -124,7 +124,7 @@ sub edit {
         syntax_highlighting_radio => scalar $q->radio_group(
             -name    => 'syntax_highlighting',
             -values  => [0, 1],
-            -labels  => {0 => 'No', 1 => 'Yes',},
+            -labels  => {0 => localize('No'), 1 => localize('Yes'),},
             -default => pkg('MyPref')->get('syntax_highlighting'),
         )
     );
