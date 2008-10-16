@@ -759,12 +759,13 @@ sub view {
           [map { {name => $_, value => $return_params{$_}} } keys %return_params]
     );
     $template->param(was_edit => 1) if ($return_params{rm} eq 'edit');
-    $template->param(prevent_edit => 1)
-      if ($story->checked_out
+    $template->param(prevent_edit => 1) if
+      ($story->checked_out
         and ($story->checked_out_by ne $ENV{REMOTE_USER}))
       or not $story->may_edit
       or $story->retired
-      or $story->trashed;
+      or $story->trashed
+      or ($return_params{rm} eq 'edit'); # if story was open, user should use 'Back', not 'Edit'
 
     return $template->output();
 }

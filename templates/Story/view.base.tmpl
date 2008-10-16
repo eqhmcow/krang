@@ -13,7 +13,7 @@ view_log = function()
   Krang.Form.submit( 'view_log_form' );
 }
 
-<tmpl_unless old_version><tmpl_unless prevent_edit>
+<tmpl_unless is_old_version><tmpl_unless prevent_edit>
   edit_story = function()
   {
     Krang.Form.submit( 'view', { rm: 'checkout_and_edit' } );
@@ -141,7 +141,7 @@ view_log = function()
 
 <div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_if prevent_edit> lame</tmpl_if></tmpl_if> capped">
 <input value="<tmpl_lang Back>" onclick="<tmpl_if parent_path>view_path('<tmpl_var escape=html parent_path>')<tmpl_else>do_return()</tmpl_if>" type="button" class="west">
-<tmpl_unless old_version><tmpl_unless prevent_edit>
+<tmpl_unless is_old_version><tmpl_unless prevent_edit>
   <input value="<tmpl_lang Edit>" onclick="edit_story()" type="button" class="east">
 </tmpl_unless></tmpl_unless>
 </div>

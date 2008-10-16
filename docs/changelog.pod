@@ -10,9 +10,15 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-Fixed bug where it was possible to 'View' the version of a Story or Media 
-object currently being edited prior to the View Schedule screen, which caused 
-'Edit' button to be present - instead, user can click 'Back'. [Noam Weinstein]
+Fixed bug where user could Edit a story, then View an old version of it,
+then click Edit from the View screen, in effect wiping out anything
+that had been left unsaved in their session. [Noam Weinstein]
+
+=item *
+
+Fixed bug where it was possible from the View Schedule screen to 'View' the 
+version of a Story or Media currently open for edit, causing confusion and
+the possible loss of changes if the user clicked 'Edit' again. [Noam Weinstein]
 
 =item *
 
