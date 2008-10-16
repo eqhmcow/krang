@@ -1628,7 +1628,7 @@ sub update_media {
     # Make sure object hasn't been modified elsewhere
     if (my $id = $m->media_id) {
         if (my ($media_in_db) = pkg('Media')->find(media_id => $id)) {
-            if (   !$media_in_db->checked_out
+            if (  !$media_in_db->checked_out
                 || $media_in_db->checked_out_by ne $ENV{REMOTE_USER}
                 || $media_in_db->version > $m->version)
             {
@@ -1895,9 +1895,8 @@ sub make_media_view_tmpl_data {
         );
         push(@contribs, \%contrib_row);
     }
-    $tmpl_data{contribs}       = \@contribs;
-    $tmpl_data{return_script}  = $q->param('return_script');
-    $tmpl_data{return_runmode} = $q->param('return_runmode');
+    $tmpl_data{contribs}      = \@contribs;
+    $tmpl_data{return_script} = $q->param('return_script');
 
     # Display creation_date
     my $creation_date = $m->creation_date();
@@ -1943,19 +1942,9 @@ sub make_media_view_tmpl_data {
     }
 
     # Store any special return params
-    my %return_params        = $q->param('return_params');
-    my @return_params_hidden = ();
-    while (my ($k, $v) = each(%return_params)) {
-        push(
-            @return_params_hidden,
-            $q->hidden(
-                -name     => $k,
-                -value    => $v,
-                -override => 1
-            )
-        );
-    }
-    $tmpl_data{return_params} = join("\n", @return_params_hidden);
+    my %return_params = $q->param('return_params');
+    $tmpl_data{return_params_loop} =
+      [map { {name => $_, value => $return_params{$_}} } keys %return_params];
 
     $tmpl_data{can_edit} = 1
       unless (not($m->may_edit)

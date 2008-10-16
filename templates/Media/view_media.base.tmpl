@@ -8,9 +8,11 @@ Krang.onload( function() {
   Krang.Help.set( 'media_view' );
 } );
 
+<tmpl_unless parent_path>
 do_return = function() {
   Krang.Form.submit( 'return_form' );
-}
+} 
+</tmpl_unless>
 
 view_log = function() {
   Krang.Form.submit( 'view', { rm: 'view_log' } );
@@ -59,8 +61,10 @@ Krang.onload( function() {
 <input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
 <input name="version" value="<tmpl_var escape=html version>" type="hidden">
 <input name="return_script" value="<tmpl_var escape=html return_script>" type="hidden">
-<input name="return_runmode" value="<tmpl_var escape=html return_runmode>" type="hidden">
-<input name="return_params" value="<tmpl_var escape=html return_params>" type="hidden">
+<tmpl_loop return_params_loop>
+  <input name="return_params" value="<tmpl_var escape=html name>" type="hidden">
+  <input name="return_params" value="<tmpl_var escape=html value>" type="hidden">
+</tmpl_loop>
 
 <!-- BEGIN BASIC PROPERTIES -->
 
@@ -231,7 +235,7 @@ Krang.onload( function() {
 <!-- BEGIN BUTTONS -->
 
 <div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_if prevent_edit> lame</tmpl_if></tmpl_if> capped">
-<input value="<tmpl_lang Back>" onclick="do_return()" type="button" class="west">
+<input value="<tmpl_lang Back>" onclick="<tmpl_if parent_path>view_path('<tmpl_var escape=html parent_path>')<tmpl_else>do_return()</tmpl_if>" type="button" class="west">
 <tmpl_unless is_old_version><tmpl_if can_edit>
   <input value="<tmpl_lang Edit>" onclick="do_edit_media()" type="button">
 </tmpl_if></tmpl_unless>
@@ -247,10 +251,9 @@ Krang.onload( function() {
 
 
 <form name="return_form" action="<tmpl_var escape=html return_script>" method="post">
-<input name="rm" value="<tmpl_if parent_path>view<tmpl_else><tmpl_var escape=html return_runmode></tmpl_if>" type="hidden">
-<input name="parent_path" value="<tmpl_var parent_path>" type="hidden">
-<input name="retired" value="<tmpl_var escape=html retired>" type="hidden">
-<tmpl_var return_params>
+<tmpl_loop return_params_loop>
+  <input name="<tmpl_var escape=html name>" value="<tmpl_var escape=html value>" type="hidden">
+</tmpl_loop>
 </form>
 
 <tmpl_unless is_old_version><tmpl_if can_edit>
