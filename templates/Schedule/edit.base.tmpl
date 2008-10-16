@@ -13,7 +13,11 @@ schedule_action = function()
 
 save_and_view = function()
 {
-  Krang.Form.submit('add_schedule_form', { rm: 'save_and_view' });
+  if ( document.add_schedule_form.version.value == 0 ) {
+    alert( Krang.L10N.loc('That is the version you are currently editing - please use Back instead.') );
+  } else {
+    Krang.Form.submit('add_schedule_form', { rm: 'save_and_view' });
+  }
 }
 
 <tmpl_if existing_schedule_loop>

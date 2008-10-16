@@ -10,8 +10,14 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-Ported fix from David Kaufman to unpreview a media object when it
-is deleted (instead of just unpublishing it). [David Kaufman]
+Fixed bug where it was possible to 'View' the version of a Story or Media 
+object currently being edited prior to the View Schedule screen, which caused 
+'Edit' button to be present - instead, user can click 'Back'. [Noam Weinstein]
+
+=item *
+
+Ported fix to unpreview a media object when it is deleted 
+(instead of just unpublishing it). [David Kaufman]
 
 =item *
 
