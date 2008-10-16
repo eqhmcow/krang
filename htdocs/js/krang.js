@@ -830,9 +830,14 @@ Krang.Messages = {
                 if( ! Krang.Messages._locked[level] ) {
                     // lock the messages (will be unlocked by afterFinish call)
                     Krang.Messages._locked[level] = true;
-                    // in IE 6 we need to create an iframe to slide at the same time as
-                    // the message's wrapper
+
+                    // move the message element back up at the top just to make sure
+                    // it always starts at the top
+                    el.setStyle({ top: '0px' });
+
                     if( Krang.is_ie_6() ) {
+                        // in IE 6 we need to create an iframe to slide at the 
+                        // same time as the message's wrapper
                         var wrapper = el.down('div.wrapper');
                         Krang.Widget.HideIEControls.load(wrapper);
                         el.show();
