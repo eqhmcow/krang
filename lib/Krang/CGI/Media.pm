@@ -1739,6 +1739,7 @@ sub make_media_tmpl_data {
             -values   => $m->all_versions,
             -default  => ($q->param('reverted_to_version') || $curr_version),
             -override => 1,
+            -class    => 'usual',
         );
         $tmpl_data{media_version_chooser} = $media_version_chooser;
     }

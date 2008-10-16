@@ -53,6 +53,17 @@ div.autocomplete { height: expression( ( this.scrollHeight > 154 ) ? '154px' : '
 
 .krang-slider { position: absolute; top: expression( ( ie6_slider_top = document.documentElement.scrollTop ) + 'px' ); }
 .krang-slider .content, #modal_container .content { height: expression( ( ( this.scrollHeight < 60 ) ? 60 : ( this.scrollHeight > 314 ) ? 314 : this.scrollHeight ) + 'px' ); }
+
+.buttonbar input { display: inline; }
+.buttonbar .menu input { display: block; padding: .1em 0; }
+#C table .buttonbar .button { margin: 4px 0 0 0; }
+#C table .buttonbar .menu .button { margin: 4px 4px 0 0; }
+</style><![endif]-->
+
+<!--[if IE 7]><style type="text/css">
+/* fix for "stickiness" in IE7 */
+.buttonbar ul li:hover, .buttonbar ul li.over { background-position: 0 0; }
+#C td .buttonbar ul li:hover, #C td .buttonbar ul li.over { background-position: 0 0; }
 </style><![endif]-->
 
 <tmpl_if language_specific_css><tmpl_var language_specific_css></tmpl_if>

@@ -68,7 +68,7 @@ cancel_group_change = function()
 <tbody>
 
 <tr class="demi<tmpl_if duplicate_name> err<tmpl_else><tmpl_if error_invalid_name> err</tmpl_if></tmpl_if>">
-<th class="f"><tmpl_lang Group Name></td>
+<th class="f"><tmpl_lang Group Name></th>
 <td class="l"><input name="name" value="<tmpl_var escape=html name>"></td>
 </tr>
 
@@ -195,16 +195,14 @@ cancel_group_change = function()
 
 <colgroup>
 <col class="tick">
-<col class="tick">
 <col>
-<col class="tick">
 <col class="tick">
 <col>
 </colgroup>
 
 <thead>
 <tr>
-<th class="f l" colspan="6"><tmpl_lang Administrative Permissions></th>
+<th class="f l" colspan="4"><tmpl_lang Administrative Permissions></th>
 </tr>
 </thead>
 
@@ -212,70 +210,84 @@ cancel_group_change = function()
 
 <tr>
 <td class="tick f"><tmpl_var may_publish></td>
-<td colspan="2"><tmpl_lang May Publish></td>
+<td><tmpl_lang May Publish></td>
 <td class="tick"><tmpl_var may_checkin_all></td>
-<td class="l" colspan="2"><tmpl_lang May Check In All></td>
+<td class="l"><tmpl_lang May Check In All></td>
 </tr>
 
 <tr>
 <td class="tick f"><tmpl_var admin_desks></td>
-<td colspan="2"><tmpl_lang Manage Desks></td>
+<td><tmpl_lang Manage Desks></td>
 <td class="tick"><tmpl_var admin_jobs></td>
-<td class="l" colspan="2"><tmpl_lang Manage Jobs></td>
+<td class="l"><tmpl_lang Manage Jobs></td>
 </tr>
 
 <tr>
 <td class="tick f"><tmpl_var admin_groups></td>
-<td colspan="2"><tmpl_lang Manage Groups></td>
+<td><tmpl_lang Manage Groups></td>
 <td class="tick"><tmpl_var admin_sites></td>
-<td class="l" colspan="2"><tmpl_lang Manage Sites></td>
+<td class="l"><tmpl_lang Manage Sites></td>
 </tr>
 
 <tr>
 <td class="tick f"><tmpl_var admin_users></td>
-<td colspan="2"><tmpl_lang Manage Users></td>
+<td><tmpl_lang Manage Users></td>
 <td class="tick"><tmpl_var admin_categories></td>
-<td class="l" colspan="2"><tmpl_lang Manage Categories></td>
+<td class="l"><tmpl_lang Manage Categories></td>
 </tr>
 
 <tr>
 <td class="f">&nbsp;</td>
-<td class="tick"><tmpl_var admin_users_limited></td>
-<td<tmpl_unless enable_ftp> class="l" colspan="4"</tmpl_unless>><tmpl_lang Group Limited></td>
+<td>
+  <tmpl_var admin_users_limited>
+  <tmpl_lang Group Limited>
+</td>
 <tmpl_if enable_ftp>
-  <td></td>
-  <td class="tick"><tmpl_var admin_categories_ftp></td>
-  <td class="l" ><tmpl_lang Via FTP></td>
+  <td class="tick"></td>
+  <td class="l">
+    <tmpl_var admin_categories_ftp>
+    <tmpl_lang Via FTP>
+  </td>
+<tmpl_else>
+  <td></td><td class="l"></td>
 </tmpl_if>
 </tr>
 
 <tr>
 <td class="tick f"><tmpl_var admin_contribs></td>
-<td colspan="2"><tmpl_lang Manage Contributors></td>
+<td><tmpl_lang Manage Contributors></td>
 <td class="tick"><tmpl_var admin_scheduler></td>
-<td class="l" colspan="2"><tmpl_lang Manage Scheduler Addons></td>
+<td class="l"><tmpl_lang Manage Scheduler Addons></td>
 </tr>
 
 <tr>
 <td class="tick f"><tmpl_var admin_lists></td>
-<td colspan="2"><tmpl_lang Manage Lists></td>
+<td><tmpl_lang Manage Lists></td>
 <td class="tick"><tmpl_var admin_delete></td>
-<td class="l" colspan="2"><tmpl_lang Delete Content in the Trash></td>
+<td class="l"><tmpl_lang Delete Content in the Trash></td>
 </tr>
 
 </tbody>
 
 </table></div>
 
-<div class="panel capped">
-<input value="<tmpl_lang Cancel>" onclick="cancel_group_change()" type="button" class="west">
+<div class="panel capped clearfix buttonbar">
+<ul class="west">
+  <li><input value="<tmpl_lang Cancel>" onclick="cancel_group_change()" type="button"></li>
 <tmpl_unless add_mode>
-  <input value="<tmpl_lang Delete>" onclick="delete_group()" type="button" class="west">
+  <li><input value="<tmpl_lang Delete>" onclick="delete_group()" type="button"></li>
 </tmpl_unless>
-<input value="<tmpl_lang Save>" onclick="do_save()" type="button" class="east">
-<tmpl_unless associate_mode>
-  <input value="<tmpl_lang Save &amp; Stay>" onclick="save_stay()" type="button" class="east">
-</tmpl_unless>
+</ul>
+
+<ul class="east">
+  <tmpl_if associate_mode>
+    <input value="<tmpl_lang Save>" onclick="do_save()" type="button">
+  <tmpl_else>
+  <li class="menu">
+    <input value="<tmpl_lang Save> &#9660;" onclick="do_save()" type="button">
+    <ul><li><a href="javascript:save_stay()"><tmpl_lang Save &amp; Stay></a></li></ul>
+  </li>
+  </tmpl_if>
 </div>
 
 </form>

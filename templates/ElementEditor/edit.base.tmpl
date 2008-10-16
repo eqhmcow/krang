@@ -186,9 +186,19 @@
   <tmpl_if bulk_edit_sep><input name="bulk_edit_sep" value="<tmpl_var escape=html bulk_edit_sep>" type="hidden"></tmpl_if>
 </tmpl_if>
 
-<tmpl_if crumbs><div class="crumbs"><tmpl_loop crumbs>
+<tmpl_if crumbs>
+<tmpl_if allow_delete><p class="cram east">
+  <input value="<tmpl_var done_with_this_element>" onclick="save_and_go_up()" type="button" class="button">
+  <input value="<tmpl_var delete_this_element>" onclick="remove_element()" type="button" class="button">
+</p></tmpl_if>
+
+<div class="crumbs"><strong><tmpl_lang Go To:></strong> <tmpl_loop crumbs>
   <tmpl_unless __last__><a href="javascript:jump_to('<tmpl_var escape=html path>')"></tmpl_unless><tmpl_var escape=html name><tmpl_unless __last__></a> &raquo;</tmpl_unless>
-</tmpl_loop></div></tmpl_if>
+</tmpl_loop>
+
+</div>
+
+</tmpl_if>
 
 <tmpl_if bulk_edit>
 
@@ -237,11 +247,11 @@
 
 <tmpl_else><tmpl_unless child_loop>
 
-  <p class="naught">
-  <tmpl_lang No sub-elements defined.>
-  </p>
-
   <tmpl_if child_select>
+    <p class="naught">
+    <tmpl_lang No sub-elements defined.>
+    </p>
+
     <br>
     <tmpl_var child_select>
     <input value="<tmpl_lang Add Element>" onclick="add_child()" type="button" class="button">
@@ -319,7 +329,7 @@
   </table>
   </td>
 
-  <td class="series l"><tmpl_unless no_delete><input value="<tmpl_lang Delete>" onclick="remove_children()" type="button" class="mini-list-button"></tmpl_unless></td>
+  <td class="series l"><tmpl_unless no_delete><input value="<tmpl_lang Delete>" onclick="remove_children()" type="button" class="mini-list-button button"></tmpl_unless></td>
   </tr>
 
   </tbody>
@@ -327,4 +337,18 @@
   </table></div>
 
 </tmpl_unless></tmpl_if>
+
+<tmpl_if crumbs>
+<tmpl_if allow_delete><p class="cram east">
+  <input value="<tmpl_var done_with_this_element>" onclick="save_and_go_up()" type="button" class="button">
+  <input value="<tmpl_var delete_this_element>" onclick="remove_element()" type="button" class="button">
+</p></tmpl_if>
+
+<div class="crumbs"><strong><tmpl_lang Go to:></strong> <tmpl_loop crumbs>
+  <tmpl_unless __last__><a href="javascript:jump_to('<tmpl_var escape=html path>')"></tmpl_unless><tmpl_var escape=html name><tmpl_unless __last__></a> &raquo;</tmpl_unless>
+</tmpl_loop>
+
+</div>
+
+</tmpl_if>
 

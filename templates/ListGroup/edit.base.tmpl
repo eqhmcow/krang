@@ -399,10 +399,17 @@ do_save_stay = function()
 
 </table>
 
-<div class="panel capped">
-<input value="<tmpl_lang Cancel>" onclick="do_cancel()" type="submit" class="west">
-<input value="<tmpl_lang Save>" onclick="do_save()" type="submit" class="east">
-<input value="<tmpl_lang Save &amp; Stay>" onclick="do_save_stay()" type="button" class="east">
+<div class="panel capped buttonbar clearfix">
+<ul class="west">
+  <li><input value="<tmpl_lang Cancel>" onclick="do_cancel()" type="submit" class="west"></li>
+</ul>
+
+<ul class="east">
+<li class="menu">
+  <input value="<tmpl_lang Save> &#9660;" onclick="do_save()" type="submit" class="east">
+  <ul><li><a href="javascript:do_save_stay();"><tmpl_lang Save &amp; Stay></a></li></ul>
+</li>
+</ul>
 </div>
 
 </form>

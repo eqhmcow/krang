@@ -1,8 +1,5 @@
 <tmpl_include header.tmpl>
 
-
-<!-- BEGIN JAVASCRIPT -->
-
 <script type="text/javascript">
 
 Krang.onload( function() {
@@ -167,13 +164,6 @@ Krang.onload( function() {
 
 </script>
 
-<!-- BEGIN JAVASCRIPT -->
-
-
-
-
-<!-- BEGIN MAIN FORM -->
-
 <form name="edit" method="post" enctype="multipart/form-data" action="media.pl">
 
 <input name="rm" value="save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>" type="hidden">
@@ -184,10 +174,6 @@ Krang.onload( function() {
   <tmpl_var return_params>
 </tmpl_unless>
 
-
-
-<!-- BEGIN HEADER -->
-
 <tmpl_unless add_mode>
 
 <span class="east">
@@ -197,7 +183,6 @@ Krang.onload( function() {
     <tmpl_if media_id></a></tmpl_if>
   </tmpl_if>
 </span>
-
 
 <p class="cram east">
   <input name="return_script" value="media.pl" type="hidden">
@@ -213,7 +198,6 @@ Krang.onload( function() {
 
 </tmpl_unless>
 
-
 <h2>
 <tmpl_if add_mode>
   <tmpl_lang New Media>
@@ -222,13 +206,6 @@ Krang.onload( function() {
 </tmpl_if>
 </h2>
 
-<!-- END HEADER -->
-
-
-
-<!-- BEGIN BASIC PROPERTIES -->
-
-<!-- ADD MODE -->
 <tmpl_if add_mode>
 
   <table cellspacing="0" class="request" summary="">
@@ -241,26 +218,20 @@ Krang.onload( function() {
 
     <tr<tmpl_if error_media_type_id> class="err"</tmpl_if>>
     <th>*<tmpl_lang Type></th>
-    <td>
-    <tmpl_var type_chooser>
-    </td>
+    <td><tmpl_var type_chooser></td>
     </tr>
 
-    <tr<tmpl_if error_invalid_title> class="err"</tmpl_if>>
+    <tr class="even<tmpl_if error_invalid_title> err</tmpl_if>">
     <th>*<tmpl_lang Title></th>
-    <td>
-    <input name="title" value="<tmpl_var escape=html title>">
-    </td>
+    <td><input name="title" value="<tmpl_var escape=html title>"></td>
     </tr>
 
     <tr<tmpl_if duplicate_url> class="err"<tmpl_else><tmpl_if error_category_id> class="err"</tmpl_if></tmpl_if>>
     <th>*<tmpl_lang Site/Category></th>
-    <td>
-    <tmpl_var category_chooser>
-    </td>
+    <td><tmpl_var category_chooser></td>
     </tr>
 
-    <tr<tmpl_if duplicate_url> class="err"<tmpl_else><tmpl_if error_media_file> class="err"</tmpl_if></tmpl_if>>
+    <tr class="even<tmpl_if duplicate_url> err<tmpl_else><tmpl_if error_media_file> err</tmpl_if></tmpl_if>">
     <th><tmpl_lang Upload File></th>
     <td>
     <tmpl_if filename>
@@ -277,7 +248,6 @@ Krang.onload( function() {
   </tbody>
   </table>
 
-<!-- EDIT MODE -->
 <tmpl_else>
 
   <div class="table-container">
@@ -302,56 +272,59 @@ Krang.onload( function() {
 
   <tbody class="half">
     <tr>
-    <td class="f"><tmpl_lang URL></td>
+    <th class="f"><tmpl_lang URL></td>
     <td class="l"><tmpl_var url></td>
     </tr>
 
     <tmpl_if is_root>
 
-      <tr<tmpl_if error_media_type_id> class="err"</tmpl_if>>
-      <td class="f">*<tmpl_lang Type></td>
+      <tr class="even<tmpl_if error_media_type_id> err</tmpl_if>">
+      <th class="f">*<tmpl_lang Type></td>
       <td class="l">
       <tmpl_var type_chooser>
       </td>
       </tr>
 
       <tr<tmpl_if error_invalid_title> class="err"</tmpl_if>>
-      <td class="f">*<tmpl_lang Title></td>
+      <th class="f">*<tmpl_lang Title></td>
       <td class="l">
       <input name="title" value="<tmpl_var escape=html title>">
       </td>
       </tr>
 
-      <tr<tmpl_if duplicate_url> class="err"<tmpl_else><tmpl_if error_category_id> class="err"</tmpl_if></tmpl_if>>
-      <td class="f">*<tmpl_lang Site/Category></td>
+      <tr class="even<tmpl_if duplicate_url> err<tmpl_else><tmpl_if error_category_id> err</tmpl_if></tmpl_if>">
+      <th class="f">*<tmpl_lang Site/Category></td>
       <td class="l">
       <tmpl_var category_chooser>
       </td>
       </tr>
     
-      </tbody><tbody>
-
       <tr>
-      <td class="f">Current Version</td>
-      <td class="l"><tmpl_var escape=html version>&nbsp;&nbsp
-                      <tmpl_if reverted_to_version>
-                        (<tmpl_lang Copied from Version> <tmpl_var reverted_to_version>)
-                      <tmpl_else>
-                        (<tmpl_lang Published Version>: <tmpl_if published_version><tmpl_var published_version><tmpl_else>None</tmpl_if>)
-                      </tmpl_if><br />
-                      <tmpl_var media_version_chooser>
-                      <input value="<tmpl_lang Revert>" onclick="revert_version()" type="button" class="button">
-                      <input value="<tmpl_lang View>" onclick="view_version()" type="button" class="button">
-                    
+      <th class="f">Current Version</td>
+      <td class="l">
+        <tmpl_var escape=html version>&nbsp;&nbsp;
+        <tmpl_if reverted_to_version>
+          (<tmpl_lang Copied from Version> <tmpl_var reverted_to_version>)
+        <tmpl_else>
+          (<tmpl_lang Published Version>: <tmpl_if published_version><tmpl_var published_version><tmpl_else><tmpl_lang None></tmpl_if>)
+        </tmpl_if>
+        <br />
+        <tmpl_var media_version_chooser>
+        <input value="<tmpl_lang Revert>" onclick="revert_version()" type="button" class="button">
+        <input value="<tmpl_lang View>" onclick="view_version()" type="button" class="button">
       </td>
       </tr>
 
-      <tr<tmpl_if duplicate_url> class="err"<tmpl_else><tmpl_if error_media_file> class="err"</tmpl_if></tmpl_if>>
-      <td class="f"><tmpl_lang Upload File></td>
+      <tr class="even <tmpl_if duplicate_url> err<tmpl_else><tmpl_if error_media_file> err</tmpl_if></tmpl_if>">
+      <th class="f"><tmpl_lang Upload File></td>
       <td class="l">
       <tmpl_if filename>
         <tmpl_lang Current File>
-        <tmpl_if media_id><a href="javascript:Krang.preview('media',null)"></tmpl_if><tmpl_var escape=html filename><tmpl_if media_id></a></tmpl_if>
+        <tmpl_if media_id>
+          <a href="javascript:Krang.preview('media',null)"><tmpl_var escape=html filename></a>
+        <tmpl_else>
+          <tmpl_var escape=html filename>
+        </tmpl_if>
         <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
         <i>&mdash; <tmpl_lang or> &mdash;</i>
         <br>
@@ -368,14 +341,7 @@ Krang.onload( function() {
   </div>
 </tmpl_if>
 
-<!-- END PROPERTIES -->
-
-
-
-
 <tmpl_if is_root>
-
-  <!-- BEGIN METADATA -->
 
   <div class="table-container">
   <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
@@ -416,7 +382,7 @@ Krang.onload( function() {
       </tr>
 
       <tr>
-        <td class="f"><tmpl_lang Contributors></td>
+        <th class="f"><tmpl_lang Contributors></th>
         <td class="l">
         <tmpl_if contribs>
           <tmpl_loop contribs>
@@ -434,10 +400,6 @@ Krang.onload( function() {
   </table>
   </div>
 
-  <!-- END METADATA -->
-
-  <!-- BEGIN TEXT INPUT -->
-
   <tmpl_if is_text>
     <div class="table-container">
       <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
@@ -454,75 +416,65 @@ Krang.onload( function() {
     </div>
   </tmpl_if>
 
-  <!-- END TEXT INPUT -->
-
 </tmpl_if>
-
-
-<!-- BEGIN ELEMENT EDITOR --> 
 
 <tmpl_unless add_mode>
 <tmpl_include ElementEditor/<tmpl_lang en>/edit.tmpl>
 </tmpl_unless>
 
-<!-- END ELEMENT EDITOR -->
+<div class="panel clearfix buttonbar capped<tmpl_if bulk_edit> lame</tmpl_if>">
 
-
-
-
-<!-- BEGIN BUTTONS -->
-
-<div class="panel<tmpl_if bulk_edit> lame</tmpl_if> capped">
-
-<tmpl_if add_mode>
-
-  <input value="<tmpl_lang Cancel>" onclick="do_cancel_add()" type="button" class="west">
-  <input value="<tmpl_lang Create>" onclick="do_create()" type="button" class="east">
-  
-<tmpl_else>
-
-  <tmpl_if bulk_edit>
-    <input value="Done Bulk Editing <tmpl_var name_of_this_element>" onclick="save_and_leave_bulk_edit()" type="button" class="west">
-  <tmpl_else>
-
-      <input value="<tmpl_lang Save>" onclick="db_save()" type="button" class="east">
-      <input value="<tmpl_lang Save &amp; Stay>" onclick="db_save_stay()" type="button" class="east">
-
-    <tmpl_if is_root>
-
-      <input value="<tmpl_lang Cancel>" onclick="do_cancel_edit()" type="button" class="west">
-      <input value="<tmpl_lang Delete>" onclick="do_delete()" type="button" class="west">
-
-      <tmpl_if may_publish>
-        <input value="<tmpl_lang Publish>" onclick="publish_media()" type="button" class="east">
-      </tmpl_if>
-
-      <tmpl_if can_transform_image>
-        <input value="<tmpl_lang Transform>" onclick="transform_image()" type="button" class="east">
-      </tmpl_if>
-      
+  <ul class="west">
+    <tmpl_if add_mode>
+      <li><input value="<tmpl_lang Cancel>" onclick="do_cancel_add()" type="button"></li>
     <tmpl_else>
-
-      <input value="<tmpl_var escape=html done_with_this_element>" onclick="save_and_go_up()" type="button" class="west">
-      <tmpl_if allow_delete>
-         <input value="<tmpl_var escape=html delete_this_element>" onclick="remove_element()" type="button" class="west">
+      <tmpl_if bulk_edit>
+        <li>
+          <input value="<tmpl_lang Done Bulk Editing> <tmpl_var name_of_this_element>" onclick="save_and_leave_bulk_edit()" type="button">
+        </li>
+      <tmpl_else>
+        <tmpl_if is_root>
+          <li><input value="<tmpl_lang Cancel>" onclick="do_cancel_edit()" type="button"></li>
+          <li><input value="<tmpl_lang Delete>" onclick="do_delete()" type="button"></li>
+        <tmpl_else>
+          <li><input value="<tmpl_var escape=html done_with_this_element>" onclick="save_and_go_up()" type="button"></li>
+          <tmpl_if allow_delete>
+            <li><input value="<tmpl_var escape=html delete_this_element>" onclick="remove_element()" type="button"></li>
+          </tmpl_if>
+        </tmpl_if>
       </tmpl_if>
-
     </tmpl_if>
-  </tmpl_if>
-</tmpl_if>
+  </ul>
+
+  <ul class="east">
+    <tmpl_if add_mode>
+      <li><input value="<tmpl_lang Create>" onclick="do_create()" type="button"></li>
+    <tmpl_else>
+      <tmpl_unless bulk_edit>
+        <li class="menu">
+          <input value="<tmpl_lang Save> &#9660;" onclick="db_save()" type="button">
+          <ul><li><a href="javascript:db_save_stay()"><tmpl_lang Save &amp; Stay></a></li></ul>
+        </li>
+        <tmpl_if is_root>
+          <tmpl_if may_publish>
+            <li><input value="<tmpl_lang Publish>" onclick="publish_media()" type="button"></li>
+          </tmpl_if>
+          <tmpl_if can_transform_image>
+            <li><input value="<tmpl_lang Transform>" onclick="transform_image()" type="button"></li>
+          </tmpl_if>
+        <tmpl_else>
+          <li><input value="<tmpl_var escape=html done_with_this_element>" onclick="save_and_go_up()" type="button"></li>
+          <tmpl_if allow_delete>
+            <li><input value="<tmpl_var escape=html delete_this_element>" onclick="remove_element()" type="button"></li>
+          </tmpl_if>
+        </tmpl_if>
+      </tmpl_unless>
+    </tmpl_if>
+  </ul>
 
 </div>
 
-<!-- END BUTTONS -->
-
 </form>
-
-<!-- END MAIN FORM -->
-
-
-
-<!-- BEGIN DELETE-MEDIA FORM -->
 
 <tmpl_unless add_mode>
   <form name="delete_media_form" method="post" action="media.pl">
@@ -530,8 +482,5 @@ Krang.onload( function() {
   <input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
   </form>
 </tmpl_unless>
-
-<!-- END DELETE-MEDIA FORM -->
-
 
 <tmpl_include footer.tmpl>

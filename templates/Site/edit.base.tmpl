@@ -90,14 +90,20 @@ save_stay = function()
 
 </table>
 
-<div class="panel capped">
-<input value="<tmpl_lang Cancel>" onclick="cancel_site_change()" type="button" class="west">
-<tmpl_unless add_mode>
-  <input value="<tmpl_lang Delete>" onclick="delete_site()" type="button" class="west">
-</tmpl_unless>
+<div class="panel capped clearfix buttonbar">
+<ul class="west">
+  <li><input value="<tmpl_lang Cancel>" onclick="cancel_site_change()" type="button"></li>
+  <tmpl_unless add_mode>
+  <li><input value="<tmpl_lang Delete>" onclick="delete_site()" type="button"></li>
+  </tmpl_unless>
+</ul>
 
-<input value="<tmpl_lang Save>" onclick="do_save()" type="submit" class="east">
-<input value="<tmpl_lang Save &amp; Stay>" onclick="save_stay()" type="button" class="east">
+<ul class="east">
+  <li class="menu">
+    <input value="<tmpl_lang Save> &#9660;" onclick="do_save()" type="submit">
+    <ul><li><a href="javascript:save_stay()"><tmpl_lang Save &amp; Stay></a></li></ul>
+  </li>
+</ul>
 </div>
 
 </form>

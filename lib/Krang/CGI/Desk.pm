@@ -179,6 +179,15 @@ sub _row_handler {
     my $tp = $obj->cover_date;
     $row->{cover_date} =
       (ref($tp)) ? $tp->strftime(localize('%m/%d/%Y %I:%M %p')) : localize('[n/a]');
+
+    # reformat command_column to be in a list
+    my $cc = $row->{command_column};
+    if ( $cc ) {
+        $cc =~ s|>(\s+)?<input|></li> <li><input|g;
+        $cc = '<li>' . $cc . '</li>';
+        $row->{command_column} = $cc;
+    }
+
 }
 
 =item checkout_checked
@@ -215,10 +224,11 @@ sub move {
       unless pkg('Group')->may_move_story_from_desk($obj->desk_id);
 
     # check if they may move object to desired desk
+    my $desk_id = $self->query->param('move_' . $obj->story_id);
     return $self->access_forbidden()
-      unless pkg('Group')->may_move_story_to_desk($self->query->param('move_' . $obj->story_id));
+      unless pkg('Group')->may_move_story_to_desk($desk_id);
 
-    $self->_do_move($obj);
+    $self->_do_move($obj, $desk_id);
     return $self->show;
 }
 
@@ -231,6 +241,7 @@ Moves list of checked stories to desks.
 sub move_checked {
     my $self  = shift;
     my $query = $self->query;
+    my $desk_id = $self->query->param('move_to_desk_id');
     foreach my $obj (map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked')) {
 
         # check if they may *move* object
@@ -239,10 +250,9 @@ sub move_checked {
 
         # check if they may move object to desired desk
         return $self->access_forbidden()
-          unless pkg('Group')
-              ->may_move_story_to_desk($self->query->param('move_' . $obj->story_id));
+          unless pkg('Group')->may_move_story_to_desk($desk_id);
 
-        $self->_do_move($obj);
+        $self->_do_move($obj, $desk_id);
     }
     return $self->show;
 }
@@ -338,10 +348,9 @@ sub _id2obj {
 
 # move one story to another desk
 sub _do_move {
-    my ($self, $obj) = @_;
+    my ($self, $obj, $desk_id) = @_;
 
     my $story_id = $obj->story_id;
-    my $desk_id  = $self->query->param('move_' . $story_id);
     my ($desk) = pkg('Desk')->find(desk_id => $desk_id);
     my $desk_name = $desk ? localize($desk->name) : '';
 

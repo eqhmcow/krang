@@ -387,41 +387,28 @@ preview_and_stay = function() {
 
 
 
-<div class="panel capped">
+<div class="panel capped clearfix buttonbar">
+  <ul class="west">
+    <li><input value="<tmpl_lang Cancel>" onclick="cancel_edit()" type="button"></li>
+    <li><input value="<tmpl_lang Delete>" onclick="remove_story()" type="button"></li>
+  </ul>
 
-<tmpl_if bulk_edit>
-  <input value="<tmpl_var bulk_done_with_this_element>" onclick="save_and_leave_bulk_edit()" type="button" class="west">
-
-<tmpl_else>  
-
-  <input value="<tmpl_lang Save>" onclick="db_save()" type="button" class="east">
-  <input value="<tmpl_lang Save &amp; Stay>" onclick="db_save_and_stay()" type="button" class="east">
-
-  <tmpl_if is_root>
-
-    <input value="<tmpl_lang Cancel>" onclick="cancel_edit()" type="button" class="west"> 
-    <input value="<tmpl_lang Delete>" onclick="remove_story()" type="button" class="west">
-
+  <ul class="east">
+    <li class="menu">
+      <input value="<tmpl_lang Save> &#9660;" onclick="db_save()" type="button">
+      <ul><li><a href="javascript:db_save_and_stay()"><tmpl_lang Save &amp; Stay></a></li></ul>
+    </li>
+    <li class="menu">
+      <input value="<tmpl_lang Check In To> &#9660;" onclick="return false;" type="button">
+      <ul>
+      <tmpl_loop desk_loop>
+      <li><a href="#" onclick="check_in(<tmpl_var choice_desk_id escape=html>);"><tmpl_var choice_desk_name escape=html></a></li>
+      </tmpl_loop>
+      </ul>
+    </li>
     <tmpl_if may_publish>
-      <input value="<tmpl_lang Publish>" onclick="save_and_publish()" type="button" class="east">
+    <li><input value="<tmpl_lang Publish>" onclick="save_and_publish()" type="button"</li>
     </tmpl_if>
-    <select name="checkin_to" class="east"><tmpl_loop desk_loop>
-      <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected</tmpl_if>><tmpl_var escape=html choice_desk_name> <tmpl_lang Desk></option>
-    </tmpl_loop></select>
-    <input value="<tmpl_lang Check In To>" onclick="check_in(document.categories.checkin_to.value)" type="button" class="east">
-
-  <tmpl_else>
-
-     <input value="<tmpl_var done_with_this_element>" onclick="save_and_go_up()" type="button" class="west">
-     <tmpl_if allow_delete>
-       <input value="<tmpl_var delete_this_element>" onclick="remove_element()" type="button" class="west">
-     </tmpl_if>
-     <input value="<tmpl_lang Cancel>" onclick="cancel_edit()" type="button" class="east"> 
-
-  </tmpl_if>
-
-</tmpl_if>
-
 </div>
 
 <tmpl_unless auto_category>

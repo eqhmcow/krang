@@ -1,7 +1,6 @@
 /**************
  * Page Frame *
  **************/
-
 html { background: #333; color: #FFF; overflow-y: scroll; }
 html, body { margin: 0; padding: 0 }
 #B { background: url("/static/<tmpl_var krang_install_id>/images/bkg-body.gif") repeat-y; width: 974px; margin: 0 auto; padding: 0; font: 11px/1 "Helvetica Neue",arial,helvetica,sans-serif; }
@@ -14,51 +13,42 @@ html, body { margin: 0; padding: 0 }
 /******************
  * Global Effects *
  ******************/
-
 a                 { background-color: inherit; color: <tmpl_var LinkColor>; font-weight: bold; text-decoration: none; }
 a:hover, a:active { background-color: <tmpl_var HilightColor>; color: <tmpl_var LinkColor>; }
 a:focus           { outline: none; }/*:FF borks layout otherwise(db2)*/
 a img             { border: 0; }
-
 form { margin: 0; padding: 0; }
-
 .button       { background: #EEE url("/static/<tmpl_var krang_install_id>/images/bkg-button-mini.gif") 0 50% repeat-x !important; color: <tmpl_var LinkColor> !important; width: auto !important; overflow: visible; margin: 0 5px 0 0; border: 1px solid #BBB; border-color: #EEE #BBB #BBB #EEE; padding: .1em .5em; font-size: 1em; line-height: 1; }
 .button:hover { background-color: <tmpl_var HilightColor> !important; background-image: none !important; }
-
 .mini-list-btn { background: #EEE url("/static/<tmpl_var krang_install_id>/images/bkg-button-mini.gif") 0 50% repeat-x !important; color: <tmpl_var LinkColor> !important; width: auto !important; overflow: visible; margin: 0 5px 0 0; border: 1px solid #BBB; border-color: #EEE #BBB #BBB #EEE; padding: .1em .5em; font-size: 1em; line-height: 1; filter: alpha(opacity=40); opacity: .4; }
 .mini-list-btn-enabled { filter: alpha(opacity=100); opacity: 1.0; }
 .mini-list-btn-enabled:hover { background-color: <tmpl_var HilightColor> !important; background-image: none !important; }
-
 .glue { white-space: nowrap !important; }
 .wrap { white-space: normal !important; }
 .cram { margin: 0 !important; }
-
 .enclose { overflow: hidden; }
-
 .clearfix:after { content: "."; display: block; height: 0; clear: both; visibility: hidden; }
 .clearfix { display: block; }
+.west { float: left; }
+.east { float: right; }
 
 /*******************
  * Header + Footer *
  *******************/
-
 #H h1, #H #instance_logo { position: absolute; top: 10px; }
 #H h1 { left: 20px; margin: 0; font-size: 1em; }
 #H #instance_logo { right: 20px; }
-
 #H .nav, #F .nav div { color: #666; }
 #H .nav ul, #F .nav ul { list-style: none; margin: 0; }
 #H .nav li, #F .nav li { border-left: 1px solid #CCC; }
 #H .nav li.l, #F .nav li.l { border-right: 1px solid #CCC; }
 #H .nav a, #H .nav b, #F .nav a { display: block; height: 2.28em; padding: 0 10px; line-height: 2.28; white-space: nowrap; cursor: pointer; }
 #H .nav a span, #F .nav a span { color: #666; font-weight: normal; }
-
 #H .nav      { background: #DDD url("/static/<tmpl_var krang_install_id>/images/bkg-header-nav.gif") repeat-x; position: absolute; height: 2.28em; bottom: 0; left: 180px; right: 0; }
 #H .nav ul   { background: url("/static/<tmpl_var krang_install_id>/images/bkg-header-corner.gif") no-repeat; height: 100%; width: 100%; padding: 0; }
 #H .nav li   { float: right; }
 #H .nav li.l { margin-right: 20px; }
 #H .nav b    { color: <tmpl_var LinkColor>; font-weight: bold; }
-
 #H .nav .menu          { position: relative; }
 #H .nav .menu b        { background: url("/static/<tmpl_var krang_install_id>/images/icon-submenu.gif") 100% 50% no-repeat; padding-right: 20px; }
 #H .nav .menu ul       { background-color: #EEE; background-image: none; position: absolute; height: auto; width: auto; top: 100%; left: -999em; border: 1px solid #CCC; border-width: 1px 1px 0; border-top-color: #D4D4D4; }
@@ -67,17 +57,14 @@ form { margin: 0; padding: 0; }
 #H .nav .menu li.l     { margin-right: 0; }
 #H .nav .menu li a     { border-bottom: 1px solid #CCC; }
 #H .nav .menu li.xxx   { display: none; }
-
 #F .nav        { background: <tmpl_var DarkLinkColor> url("/static/<tmpl_var krang_install_id>/images/bkg-footer-grass.jpg") no-repeat; height: 65px; max-height: 65px; }
 #F .nav div    { background: #E1E1E1 url("/static/<tmpl_var krang_install_id>/images/bkg-footer-nav.gif") 0 100% repeat-x; margin: 0 0 0 180px; }
 #F .nav ul     { background: url("/static/<tmpl_var krang_install_id>/images/bkg-footer-corner.gif") 0 100% no-repeat; height: 2.28em; padding: 0 20px; text-align: right; }
 #F .nav li     { display: -moz-inline-box; display: inline-block; }
 
-
 /***********
  * Sidebar *
  ***********/
-
 #S div           { border-bottom: 1px solid #CCC; }
 #S div.first     { border-top: 1px solid #CCC; }
 #S div div       { border-bottom: 0; }
@@ -87,7 +74,6 @@ form { margin: 0; padding: 0; }
 #S dl            { background: #EEE; color: #999; margin: 0; padding: 0 0 10px; }
 #S dt a, #S dt b { display: block; border: 1px solid #EEE; border-width: 1px 0; padding: 4px 0 4px 38px; }
 #S dt a:hover    { border-color: #CCC; }
-
 #S h2.stories span   { background-position:  -356px 50%; }    #S h2.stories span:hover   { background-position:  -534px 50%; }
 #S h2.media span     { background-position:  -712px 50%; }    #S h2.media span:hover     { background-position:  -890px 50%; }
 #S h2.templates span { background-position: -1068px 50%; }    #S h2.templates span:hover { background-position: -1246px 50%; }
@@ -95,38 +81,24 @@ form { margin: 0; padding: 0; }
 #S h2.trash span     { background-position: -1780px 50%; }    #S h2.trash span:hover     { background-position: -1958px 50%; }
 #S h2.trash span a   { display: block; padding:0; font-weight: normal; color: <tmpl_var HeaderColor> }
 
-/************
- * Throbber *
- ************/
-
+/*************
+ * Indicator *
+ *************/
 #indicator     { background-color: <tmpl_var XLightColor>; color: #666; filter: alpha(opacity=90); opacity: .9; position: fixed; z-index: 32767; left: 0; bottom: 0; height: 3em; width: auto; border: 1px solid <tmpl_var HeaderColor>; padding: 0 1em; font-size: .91em; line-height: 3; font-weight: bold; white-space: nowrap; }/*:Sf(2)==z-i*/
 #indicator img { padding: 0 1em 0 0; vertical-align: middle; }
-
 
 /***************
  * Krang.Error *
  ***************/
-
 #modal_overlay   { background-color: #000; }
 #modal_container { background-color: <tmpl_var BrightColor>; width: 500px; border: 1px solid <tmpl_var BorderColor>; }
-
-#modal_container .content {
-  background: url("/static/<tmpl_var krang_install_id>/images/bug.gif") no-repeat;
-  color: #000;
-  min-height: 60px;
-  margin: 10px 15px;
-  padding: 0 0 0 60px;
-  font-size: 1.27em;
-}
-
+#modal_container .content { background: url("/static/<tmpl_var krang_install_id>/images/bug.gif") no-repeat; color: #000; min-height: 60px; margin: 10px 15px; padding: 0 0 0 60px; font-size: 1.27em; }
 #modal_container .control { background-color: <tmpl_var XLightColor>; padding: 5px 10px 5px 0; text-align: right; }
 #modal_container .button  { margin: 0; }
-
 
 /******************
  * Krang.Messages *
  ******************/
-
 .krang-slider          { z-index: 200; width: 974px; position: fixed; }/*:FIX z-index(db2)*/
 .krang-slider .wrapper { background-color: <tmpl_var BrightColor>; filter: alpha(opacity=90); opacity: .9; width: 440px; margin: 0 auto; border: 1px solid <tmpl_var BrightBorderColor>; }
 .krang-slider .content { background: url("/static/<tmpl_var krang_install_id>/images/slider-info.gif") 20px 10px no-repeat; color: #333; min-height: 60px; max-height: 28.5em; overflow: auto; }
@@ -135,93 +107,61 @@ form { margin: 0; padding: 0; }
 .krang-slider form     { background-color: <tmpl_var XLightColor>; border-top: 1px solid <tmpl_var BrightBorderColor>; padding: 10px; text-align: right; }
 .krang-silder .button  { margin: 0; }
 
-
-/* !!!!!!!!!!!!!!!!!!!! PAGE "CONTENT" FOLLOWS BELOW !!!!!!!!!!!!!!!!!!!! */
-
-
-/******************
- * Global Effects *
- ******************/
-
-#C .west { float: left; }
-#C .east { float: right; }
-
-
 /************
  * Headings *
  ************/
-
 #C h2, #C h3, #C h4 { background-color: inherit; margin: 0; }
 #C h2, #C h3 { color: <tmpl_var HeaderColor>; font-weight: normal; font-family: Georgia,serif; text-transform: uppercase; }
 #C h2 { border-bottom: 1px solid <tmpl_var XLightColor>; font-size: 2.72em; letter-spacing: 1px; word-spacing: 3px; }
 #C h3 { margin-top: 1.44em; font-size: 1.27em; }
 #C h4 { color: #666; margin-top: 1.82em; font-size: 1em; font-weight: bold; }
-
 #C div h3, #C div h4 { margin-left: 0; margin-right: 0; }
-
 
 /**********
  * Blocks *
  **********/
-
 #C p, #C .faux-p { margin: 1.5em 20px 0; line-height: 1.5; }
-
 
 /**********
  * Tables *
  **********/
-
 #C table { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 10px 0 0; line-height: 1.82; }
-
 #C thead { }
-
 #C tbody { }
 #C tbody.even { background-color: #F3F3F3; }
-
 #C tr             { }
 #C tr.even        { background-color: #F3F3F3; }
 #C tr.hilite      { background-color: <tmpl_var HilightColor> !important; }
 #C tr.even.hilite { background-color: <tmpl_var EvenHilightColor> !important; }
-
 #C th, #C td { padding: .27em 5px; overflow: hidden; word-wrap: break-word; vertical-align: top; }
-
 #C th       { background-color: inherit; font-weight: bold; text-align: left; white-space: nowrap; }
 #C thead th { color: <tmpl_var HeaderColor>; padding-top: .45em; padding-bottom: .45em; vertical-align: bottom; }
 #C tbody th { color: #666; }
-
 #C table.report { }
 #C table.report tbody th, #C table.report td { padding-top: 0; padding-bottom: 0; }
-
 #C table.request { }
 #C table.request thead { background-color: <tmpl_var XLightColor>; }
 #C table.request thead th.f, #C table.request thead th.l { background-image: url("/static/<tmpl_var krang_install_id>/images/bkg-corners-inner.gif"); background-repeat: no-repeat; }
 #C table.request thead th.f { background-position: 0 -2400px; }
 #C table.request thead th.l { background-position: 100% -2700px; }
-
 #C table.result { border-bottom: 1px solid #DDD; border-collapse: separate; border-spacing: 0; margin: 0; }
 #C table.result thead { background-color: <tmpl_var XLightColor>; }
 #C table.result tbody th, #C table.result td { padding-top: .27em; padding-bottom: .27em; }
-
 #C table.result thead th.f { border-left:  1px solid <tmpl_var XLightColor>; padding-left: 10px}
 #C table.result thead th.l { border-right: 1px solid <tmpl_var XLightColor>; }
 #C table.result tbody td.f { border-left:  1px solid #DDD !important; padding-left: 10px}
 #C table.result tbody td.l { border-right: 1px solid #DDD !important; }
-
 #C table.compact { width: auto; table-layout: auto; }
 #C table.compact th, #C table.compact td { overflow: visible; word-wrap: normal; white-space: nowrap; }
-
 #C table table    { margin-top: 0; table-layout: auto; }/*:ONLY ElementEditor?(db2)*/
 #C table table td { padding-left: 0; overflow: visible; word-wrap: normal; }/*:ONLY ElementEditor?(db2)*/
-
 #C table.props { border-bottom: 1px solid #DDD; border-collapse: separate; border-spacing: 0; margin: 0 }
 #C table.props thead { background-color: <tmpl_var XLightColor>; }
 #C table.props tbody th, #C div table.props td { padding: .27em 0px }
 #C table.props thead th.f { border-left:  1px solid <tmpl_var XLightColor>; padding-left: 10px}
-#C table.props tbody td.f { border-left:  1px solid #DDD; padding-left: 10px; font-weight: bold; color: #666}
-#C table.props tbody td.l { border-right: 1px solid #DDD }
-
+#C table.props tbody td.f, #C table.props tbody th.f { border-left:  1px solid #DDD; padding-left: 10px; font-weight: bold; color: #666}
+#C table.props tbody td.l, #C table.props tbody th.l { border-right: 1px solid #DDD }
 #C table.bordered-request { border-bottom: 1px solid #DDD; margin-top: 10px; }
-
 /*column widths must account for padding (~1.5em):*/
 #C col.c-date        { width: 7em; }    /*:format = 'xx/xx/xxxx xx:xx XX' on 2 lines*/
 #C col.c-ldate       { width: 12em; }   /*:format = 'xx/xx/xxxx xx:xx XX' on 1 line*/
@@ -239,89 +179,83 @@ form { margin: 0; padding: 0; }
 #C col.c-label-tiny  { width: 9.5em; }  /* tiny column labels */
 #C col.c-sum         { width: 7.5em; }     
 #C col.c-big-sum     { width: 9.5em; }
-
 #C col.series  { width: 8.5em;  }/*:compact button, select, label*/
 #C col.tick    { width:  40px;  }/*:checkbox ONLY (~3.5em)*/
 #C col.desk-cmd { width: 31em;  }/*:desk cmd column*/
 #C tr .series, #C tr .tick { text-align: center; }
-
 #C table .button { margin: 0; }
-
 #C thead img, #C thead input, #C thead th.tick { vertical-align: middle; }
 #C thead a img { margin: 0 0 0 .25em; }/*:sortables*/
-
 /*  Table container for rounded table header corners */
 #C .table-container { position: relative; margin: 20px 0px 10px }
 #C img.left-corner  { position: absolute; top:0; left:0;  }
 #C img.right-corner { position: absolute; top:0; right:0; }
-
 /* ElementEditor command row */
 #C tr.command-row td    { border-top:   2px solid #F3F3F3; border-bottom: 1px solid #F3F3F3; }
 #C tr.command-row td.f  { border-left:  1px solid #F3F3F3 !important; vertical-align: middle}
 #C tr.command-row td.l  { border-right: 1px solid #F3F3F3 !important; vertical-align: middle}
 #C tr.command-row table { width: auto !important }
 #C tr.command-row table, #C tr.command-row table td { border: none }
-
-#C .crumbs { margin-top: 20px; padding-left: 10px }
+#C .crumbs { margin-top: 20px; padding-left: 10px; font-size: 13px; }
+#C td.notrim { overflow: visible; }
 
 /*********
  * Forms *
  *********/
-
 input, select, textarea { font-size: 1em; }
 textarea { line-height: 1.1; font-family: "Helvetica Neue",arial,helvetica,sans-serif; }
 input:focus, select:focus, textarea:focus { background-color: <tmpl_var HilightColor>; color: #000; }
 input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { background-color: #FFF; }
-
 #C .edit textarea { width: 95%; }
-
 #C .full input, #C .full select, #C .full textarea { width:   95%; }
 #C .demi input, #C .demi select, #C .demi textarea { width: 71.3%; }
 #C .half input, #C .half select, #C .half textarea { width: 47.5%; }
 #C .full .usual, #C .demi .usual, #C .half .usual  { width:  auto; }
-
 #C .half input.pushright     { margin-left: 30px;         }
 #C .half input.disabled      { background-color: #e0e0e0; } /* Neccesary for IE to gray disabled input */
 #C .half .err input:disabled { background-color: #e0e0e0; }
-
 #C label { background-color: inherit; color: #666; font-weight: bold; }
 #C label input { vertical-align: middle; }
 #C label input.radio { margin: 0 3px 0 0; }
-
+#C input.usual, #C select.usual { width: auto }
 
 /*****************
  * Action Panels *
  *****************/
-
 #C .panel  { width: 100%; padding: 20px 0 0; text-align: right; } /* width fixes safari layout problem */
-
 #C .panel input       { background: <tmpl_var LinkColor> url("/static/<tmpl_var krang_install_id>/images/bkg-button-full.gif") 0 50% repeat-x; color: #FFF; width: auto; overflow: visible; margin: 0 0 0 5px; border: 1px solid <tmpl_var DarkLinkColor>; border-color: <tmpl_var LinkColor> <tmpl_var DarkLinkColor> <tmpl_var DarkLinkColor> <tmpl_var LinkColor>; padding: .1em .5em; font-size: 1.27em; line-height: 1; }
-#C .panel input.west:hover { background-color: <tmpl_var DarkLinkColor>; background-image: none; }
-#C .panel input.east:hover { background-color: <tmpl_var DarkLinkColor>; background-image: none; }
+#C .panel input:hover { background-color: <tmpl_var DarkLinkColor> !important; background-image: none !important; }
 #C .panel input.list-btn { filter: alpha(opacity=40); opacity: .4; }
 #C .panel input.list-btn-enabled { filter: alpha(opacity=100); opacity: 1.0; }
 #C .panel input.list-btn-enabled:hover { background-color: <tmpl_var DarkLinkColor>; background-image: none; }
-
-/*(db2)testing - TOO effective:*/
 #C div .panel input       { background-color: #EEE; background-image: url("/static/<tmpl_var krang_install_id>/images/bkg-button-mini.gif"); color: <tmpl_var LinkColor>; border-color: #EEE #BBB #BBB #EEE; font-size: 1em; }
-#C div .panel input:hover { background-color: <tmpl_var HilightColor>; }
-
 #C .panel input.west, select.west { margin-right: 10px; margin-left: 0; }
 #C .panel input.east, select.east { margin-left: 10px; margin-right: 0; }
 #C .panel div.west   { text-align: left; }/*:IE(mac) Workspace+Desk(db2)*/
-
 #C .lame { text-align: left; }
 #C .lame input.west { float: none; }
-
 #C .capped { margin-top: 10px; border-top: 5px solid <tmpl_var XLightColor>; }/*:temp(db2)*/
 
+/*******************
+ * Dropdown Buttons *
+ ********************/
+.buttonbar input { display: block; }
+#C .panel.buttonbar input { margin: 0 0 0 8px; }
+#C .panel.buttonbar .west input { margin: 0 8px 0 0; }
+#C table .buttonbar .button { margin: 4px 4px 0 0; z-index: 0; }
+.buttonbar ul { margin: 0; padding: 0; list-style: none; }
+.buttonbar ul li { margin: 0; float: left; position: relative; }
+.buttonbar ul li ul { position: absolute; left: -999em; text-align: left; background: #eee; }
+.buttonbar ul ul li { float: none; border: 1px solid #ccc; border-top: none; }
+.buttonbar ul ul li a { width: 8em; display: block; padding: .5em 1em; }
+#C td .buttonbar ul ul li a { padding: 0 .5em; }
+.buttonbar ul li:hover ul, .buttonbar ul li.over ul { left: 8px; z-index: 32767; }
+#C td .buttonbar ul li:hover ul, #C td .buttonbar ul li.over ul { left: 0; z-index: 32767; }
 
 /***********
  * Tabsets *
  ***********/
-
 #C .tabset { margin: 20px 0 0; border: 10px solid <tmpl_var XLightColor>; }
-
 #C .tabs { list-style: none; margin: 0; padding: 0; background-color: <tmpl_var XLightColor>; white-space: nowrap; overflow: hidden; }
 #C .tabs li { display: inline-block; display: -moz-inline-box; height: 2.27em; margin: 0 10px 0 0; }
 #C .tabs li * { display: block; background-image: url("/static/<tmpl_var krang_install_id>/images/bkg-corners-inner.gif"); background-repeat: no-repeat; }
@@ -331,13 +265,9 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
 #C .tabs span { padding: 0 10px 0 0; line-height: 2.27em; }
 #C .tabs a span { background-position: 100% -900px; }
 #C .tabs b span { background-position: 100% -300px; }
-
 #C .tab-option { background-color: <tmpl_var XLightColor>; color: #666; float: right; margin: 0; line-height: 2.27; }
-
 #C .tabbed { margin: 0 20px 20px; }
-
 #C .tabbed p, #C .tabbed .faux-p { margin-right: 0; margin-left: 0; }/*:testing(db2)*/
-
 #C .finder { border: 10px solid #DDD; }
 #C .finder .tabs { background-color: #DDD; }
 #C .finder .tabs a { background-position: 0 -1800px; }
@@ -346,41 +276,26 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
 #C .finder .tabs b span { background-position: 100% -1500px; }
 #C .finder .tab-option { background-color: #DDD; }
 
-
 /********************
  * Krang::HTMLPager *
  ********************/
-
-#C p.naught { background-color: #EEE; color: #666; padding: 1.5em 30px; font-weight: bold; }
-
+#C p.naught { background-color: #EEE; color: #666; padding: 1.5em 30px; font-weight: bold; font-style: italic;}
 #C p.naught a { margin-left: 10px }
-
 #C .pages { background-color: inherit; color: <tmpl_var HeaderColor>; margin: 20px 0 0; border-top: 1px solid <tmpl_var XLightColor>; padding: 10px .5em 0 1em; font-weight: bold; }
 #C .killborder .pages { border: none; }
-
 #C .pages p   { float: left; margin: 0; line-height: 1; }/*:FIXME(db2)*/
 #C .pages p a { margin: 0 0 0 .5em; border-left: 1px solid <tmpl_var XLightColor>; padding: 0 .5em; }
-
 #C .pages ul { float: right; list-style: none; margin: 0; padding: 0; white-space: nowrap; }
 #C .pages li { display: inline; }
-
 #C .pages li a, #C .pages li b     { display: -moz-inline-box; display: inline-block; border-right: 1px solid <tmpl_var XLightColor>; padding: 0 .5em; }
 #C .pages li a.l, #C .pages li b.l { border-right: 1px solid <tmpl_var BackgroundColor>; }
-
 
 /*************************
  * HTML::PopupTreeSelect *
  *************************/
-
-.hpts-outer
-{
-  z-index: 32767; display: none; position: absolute; background-color: <tmpl_var BackgroundColor>; top: 0; left: 0; border: 2px outset <tmpl_var TextColor>;
-  filter:progid:DXImageTransform.Microsoft.dropshadow(color=#BABABA,offX=3,offY=3,positive=true);
-}
-
+.hpts-outer { z-index: 32767; display: none; position: absolute; background-color: <tmpl_var BackgroundColor>; top: 0; left: 0; border: 2px outset <tmpl_var TextColor>; filter:progid:DXImageTransform.Microsoft.dropshadow(color=#BABABA,offX=3,offY=3,positive=true); }
 .hpts-outer *   { width: 225px; }
 .hpts-outer * * { width: auto; }
-
 .hpts-title { overflow: hidden; background: #999; color: #ffffff; margin-bottom: 4px; padding: 2px 0 0 6px; font-weight: bold; white-space: nowrap; cursor: move; line-height: 1.82}
 .hpts-inner { overflow: auto; height: 200px; padding: 4px 0 0 4px; }
 .hpts-block { display: none; margin-left: 24px; }
@@ -400,76 +315,40 @@ input.hpts-ok-btn-enabled:hover { background-color: <tmpl_var HilightColor> !imp
 /*******************************
  * Krang::Widget::date_chooser *
  *******************************/
-
 img.calendar_trigger:hover { cursor: pointer; }
 div.calendar               { position: relative; width: 204px; }
 .calendar, .calendar table { background: #999; color: #FFF; cursor: default; }
-
-/* navigation buttons */
 .calendar .button { height: 15px; font-weight: bold; text-align: center; }
 .calendar .nav    { background: #999 url("/static/<tmpl_var krang_install_id>/images/cal_button_bg.gif") bottom right repeat-x; color: <tmpl_var LinkColor>; padding: 0 2px; font-size: 15px; }/*:FIX(db2)*/
-
-/* 'Month Year' labeling */
 .calendar thead .title { background: #999; color: #FFF; font-size: 11px; font-weight: bold; text-align: center; }/*:FIX(db2)*/
-
-/* TR containing navigation buttons */
 .calendar thead .headrow { background: #778; color: #FFF; }
-
-/* TR containing day names */
 .calendar thead .daynames { background: <tmpl_var XLightColor>; }
-
-/* TDs containing the day names */
 .calendar thead .name { background-color: #DDD; color: <tmpl_var HeaderColor>; font-family: Georgia, serif; font-size: 14px; text-align: center; }
-
-/* button :hover state */
 .calendar thead .hilite { color: #000; }
-
-/* button :active state */
 .calendar thead .active { color: #999; }
-
-/* TDs containing particular days */
 .calendar tbody .day { color: <tmpl_var LinkColor>; width: 2em; padding: 2px 4px 2px 2px; text-align: center; }
 .calendar tbody .day.othermonth { font-weight: normal; }
 .calendar tbody td   { background-color: #FFF; font-weight: bold; }
-
-/* TD :hover state */
 .calendar tbody td.hilite { background-color: #DDD; color: <tmpl_var DarkLinkColor>; }
-
-/* TD :active state */
 .calendar tbody td.active { background: #999; }
-
-/* selected day */
 .calendar tbody td.selected { background-color: <tmpl_var HilightColor>; color: <tmpl_var DarkLinkColor>; }
-
-/* weekends */
 .calendar tbody td.weekend, .calendar tbody td.oweekend { background-color: <tmpl_var XLightColor>; }
-
-/* today, etc. */
 .calendar tbody td.today   { color: #000; }
 .calendar tbody .disabled  { color: #999; }
 .calendar tbody .emptycell { visibility: hidden; }
-
-/* some months need fewer than six rows */
 .calendar tbody .emptyrow { display: none; }
-
-/* TFOOT */
 .calendar tfoot { display: none; }
-
-/* Combo boxes (menus that display months/years for direct selection) */
 .calendar .combo { display: none; background: #DDD; color: #000; position: absolute; z-index: 100; top: 0; left: 0; width: 4em; border: 1px solid #999; font-size: .9em; cursor: default; }
 .calendar .combo .label, .calendar .combo .label-IEfix { padding: 1px; text-align: center; }
 .calendar .combo .label-IEfix { width: 4em; }/*:egad(db2)*/
 .calendar .combo .hilite { background: <tmpl_var XLightColor>; }
 .calendar .combo .active { background: <tmpl_var XLightColor>; border-top: 1px solid #999; border-bottom: 1px solid #999; font-weight: bold; }
 
-
 /*******************************
  * Krang::Widget::time_chooser *
  *******************************/
-
 img.clock_trigger:hover { cursor: pointer; }
 div.clock_widget        { background-color: <tmpl_var XLightColor>; position: absolute; width: auto; border: 1px solid #999; padding: 3px; white-space: nowrap; z-index: 100}
-
 
 /************
  * Tooltips *
@@ -481,21 +360,16 @@ div.clock_widget        { background-color: <tmpl_var XLightColor>; position: ab
 /**********************
  * Ajax.Autocompleter *
  **********************/
-
 input.autocomplete { width: 50% }
-
 div.autocomplete             { background-color: <tmpl_var BrightColor>; position: absolute; z-index: 32767; overflow: auto; max-height: 14em; border: 1px solid <tmpl_var BorderColor>; }/*:Sf(2)==z-i*/
 div.autocomplete ul          { list-style: none; margin: 0; padding: 0; }
 div.autocomplete li          { display: block; padding: .2em; cursor: pointer; }
 div.autocomplete li.selected { background-color: <tmpl_var HilightColor>; }
-
-/*(db2)Publisher/progress ONLY:*/
 #C .publish              { margin: 20px 20px 0; font-weight: bold; }
 #C #progress             { background: #EEE; color: #666; float: left; height: 20px; width: 298px; margin: 1em 20px 0 0; border: 1px solid #DDD; }
 #C #progress_bar         { background: transparent url("/static/<tmpl_var krang_install_id>/images/progress_bg.gif") repeat-x; height: 19px; width: 0; overflow: hidden; border: 1px solid #69C; border-width: 0 1px 1px 0; }
 #C #progress_bar_percent { background: #FFF; color: <tmpl_var HeaderColor>; float: left; font-size: 1.27em; }
 #C #progress_bar_label   { clear: both; padding: 20px 0 0; }
-
 
 /************************
  * Image Transform Tools
@@ -511,11 +385,9 @@ div.autocomplete li.selected { background-color: <tmpl_var HilightColor>; }
  * Image Crop Controls *
 ************************/
 .imgCrop_wrap { position: relative; cursor: crosshair; }
-/* fix for IE displaying all boxes at line-height by default, although they are still 1 pixel high until we combine them with the pointless span */
 .imgCrop_wrap, .imgCrop_wrap * { font-size: 0; }
 .imgCrop_overlay { background-color: #000; opacity: 0.5; filter:alpha(opacity=50); position: absolute; width: 100%; height: 100%; }
 .imgCrop_selArea { position: absolute; cursor: move; z-index: 2; }
-/* clickArea is all a fix for IE 5.5 & 6 to allow the user to click on the given area */
 .imgCrop_clickArea { width: 100%; height: 100%; background-color: #FFF; opacity: 0.01; filter:alpha(opacity=01); }
 .imgCrop_marqueeHoriz { position: absolute; width: 100%; height: 1px; background: transparent url("/static/<tmpl_var krang_install_id>/images/cropper_horiz.gif) repeat-x 0 0; z-index: 3;
 }
@@ -538,9 +410,7 @@ div.autocomplete li.selected { background-color: <tmpl_var HilightColor>; }
 .imgCrop_previewWrap { overflow: hidden; position: relative; }
 .imgCrop_previewWrap img { position: absolute; }
 
-
 /* !!!!!!!!!!!!!!!!!!!!! UNSORTED CSS FOLLOWS BELOW !!!!!!!!!!!!!!!!!!!!! */
-
 /*(db2)Bugzilla/edit ONLY:*/
 #C dl.eg        { background: <tmpl_var BackgroundColor>; margin: 12px 0 0; padding: 0; }
 #C dl.eg dt     { margin: 12px 0 0; font-weight: bold; }
@@ -549,22 +419,18 @@ div.autocomplete li.selected { background-color: <tmpl_var HilightColor>; }
 #C dl.eg .good  { color: <tmpl_var LinkColor>; }
 #C dl.eg dd     { margin: 0 0 0 12px; font-style: italic; }
 
-
 /*(db2)Debug/debug ONLY:*/
 .solo #M { background-image: none; }
 .solo #C { float: none; width: auto; }
 
-
 /*(db2)Krang::ElementClass::mark_form_invalid() ONLY:*/
 .invalid, .invalid textarea, .invalid input, .invalid select { background: <tmpl_var AlertColor>; }
-
 
 /*(db2)fix these ui warnings:*/
 #C ul.notes  { background: <tmpl_var XHilightColor>; color: <tmpl_var AlertColor>; border: 1px solid <tmpl_var BorderColor>; margin: 0 0 .25em; padding: .5em .5em .5em 2em; font-size: 1.27em; font-weight: bold; overflow: hidden; word-wrap: break-word; }
 #C .notes li { margin: .5em 0; }
 .alert       { color: <tmpl_var AlertColor>; margin-bottom: 5px; font-weight: bold; }/*:???(db2)*/
 #F .alertp   { background: <tmpl_var XHilightColor>; color: <tmpl_var AlertColor>; margin: 20px 0 0; border: 1px solid <tmpl_var BorderColor>; padding: 24px; font-size: 1.27em; font-weight: bold; position: absolute; left: 20%; top: 50%; }
-
 
 /* !!!!!!!!!!!!!! CORRALLED ERROR UI FLAGGING -- TEMPORARY !!!!!!!!!!!!!! */
 
