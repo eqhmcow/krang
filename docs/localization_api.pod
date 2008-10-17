@@ -4,13 +4,17 @@ This document describes how to make use of Krang's localization API.
 
 =head2 Overview
 
-Krang's localization API includes four parts:
+Krang's localization API includes the following parts:
 
 =over 4
 
 =item *
 
 Localization of static template strings via special <tmpl_lang SomeString> tags
+
+=item *
+
+Language specific template subdirectories and .base.tmpl files
 
 =item *
 
@@ -53,8 +57,8 @@ them are statically coded in the template.  Those strings have to be
 wrapped.
 
 One more note: Don't split strings using tmpl_if & Co., and don't wrap
-the splitted string parts separately. Other languages might require to
-reverse the order of the splitted string parts or express them in
+the split string's parts separately. Other languages might need to
+reverse the order of the split string's parts or express them in
 wholly different ways.  This is best explained using an example,
 coming from C<templates/User/edit_view.tmpl>:
 
@@ -106,7 +110,7 @@ tmpl_var tags.  Consider the following example:
 
 The button label, then, is built from the static template string "Done
 Editing " and the element name provided by the tmpl_var.  Again, other
-languages might require to reverse the wording.  That's why it is
+languages might need to reverse the wording.  That's why it is
 necessary to put things in the following way:
 
   # in Krang::CGI::ElementEditor
@@ -115,6 +119,51 @@ necessary to put things in the following way:
   # and in templates/Story/edit.base.tmpl
   <input value="<tmpl_var done_with_this_element>" onclick="save_and_go_up()" type="button" class="west">
 
+=head2 Language specific template subdirectories and .base.tmpl files
+
+The L<Krang::HTMLTemplate> module automatically honors the C<DefaultLanguage>
+directive in C<krang.conf> (which defaults to 'en' if not specified) by 
+first searching for requested template files in the corresponding language-code 
+subdirectory of each location in the template search path.
+
+For instance, when Krang::CGI::Story's new_story() method calls 
+load_tmpl('C<new.tmpl>'), the template will be loaded from the first of the 
+following locations found, in this order (assuming one addon named C<MyAddon> is 
+loaded and has no skin):
+
+  KrangRoot/addons/MyAddon/templates/Story/en/new.tmpl
+  KrangRoot/addons/MyAddon/templates/en/new.tmpl
+  KrangRoot/addons/MyAddon/templates/Story/new.tmpl
+  KrangRoot/templates/Story/en/new.tmpl
+  KrangRoot/templates/en/new.tmpl
+  KrangRoot/templates/Story/new.tmpl
+  KrangRoot/addons/MyAddon/templates/new.tmpl
+  KrangRoot/templates/new.tmpl
+
+But developers don't actually edit the templates in the language-specific 
+subdirectories.  They are automatically generated each time krang is restarted 
+(or whenever the C<krang_localize_templates> runs) based on "base" templates.  
+Base templates, which have filenames ending in C<.base.tmpl>, are used 
+to pre-generate the language-specific templates that krang will use at run-time.  
+
+For instance:
+
+  KrangRoot/addons/MyAddon/templates/Story/new.base.tmpl
+
+will have its <tmpl_lang> tags expanded, using each of the AvailableLanguages 
+listed in krang.conf, into the final, language-specific templates.  So if the 
+AvailableLanguages are English and German, that base template will be expanded 
+into:
+
+  KrangRoot/addons/MyAddon/templates/Story/en/new.tmpl
+  KrangRoot/addons/MyAddon/templates/Story/de/new.tmpl
+
+This is so that all the language-specific strings don't need to be changed 
+around at run time, but only when Krang is restarted.  
+
+Only the non-language-specific .base.tmpl files need to be maintained by 
+developers, version controlled, and overridden in addons.
+
 =head2 JavaScript strings
 
 Strings passed to the JavaScript functions alert() , confirm() and
@@ -122,7 +171,7 @@ prompt() must first be passed to Krang.L10N.loc().  Example:
 
   confirm( Krang.L10N.loc('Are you SURE you want to delete these Categories?') ) 
 
-Again tmpl_if & Co. should not interfer (see above "Static template strings")
+Again tmpl_if & Co. should not interfere (see above "Static template strings")
 
 =head2 Messages and alerts managed by L<Krang::Message>
 
