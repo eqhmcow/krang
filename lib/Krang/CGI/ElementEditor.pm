@@ -1211,7 +1211,7 @@ sub _get_script_name {
 }
 
 sub _numeric_date_format {
-    my ($self, $time_piece);
+    my ($self, $time_piece) = @_;
 
     # default numeric date format
     my $date_format    = 'mdy';
@@ -1223,7 +1223,7 @@ sub _numeric_date_format {
     }
 
     return ref($time_piece)
-      ? $self->query->escapeHTML($time_piece->date_format($date_separator))
+      ? $self->query->escapeHTML($time_piece->$date_format($date_separator))
       : localize('[n/a]');
 }
 
