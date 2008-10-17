@@ -94,9 +94,6 @@ BEGIN {
 
 use Krang;
 use Krang::Platform;
-use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Conf => qw(KrangRoot);
-use Krang::ClassLoader 'File';
 use File::Find;
 use File::Temp qw(tempdir);
 use Cwd qw(cwd);
@@ -229,10 +226,14 @@ sub get_excluded_lang_re {
 
     # default to exclude all lexicons, but include lang/bin/*
     my %exclude_lang = ();
-    @exclude_lang{grep { -d && $_ !~ m[bin$] } pkg('File')->find_glob('lang/*')} = ();
+    @exclude_lang{
+      grep { -d && $_ !~ m[bin$] } 
+      grep { -e $_ } 
+      glob(catfile($ENV{KRANG_ROOT}, 'lang/*'))
+    } = ();
 
     # maybe include some lexicon(s)
-    my $krang_root = KrangRoot;
+    my $krang_root = $ENV{KRANG_ROOT};
     if ($with_language) {
         my @include_lang = map { catdir($krang_root, 'lang', $_) }
           split(/\s*,\s*/, $with_language);
