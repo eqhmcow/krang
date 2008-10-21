@@ -34,7 +34,7 @@ Krang.onload( function() {
   checkin = function( id, desk )
   {
     var data = { rm: 'checkin', id: id };
-    data['checkin_to_' + id] = desk;
+    data['desk_id'] = desk;
     Krang.Form.submit('krang_pager_form', data, {to_top: false});
   }
 
@@ -177,7 +177,6 @@ Krang.onload( function() {
       <tmpl_var escape=html media_id>
     <tmpl_else><tmpl_if is_template>
       <tmpl_var escape=html template_id>
-    <tmpl_else>
     </tmpl_if></tmpl_if></tmpl_if></td>
 
     <td><tmpl_if is_story>
@@ -186,7 +185,6 @@ Krang.onload( function() {
       <tmpl_lang Media>
     <tmpl_else><tmpl_if is_template>
       <tmpl_lang Template>
-    <tmpl_else>
     </tmpl_if></tmpl_if></tmpl_if></td>
 
     <td class="notrim"<tmpl_unless thumbnail> colspan="2"</tmpl_unless>>
@@ -223,7 +221,6 @@ Krang.onload( function() {
               <a href="#" onclick="checkin('<tmpl_var escape=html id>', <tmpl_var choice_desk_id>);">
               <tmpl_var escape=html choice_desk_name> <tmpl_lang Desk></a>
             </li>
-            <input name="checkin_to_<tmpl_var escape=html id>" type="hidden">
           </tmpl_loop desk_loop>
           </ul>
         </tmpl_if>
@@ -265,7 +262,7 @@ Krang.onload( function() {
 
   <tmpl_include HTMLPager/<tmpl_lang en>/pager-pagination.tmpl>
 
-  <div class="panel capped">
+  <div class="panel capped clearfix buttonbar">
   <div class="west">
   <tmpl_lang Sorted by>
   <tmpl_var sort_select>

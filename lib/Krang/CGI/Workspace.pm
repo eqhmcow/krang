@@ -295,18 +295,17 @@ Checks in object (to specified desk for stories)
 =cut
 
 sub checkin {
-    my $self  = shift;
-    my $query = $self->query;
-    my $obj   = $self->_id2obj($query->param('id'));
+    my $self    = shift;
+    my $query   = $self->query;
+    my $obj     = $self->_id2obj($query->param('id'));
+    my $desk_id = $self->query->param('desk_id');
 
     # check if they may move story to desired desk
     if ($obj->isa('Krang::Story')) {
-        return $self->access_forbidden()
-          unless pkg('Group')
-              ->may_move_story_to_desk($self->query->param('move_' . $obj->story_id));
+        return $self->access_forbidden() unless pkg('Group')->may_move_story_to_desk($desk_id);
     }
 
-    $self->_do_checkin($obj);
+    $self->_do_checkin($obj, $desk_id);
 
     $self->show;
 }
@@ -343,16 +342,15 @@ Checks in checked objects (to specified desk for stories).
 sub checkin_checked {
     my $self  = shift;
     my $query = $self->query;
+    my $desk_id = $self->query->param('desk_id');
     foreach my $obj (map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked')) {
 
         # check if they may move story to desired desk
         if ($obj->isa('Krang::Story')) {
-            return $self->access_forbidden()
-              unless pkg('Group')
-                  ->may_move_story_to_desk($self->query->param('move_' . $obj->story_id));
+            return $self->access_forbidden() unless pkg('Group')->may_move_story_to_desk($desk_id);
         }
 
-        $self->_do_checkin($obj);
+        $self->_do_checkin($obj, $desk_id);
     }
     return $self->show;
 }
@@ -457,11 +455,10 @@ sub _id2obj {
 
 # checkin one object (story also move to desk)
 sub _do_checkin {
-    my ($self, $obj) = @_;
+    my ($self, $obj, $desk_id) = @_;
 
     if ($obj->isa('Krang::Story')) {
         my $story_id = $obj->story_id;
-        my $desk_id  = $self->query->param('checkin_to_story_' . $story_id);
         my ($desk) = pkg('Desk')->find(desk_id => $desk_id);
         my $desk_name = $desk ? localize($desk->name) : '';
 
