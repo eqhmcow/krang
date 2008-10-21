@@ -106,6 +106,10 @@ our @REQUIRED_INSTANCE_DIRECTIVES = qw(
   InstanceHostName
 );
 
+our @DEPRECATED_DIRECTIVES = qw(
+  ForceStaticBrowserCaching
+);
+
 use Krang::Platform;
 use File::Spec::Functions qw(catfile catdir rel2abs);
 use Carp qw(croak);
@@ -325,12 +329,21 @@ sub check {
           unless defined $CONF->get($dir);
     }
 
+    # check for deprecated directives at the top level
+    my %found_top_level_deprecated_directives;
+    foreach my $dir (@DEPRECATED_DIRECTIVES) {
+        if (defined $CONF->get($dir)) {
+            warn("Directive $dir is deprecated.\n");
+            $found_top_level_deprecated_directives{$dir} = 1;
+        }
+    }
+
     # make sure each instance has the necessary directives
     foreach my $instance ($pkg->instances()) {
         my $block = $CONF->block(instance => $instance);
 
         foreach my $dir (@REQUIRED_INSTANCE_DIRECTIVES) {
-            _broked("Instance '$instance' missing required '$dir' directive")
+            _broked("Instance '$instance' missing required '$dir' directive\n")
               unless defined $block->get($dir);
         }
 
@@ -352,6 +365,13 @@ sub check {
         _broked("Instance '$instance' is looking for InstanceElementSet "
               . "'$element_set' which is not installed")
           unless $found;
+
+        # check for deprecated directives at the instance level
+        foreach my $dir (@DEPRECATED_DIRECTIVES) {
+            next if $found_top_level_deprecated_directives{$dir};
+            warn("Directive $dir in Instance '$instance' is deprecated.\n")
+              if defined $block->get($dir);
+        }
     }
 
     # make sure KrangUser and KrangGroup exist
