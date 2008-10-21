@@ -86,12 +86,20 @@ use Krang::ClassLoader 'CGI::Login';
 use Krang::ClassLoader 'ErrorHandler';
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader 'HTMLTemplate';
-use Krang::ClassLoader Conf =>
-  qw(KrangRoot PasswordChangeTime ApacheMaxSize Secret ApacheMaxUnsharedSize ForceStaticBrowserCaching DefaultLanguage);
+use Krang::ClassLoader Conf => qw(
+    KrangRoot 
+    PasswordChangeTime 
+    ApacheMaxSize 
+    Secret 
+    ApacheMaxUnsharedSize 
+    BrowserSpeedBoost
+    DefaultLanguage
+);
 use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader 'AddOn';
 use Krang;
 use Krang::ClassLoader 'Session' => qw(%session);
+use CSS::Minifier::XS qw(minify);
 
 BEGIN { pkg('AddOn')->call_handler('InitHandler') }
 
@@ -162,8 +170,7 @@ sub trans_handler ($$) {
     if ($uri =~ /^\/static\//) {
 
         # if we have it configured to do so
-        if (ForceStaticBrowserCaching) {
-
+        if (BrowserSpeedBoost) {
             # make it expire waaaaay in the future
             $r->err_header_out('Expires'       => 'Mon, 28 Jul 2014 23:30:00 GMT');
             $r->err_header_out('Cache-Control' => 'max-age=315360000');
@@ -171,7 +178,46 @@ sub trans_handler ($$) {
 
         # find the appropriate krang file
         $uri =~ s{^/static/[^/]+/}{/};
-        my $file = pkg('File')->find("htdocs/$uri");
+        my $file = pkg('File')->find(catfile('htdocs', $uri));
+
+        # if it's a CSS file then let's minify it
+        if( BrowserSpeedBoost && $uri =~ /\.css$/ ) {
+            my $install_id = pkg('Info')->install_id;
+            my $new_file = $file;
+            $new_file =~ s/\.css$/.minified-$install_id.css/;
+            unless(-e $new_file ) {
+                # minify the file and save it
+                local $/;
+                open(my $CSS, '<', $file) or die "Could not open $file for reading: $!";
+                my $css_contents = <$CSS>;
+                close($CSS);
+                $css_contents = minify($css_contents);
+                open($CSS, '>', $new_file) or die "Could not open $new_file for writing: $!";
+                print $CSS $css_contents;
+                close($CSS);
+                $file = $new_file;
+            }
+
+            # can we compress it?
+            my $accept_encoding = $r->header_in('Accept-Encoding');
+            if( $accept_encoding =~ /gzip/ ) {
+                # the browser says it can, but IE6 lies and fails randomly with gzipped content
+                my $bd = HTTP::BrowserDetect->new($r->header_in('User-Agent'));
+                $r->pnotes(browser_detecor => $bd);
+                unless( $bd->ie && $bd->version < 6 ) {
+                    my $compressed_file = $new_file . '.gz';
+                    unless( -e $compressed_file ) {
+                        # we could replace this with some Perl module to do the gzip compression
+                        # to avoid the overhead of a system call, but it's just a 1 time hit for
+                        # the file the first time and is really negligible
+                        system('gzip', $new_file) == 0 or die "Could not compress file $new_file!";
+                    }
+                    $r->err_header_out('Content-Encoding' => 'gzip');
+                    $file = $compressed_file;
+                }
+            }
+        } 
+
         $r->filename($file);
         return OK;
     }
@@ -299,7 +345,7 @@ sub access_handler ($$) {
         konqueror => 'WebKit',
     );
 
-    my $bd = HTTP::BrowserDetect->new($r->header_in('User-Agent'));
+    my $bd = $r->pnotes('browser_detector') || HTTP::BrowserDetect->new($r->header_in('User-Agent'));
     foreach my $browser (keys %allow_browsers) {
         if ($bd->$browser) {
             $allow_browsers{$browser} =~ /(\d)+(\.\d+)?/;
@@ -308,7 +354,7 @@ sub access_handler ($$) {
             if ($bd->major > $major
                 or ($bd->major == $major && $bd->minor >= $minor))
             {
-                $r->cgi_env("KRANG_BROWSER_ENGINE" => $engine_of{$browser});
+                $r->subprocess_env("KRANG_BROWSER_ENGINE" => $engine_of{$browser});
                 return OK;
             }
         }
@@ -448,8 +494,8 @@ sub authen_handler ($$) {
     $r->connection->user($cookie{user_id});
 
     # Propagate user & window to CGI-land via the environment
-    $r->cgi_env('KRANG_SESSION_ID' => $session_id);
-    $r->cgi_env('KRANG_WINDOW_ID'  => $window_id);
+    $r->subprocess_env('KRANG_SESSION_ID' => $session_id);
+    $r->subprocess_env('KRANG_WINDOW_ID'  => $window_id);
 
     # We are authenticated, we've got a window_id and a valid session:
     # Redirect to workspace if user typed a login URI in a new window

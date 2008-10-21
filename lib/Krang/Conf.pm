@@ -14,6 +14,7 @@ our @VALID_DIRECTIVES;
   BadLoginCount
   BadLoginWait
   BadLoginNotify
+  BrowserSpeedBoost
   BugzillaComponent
   BugzillaEmail
   BugzillaPassword
