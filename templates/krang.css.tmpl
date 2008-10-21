@@ -224,11 +224,12 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
  *****************/
 #C .panel  { width: 100%; padding: 20px 0 0; text-align: right; } /* width fixes safari layout problem */
 #C .panel input       { background: <tmpl_var LinkColor> url("/static/<tmpl_var krang_install_id>/images/bkg-button-full.gif") 0 50% repeat-x; color: #FFF; width: auto; overflow: visible; margin: 0 0 0 5px; border: 1px solid <tmpl_var DarkLinkColor>; border-color: <tmpl_var LinkColor> <tmpl_var DarkLinkColor> <tmpl_var DarkLinkColor> <tmpl_var LinkColor>; padding: .1em .5em; font-size: 1.27em; line-height: 1; }
+#C .panel input.delete { background-image: url("/static/<tmpl_var krang_install_id>/images/bkg-button-full-delete.gif"); border-color: #991100 #662200 #662200 #991100;}
 #C .panel input:hover { background-color: <tmpl_var DarkLinkColor> !important; background-image: none !important; }
 #C .panel input.list-btn { filter: alpha(opacity=40); opacity: .4; }
 #C .panel input.list-btn-enabled { filter: alpha(opacity=100); opacity: 1.0; }
 #C .panel input.list-btn-enabled:hover { background-color: <tmpl_var DarkLinkColor>; background-image: none; }
-#C div .panel input       { background-color: #EEE; background-image: url("/static/<tmpl_var krang_install_id>/images/bkg-button-mini.gif"); color: <tmpl_var LinkColor>; border-color: #EEE #BBB #BBB #EEE; font-size: 1em; }
+#C div .panel input { background-color: #EEE; background-image: url("/static/<tmpl_var krang_install_id>/images/bkg-button-mini.gif"); color: <tmpl_var LinkColor>; border-color: #EEE #BBB #BBB #EEE; font-size: 1em; }
 #C .panel input.west, select.west { margin-right: 10px; margin-left: 0; }
 #C .panel input.east, select.east { margin-left: 10px; margin-right: 0; }
 #C .panel div.west   { text-align: left; }/*:IE(mac) Workspace+Desk(db2)*/
@@ -250,7 +251,9 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
 .buttonbar ul ul li a { width: 8em; display: block; padding: .5em 1em; }
 #C td .buttonbar ul ul li a { padding: 0 .5em; }
 .buttonbar ul li:hover ul, .buttonbar ul li.over ul { left: 8px; z-index: 32767; }
+.buttonbar ul li:hover ul.disabled, .buttonbar ul li.over ul { left: -999em; z-index: 0; }
 #C td .buttonbar ul li:hover ul, #C td .buttonbar ul li.over ul { left: 0; z-index: 32767; }
+#C td .buttonbar ul li:hover ul.disabled, #C td .buttonbar ul li.over ul { left: -999em; z-index: 0; }
 
 /***********
  * Tabsets *

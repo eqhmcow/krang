@@ -589,12 +589,15 @@ Krang.Form = {
         if (!ckbx) { ckbx = 'krang_pager_rows_checked' }
         [ [$('C'), 'list-btn'], [form, 'mini-list-btn'] ].each(function(spec) {
             spec[0].select('.'+spec[1]).each(function(btn) {
+             var submenu = btn.next('ul');
                 if (Krang.row_checked(form, ckbx)) {
                     btn.addClassName(spec[1]+'-enabled');
                     btn.enable();
+                    if(submenu) submenu.removeClassName('disabled');
                 } else {
                     btn.removeClassName(spec[1]+'-enabled');
                     btn.disable();
+                    if(submenu) submenu.addClassName('disabled');
                     spec[0].select('input#checkallbox').first().checked = false;
                 }
             })});
