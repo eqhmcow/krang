@@ -37,7 +37,7 @@ Krang.run_code = function(code_array) {
 }
 Krang.load = function(target) {
     // apply our registered behaviours
-    Behaviour.apply(target);
+    Behaviour.apply($(target));
 
     // run any code from Krang.onload()
     Krang.run_code(Krang.onload_code);
@@ -583,14 +583,14 @@ Krang.Form = {
         if (!form) { return false }
         if (!ckbx) { ckbx = 'krang_pager_rows_checked' }
         [ [$('C'), 'list-btn'], [form, 'mini-list-btn'] ].each(function(spec) {
-            $A(spec[0].getElementsByClassName(spec[1])).each(function(btn) {
+            spec[0].select('.'+spec[1]).each(function(btn) {
                 if (Krang.row_checked(form, ckbx)) {
                     btn.addClassName(spec[1]+'-enabled');
                     btn.enable();
                 } else {
                     btn.removeClassName(spec[1]+'-enabled');
                     btn.disable();
-                    spec[0].getElementsBySelector('input#checkallbox').first().checked = false;
+                    spec[0].select('input#checkallbox').first().checked = false;
                 }
             })});
     }
@@ -1684,7 +1684,7 @@ var rules = {
                 Krang.Nav.goto_url(el.getAttribute('href'));
                 Event.stop(event);
             }
-        });
+        }.bindAsEventListener(el));
     },
     'form' : function(el) {
         // if we have an on submit handler, then we don't want to

@@ -10,7 +10,7 @@
 var Behaviour = {
     rules : $H({}),
     register : function(new_rules) {
-        Behaviour.rules.merge(new_rules);
+        Behaviour.rules = Behaviour.rules.merge(new_rules);
     },
     apply : function(el) {
         Behaviour.rules.each(function(pair) { 
@@ -22,7 +22,7 @@ var Behaviour = {
             // else use $$() to find the targets
             var targets;
             if( el )
-                targets = Element.getElementsBySelector(el, rule);
+                targets = el.select(rule);
             else 
                 targets = $$(rule);
 
