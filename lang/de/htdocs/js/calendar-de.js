@@ -52,18 +52,18 @@ Calendar._FD = 1;
 // full month names
 Calendar._MN = new Array
 (
- "Januar",
- "Februar",
- "März",
- "April",
- "Mai",
- "Juni",
- "Juli",
- "August",
- "September",
- "Oktober",
- "November",
- "Dezember"
+ "Januar<br/>",
+ "Februar<br/>",
+ "M" + String.fromCharCode(0x00e4) + "rz<br/>",
+ "April<br/>",
+ "Mai<br/>",
+ "Juni<br/>",
+ "Juli<br/>",
+ "August<br/>",
+ "September<br/>",
+ "Oktober<br/>",
+ "November<br/>",
+ "Dezember<br/>"
  );
 
 // short month names
@@ -71,7 +71,7 @@ Calendar._SMN = new Array
 (
  "Jan",
  "Feb",
- "Mär",
+ "M" + String.fromCharCode(0x00e4) + "r",
  "Apr",
  "Mai",
  "Jun",
@@ -85,7 +85,7 @@ Calendar._SMN = new Array
 
 // tooltips
 Calendar._TT = {};
-Calendar._TT["INFO"] = "Über den Kalendar";
+Calendar._TT["INFO"] = String.fromCharCode(0x00dc) + "ber den Kalendar";
 
 Calendar._TT["ABOUT"] =
 "Date selection:\n" +
