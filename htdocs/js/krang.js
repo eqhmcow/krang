@@ -262,6 +262,7 @@ Krang.Ajax = {
     Takes the following args in it's hash:
 
     url       : the url of the request (required)
+    method    : the HTTP method. (optional defaults to 'get')
     params    : a hash of params for the request
     indicator : the id of the image to use as an indicator (optional defaults to 'indicator')
     onComplete: a callback function to be executed after the normal processing (optional)
@@ -285,8 +286,6 @@ Krang.Ajax = {
             // do something
         }
     });
-
-    TODO: handle GET and POST differently
 */
 Krang.Ajax.request = function(args) {
     var url       = args['url'];
@@ -294,6 +293,7 @@ Krang.Ajax.request = function(args) {
     var indicator = args['indicator'];
     var complete  = args['onComplete'] || Prototype.emptyFunction;
     var failure   = args['onFailure'] || Prototype.emptyFunction;
+    var method    = args['method'] || 'get';
 
     // tell the user that we're doing something
     Krang.show_indicator(indicator);
@@ -311,6 +311,7 @@ Krang.Ajax.request = function(args) {
         url,
         {
             parameters  : params,
+            method      : method,
             evalScripts : true,
             asynchronous: true,
             // if we're successful we're not in edit mode (can be reset by the request)
@@ -345,6 +346,7 @@ Krang.Ajax.request = function(args) {
     Takes the following args in it's hash:
 
     url       : the url of the request (required)
+    method    : the HTTP method to use (optional defaults to 'get')
     params    : a hash of params for the request
     target    : the id of the target element receiving the contents (optional defaults to 'C')
     indicator : the id of the image to use as an indicator (optional defaults to 'indicator')
@@ -380,6 +382,7 @@ Krang.Ajax.request = function(args) {
 */
 Krang.Ajax.update = function(args) {
     var url       = args.url;
+    var method    = args.method || 'get';
     var params    = args.params || {};
     var target    = args.target;
     var indicator = args.indicator;
@@ -411,6 +414,7 @@ Krang.Ajax.update = function(args) {
         url,
         {
             parameters  : params,
+            method      : method,
             evalScripts : true,
             asynchronous: true,
             // if we're successful we're not in edit mode (can be reset by the request)
@@ -567,6 +571,7 @@ Krang.Form = {
                 Krang.Ajax.update({
                     url        : url,
                     params     : Form.serialize(form, true),
+                    method     : form.method,
                     target     : options.target,
                     to_top     : options.to_top,
                     onComplete : options['onComplete']
