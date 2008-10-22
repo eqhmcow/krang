@@ -156,7 +156,6 @@ sub browser2db {
     while (
         my $span = $t->look_down(
             "_tag"  => "span",
-            "style" => qr{.+}
         )
       )
     {
@@ -164,6 +163,12 @@ sub browser2db {
         my $repl  = undef;
         my $child = undef;
         my $style = $span->attr('style');
+
+        # remove SPANs with empty style attrib
+        unless ($style) {
+            $span->replace_with($span->content_list)->delete;
+            next;
+        }
 
         # make (nested) tags for style props
         while ($style =~ /$regexp/g) {
