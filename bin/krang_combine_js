@@ -110,7 +110,6 @@ my @files = qw(
     js/lexicon.$lang.js
     js/krang.js
     js/popup_tree_select.js
-    codepress/codepress.js
     js/cropper.js
 );
 @files = map { catfile(KrangRoot, 'htdocs', $_) } @files;
