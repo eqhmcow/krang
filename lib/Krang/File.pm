@@ -63,7 +63,6 @@ sub find {
 
     my ($pkg, $file) = @_;
     my $root   = KrangRoot;
-    my @addons = pkg('AddOn')->find();
 
     -e $_ and return $CACHE{$file} = $_
       for ((map { catfile($root, 'addons', $_->name, $file) } pkg('AddOn')->find()),
@@ -77,7 +76,6 @@ sub flush_cache { %CACHE = (); }
 sub find_all {
     my ($pkg, $file) = @_;
     my $root   = KrangRoot;
-    my @addons = pkg('AddOn')->find();
 
     return grep { -e $_ } (
         (map { catfile($root, 'addons', $_->name, $file) } pkg('AddOn')->find()),
@@ -88,7 +86,6 @@ sub find_all {
 sub find_glob {
     my ($pkg, $file) = @_;
     my $root   = KrangRoot;
-    my @addons = pkg('AddOn')->find();
 
     my @files = glob(catfile($root, $file));
     foreach my $addon (pkg('AddOn')->find) {
