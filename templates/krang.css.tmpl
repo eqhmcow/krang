@@ -4,7 +4,7 @@
 html { background: #333; color: #FFF; overflow-y: scroll; }
 html, body { margin: 0; padding: 0 }
 #B { background: url("/static/<tmpl_var krang_install_id>/images/bkg-body.gif") repeat-y; width: 974px; margin: 0 auto; padding: 0; font: 11px/1 "Helvetica Neue",arial,helvetica,sans-serif; }
-#H   { background: <tmpl_var DarkLinkColor> url("/static/<tmpl_var krang_install_id>/images/bkg-header.jpg") no-repeat; position: relative; height: 105px; margin: 0 7px; }
+#H   { background: <tmpl_var DarkLinkColor> url("/static/<tmpl_var krang_install_id>/images/bkg-header-footer.jpg") no-repeat; position: relative; height: 105px; margin: 0 7px; }
 #M   { background: #FFF url("/static/<tmpl_var krang_install_id>/images/bkg-midriff.gif") repeat-y; color: #000; min-height: 420px; margin: 0 7px; border: 1px solid #D4D4D4; border-width: 1px 0; }
 #S   { width: 178px; margin: 20px 0; }
 #C   { float: right; width: 740px; margin: 20px; }
@@ -45,7 +45,7 @@ form { margin: 0; padding: 0; }
 #H .nav a, #H .nav b, #F .nav a { display: block; height: 2.28em; padding: 0 10px; line-height: 2.28; white-space: nowrap; cursor: pointer; }
 #H .nav a span, #F .nav a span { color: #666; font-weight: normal; }
 #H .nav      { background: #DDD url("/static/<tmpl_var krang_install_id>/images/bkg-header-nav.gif") repeat-x; position: absolute; height: 2.28em; bottom: 0; left: 180px; right: 0; }
-#H .nav ul   { background: url("/static/<tmpl_var krang_install_id>/images/bkg-header-corner.gif") no-repeat; height: 100%; width: 100%; padding: 0; }
+#H .nav ul   { background: url("/static/<tmpl_var krang_install_id>/images/bkg-header-footer-corner.gif") no-repeat; height: 100%; width: 100%; padding: 0; }
 #H .nav li   { float: right; }
 #H .nav li.l { margin-right: 20px; }
 #H .nav b    { color: <tmpl_var LinkColor>; font-weight: bold; }
@@ -57,9 +57,9 @@ form { margin: 0; padding: 0; }
 #H .nav .menu li.l     { margin-right: 0; }
 #H .nav .menu li a     { border-bottom: 1px solid #CCC; }
 #H .nav .menu li.xxx   { display: none; }
-#F .nav        { background: <tmpl_var DarkLinkColor> url("/static/<tmpl_var krang_install_id>/images/bkg-footer-grass.jpg") no-repeat; height: 65px; max-height: 65px; }
+#F .nav        { background: <tmpl_var DarkLinkColor> url("/static/<tmpl_var krang_install_id>/images/bkg-header-footer.jpg") no-repeat; background-position: 0 -105px; height: 65px; max-height: 65px; }
 #F .nav div    { background: #E1E1E1 url("/static/<tmpl_var krang_install_id>/images/bkg-footer-nav.gif") 0 100% repeat-x; margin: 0 0 0 180px; }
-#F .nav ul     { background: url("/static/<tmpl_var krang_install_id>/images/bkg-footer-corner.gif") 0 100% no-repeat; height: 2.28em; padding: 0 20px; text-align: right; }
+#F .nav ul     { background: url("/static/<tmpl_var krang_install_id>/images/bkg-header-footer-corner.gif") 0 100% no-repeat; height: 2.28em; padding: 0 20px; text-align: right; }
 #F .nav li     { display: -moz-inline-box; display: inline-block; }
 
 /***********
