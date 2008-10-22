@@ -190,6 +190,12 @@ sub _row_handler {
         $date = $obj->creation_date();
     }
 
+    # since we are using dropdowns for some of these buttons we want to wrap the existing
+    # command buttoms in <li>
+    $row->{command_column} =~ s/(<input[^>]*>)/<li>$1<\/li>/g if $row->{command_column};
+
+    $row->{desk_loop} ||= [];
+
     # format the date
     $row->{date} = ref $date ? $date->strftime(localize('%m/%d/%Y %I:%M %p')) : localize('[n/a]');
 
