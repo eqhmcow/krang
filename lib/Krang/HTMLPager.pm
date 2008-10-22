@@ -7,6 +7,7 @@ use Carp qw(croak);
 use Krang::ClassLoader 'HTMLTemplate';
 use Krang::ClassLoader Conf => qw(KrangRoot DefaultLanguage);
 use Krang::ClassLoader 'MyPref';
+use Krang::ClassLoader 'Info';
 use Krang::ClassLoader Session      => qw(%session);
 use Krang::ClassLoader Localization => qw(localize);
 use File::Spec::Functions qw(catdir);
@@ -979,6 +980,7 @@ sub make_sortable_column_html {
     my ($col, $col_label) = @_;
 
     my $q = $self->cgi_query();
+    my $install_id = pkg('Info')->install_id;
 
     # Is column currently selected? If not, attempt to find in cache, or set default
     my $sort_field      = $self->calculate_order_by($q);
@@ -989,7 +991,9 @@ sub make_sortable_column_html {
     if ($is_selected) {
         $col_label = "$col_label";
         $col_label .=
-          '<img alt="" src="/images/arrow-' . ($sort_order_desc ? 'desc' : 'asc') . '.gif">';
+            qq(<img alt="" src="/static/$install_id/images/arrow-)
+          . ($sort_order_desc ? 'desc' : 'asc')
+          . '.gif">';
     }
 
     # Make link to re-sort
