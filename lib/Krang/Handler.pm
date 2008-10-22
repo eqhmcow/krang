@@ -99,7 +99,8 @@ use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader 'AddOn';
 use Krang;
 use Krang::ClassLoader 'Session' => qw(%session);
-use CSS::Minifier::XS qw(minify);
+use CSS::Minifier::XS;
+use JavaScript::Minifier::XS;
 
 BEGIN { pkg('AddOn')->call_handler('InitHandler') }
 
@@ -159,7 +160,7 @@ sub login_uri {
 # flavor == "root"     :  If no instance name, must be in root directory.  Show list of instances.
 #                      :  If we have an instance name, it should match first directory in path
 #                      :  If in instance path, rewrite uri to point to real assets in htdocs root.
-#
+
 sub trans_handler ($$) {
     my $self = shift;
     my ($r)  = @_;
@@ -169,54 +170,33 @@ sub trans_handler ($$) {
     # prefix that looks like "/static/XXXX" where "XXXX" is the install_id
     if ($uri =~ /^\/static\//) {
 
-        # if we have it configured to do so
+        # find the appropriate krang file
+        my $file = $uri;
+        $file =~ s{^/static/[^/]+/}{};
+        $file = pkg('File')->find(catfile('htdocs', $file));
+        return NOT_FOUND unless $file;
+
         if (BrowserSpeedBoost) {
-            # make it expire waaaaay in the future
+            # make it expire waaaaay in the future since we know the resource won't change
             $r->err_header_out('Expires'       => 'Mon, 28 Jul 2014 23:30:00 GMT');
             $r->err_header_out('Cache-Control' => 'max-age=315360000');
-        }
 
-        # find the appropriate krang file
-        $uri =~ s{^/static/[^/]+/}{/};
-        my $file = pkg('File')->find(catfile('htdocs', $uri));
-
-        # if it's a CSS file then let's minify it
-        if( BrowserSpeedBoost && $uri =~ /\.css$/ ) {
-            my $install_id = pkg('Info')->install_id;
-            my $new_file = $file;
-            $new_file =~ s/\.css$/.minified-$install_id.css/;
-            unless(-e $new_file ) {
-                # minify the file and save it
-                local $/;
-                open(my $CSS, '<', $file) or die "Could not open $file for reading: $!";
-                my $css_contents = <$CSS>;
-                close($CSS);
-                $css_contents = minify($css_contents);
-                open($CSS, '>', $new_file) or die "Could not open $new_file for writing: $!";
-                print $CSS $css_contents;
-                close($CSS);
-                $file = $new_file;
-            }
-
-            # can we compress it?
-            my $accept_encoding = $r->header_in('Accept-Encoding');
-            if( $accept_encoding =~ /gzip/ ) {
-                # the browser says it can, but IE6 lies and fails randomly with gzipped content
-                my $bd = HTTP::BrowserDetect->new($r->header_in('User-Agent'));
-                $r->pnotes(browser_detecor => $bd);
-                unless( $bd->ie && $bd->version < 6 ) {
-                    my $compressed_file = $new_file . '.gz';
-                    unless( -e $compressed_file ) {
-                        # we could replace this with some Perl module to do the gzip compression
-                        # to avoid the overhead of a system call, but it's just a 1 time hit for
-                        # the file the first time and is really negligible
-                        system('gzip', $new_file) == 0 or die "Could not compress file $new_file!";
-                    }
+            if ($uri =~ /\.css$/) {
+                # if it's a CSS file then let's minify it and optionally compress it
+                my $new_file = $self->_minify_and_gzip($r, $file, 'css');
+                $file = $new_file if $new_file;
+            } elsif( $uri =~ /combined.\w\w\.js$/ ) {
+                # the prebuilt combined JS file needs to be redirected to the gzip one if we can
+                if( $self->_can_handle_gzip($r) ) {
+                    $file = "$file.gz";
                     $r->err_header_out('Content-Encoding' => 'gzip');
-                    $file = $compressed_file;
                 }
+            } elsif( $uri =~ /\.js$/ ) {
+                # if it's any other JS file then let's minify it and optionally compress it
+                my $new_file = $self->_minify_and_gzip($r, $file, 'js');
+                $file = $new_file if $new_file;
             }
-        } 
+        }
 
         $r->filename($file);
         return OK;
@@ -324,6 +304,7 @@ sub trans_handler ($$) {
 # Check the browser using HTTP::BrowserDetect and bounce old browsers
 # before they can get into trouble.
 sub access_handler ($$) {
+return OK;
     my $self = shift;
     my ($r) = @_;
 
@@ -407,7 +388,8 @@ sub authen_handler ($$) {
         return OK;
     }
 
- # A non-PERL request (e.g. image), bug, or help file: let it through (we are already authenticated)
+    # A non-PERL request (e.g. image), bug, or help file: let it through 
+    # (we are already authenticated)
     if ($r->uri !~ /(\.pl|\/|$instance)$/ || $r->uri =~ /\/bug\.cgi$/ || $r->uri =~ /\/help\.pl$/) {
 
         # We are authenticated:  Setup REMOTE_USER
@@ -731,6 +713,72 @@ sub _do_redirect {
     my $output = "Redirect: <a href=\"$new_uri\">$new_uri</a>";
 
     return REDIRECT;
+}
+
+sub _can_handle_gzip {
+    my ($self, $r) = @_;
+return 1;
+    if( $r->header_in('Accept-Encoding') && $r->header_in('Accept-Encoding') =~ /gzip/i ) {
+        my $bd = $r->pnotes('browser_detector');
+        if(! $bd ) {
+            $bd = HTTP::BrowserDetect->new($r->header_in('User-Agent'));
+            $r->pnotes(browser_detecor => $bd);
+        }
+        if( $bd->ie && $bd->version < 6 ) {
+            return 0;
+        } else {
+            return 1;
+        }
+    } else {
+        return 1;
+    }
+}
+
+sub _minify_and_gzip {
+    my ($self, $r, $file, $type) = @_;
+    my $install_id = pkg('Info')->install_id;
+    my $new_file   = $file;
+    $new_file =~ s/\.$type$/.minified-$install_id.$type/;
+
+    unless (-e $new_file) {
+
+        # minify the file and save it
+        local $/;
+        open(my $ASSET, '<', $file) or die "Could not open $file for reading: $!";
+        my $content = <$ASSET>;
+        close($ASSET);
+
+        if( $type eq 'css' ) {
+            eval { $content = CSS::Minifier::XS::minify($content) };
+        } elsif( $type eq 'js' ) {
+            eval { $content = JavaScript::Minifier::XS::minify($content) };
+        }
+
+        if( $@ ) {
+            warn "Could not minify file $file: $@\n";
+            return;
+        } else {
+            open($ASSET, '>', $new_file) or die "Could not open $new_file for writing: $!";
+            print $ASSET $content;
+            close($ASSET);
+        }
+    }
+
+    # can we compress it?
+    if ($self->_can_handle_gzip($r)) {
+        my $compressed_file = $new_file . '.gz';
+        unless (-e $compressed_file) {
+
+            # we could replace this with some Perl module to do the gzip compression
+            # to avoid the overhead of a system call, but it's just a 1 time hit for
+            # the file the first time and is really negligible
+            system("gzip -c $new_file > $compressed_file") == 0
+              or die "Could not compress file $new_file!";
+        }
+        $r->err_header_out('Content-Encoding' => 'gzip');
+        $new_file = $compressed_file;
+    }
+    return $new_file;
 }
 
 1;

@@ -504,6 +504,7 @@ sub _addon_conf {
               AdminSchedulerActionList
               ObjectSchedulerActionList
               DataSetClasses
+              ExtraJavascriptFiles
               )
         ],
         valid_blocks => []

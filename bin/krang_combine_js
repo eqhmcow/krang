@@ -1,0 +1,162 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_combine_js - One JavaScript file to rule them all
+
+=head1 SYNOPSIS
+
+   krang_combine_js --verbose
+
+=head1 DESCRIPTION
+
+This script is normally called by L<bin/krang_ctl> at Krang startup.
+It combines all of the JavaScript files in Krang (along with any
+that are listed in the C<ExtraJavascriptFiles> of installed addons)
+into a single file. This file is then minimized and then compressed
+(to send to browsers that support it).
+
+It also takes into account language specific JavaScript files and
+will create a separate combined file for each C<AvailableLanguages>.
+If you have a file in your addon that needs to be language specific
+then you can specify which one ends up in the combined file by using
+'$lang' in your C<ExtraJavascriptFiles>. For example
+
+    js/addon_lexicon.$lang.js
+
+=head1 OPTIONS
+
+The script takes the following options:
+
+=over 4
+
+=item --verbose
+
+Prints more information about which files are being combined together
+and what your savings are.
+
+=item --help
+
+=item --man
+
+=back
+
+=cut
+
+use File::Find;
+use File::Spec::Functions qw(catdir catfile splitdir canonpath);
+use File::Path;
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 2]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+our ($help, $man, $v);
+
+use Getopt::Long;
+use Pod::Usage;
+my $result = GetOptions(
+    'verbose+'      => \$v,
+    'help'          => \$help,
+    'man'           => \$man,
+) or pod2usage(2);
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader Script => 'instance_agnostic';
+use Krang::ClassLoader Conf => qw(AvailableLanguages KrangRoot);
+use Krang::ClassLoader 'AddOn';
+use Krang::ClassLoader 'Info';
+use JavaScript::Minifier::XS qw(minify);
+
+# list of files relative to /htdocs
+my @files = qw(
+    js/calendar.js
+    js/calendar-$lang.js
+    js/prototype.js
+    js/scriptaculous.js
+    js/control.modal.js
+    js/behaviour.js
+    js/lexicon.$lang.js
+    js/krang.js
+    js/popup_tree_select.js
+    codepress/codepress.js
+    js/cropper.js
+);
+@files = map { catfile(KrangRoot, 'htdocs', $_) } @files;
+
+foreach my $addon (pkg('AddOn')->find()) {
+    my $conf = $addon->conf;
+    my @extra_js = $conf->get('ExtraJavaScriptFiles');
+    @extra_js = map { catfile(KrangRoot, 'addons', $addon->name, 'htdocs', $_) } @extra_js;
+    if( $v && @extra_js ) {
+        print "Adding extra files from " . $addon->name . "\n";
+        print "  $_\n" foreach @extra_js;
+    }
+    push(@files, @extra_js);
+}
+
+my @langs = AvailableLanguages();
+push(@langs, 'en') unless grep { $_ eq 'en' } @langs;
+foreach my $lang (@langs) {
+    print "Combining for language $lang\n" if $v;
+    my $combined_file = catfile(KrangRoot, 'htdocs', 'js', "combined.$lang.js");
+    if( -e $combined_file ) {
+        unlink $combined_file or die "Could not remove old combined JS file $combined_file: $!";
+    }
+    system('touch', $combined_file) == 0 or die "Could not create combined file $combined_file!";
+    foreach my $file (@files) {
+        $file =~ s/\$lang/$lang/g;
+        if( -e $file ) {
+            system("cat $file >> $combined_file") == 0
+              or die "Could not add file $file to combined file $combined_file!";
+        } else {
+            warn "File $file does not exist.";
+        }
+    }
+
+    # minimize the JS file
+    local $/;
+    open(my $JS, '<', $combined_file) or die "Could not open file $combined_file for reading: $!";
+    my $js_contents = <$JS>;
+    close($JS);
+    $js_contents = minify($js_contents);
+    open($JS, '>', $combined_file) or die "Could not open file $combined_file for writing: $!";
+    print $JS $js_contents;
+    close($JS);
+
+    # now create a compressed version
+    system("gzip -c $combined_file > $combined_file.gz") == 0 or die "Could not compress file $combined_file!";
+}
+
+print " Done.\n";

@@ -36,6 +36,7 @@ use Krang::ClassLoader Conf    => qw(
   Charset
   EnableTemplateCache
   DefaultLanguage
+  BrowserSpeedBoost
 );
 use Krang::ClassLoader Message => qw(get_messages clear_messages get_alerts clear_alerts);
 use Krang::ClassLoader 'Navigation';
@@ -152,6 +153,9 @@ sub output {
 
     $template->param(enable_bugzilla => EnableBugzilla)
       if $template->query(name => 'enable_bugzilla');
+
+    $template->param(browser_speed_boost => BrowserSpeedBoost)
+      if $template->query(name => 'browser_speed_boost');
 
     # add the message and alert loops
     if ($template->query(name => 'header_message_loop')) {

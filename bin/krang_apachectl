@@ -87,7 +87,7 @@ use Krang::ClassLoader Conf => qw(KrangRoot InstanceHostName Skin KrangUser Kran
   InstanceApacheAddr InstanceApachePort InstanceSSLCertificateFile
   InstanceSSLCertificateKeyFile InstanceSSLCertificateChainFile
   InstanceSSLCACertificateFile InstanceSSLCARevocationFile InstanceSSLPort
-  RewriteLogLevel AvailableLanguages
+  RewriteLogLevel AvailableLanguages BrowserSpeedBoost
 );
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader Localization => qw(%LANG);
@@ -208,6 +208,7 @@ sub start {
     apply_skin();
     make_templates();
     make_js_localizer();
+    make_js_combined();
 
     print "krang_apachectl $command: starting httpd\n";
     unless (system($httpd)) {
@@ -366,4 +367,23 @@ sub make_js_localizer {
     print "Making JavaScript localizer for $langs.\n";
     system(catfile(KrangRoot, 'lang', 'bin', 'krang_make_js_loc'))
       and die "Couldn't make JavaScript localizer: $?";
+}
+
+sub make_js_combined {
+    # only run if we have an instance set up with BrowserSpeedBoost
+    my $go_ahead = 0;
+    my $orig_instance = pkg('Conf')->instance();
+    foreach my $instance (pkg('Conf')->instances) {
+        pkg('Conf')->instance($instance);
+        if( BrowserSpeedBoost ) {
+            $go_ahead = 1;
+            last;
+        }
+    }
+
+    return unless $go_ahead;
+
+    print "Making Combined JavaScript files for $langs.\n";
+    system(catfile(KrangRoot, 'bin', 'krang_combine_js'))
+      and die "Couldn't make JavaScript combined files: $?";
 }
