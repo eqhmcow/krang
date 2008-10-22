@@ -133,7 +133,6 @@ foreach my $lang (@langs) {
     if( -e $combined_file ) {
         unlink $combined_file or die "Could not remove old combined JS file $combined_file: $!";
     }
-    system('touch', $combined_file) == 0 or die "Could not create combined file $combined_file!";
     foreach my $file (@files) {
         $file =~ s/\$lang/$lang/g;
         if( -e $file ) {
