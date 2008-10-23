@@ -395,7 +395,7 @@ sub command_spec {
     };
 }
 
-sub get_separator { return "|" }
+sub get_separator { return "\x{E000}" }
 
 =head1 NAME
 
