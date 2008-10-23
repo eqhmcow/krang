@@ -1772,7 +1772,12 @@ var rules = {
         el.observe('mouseout', function(event) {
             Krang.Tooltip.Media.hide();
         }.bindAsEventListener(el));
-        
+    },
+    // for the big green dropdown menu buttons in the panels
+    // IE needs some help here (this may not be necessary for IE7)
+    '.buttonbar .menu' : function( el ) {
+        if (navigator.userAgent.indexOf('MSIE') != -1)
+            el.onmouseover = el.onmouseout = function(){ this.toggleClassName('over') };
     }
 };
 
