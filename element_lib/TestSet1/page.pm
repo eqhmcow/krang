@@ -18,6 +18,8 @@ and leadin elements are available.
 
 use Krang::ClassLoader base => 'ElementClass';
 
+use Krang::ElementClass::PoorText;
+
 sub new {
     my $pkg  = shift;
     my %args = (
@@ -122,6 +124,21 @@ sub new {
                     $data =~ s/^Correction: //;
                     return $data;
                 },
+            ),
+            pkg('ElementClass::PoorText')->new(
+                name               => 'poortext_header',
+                type               => 'text',
+                commands           => 'basic_with_special_chars',
+                command_button_bar => 1,
+                special_char_bar   => 0,
+            ),
+            pkg('ElementClass::PoorText')->new(
+                name               => 'poortext_paragraph',
+                type               => 'textarea',
+                commands           => 'all',
+                required           => 1,
+                command_button_bar => 1,
+                special_char_bar   => 0,
             ),
         ],
         @_

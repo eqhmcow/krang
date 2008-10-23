@@ -2,6 +2,8 @@
 <tmpl_if is_wide_page><tmpl_if wide_page>THIS IS A VERY WIDE PAGE<tmpl_else>A NARROW PAGE</tmpl_if></tmpl_if>
 <tmpl_if is_header><tmpl_var header></tmpl_if>
 <tmpl_if is_paragraph><p><tmpl_var paragraph></p></tmpl_if>
+<tmpl_if is_poortext_header><tmpl_var poortext_header></tmpl_if>
+<tmpl_if is_poortext_paragraph><tmpl_var poortext_paragraph></tmpl_if>
 </tmpl_loop>
 
 <P>Page number <tmpl_if current_page_number><tmpl_var current_page_number><tmpl_else>1</tmpl_if> of <tmpl_if total_pages><tmpl_var total_pages><tmpl_else>1</tmpl_if>.</p>

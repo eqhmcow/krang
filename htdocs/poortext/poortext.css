@@ -1,0 +1,264 @@
+/* The DIV to make editable */
+html, body { 
+  margin: 0;
+  padding: 0;
+}
+
+.poortext {
+  background-color: #ffffff !important;
+  border: 1px solid silver;
+  font-size: 12px !important;
+  font-family: sans-serif;
+  overflow: auto;
+  color: #000000;
+}
+
+.poortext a { 
+  color: #0000ff;
+  text-decoration: underline;
+  font-size: 12px !important;
+  font-weight: normal;
+  font-family: sans-serif;
+}
+
+.pt-text {
+/*
+   Ratio between font-size, height, line-height and padding is important
+   to mimic text flavor, to ensure that tails of letters in the
+   previous line (in Gecko there are really multiple lines )don't show
+   up in the current line and to make sure the text doesn't move
+   vertically when focusing and beginning to type.
+*/
+  font-size: 14px;
+  height: 26px;      /* for IE6 */
+  line-height: 26px; /* must be much bigger than font-size */
+  overflow: hidden;
+  padding: 0px 0px 6px 0px; /* push it up */
+  width: 300px;
+}
+
+html>body .pt-text { 
+  height: 16px;      /* for Gecko */
+  line-height: 22px; /* for Gecko */
+}
+
+/* The textarea to show the source */
+.pta { 
+  width: 400px;
+  height: 200px;
+  border: 1px solid silver;
+}
+/* Dialog styles */
+.pt-popup {
+  color: #000000;
+  position: fixed;
+  cursor: move;
+/*   overflow: auto;  */
+
+/* Required for Gecko < 2.0 (1.9) see bug #167801 overflow:auto works
+good for FF>1.5 But with FF 1.0.4 it shows the scroll bars if width
+and height are not set So we use the other workaround with
+position:fixed But that doesn't play nicely with draggables, so we
+revert to overflow, but we set it directly on a parent DIV of the text
+input fields.  */ 
+
+}
+
+.pt-popup-content {
+  font-size: 12px;
+  font-family: Arial, Verdana, sans-serif;
+  background-color: #FFFFE0;
+  padding: 16px 14px 14px 14px;
+  border: 1px solid #6A5ACD;
+}
+
+.pt-fieldset { 
+  border: 1px solid #333333;
+  padding: 10px 8px;                    
+}
+
+.pt-fieldset td {
+  font-size: 12px;
+}
+
+.pt-legend { 
+  position: absolute;
+  top: 9px;
+  left: 25px;
+  background-color: #FFFFE0;
+  padding: 2px;
+}
+
+.pt-dlg-form { 
+  margin: 0;
+  padding: 0;
+}
+
+.pt-dlg-first-col { 
+  width: 30px;
+  cursor: default;
+}
+
+.pt-dlg-second-col {
+  cursor: default;
+/* nothing yet */
+}
+
+.pt-dlg-item { 
+  padding: 2px 0;               
+}
+
+.pt-dlg-button { 
+  border: 1px solid #6a5acd;
+  font-size: 10px;
+  background-color: #ffffe0;                
+}
+
+.pt-dlg-button:focus { 
+  background-color: #ffffe0;
+}
+
+.pt-abbr { 
+  cursor: help !important;
+  color: #000 !important;
+  text-decoration: none !important;
+  border-bottom: 1px dotted #333;
+}
+
+.pt-acronym {
+  cursor: help !important;
+  color: #000 !important;
+  text-decoration: none !important;
+  border-bottom: 1px dotted #333;
+}
+
+/* ButtonBar styles */
+#pt-btnBar, #pt-specialCharBar { 
+  background-color: #fff;
+  border: 1px solid silver;
+  position: absolute;
+  margin:0;
+  padding:0;                                 
+}
+
+#pt-btnBar ul, #pt-specialCharBar ul { 
+  margin: 0;
+  padding: 0;
+}
+
+li.pt-btn, li.pt-char {
+  background-color: #fff;
+  display: block;
+  float: left;
+  list-style: none;
+  margin: 0;
+  margin: 0px 1px 0 1px;
+  padding: 0;
+  border: none;
+}
+
+li.pt-btn:first-child, li.pt-char:first-child { 
+  margin-left: 0px;
+}
+
+a.pt-btnLink, a.pt-charLink { 
+  border: 2px solid #fff;
+  display: block;
+  line-height:16px;
+  height: 16px;
+  width: 20px;
+  margin: 0;
+  padding: 0;
+}
+
+a.pt-btnLink:hover, a.pt-btn-pressed, a.pt-charLink:hover {
+  border: 2px solid silver;
+  margin: 0;
+  padding:0;
+  background: transparent;
+}
+
+#pt-btn-bold { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll 0px;
+}
+#pt-btn-italic { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -20px;
+}
+#pt-btn-underline { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -40px;
+}
+#pt-btn-strikethrough { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -60px;
+}
+#pt-btn-subscript { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -80px;
+}
+#pt-btn-superscript { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -100px;
+}
+
+#pt-btn-align_left  { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -120px;
+}
+#pt-btn-align_center { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -140px;
+}
+#pt-btn-align_right { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -160px;
+}
+#pt-btn-justify     { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -180px;
+}
+
+#pt-btn-indent     { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -200px;
+}
+#pt-btn-outdent     { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -220px;
+}
+
+#pt-btn-add_html { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -240px;
+}
+#pt-btn-delete_html { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -260px;
+}
+#pt-btn-cut { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -280px;
+}
+#pt-btn-copy { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -300px;
+}
+#pt-btn-paste { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -320px;
+}
+#pt-btn-undo { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -340px;
+}
+#pt-btn-redo { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -360px;
+}
+#pt-btn-specialchars { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -380px;
+}
+#pt-btn-help { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -400px;
+}
+
+
+/*    Special Char Images      */
+#pt-char-ldquo { 
+  background: transparent url("/poortext/images/special_char_sprite.png") no-repeat;
+}
+#pt-char-rdquo { 
+  background: transparent url("/poortext/images/special_char_sprite.png") no-repeat scroll -20px;
+}
+#pt-char-lsquo { 
+  background: transparent url("/poortext/images/special_char_sprite.png") no-repeat scroll -40px;
+}
+#pt-char-rsquo { 
+  background: transparent url("/poortext/images/special_char_sprite.png") no-repeat scroll -60px;
+}
+#pt-char-ndash { 
+  background: transparent url("/poortext/images/special_char_sprite.png") no-repeat scroll -80px;
+}
