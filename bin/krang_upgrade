@@ -365,7 +365,7 @@ sub make_backups {
 
     # compute a backup filename
     my ($y, $m, $d) = (localtime)[5, 4, 3];
-    $BACKUP_FILENAME = sprintf('krang-upgrade-%04d%02d%02d.kba', ($y + 1900), $m, $d);
+    $BACKUP_FILENAME = sprintf('krang-upgrade-%04d%02d%02d.kba', ($y + 1900), $m+1, $d);
 
     # find another name if this one exists
     if (-e $BACKUP_FILENAME) {
