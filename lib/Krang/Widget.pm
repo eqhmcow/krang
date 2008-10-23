@@ -10,7 +10,7 @@ use HTML::PopupTreeSelect::Dynamic;
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'HTMLTemplate';
 use Krang::ClassLoader 'Info';
-use Krang::ClassLoader Conf         => qw(KrangRoot ForceStaticBrowserCaching);
+use Krang::ClassLoader Conf         => qw(KrangRoot BrowserSpeedBoost);
 use Krang::ClassLoader DB           => qw(dbh);
 use Krang::ClassLoader Log          => qw(debug info);
 use Krang::ClassLoader Message      => qw(add_alert);
@@ -1073,7 +1073,7 @@ sub autocomplete_values {
 }
 
 sub _img_prefix {
-    return ForceStaticBrowserCaching
+    return BrowserSpeedBoost
       ? '/static/' . pkg('Info')->install_id . '/'
       : '';
 }
