@@ -736,9 +736,8 @@ return 1;
 
 sub _minify_and_gzip {
     my ($self, $r, $file, $type) = @_;
-    my $install_id = pkg('Info')->install_id;
     my $new_file   = $file;
-    $new_file =~ s/\.$type$/.minified-$install_id.$type/;
+    $new_file =~ s/\.$type$/.minified.$type/;
 
     unless (-e $new_file) {
 

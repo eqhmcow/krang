@@ -208,7 +208,7 @@ sub start {
     apply_skin();
     make_templates();
     make_js_localizer();
-    make_js_combined();
+    prepare_for_browser_speed_boost();
 
     print "krang_apachectl $command: starting httpd\n";
     unless (system($httpd)) {
@@ -369,7 +369,7 @@ sub make_js_localizer {
       and die "Couldn't make JavaScript localizer: $?";
 }
 
-sub make_js_combined {
+sub prepare_for_browser_speed_boost {
     # only run if we have an instance set up with BrowserSpeedBoost
     my $go_ahead = 0;
     my $orig_instance = pkg('Conf')->instance();
@@ -386,4 +386,8 @@ sub make_js_combined {
     print "Making Combined JavaScript files for $langs.\n";
     system(catfile(KrangRoot, 'bin', 'krang_combine_js'))
       and die "Couldn't make JavaScript combined files: $?";
+
+    print "Clearing out old minified and compressed JS and CSS files.\n";
+    system(catfile(KrangRoot, 'bin', 'krang_clear_minified_assets'))
+      and die "Couldn't clear out minified assets: $?";
 }
