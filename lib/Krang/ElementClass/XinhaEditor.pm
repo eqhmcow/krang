@@ -83,7 +83,7 @@ sub validate {
         $self->{required}
         and (  not defined $value
             or not length $value
-            or $value =~ m!^<br\s*/>\s*$!)
+            or $value =~ m/^<br\s*\/>\s*$/)
       )
     {
         return (0, localize($self->display_name) . ' ' . localize('requires a value.'));
@@ -131,7 +131,7 @@ sub input_form {
         # I'm the first!  Insert one-time JavaScript
         $html .= <<END;
 <script type="text/javascript">
-    _editor_url  = "xinha/"
+    _editor_url  = "/static/$install_id/xinha/"
     _editor_lang = "$lang";
 
     if (!Krang.XinhaLoaded) {
