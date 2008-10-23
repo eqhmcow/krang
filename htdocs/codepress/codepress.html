@@ -18,10 +18,10 @@
 
 	if(lh.match('language=')) language = lh.replace(/.*language=(.*?)(&.*)?$/,'$1');
 
-	document.write('<link type="text/css" href="codepress.css?ts='+ts+'" rel="stylesheet" />');
-	document.write('<link type="text/css" href="languages/'+language+'.css?ts='+ts+'" rel="stylesheet" id="cp-lang-style" />');
-	document.write('<scr'+'ipt type="text/javascript" src="engines/'+engine+'.js?ts='+ts+'"></scr'+'ipt>');
-	document.write('<scr'+'ipt type="text/javascript" src="languages/'+language+'.js?ts='+ts+'"></scr'+'ipt>');
+	document.write('<link type="text/css" href="codepress.css rel="stylesheet" />');
+	document.write('<link type="text/css" href="languages/'+language+'.css rel="stylesheet" id="cp-lang-style" />');
+	document.write('<scr'+'ipt type="text/javascript" src="engines/'+engine+'.js"></scr'+'ipt>');
+	document.write('<scr'+'ipt type="text/javascript" src="languages/'+language+'.js"></scr'+'ipt>');
 	</script>
 
 </head>
