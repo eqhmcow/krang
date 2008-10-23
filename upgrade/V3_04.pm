@@ -9,6 +9,129 @@ use Krang::Conf qw(KrangRoot InstanceElementSet);
 use File::Spec::Functions qw(catfile catdir);
 
 sub per_installation {
+    my $self = shift;
+    
+    print "Removing deprecated files... ";
+    
+    # removed in v3.02:
+    # svn diff http://svn.krangcms.com/tags/krang_v3_01_fc5 \
+    #          http://svn.krangcms.com/tags/3.02 --summarize | grep '^D'
+    $self->remove_files( qw(
+        src/Imager-0.44.tar.gz
+        src/Image-Info-1.15.tar.gz
+        bin/smoke_test
+    ));
+    
+    # removed in v3.03:
+    # svn diff http://svn.krangcms.com/tags/3.02 \
+    #          http://svn.krangcms.com/tags/3.03 --summarize | grep '^D'
+    $self->remove_files( qw(
+        src/JSON-1.07.tar.gz
+        src/CGI-Application-Plugin-JSON-0.3.tar.gz
+    ));
+        
+    # removed in v3.04:
+    # svn diff http://svn.krangcms.com/tags/3.03 \
+    #          http://svn.krangcms.com/trunk/krang --summarize | grep '^D'
+    $self->remove_files( qw(
+        htdocs/help/category.html
+        htdocs/help/contributor.html
+        htdocs/help/contributor_associate.html
+        htdocs/help/desk.html
+        htdocs/help/desk_admin.html
+        htdocs/help/group.html
+        htdocs/help/list_group.html
+        htdocs/help/log.html
+        htdocs/help/media_archived.html
+        htdocs/help/my_alerts.html
+        htdocs/help/my_pref.html
+        htdocs/help/schedule.html
+        htdocs/help/schedule_job.html
+        htdocs/help/site.html
+        htdocs/help/story_archived.html
+        htdocs/help/template_archived.html
+        htdocs/help/user.html
+        htdocs/help/workspace.html
+        src/Digest-MD5-2.23.tar.gz
+        src/HTML-Parser-3.36.tar.gz
+        src/HTML-PopupTreeSelect-Dynamic-1.3.tar.gz
+        templates/footer.tmpl
+        templates/header.tmpl
+        templates/nav.tmpl
+        templates/About/about.tmpl
+        templates/Alert/message.tmpl
+        templates/Bugzilla/edit.tmpl
+        templates/Category/copy.tmpl
+        templates/Category/edit.tmpl
+        templates/Category/find.tmpl
+        templates/Category/new.tmpl
+        templates/Contrib/associate_list_view.tmpl
+        templates/Contrib/edit_view.tmpl
+        templates/Contrib/list_view.tmpl
+        templates/Desk/desk.tmpl
+        templates/DeskAdmin/edit.tmpl
+        templates/ElementEditor/edit.tmpl
+        templates/ElementEditor/find_media_link.tmpl
+        templates/ElementEditor/find_story_link.tmpl
+        templates/ElementEditor/view.tmpl
+        templates/Group/edit_categories.tmpl
+        templates/Group/edit_view.tmpl
+        templates/Group/list_view.tmpl
+        templates/HTMLPager/pager-internals.tmpl
+        templates/HTMLPager/pager-pagination.tmpl
+        templates/Help/help_footer.tmpl
+        templates/Help/help_header.tmpl
+        templates/History/show.tmpl
+        templates/ListGroup/edit.tmpl
+        templates/ListGroup/list_view.tmpl
+        templates/Login/forgot_pw.tmpl
+        templates/Login/forgot_pw_email.tmpl
+        templates/Login/login.tmpl
+        templates/Login/login_footer.tmpl
+        templates/Login/login_header.tmpl
+        templates/Login/reset_pw.tmpl
+        templates/Media/BulkUpload/choose.tmpl
+        templates/Media/edit_media.tmpl
+        templates/Media/list_active.tmpl
+        templates/Media/list_active_pager.tmpl
+        templates/Media/list_retired.tmpl
+        templates/Media/list_view.tmpl
+        templates/Media/list_view_pager.tmpl
+        templates/Media/transform_image.tmpl
+        templates/Media/view_media.tmpl
+        templates/MyAlerts/edit.tmpl
+        templates/MyPref/edit.tmpl
+        templates/Publisher/media_error.tmpl
+        templates/Publisher/progress.tmpl
+        templates/Publisher/publish_list.tmpl
+        templates/Schedule/edit.tmpl
+        templates/Schedule/edit_admin.tmpl
+        templates/Schedule/list_all.tmpl
+        templates/Site/edit.tmpl
+        templates/Site/list_view.tmpl
+        templates/Site/view.tmpl
+        templates/Story/edit.tmpl
+        templates/Story/find.tmpl
+        templates/Story/find_pager.tmpl
+        templates/Story/list_active.tmpl
+        templates/Story/list_active_pager.tmpl
+        templates/Story/list_retired.tmpl
+        templates/Story/new.tmpl
+        templates/Story/view.tmpl
+        templates/Template/edit.tmpl
+        templates/Template/list_active.tmpl
+        templates/Template/list_active_pager.tmpl
+        templates/Template/list_retired.tmpl
+        templates/Template/list_view.tmpl
+        templates/Template/list_view_pager.tmpl
+        templates/Template/view.tmpl
+        templates/Trash/trash.tmpl
+        templates/User/edit_view.tmpl
+        templates/User/list_view.tmpl
+        templates/Widget/category_chooser.tmpl
+        templates/Widget/template_chooser.tmpl
+        templates/Workspace/workspace.tmpl
+    ));
 }
 
 sub per_instance {
