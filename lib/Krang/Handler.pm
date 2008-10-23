@@ -304,7 +304,7 @@ sub trans_handler ($$) {
 # Check the browser using HTTP::BrowserDetect and bounce old browsers
 # before they can get into trouble.
 sub access_handler ($$) {
-return OK;
+
     my $self = shift;
     my ($r) = @_;
 
