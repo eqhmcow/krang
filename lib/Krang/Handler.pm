@@ -181,19 +181,16 @@ sub trans_handler ($$) {
             $r->err_header_out('Expires'       => 'Mon, 28 Jul 2014 23:30:00 GMT');
             $r->err_header_out('Cache-Control' => 'max-age=315360000');
 
-            if ($uri =~ /\.css$/) {
-                # if it's a CSS file then let's minify it and optionally compress it
-                my $new_file = $self->_minify_and_gzip($r, $file, 'css');
-                $file = $new_file if $new_file;
-            } elsif( $uri =~ /combined.\w\w\.js$/ ) {
+            if( $uri =~ /combined.\w\w\.js$/ ) {
                 # the prebuilt combined JS file needs to be redirected to the gzip one if we can
                 if( $self->_can_handle_gzip($r) ) {
                     $file = "$file.gz";
                     $r->err_header_out('Content-Encoding' => 'gzip');
                 }
-            } elsif( $uri =~ /\.js$/ ) {
-                # if it's any other JS file then let's minify it and optionally compress it
-                my $new_file = $self->_minify_and_gzip($r, $file, 'js');
+            } elsif ($uri =~ /\.(css|js|html)$/ ) {
+                # if it's a CSS/JS/HTML file then let's minify it and optionally compress it
+                my $type = $1;
+                my $new_file = $self->_minify_and_gzip($r, $file, $type);
                 $file = $new_file if $new_file;
             }
         }
@@ -739,27 +736,31 @@ sub _minify_and_gzip {
     my $new_file   = $file;
     $new_file =~ s/\.$type$/.minified.$type/;
 
-    unless (-e $new_file) {
+    # can we minify it?
+    if( $type eq 'css' || $type eq 'js' ) {
 
-        # minify the file and save it
-        local $/;
-        open(my $ASSET, '<', $file) or die "Could not open $file for reading: $!";
-        my $content = <$ASSET>;
-        close($ASSET);
+        unless (-e $new_file) {
 
-        if( $type eq 'css' ) {
-            eval { $content = CSS::Minifier::XS::minify($content) };
-        } elsif( $type eq 'js' ) {
-            eval { $content = JavaScript::Minifier::XS::minify($content) };
-        }
-
-        if( $@ ) {
-            warn "Could not minify file $file: $@\n";
-            return;
-        } else {
-            open($ASSET, '>', $new_file) or die "Could not open $new_file for writing: $!";
-            print $ASSET $content;
+            # minify the file and save it
+            local $/;
+            open(my $ASSET, '<', $file) or die "Could not open $file for reading: $!";
+            my $content = <$ASSET>;
             close($ASSET);
+
+            if( $type eq 'css' ) {
+                eval { $content = CSS::Minifier::XS::minify($content) };
+            } elsif( $type eq 'js' ) {
+                eval { $content = JavaScript::Minifier::XS::minify($content) };
+            }
+
+            if( $@ ) {
+                warn "Could not minify file $file: $@\n";
+                return;
+            } else {
+                open($ASSET, '>', $new_file) or die "Could not open $new_file for writing: $!";
+                print $ASSET $content;
+                close($ASSET);
+            }
         }
     }
 
