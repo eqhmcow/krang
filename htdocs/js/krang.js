@@ -1086,7 +1086,7 @@ Object.extend( Krang.Navigation.prototype, {
     cookie_name: 'KRANG_NAV_ACCORDION_OPEN_PANELS',
     initialize: function() {
         // all elements of '#S .nav_panel' are our panels
-        this.panels = document.getElementsByClassName('nav_panel', $('S'));
+        this.panels = $('S').select('div.nav_panel');
         // get the opened panels from our cookie
         this.opened_panels = this.opened_panels_from_cookie();
 
@@ -1096,7 +1096,7 @@ Object.extend( Krang.Navigation.prototype, {
         // now cycle through each panel, open it if appropriate, close
         // it other wise. Also add the onclick handlers
         var pos = 0;
-        $A(this.panels).each(function(panel) {
+        this.panels.each(function(panel) {
             var label    = panel.childNodes[ 0 ];
             var contents = panel.childNodes[ 1 ];
 
@@ -1110,7 +1110,7 @@ Object.extend( Krang.Navigation.prototype, {
             // set the onclick handler to record that a panel has been
             // opened or closed, and to use Krang.Widget.BlindUpDown to
             // show or hide it.
-            label.observe( 'click', this._label_onclick(contents, pos).bind(this));
+            $(label).observe( 'click', this._label_onclick(contents, pos).bind(this));
 
             ++pos;
        }.bind(this));
