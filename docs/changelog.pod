@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added a new WYSIWYG elementclass Krang::ElementClass::PoorText and all
+it takes. [Bodo Schulze]
+
+=item *
+
 Fixed bug where user could Edit a story, then View an old version of it,
 then click Edit from the View screen, in effect wiping out anything
 that had been left unsaved in their session. [Noam Weinstein]
