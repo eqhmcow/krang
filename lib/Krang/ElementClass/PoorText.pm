@@ -117,17 +117,6 @@ sub input_form {
 <script type="text/javascript">
     // pull in the JavaScript
 if (!Krang.PoorTextLoaded) {
-    // from scriptaculous these two are needed for dialog popups
-    ['effects.js', 'dragdrop.js'].each(function(name) {
-            var script = new Element(
-                'script',
-                { type: "text/javascript",
-                  src : "/static/$install_id/js/" + name}
-            );
-
-            document.body.appendChild(script);
-        });
-
     // the core poortext.js which will also pull in a browser-specific JavaScript
     var pt_script = new Element(
        'script',
