@@ -1,0 +1,144 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+
+use File::Spec::Functions qw(catdir catfile canonpath splitdir);
+use FindBin qw($RealBin);
+use Config;
+
+=head1 NAME
+
+krang_make_poortext - make browser engine-specific JavaScript for PoorText
+
+=head1 SYNOPSIS
+
+Generate combined JavaScript files for each supported browser engine
+
+  htdocs/poortext/bin/krang_make_poortext
+
+This script is called by F<bin/krang_apachectl>.
+
+=head1 DESCRIPTION
+
+This script generates, for each supported browser engine, combined
+JavaScript files required by the WYSIWYG element
+L<Krang::ElementClass::PoorText>.
+
+The combined files contain everything required to make PoorText work
+in browsers using the corresponding render engine.
+
+Currently supported engines are:
+
+ * Gecko
+ * IE
+ * WebKit
+
+The files generated in F<htdocs/poortext/> are:
+
+ * poortext_Gecko.js
+ * poortext_IE.js
+ * poortext_Webkit.js
+
+=head1 OPTIONS
+
+=over 4
+
+=item --verbose
+
+Prints a running dialog of what's happening.  Repeat for more details.
+
+=item --help
+
+=item --man
+
+=back
+
+=cut
+BEGIN {
+
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 3]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::ClassLoader Script => qw(instance_agnostic);
+use Krang::ClassLoader Conf   => qw(KrangRoot DefaultLanguage AvailableLanguages);
+
+use Getopt::Long;
+use Pod::Usage;
+
+my ($help, $man, $verbose);
+
+pod2usage(2)
+  unless GetOptions(
+    'help'       => \$help,
+    'man'        => \$man,
+    'verbose'    => \$verbose,
+  );
+pod2usage(1) if $help;
+pod2usage(-verbose => 2) if $man;
+
+# setting
+my $poortext_root = catdir(KrangRoot, 'htdocs', 'poortext');
+my @languages     = grep { $_ ne 'en' } AvailableLanguages;
+
+# files to concat
+my @universal_files = (
+    'poortext_core.js',
+    'poortext_dialog_html.js',
+);
+my @lang_files      = map { catfile('lang', "$_.js") } @languages;
+my @browser_engines = (
+    ['gecko' , 'Gecko'  ],
+    ['ie'    , 'IE'     ],
+    ['webkit', 'WebKit' ],
+);
+
+# combine into engine-specific JavaScript files
+for my $engine (@browser_engines) {
+
+    print "Making PoorText JavaScript for $engine->[1]\n" if $verbose;
+
+    # engine-specific JavaScript file combining all poortext JavaScript files
+    my $of = catfile($poortext_root, "poortext_$engine->[1].js");
+    open my $OUT, '>', $of
+      or die "Can't open '$of' for writing: $!";
+
+
+    for my $file (@universal_files, "poortext_$engine->[0].js", @lang_files) {
+        my $if = catfile($poortext_root, $file);
+        open my $IN, '<', $if
+          or die "Can't open '$if' for reading: $!";
+
+        while (<$IN>) {
+            print $OUT $_;
+        }
+
+        close $IN;
+    }
+
+    close $OUT;
+}
