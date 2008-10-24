@@ -72,6 +72,8 @@ div.autocomplete { height: expression( ( this.scrollHeight > 154 ) ? '154px' : '
 <tmpl_var custom_css>
 </tmpl_if>
 
+<link rel="stylesheet" type="text/css" href="/poortext/css/poortext.css">
+
 <tmpl_if browser_speed_boost>
   <script src="/static/<tmpl_var krang_install_id>/js/combined.<tmpl_lang en>.js" type="text/javascript"></script>
 <tmpl_else>
@@ -88,8 +90,6 @@ div.autocomplete { height: expression( ( this.scrollHeight > 154 ) ? '154px' : '
 </tmpl_if>
 <!--<script src="/js/firebug/firebug.js" type="text/javascript"></script>-->
 <script src="/static/<tmpl_var krang_install_id>/codepress/codepress.js" type="text/javascript"></script>
-
-<link rel="stylesheet" type="text/css" href="/poortext/poortext.css">
 
 <script type="text/javascript">
 Krang.instance = '<tmpl_var escape=js instance_display_name>';
