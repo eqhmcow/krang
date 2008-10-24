@@ -104,7 +104,7 @@ sub input_form {
     my $lang = localize('en');
     $lang = substr($lang, 0, 2) unless $lang eq 'en';
     my $install_id = pkg('Info')->install_id();
-    my $config     = $self->get_pt_config(%arg);
+    my $config     = $self->get_pt_config(%arg, text => $text);
     my $class      = $self->get_css_class(%arg);
     my $style      = $self->get_css_style(%arg, indent => $indent, align => $align);
 
@@ -294,6 +294,12 @@ sub get_pt_config {
     # add the commands spec
     my $cmd = $self->get_command_spec(%arg);
     push @conf, $cmd if $cmd;
+
+    # if there's no text yet, we assume it's a newly added field,
+    # hence we don't defer creating the IFrame (in browsers that
+    # require it)
+    my $defer = $arg{text} ? 'true' : 'false';
+    push @conf, "deferIframeCreation: $defer";
 
     # stringify
     my $conf = join(',', @conf);
