@@ -1719,14 +1719,14 @@ sub _search_text_to_phrases {
     my @phrases;
 
     # first add any quoted text as multi-word phrase(s)
-    while ($text =~ s/([\'\"])([^\1]*?)\1//) {
+    while (defined $text && $text =~ s/([\'\"])([^\1]*?)\1//) {
         my $phrase = $2;
         $phrase =~ s/\s+/ /;
         push @phrases, $phrase;
     }
 
     # then split remaining text into one-word phrases
-    push @phrases, (split /\s+/, $text);
+    push @phrases, (split /\s+/, $text) if defined $text;
     return @phrases;
 }
 
