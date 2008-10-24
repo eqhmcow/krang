@@ -209,6 +209,7 @@ sub start {
     make_templates();
     make_js_localizer();
     prepare_for_browser_speed_boost();
+    make_js_for_poortext();
 
     print "krang_apachectl $command: starting httpd\n";
     unless (system($httpd)) {
@@ -390,4 +391,9 @@ sub prepare_for_browser_speed_boost {
     print "Clearing out old minified and compressed JS and CSS files.\n";
     system(catfile(KrangRoot, 'bin', 'krang_clear_minified_assets'))
       and die "Couldn't clear out minified assets: $?";
+}
+
+sub make_js_for_poortext {
+    system(catfile(KrangRoot, 'htdocs', 'poortext', 'bin', 'krang_make_poortext'), '--verbose')
+      and die "Couldn't make browser engine-specific JavaScript for Krang::ElementClass::PoorText: $?";
 }
