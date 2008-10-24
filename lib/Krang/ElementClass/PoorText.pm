@@ -121,7 +121,7 @@ if (!Krang.PoorTextLoaded) {
     var pt_script = new Element(
        'script',
        { type: "text/javascript",
-         src: "/static/$install_id/poortext/poortext.js"}
+         src: "/static/$install_id/poortext/poortext_$ENV{KRANG_BROWSER_ENGINE}.js"}
     );
     document.body.appendChild(pt_script);
 
