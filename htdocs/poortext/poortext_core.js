@@ -1157,7 +1157,9 @@ PoorText.prototype = {
 
     setTextAlign : function(align) {
         this.setStyle({textAlign : align});
-        this.restoreSelection(); // WebKit needs this
+        if (Prototype.Browser.WebKit) {
+            this.restoreSelection();
+        }
     },
 
     getTextAlign : function() {
@@ -1170,7 +1172,9 @@ PoorText.prototype = {
         var newIndent = oldIndent + this.config.indentSize + 'px';
         var newWidth  = oldWidth - (this.config.indentSize * 2) + 'px';
         this.setStyle({paddingLeft : newIndent, paddingRight: newIndent, width: newWidth});
-        this.restoreSelection(); // WebKit needs this
+        if (Prototype.Browser.WebKit) {
+            this.restoreSelection();
+        }
     },
 
     setTextOutdent : function() {
@@ -1184,7 +1188,9 @@ PoorText.prototype = {
         }
         newIndent += 'px';
         this.setStyle({paddingLeft : newIndent, paddingRight: newIndent, width: newWidth});
-        this.restoreSelection(); // WebKit needs this
+        if (Prototype.Browser.WebKit) {
+            this.restoreSelection();
+        }
     },
 
     getTextIndent : function() {
