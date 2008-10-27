@@ -151,7 +151,11 @@ poortext_init = function() {
     }
 
     // language is a global config
-    PoorText.config = { lang : "$lang" };
+    PoorText.config = {
+        lang          : "$lang",
+        useInFilters  : false,
+        useOutFilters : false,
+    };
 
     // make them all fields
     poortext_elements.each(function(pt) {
