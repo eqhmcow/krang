@@ -497,8 +497,18 @@ PoorText.outFilters = [ PoorText.correctMarkup,
       PoorText strings. Lexicons reside in lang/. Defaults to English.<br/>
 
    <b>indentSize</b> {NUMBER} - The number of pixel the text content
-       will be shifted to the right when pressing KEY_TAB. Defaults to
-       20px.<br/>
+      will be shifted to the right when pressing KEY_TAB. Defaults to
+      20px.<br/>
+
+   <b>useInFilters</b> {BOOL} - Set to true if the incoming markup
+      should be passed through PoorText.inFilters to adjust the markup
+      to what the browser's execCommand() understands. Defaults to
+      true.<br/>
+
+   <b>useOutFilters</b> {BOOL} - Set to true if the outgoing markup
+      should be passed through PoorText.outFilters to adjust the
+      markup back from what the browser's execCommand()
+      understands. Defaults to true.<br/>
 
    @type Class Object
 */
@@ -607,7 +617,9 @@ PoorText.prototype = {
             attachButtonBar     : false,
             attachSpecialCharBar : false,
             lang : 'de',
-            indentSize : 20
+            indentSize : 20,
+            useInFilters : true,
+            useOutFilters : true,
 	};
 
 	// Merge in global config shortcuts
@@ -963,7 +975,9 @@ PoorText.prototype = {
        @type String
     */
     getHtml : function() {
-	return this.applyFiltersTo(this.editNode.cloneNode(true), PoorText.outFilters);
+	return this.config.useOutFilters
+           ? this.applyFiltersTo(this.editNode.cloneNode(true), PoorText.outFilters)
+           : this.editNode.cloneNode(true).innerHTML;
     },
 
     /**
@@ -973,7 +987,9 @@ PoorText.prototype = {
        @return nothing
     */
     setHtml : function(node, filters) {
-	this.editNode.innerHTML = this.applyFiltersTo(node, filters).innerHTML;
+	this.editNode.innerHTML = this.config.useInFilters
+          ? this.applyFiltersTo(node, filters).innerHTML
+          : node.innerHTML;
     },
 
     /**@ignore*/
