@@ -25,15 +25,6 @@ PoorText.bodyStyles = [
 ];
 
 /**
-   Allowed HTML tags. Used by {@link PoorText#_cleanPaste} to verify
-   that external text pasted in does not mess up our HTML.
-   @type Class RegExp
-   @final
-   @private
-*/
-PoorText.allowedTagsRE = /^(a|abbr|acronym|b|br|em|i|strike|strong|sub|sup|u)$/i;
-
-/**
    Regexp matching {@link PoorText#bodyStyles} which get copied from {@link
    #srcElement} to {@link #styleNode}.
    @type RegExp
