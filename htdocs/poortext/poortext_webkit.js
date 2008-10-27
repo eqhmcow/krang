@@ -601,7 +601,7 @@ PoorText.replace_with_children = function(node, nodes) {
 
 PoorText.pasteFilters = [
     PoorText.inFilterWebKit,
-//    PoorText.spanFilter,
+//    PoorText.spanFilter, // does not work as intended :(
     PoorText.addUrlProtection,
     PoorText.blockLevelPasteFilter,
 ];
