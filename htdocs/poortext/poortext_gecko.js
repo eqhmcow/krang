@@ -52,7 +52,7 @@ PoorText.bodyStyles = [
    @final
    @private
 */
-PoorText.allowedTagsRE = /^(a|abbr|acronym|b|br|em|i|strike|strong|sub|sup|u)$/i;
+PoorText.allowedTagsRE = /^(a|abbr|acronym|b|br|del|em|i|strike|strong|sub|sup|u)$/i;
 
 /**
    Regexp matching {@link PoorText#bodyStyles} which get copied from {@link
@@ -660,6 +660,17 @@ PoorText.blockLevelPasteFilter = function(editNode) {
     return editNode;
 };
 
+PoorText.inlineLevelPasteFilter = function(node) {
+    var html = node.innerHTML;
+
+    // replace <del> with <strike>
+    html = html.replace(/<(\/?)del(\s|>|\/)/ig, "<$1strike$2")
+
+    node.innerHTML = html;
+
+    return node;
+}
+
 PoorText.replace_with_children = function(node, nodes) {
     var parent = node.parentNode;
     $A(node.childNodes).each(function(child) {
@@ -672,6 +683,7 @@ PoorText.replace_with_children = function(node, nodes) {
 PoorText.pasteFilters = [
     PoorText.blockLevelPasteFilter,
     PoorText.inFilterGecko,
+    PoorText.inlineLevelPasteFilter,
     PoorText.addUrlProtection
 ];
 
