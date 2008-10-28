@@ -182,6 +182,16 @@ The default implementation does nothing.
 
 sub trash_hook { }
 
+=item C<< $class->untrash_hook(element => $element) >>
+
+Called just after the story containing the element tree is moved out
+of the trash bin. This routine can be used to do any necessary restoration.
+The default implementation does nothing.
+
+=cut
+
+sub untrash_hook { }
+
 =item C<< $bool = $class->publish_check(element => $element) >>
 
 This method is called before publishing the story via a scheduled

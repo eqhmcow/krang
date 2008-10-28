@@ -8,9 +8,14 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<untrash_hook> hook for element classes when things are taken
+out of the trash. [Michael Peters]
+
+=item *
+
 Added the ability to change an element's class in the Element Editor
 UI if the element library is configured to allow it (using the
-C<ChangeableElementClasses> directive in F<set.conf>).
+C<ChangeableElementClasses> directive in F<set.conf>). [Michael Peters]
 
 =item *
 

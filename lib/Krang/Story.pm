@@ -2952,6 +2952,7 @@ sub untrash {
 
     # maybe in retire, maybe alive again
     $self->{trashed} = 0;
+    $element->class->untrash_hook(element => $element);
 
     # check back in
     $self->checkin();

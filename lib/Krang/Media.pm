@@ -116,7 +116,8 @@ use Exception::Class (
 =head1 DESCRIPTION
 
 This class handles the storage and retrieval of media objects on the
-filesystem, as well as media object metadata in the database. Contributors (Krang::Contrib objects) can also be attached to stories.
+filesystem, as well as media object metadata in the database. Contributors
+(L<Krang::Contrib> objects) can also be attached to stories.
 
 =head2 Media Versioning
 
@@ -2542,6 +2543,10 @@ sub trash {
     # make sure we are the one
     $self->checkout;
 
+    # run the element class's trash_hook
+    my $element = $self->element;
+    $element->class->trash_hook(element => $element);
+
     # unpublish
     pkg('Publisher')->new->unpublish_media(media => $self);
 
@@ -2605,6 +2610,10 @@ sub untrash {
 
     # maybe in retire, maybe alive again
     $self->{trashed} = 0;
+
+    # run the element class's untrash_hook
+    my $element = $self->element;
+    $element->class->untrash_hook(element => $element);
 
     # check back in
     $self->checkin();
