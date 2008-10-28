@@ -2,15 +2,19 @@
 
 This document contains a list of changes for each release of Krang.
 
-
-
 =head2 3.04 - IN DEVELOPMENT
 
 =over
 
 =item *
 
-Added a new WYSIWYG elementclass Krang::ElementClass::PoorText and all
+Added the ability to change an element's class in the Element Editor
+UI if the element library is configured to allow it (using the
+C<ChangeableElementClasses> directive in F<set.conf>).
+
+=item *
+
+Added a new WYSIWYG elementclass L<Krang::ElementClass::PoorText> and all
 it takes. [Bodo Schulze]
 
 =item *

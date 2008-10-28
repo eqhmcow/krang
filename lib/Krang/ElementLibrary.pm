@@ -26,6 +26,9 @@ Krang::ElementLibrary - the element class loader and indexer
   # get a list of all element names, anywhere in the element library
   @names = pkg('ElementLibrary')->element_names();
 
+  # get the list of other elements that "paragraph" can be changed into
+  @classes = pkg('ElementLibrary')->changeable_classes('paragraph');
+
 =head1 DESCRIPTION
 
 This module is responsible for loading the Krang Element Library and
@@ -112,6 +115,8 @@ use Krang::ClassLoader 'ElementClass::Text';
 use Krang::ClassLoader 'ElementClass::Date';
 use Krang::ClassLoader 'ElementClass::XinhaEditor';
 
+our ($TESTING_SET, %LOADED_SET, %PARENT_SETS, %TOP_LEVEL, %CHANGEABLE);
+
 =head1 INTERFACE
 
 =over 4
@@ -135,7 +140,6 @@ sub load_set {
     local $_;
 
     # don't load sets more than once
-    our (%LOADED_SET, %PARENT_SETS);
     unless (exists $LOADED_SET{$set}) {
         my $conf = $pkg->_load_conf($set);
 
@@ -145,6 +149,7 @@ sub load_set {
 
         $pkg->_load_classes($set, $conf);
         $pkg->_instantiate_top_levels($set, $conf);
+        $pkg->_set_changeable_elements($set, $conf);
         debug("Loaded element set '$set'");
     }
 
@@ -165,11 +170,11 @@ sub _load_conf {
     # load the element set configuration file
     my $conf_file = catfile($dir, "set.conf");
     my $conf = Config::ApacheFormat->new(
-        valid_directives => [
-            qw(version krangversion toplevels
-              parentsets )
-        ],
-        valid_blocks => []
+        valid_directives =>
+          [qw(Version KrangVersion TopLevels ParentSets ChangeableElementClasses)],
+        valid_blocks         => [],
+        hash_directives      => [qw(ChangeableElementClasses)],
+        duplicate_directives => 'combine',
     );
     eval { $conf->read($conf_file) };
     croak("Unable to load element set '$set', error loading $conf_file:\n$@")
@@ -216,7 +221,6 @@ sub _load_classes {
 # global hashes
 sub _instantiate_top_levels {
     my ($pkg, $set, $conf) = @_;
-    our %TOP_LEVEL;
 
     my @tops = $conf->get("TopLevels");
     croak("No TopLevels defined for element set '$set'.")
@@ -227,6 +231,17 @@ sub _instantiate_top_levels {
         croak("Unable to find top-level element class '${set}::$top' while loading element set.")
           unless $class_obj;
         $TOP_LEVEL{$set}{$top} = $class_obj;
+    }
+}
+
+sub _set_changeable_elements {
+    my ($pkg, $set, $conf) = @_;
+    my @changeable = $conf->get("ChangeableElementClasses");
+    foreach my $first (@changeable) {
+        my @group = ($first, $conf->get(ChangeableElementClasses => $first));
+        foreach my $class (@group) {
+            $CHANGEABLE{$set}->{$class} = [ grep { $_ ne $class } @group ];
+        }
     }
 }
 
@@ -243,7 +258,6 @@ filter out this name to use the list for possible story types.
 =cut
 
 sub top_levels {
-    our %TOP_LEVEL;
     return sort keys %{$TOP_LEVEL{InstanceElementSet()}};
 }
 
@@ -257,7 +271,6 @@ element.
 
 sub top_level {
     my %args = @_[1 .. $#_];
-    our %TOP_LEVEL;
     return $TOP_LEVEL{InstanceElementSet()}{$args{name}}
       if exists $TOP_LEVEL{InstanceElementSet()}{$args{name}};
     croak(  "Unable to find top-level element named '$args{name}' in "
@@ -276,7 +289,6 @@ set) and sorted.
 
 sub element_names {
     my $pkg = shift;
-    our %TOP_LEVEL;
 
     # start with the top-levels, recursing down from there
     my @stack = values %{$TOP_LEVEL{InstanceElementSet()}};
@@ -312,7 +324,6 @@ find_class() will look there rather than the current InstanceElementSet.
 
 sub find_class {
     my ($pkg, %args) = @_;
-    our ($TESTING_SET, %PARENT_SETS);
     my ($name, $set) = @args{('name', 'set')};
     $set ||= ($TESTING_SET || InstanceElementSet);
 
@@ -336,6 +347,21 @@ sub find_class {
     # failure
     return;
 }
+
+=item C<< @classes = Krang::ElementLibrary->changeable_classes("paragraph") >>
+
+Returns the names of other element classes that the given element class can be
+inter-changed with.
+
+=cut
+
+sub changeable_classes {
+    my ($pkg, $class) = @_;
+    return $CHANGEABLE{InstanceElementSet()}->{$class}
+      ? @{$CHANGEABLE{InstanceElementSet()}->{$class}}
+      : ();
+}
+
 
 =back
 

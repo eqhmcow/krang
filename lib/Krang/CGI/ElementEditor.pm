@@ -178,6 +178,7 @@ use Krang::ClassLoader Widget       => qw(category_chooser date_chooser decode_d
 use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'BulkEdit::Textarea';
 use Krang::ClassLoader 'BulkEdit::Xinha';
+use Exception::Class;
 
 use File::Spec::Functions qw(catdir);
 
@@ -260,6 +261,8 @@ sub element_edit {
 
     # the chooser logic is separately sent to the template
     my @categorylink_chooser_loop = ();
+    my %parents_potential_children =
+      map { $_->name => localize($_->display_name) } $element->class->children();
 
     foreach my $child (@children) {
         next if $child->hidden;
@@ -274,11 +277,30 @@ sub element_edit {
         );
         $form = $child->mark_form_invalid(html => $form) if $invalid{$index};
 
+        my @changeable_classes =
+          grep { exists $parents_potential_children{$_} }
+          pkg('ElementLibrary')->changeable_classes($child->name);
+        my $element_widget;
+        if (@changeable_classes) {
+            $element_widget = $query->popup_menu(
+                -name     => "change_element_class_$index",
+                -default  => $child->name,
+                -values   => [$child->name, @changeable_classes],
+                -labels   => \%parents_potential_children,
+                -style    => 'width: 9em',
+                -override => 1,
+                -onchange => 'change_element_class(this)',
+                -id       => 'for_' . $child->xpath,
+            );
+        } else {
+            $element_widget = localize($child->display_name);
+        }
+
         push(
             @child_loop,
             {
                 form => $form,
-                name => localize($child->display_name),
+                element_widget => $element_widget,
                 path => $child->xpath(),
                 (
                     order_select => $child->reorderable && $multiple_reorders
@@ -966,12 +988,13 @@ sub add {
     my $query = $self->query();
 
     # gather params
-    my $path = $query->param('path') || '/';
-    my $child = $query->param('child');
-
-    # find our element
-    my $root = $self->_get_element;
+    my $path    = $query->param('path') || '/';
+    my $child   = $query->param('child');
+    my $root    = $self->_get_element;
     my $element = $self->_find_element($root, $path);
+
+    # change any child classes that need changing
+    $self->_make_child_class_changes($root, $path);
 
     # add the child element and save the element tree
     my $kid = $element->add_child(class => $child);
@@ -1022,10 +1045,61 @@ sub element_bulk_save {
     return 1;
 }
 
+sub _make_child_class_changes {
+    my ($self, $root, $path) = @_;
+    my $q                  = $self->query;
+    my $element            = $self->_find_element($root, $path);
+    my %potential_children = map { $_->name => $_ } $element->class->children();
+    my $index              = 0;
+
+    foreach my $child ($element->children) {
+        my $old_xpath = $child->xpath;
+        my $new_class = $q->param("change_element_class_$index");
+        if ($new_class ne $child->class->name) {
+            if ($potential_children{$new_class}) {
+                my $new_xpath;
+                eval {
+                    my $new_child = $element->replace_child(
+                        class    => $potential_children{$new_class},
+                        position => $index,
+                    );
+                    $new_xpath = $new_child->xpath;
+                };
+                my $e;
+                if ($e = Exception::Class->caught('Krang::Element::MaxChildClassViolation')) {
+                    add_alert(
+                        'cant_change_class_max',
+                        parent => localize($e->parent),
+                        child  => localize($e->child),
+                        max    => $e->max
+                    );
+                } elsif ($e = Exception::Class->caught('Krang::Element::MinChildClassViolation')) {
+                    add_alert(
+                        'cant_change_class_min',
+                        parent => localize($e->parent),
+                        child  => localize($e->child),
+                        min    => $e->min
+                    );
+                } elsif ($@) {
+                    croak($@);
+                }
+
+            } else {
+                warn "Trying to change child element from '"
+                  . $child->name
+                  . "' to '$new_class' which is not a potential child of '"
+                  . $root->name . "'!\n";
+            }
+        }
+        $index++;
+    }
+}
+
 sub element_save {
     my ($self, %args) = @_;
     my $query = $self->query();
-    my $path = $query->param('path') || '/';
+    my $path  = $query->param('path') || '/';
+    my $root  = $args{element};
 
     # pass to bulk edit if bulk editing
     return $self->element_bulk_save(%args) if $query->param('bulk_edit');
@@ -1033,7 +1107,6 @@ sub element_save {
     # saving should check for reorder, else confusing to the editor
     $self->revise('reorder', 1);
 
-    my $root = $args{element};
     my $element = $self->_find_element($root, $path);
 
     # validate data
@@ -1106,6 +1179,9 @@ sub revise {
     my $path    = $query->param('path') || '/';
     my $root    = $self->_get_element;
     my $element = $self->_find_element($root, $path);
+
+    # change any child classes that need changing
+    $self->_make_child_class_changes($root, $path);
 
     # get list of existing children and their query parameters
     my @old       = grep { !$_->hidden } $element->children();

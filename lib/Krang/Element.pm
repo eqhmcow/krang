@@ -22,6 +22,10 @@ use Carp qw(croak);
 use Krang::ClassLoader Log => qw(assert ASSERT debug info);
 use Storable qw(nfreeze thaw);
 use Krang::Cache;
+use Exception::Class (
+    'Krang::Element::MaxChildClassViolation' => { fields => [qw(parent child max)] },
+    'Krang::Element::MinChildClassViolation' => { fields => [qw(parent child min)] },
+);
 
 =head1 NAME
 
@@ -403,6 +407,93 @@ sub add_child {
     push @$children, ref($self)->new(%arg, parent => $self);
 
     return ${$children}[-1];
+}
+
+=item C<< $child = $element->replace_child(class => "paragraph", position => 1) >>
+
+=item C<< $child = $element->replace_child(class => $class_obj, position => 3) >>
+
+Create a new element object and add it as a child in the C<children>
+list in place of the element currently at the given C<position>.
+If called with a string then the class will be looked up in the list
+of child classes for this element class.  An object may be passed,
+in which case it must belong to the C<< $element->class->children >>
+list of element classes.
+
+Extra C<%args> are passed along to C<< Krang::Element->new() >> unchanged.
+
+Returns the newly created child object.
+
+B<Exceptions>
+
+=over
+
+=item *
+
+If the new element can't be added because of C<max> restriction rules
+then a C<Krang::MaxChildClassViolation> exception will be thrown.
+
+=item *
+
+If the new element can't replace the old one because of C<min> restriction
+rules then a C<MinChildClassViolation> exception will be thrown.
+
+=back
+
+=cut
+
+sub replace_child {
+    my $self     = shift;
+    my %arg      = @_;
+    my $children = $self->{children};
+    my $pos      = delete $arg{position};
+
+    croak "You must provide the position of the child element to replace!"
+      if !defined $pos;
+    croak "Position $pos is too large for this element's actual children!"
+      if $pos > $#$children;
+
+    # lookup the child class in our class
+    $arg{class} = $self->{class}->child($arg{class}) unless ref $arg{class};
+    my $replaced_child = $children->[$pos];
+
+    # enforce max, if set
+    my $max = $arg{class}->max;
+    if ($max) {
+        my $name  = $arg{class}->name;
+        my $count = 1;
+        for (@$children) {
+            $count++ if $_->class->name eq $name;
+        }
+        if ($count > $max) {
+            Krang::Element::MaxChildClassViolation->throw(
+                child  => $arg{class}->display_name,
+                parent => $self->display_name,
+                max    => $max,
+            );
+        }
+    }
+
+    my $min = $replaced_child->class->min;
+    if ($min) {
+        my $name  = $replaced_child->class->name;
+        my $count = -1;
+        for (@$children) {
+            $count++ if $_->class->name eq $name;
+        }
+        if ($count < $min) {
+            Krang::Element::MinChildClassViolation->throw(
+                child  => $replaced_child->display_name,
+                parent => $self->display_name,
+                min    => $min,
+            );
+        }
+    }
+
+    # push on the child and return it
+    my $new_child = ref($self)->new(%arg, parent => $self);
+    $children->[$pos] = $new_child;
+    return $new_child;
 }
 
 =item C<< $element->remove_children(10, 20) >>
