@@ -2778,6 +2778,10 @@ sub retire {
     # make sure we are the one
     $self->checkout;
 
+    # run the element class's retire_hook
+    my $element = $self->element;
+    $element->class->retire_hook(element => $element);
+
     # unpublish
     pkg('Publisher')->new->unpublish_story(story => $self);
 
@@ -2839,15 +2843,14 @@ sub unretire {
 
     # unretire the story
     my $dbh = dbh();
-    $dbh->do(
-        'UPDATE story
-              SET    retired = 0
-              WHERE  story_id = ?', undef,
-        $self->{story_id}
-    );
+    $dbh->do('UPDATE story SET retired = 0 WHERE story_id = ?', undef, $self->{story_id});
 
     # alive again
     $self->{retired} = 0;
+
+    # run the element class's unretire_hook
+    my $element = $self->element;
+    $element->class->unretire_hook(element => $element);
 
     # check it back in
     $self->checkin() unless $args{dont_checkin};
@@ -2886,6 +2889,8 @@ sub trash {
 
     # make sure we are the one
     $self->checkout;
+
+    # run the element class's trash_hook
     my $element = $self->element;
     $element->class->trash_hook(element => $element);
 
@@ -2952,6 +2957,8 @@ sub untrash {
 
     # maybe in retire, maybe alive again
     $self->{trashed} = 0;
+
+    # run the element class's untrash_hook
     $element->class->untrash_hook(element => $element);
 
     # check back in

@@ -192,6 +192,26 @@ The default implementation does nothing.
 
 sub untrash_hook { }
 
+=item C<< $class->retire_hook(element => $element) >>
+
+Called just before the story containing the element tree is moved to
+the retired section. This routine can be used to do any necessary cleanup.
+The default implementation does nothing.
+
+=cut
+
+sub retire_hook { }
+
+=item C<< $class->unretire_hook(element => $element) >>
+
+Called just after the story containing the element tree is moved out
+of the retired section. This routine can be used to do any necessary restoration.
+The default implementation does nothing.
+
+=cut
+
+sub unretire_hook { }
+
 =item C<< $bool = $class->publish_check(element => $element) >>
 
 This method is called before publishing the story via a scheduled

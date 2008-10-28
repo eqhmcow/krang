@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<retire_hook> and C<unretire_hook> hooks for element classes when things are moved
+in and out of the retired objects section. [Michael Peters]
+
+=item *
+
 Added C<untrash_hook> hook for element classes when things are taken
 out of the trash. [Michael Peters]
 
