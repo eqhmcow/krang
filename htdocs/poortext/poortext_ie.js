@@ -54,7 +54,9 @@ PoorText.outFilterIE = function(node, isTest) {
 };
 
 /**@ignore*/
-PoorText.outFilters.push(PoorText.outFilterIE);
+if (PoorText.config.useMarkupFilters) {
+    PoorText.outFilters.push(PoorText.outFilterIE);
+}
 
 /**@ignore*/
 PoorText.inFilterIE = function(node) {
@@ -82,7 +84,9 @@ PoorText.events['copy']  = 'onCopy';
 PoorText.events['paste'] = 'onPaste';
 
 /**@ignore*/
-PoorText.inFilters.push(PoorText.inFilterIE);
+if (PoorText.config.useMarkupFilters) {
+    PoorText.inFilters.push(PoorText.inFilterIE);
+}
 
 Object.extend(PoorText.prototype, {
     /**

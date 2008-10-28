@@ -84,19 +84,18 @@ PoorText.outFilterGecko = function(node, isTest) {
                // replace <i> with <em>
                .replace(/<(\/?)i(\s|>|\/)/ig, "<$1em$2")
 
-    return html;
+    node.innerHTML = html;
+
+    return node;
 };
 
 /**@ignore*/
-PoorText.outFilters.push(PoorText.outFilterGecko);
+if (PoorText.config.useMarkupFilters) {
+    PoorText.outFilters.push(PoorText.outFilterGecko);
+}
 
 /**@ignore*/
 PoorText.inFilterGecko = function(node) {
-    if (/^\s*$/.test(node.innerHTML)) { // make cursor visible
-        node.innerHTML = '<br>';
-        return node;
-    }
-
     var html = node.innerHTML;
 
     // replace <strong> with <b>
@@ -111,7 +110,9 @@ PoorText.inFilterGecko = function(node) {
 }
 
 /**@ignore*/
-PoorText.inFilters.push(PoorText.inFilterGecko);
+if (PoorText.config.useMarkupFilters) {
+    PoorText.inFilters.push(PoorText.inFilterGecko);
+}
 
 Object.extend(PoorText.prototype, {
 
@@ -262,6 +263,11 @@ Object.extend(PoorText.prototype, {
 
             // Apply inFilters
             this.setHtml(this.srcElement, PoorText.inFilters);
+
+            // make cursor visible when there's no text
+            if (/^\s*$/.test(this.editNode.innerHTML)) {
+                this.editNode.innerHTML = '<br>';
+            }
                 
             // Finally make it editable
             this.document.designMode = 'on';
@@ -308,10 +314,10 @@ Object.extend(PoorText.prototype, {
 
     _createEditNode : function() {
         var editNode = document.createElement('div');
+        var editNode = new Element('div', { id : 'pt-edit-node' });
         var body = this.document.body;
         body.replaceChild(editNode, body.firstChild);
         this.editNode = body.firstChild;
-        this.editNode.id = 'pt-edit-node';
     },
 
     _recreateEditNode : function() {
@@ -431,7 +437,7 @@ Object.extend(PoorText.prototype, {
 
     // Stolen from FCKeditor
     /**@ignore*/
-    doAddHTML :function (tag, url, title) {
+        doAddHTML :function (tag, url, title) {
         // Delete old elm
         this.document.execCommand("unlink", false, null);
         
@@ -457,7 +463,7 @@ Object.extend(PoorText.prototype, {
             PoorText.setClass(elm, 'pt-' + tag);
             elm.setAttribute('title', title);
         }
-        return elm;
+        return $(elm);
     },
     
     /**@ignore*/

@@ -123,7 +123,9 @@ PoorText.outFilterWebKit = function(editNode) {
 };
 
 /**@ignore*/
-PoorText.outFilters.push(PoorText.outFilterWebKit);
+if (PoorText.config.useMarkupFilters) {
+    PoorText.outFilters.push(PoorText.outFilterWebKit);
+}
 
 /**@ignore*/
 PoorText.inFilterWebKit = function(node) {
@@ -195,7 +197,9 @@ PoorText.inFilterWebKit = function(node) {
 }
 
 /**@ignore*/
-//PoorText.inFilters.push(PoorText.inFilterWebKit);
+if (PoorText.config.useMarkupFilters) {
+    PoorText.inFilters.push(PoorText.inFilterWebKit);
+}
 
 /**
     Add onPaste event

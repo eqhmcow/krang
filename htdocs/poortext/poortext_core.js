@@ -387,9 +387,10 @@ PoorText.outFilters = [ PoorText.correctMarkup,
                         PoorText.removeUrlProtection ];
 
 /**
-   Global configuration API for PoorText users.<br> The following
-   options may also be specified on a per-instance basis. In this case
-   they override the global configuration provided in PoorText.config{}.
+   Global configuration API for PoorText users.<br> Unless otherwise
+   stated, the following options may also be specified on a
+   per-instance basis. In this case they override the global
+   configuration provided in PoorText.config{}.
 
    <b>form</b> {STRING id | HTMLFormElement} - The HTML form this
        PoorText element belongs to.  May be specified as ID or
@@ -500,15 +501,11 @@ PoorText.outFilters = [ PoorText.correctMarkup,
       will be shifted to the right when pressing KEY_TAB. Defaults to
       20px.<br/>
 
-   <b>useInFilters</b> {BOOL} - Set to true if the incoming markup
-      should be passed through PoorText.inFilters to adjust the markup
-      to what the browser's execCommand() understands. Defaults to
-      true.<br/>
-
-   <b>useOutFilters</b> {BOOL} - Set to true if the outgoing markup
-      should be passed through PoorText.outFilters to adjust the
-      markup back from what the browser's execCommand()
-      understands. Defaults to true.<br/>
+   <b>useMarkupFilters</b> {BOOL} - Set to true if the
+      incoming/outgoing markup will be passed through
+      browser-engine-specific filters to adjust the markup to what
+      browsers' execCommand() understands. This option cannot be set
+      via instance configuration. It defaults to true.<br/>
 
    @type Class Object
 */
@@ -618,8 +615,7 @@ PoorText.prototype = {
             attachSpecialCharBar : false,
             lang : 'de',
             indentSize : 20,
-            useInFilters : true,
-            useOutFilters : true,
+            useMarkupFilters : true
 	};
 
 	// Merge in global config shortcuts
@@ -975,9 +971,7 @@ PoorText.prototype = {
        @type String
     */
     getHtml : function() {
-	return this.config.useOutFilters
-           ? this.applyFiltersTo(this.editNode.cloneNode(true), PoorText.outFilters)
-           : this.editNode.cloneNode(true).innerHTML;
+        return this.applyFiltersTo(this.editNode.cloneNode(true), PoorText.outFilters).innerHTML;
     },
 
     /**
@@ -987,9 +981,7 @@ PoorText.prototype = {
        @return nothing
     */
     setHtml : function(node, filters) {
-	this.editNode.innerHTML = this.config.useInFilters
-          ? this.applyFiltersTo(node, filters).innerHTML
-          : node.innerHTML;
+	this.editNode.innerHTML = this.applyFiltersTo(node, filters).innerHTML;
     },
 
     /**@ignore*/
