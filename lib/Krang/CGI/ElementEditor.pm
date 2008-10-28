@@ -1055,7 +1055,7 @@ sub _make_child_class_changes {
     foreach my $child ($element->children) {
         my $old_xpath = $child->xpath;
         my $new_class = $q->param("change_element_class_$index");
-        if ($new_class ne $child->class->name) {
+        if ($new_class && $new_class ne $child->class->name) {
             if ($potential_children{$new_class}) {
                 my $new_xpath;
                 eval {
