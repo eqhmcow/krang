@@ -6,7 +6,7 @@ use Krang::ClassFactory qw(pkg);
 
 use Krang::ClassLoader base => 'ElementClass';
 
-use Krang::ClassLoader Log          => qw(debug);
+use Krang::ClassLoader Log          => qw(critical);
 use Krang::ClassLoader Message      => qw(add_message);
 use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'Markup::Gecko';
@@ -17,13 +17,19 @@ use Digest::MD5 qw(md5_hex);
 use JSON::Any;
 use Carp qw(croak);
 
+# For *Link hard find feature
+use Storable qw(nfreeze);
+use MIME::Base64 qw(encode_base64);
+
+use Krang::ClassLoader MethodMaker => hash => [qw( find )];
+
 use Krang::MethodMaker get_set => [
     qw(
       type   commands
       width  special_char_bar   shortcut_for
       height command_button_bar indent_size
       )
-];
+], hash => [ qw(find) ];
 
 our %js_name_for = (
     type               => 'type',
@@ -70,13 +76,13 @@ sub load_query_data {
     # the HTML
     my $html = $query->param($param);
 
-    debug(__PACKAGE__ . "->load_query_data($param) - HTML coming from the browser: " . $html);
+    critical(__PACKAGE__ . "->load_query_data($param) - HTML coming from the browser: " . $html);
 
     # fix the markup
     if ($html) {
         $html = pkg("Markup::$ENV{KRANG_BROWSER_ENGINE}")->browser2db(html => $html);
 
-        debug(__PACKAGE__ . "->load_query_data($param) - HTML sent to DB: " . $html);
+        critical(__PACKAGE__ . "->load_query_data($param) - HTML sent to DB: " . $html);
     }
 
     # the INDENT and ALIGN
@@ -152,9 +158,8 @@ poortext_init = function() {
 
     // language is a global config
     PoorText.config = {
-        lang          : "$lang",
-        useInFilters  : false,
-        useOutFilters : false,
+        lang              : "$lang",
+        useMarkupFilters  : false
     };
 
     // make them all fields
@@ -170,12 +175,18 @@ poortext_init = function() {
 Krang.onload(function() {
     poortext_init();
 });
+END
 
+        $html .=<<'END';
 // save away the last focused PoorText field to avoid race conditions
+// and hide our popups
 Krang.ElementEditor.add_save_hook(function() {
     var pt = PoorText.focusedObj;
     if (pt) {
         pt.storeForPostBack();
+        if ($('pt-btnBar')) $('pt-btnBar').hide();
+        if ($('pt-specialCharBar')) $('pt-specialCharBar').hide();
+        if ($('pt-popup-addHTML')) $('pt-popup-addHTML').hide();
     }
 });
 </script>
@@ -202,13 +213,17 @@ END
     # ... its hidden input field used to return the text
     $html .= qq[<input type="hidden" name="$param" value='$text' id="${id}_return"/>];
 
-    debug(__PACKAGE__ . "->input_form($param) - HTML sent to the browser: " . $text);
+    critical(__PACKAGE__ . "->input_form($param) - HTML sent to the browser: " . $text);
 
     # the hidden field for text indent
     $html .= qq[<input type="hidden" name="${param}_indent" value="$indent" id="${id}_indent"/>];
 
     # the hidden field for text alignment
     $html .= qq[<input type="hidden" name="${param}_align" value="$align" id="${id}_align"/>];
+
+    # Add hard find parameters
+    my $find = encode_base64(nfreeze(scalar($self->find())));
+    $html .= $query->hidden("hard_find_$param", $find);
 
     return $html;
 }
