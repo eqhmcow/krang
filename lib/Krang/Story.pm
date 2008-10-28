@@ -2959,6 +2959,7 @@ sub untrash {
     $self->{trashed} = 0;
 
     # run the element class's untrash_hook
+    my $element = $self->element;
     $element->class->untrash_hook(element => $element);
 
     # check back in
