@@ -33,6 +33,7 @@ our @VALID_DIRECTIVES;
   EnableFTP
   EnableSiteServer
   EnableSSL
+  ErrorNotificationEmail
   ForceStaticBrowserCaching
   FromAddress
   FTPAddress

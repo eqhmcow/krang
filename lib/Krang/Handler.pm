@@ -45,6 +45,9 @@ use Krang::ClassLoader Conf => qw(
     ApacheMaxUnsharedSize 
     BrowserSpeedBoost
     DefaultLanguage
+    ErrorNotificationEmail
+    SMTPServer
+    FromAddress
 );
 use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader 'AddOn';
@@ -52,6 +55,8 @@ use Krang;
 use Krang::ClassLoader 'Session' => qw(%session);
 use CSS::Minifier::XS;
 use JavaScript::Minifier::XS;
+use Mail::Sender;
+use Data::Dumper;
 
 BEGIN { pkg('AddOn')->call_handler('InitHandler') }
 
@@ -538,6 +543,51 @@ sub log_handler ($$) {
     }
 
     return OK;
+}
+
+=item Krang::Handler->cleanup_handler
+
+Cleanup. We use L<Apache::SizeLimit> to limit the size of the individual
+Apache processes. Also, if an ISE occurred during the handling of this request
+we send an optional email to any addresses configured by the C<ErrorNotificationEmail>
+directive.
+
+=cut
+
+sub cleanup_handler ($$) {
+    my ($pkg, $r) = @_;
+    return DECLINED unless $r->is_main;
+
+    my $error = $r->notes('error-notes') || $ENV{ERROR_NOTES};
+    if( $error && ErrorNotificationEmail) {
+        # format an email message with all of the information that we want
+        my $line = ('=' x 40);
+        my $msg  = "PERL ERROR\n$line\n%s\nSERVER\n$line\n%s\nURL\n$line\n%s\n\n"
+          . "REQUEST\n$line\n%s\nENV\n$line\n%s\nHTTP STATUS\n$line\n%s";
+        my $server  = `hostname`;
+        my $url     = $r->uri;
+        my $request = $r->as_string();
+        my $dumper  = Data::Dumper->new([\%ENV]);
+        $dumper->Terse(0);
+        $dumper->Indent(1);
+        $dumper->Sortkeys(1);
+        $dumper->Maxdepth(0);
+        $msg = sprintf($msg, $error, $server, $url, $request, $dumper->Dump, $r->status);
+
+        # now send the email to all configured recipients
+        my @email = split(/\s*,\s*/, ErrorNotificationEmail);
+        my $sender =
+          Mail::Sender->new({smtp => SMTPServer, from => FromAddress, on_errors => 'die'});
+        $sender->MailMsg(
+            {
+                to      => \@email,
+                subject => "[Krang] Internal Server Error",
+                msg     => $msg,
+            }
+        );
+    }
+
+    Apache::SizeLimit->handler($r);
 }
 
 =head1 INTERFACE

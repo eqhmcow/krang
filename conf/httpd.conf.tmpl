@@ -214,13 +214,13 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
          PerlSetVar        flavor root
          PerlSetVar        instance <tmpl_var InstanceName>
 
-         AuthType          Krang::Handler
-         AuthName          <tmpl_var InstanceName>
-         PerlAccessHandler Krang::Handler->access_handler
-         PerlAuthenHandler Krang::Handler->authen_handler
-         PerlAuthzHandler  Krang::Handler->authz_handler
-         PerlLogHandler    Krang::Handler->log_handler
-         PerlCleanupHandler Apache::SizeLimit
+         AuthType           Krang::Handler
+         AuthName           <tmpl_var InstanceName>
+         PerlAccessHandler  Krang::Handler->access_handler
+         PerlAuthenHandler  Krang::Handler->authen_handler
+         PerlAuthzHandler   Krang::Handler->authz_handler
+         PerlLogHandler     Krang::Handler->log_handler
+         PerlCleanupHandler Krang::Handler->cleanup_handler
          require           valid-user
 
          ErrorDocument 500 /<tmpl_var InstanceName>/bug.cgi?ise=1
@@ -390,11 +390,11 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
 
        AuthType Krang::Handler
        AuthName <tmpl_var InstanceName>
-       PerlAccessHandler Krang::Handler->access_handler
-       PerlAuthenHandler Krang::Handler->authen_handler
-       PerlAuthzHandler  Krang::Handler->authz_handler
-       PerlLogHandler    Krang::Handler->log_handler
-       PerlCleanupHandler Apache::SizeLimit
+       PerlAccessHandler  Krang::Handler->access_handler
+       PerlAuthenHandler  Krang::Handler->authen_handler
+       PerlAuthzHandler   Krang::Handler->authz_handler
+       PerlLogHandler     Krang::Handler->log_handler
+       PerlCleanupHandler Krang::Handler->cleanup_handler
        require valid-user
 
        ErrorDocument 500 /bug.cgi?ise=1

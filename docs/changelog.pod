@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added the C<ErrorNotificationEmail> configuration directive that can contain an optional
+comma-separated list of email address that will be sent an email with details about
+any Internal Server Errors that occur. [Michael Peters]
+
+=item *
+
 Added C<retire_hook> and C<unretire_hook> hooks for element classes when things are moved
 in and out of the retired objects section. [Michael Peters]
 
