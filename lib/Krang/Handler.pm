@@ -20,55 +20,6 @@ The basic order of events is:
 
 =over 4
 
-=item Krang::Handler->trans_handler
-
-Responsible for setting Krang instance name and propagating it
-to the environment (KRANG_INSTANCE).  Responsible for re-writing
-requests internally to properly locate files in the case of
-"root"-flavor requests.  E.g.:
-
-Both requests:
-
-  http://my-krang/instance1/someasset.gif
-  http://my-krang/someasset.gif
-
- ...translate to...
-
-  /path/to/document/root/someasset.gif
-
-=item Krang::Handler->access_handler
-
-Access Control.  Checks to make sure the user has a browser that will
-work with Krang.
-
-=item Krang::Handler->authen_handler
-
-Authentication.  Checks for an auth cookie.  If found and valid, the request is 
-associated with the user_id via the $request->connection->user() 
-method.  The effect of this is that $query->remote_user() and 
-$ENV{REMOTE_USER} will properly report the user who is logged in.
-
-=item Krang::Handler->authz_handler
-
-Authorization. Enforces "require valid-user" only.  IOW, 
-if a user is specified, they are authorized.  If no user
-has been specified (via the authen_handler), the request is
-redirected to the login application.
-
-Also, if C<PasswordChangeTime> is set to a non-zero value,
-we check to see if the user's C<force_pw_change> has been
-set. If it has, the user is redirected to C<force_pw_change>
-runmode of the C<CGI::MyPref> class.
-
-=item Krang::Handler->log_handler
-
-Logging.  When the application is running under Apache::Registry (not
-in CGI_MODE) this handler gets error messages out of
-C<< $r->notes() >> and logs them with Krang::Log.
-
-=back
-
-
 =cut
 
 use Apache::Constants qw(:response);
@@ -111,46 +62,22 @@ if (ApacheMaxSize) {
 }
 Apache::SizeLimit->set_max_unshared_size(ApacheMaxUnsharedSize) if ApacheMaxUnsharedSize;
 
-##########################
-####  PUBLIC METHODS  ####
-##########################
 
-=head1 INTERFACE
+=item Krang::Handler->trans_handler
 
-Following are methods which can be overridden in sub-classes.
+Responsible for setting Krang instance name and propagating it
+to the environment (KRANG_INSTANCE).  Responsible for re-writing
+requests internally to properly locate files in the case of
+"root"-flavor requests.  E.g.:
 
-=over 4
+Both requests:
 
-=item unprotected_uri()
+  http://my-krang/instance1/someasset.gif
+  http://my-krang/someasset.gif
 
-Return a list of URIs which should never be restricted by login.
+ ...translate to...
 
-=cut
-
-sub unprotected_uri {
-    my $self = shift;
-
-    # Just the login.pl, by default
-    my @uris = ($self->login_uri);
-
-    return @uris;
-}
-
-=item login_uri()
-
-The URI to which users should be redirected if they fail authorization.
-
-=cut
-
-sub login_uri {
-    my $self = shift;
-
-    return qw(login.pl);
-}
-
-=pod
-
-=back
+  /path/to/document/root/someasset.gif
 
 =cut
 
@@ -298,6 +225,15 @@ sub trans_handler ($$) {
     }
 }
 
+
+=item Krang::Handler->access_handler
+
+Access Control.  Checks to make sure the user has a browser that will
+work with Krang.
+
+=cut
+
+
 # Check the browser using HTTP::BrowserDetect and bounce old browsers
 # before they can get into trouble.
 sub access_handler ($$) {
@@ -345,6 +281,16 @@ sub access_handler ($$) {
     );
     return FORBIDDEN;
 }
+
+=item Krang::Handler->authen_handler
+
+Authentication.  Checks for an auth cookie.  If found and valid, the request is 
+associated with the user_id via the $request->connection->user() 
+method.  The effect of this is that $query->remote_user() and 
+C<$ENV{REMOTE_USER}> will properly report the user who is logged in.
+
+=cut
+
 
 # Attempt to retrieve user identity from session cookie.
 # Set REMOTE_USER and KRANG_SESSION_ID if successful.
@@ -489,6 +435,20 @@ sub authen_handler ($$) {
     return OK;
 }
 
+=item Krang::Handler->authz_handler
+
+Authorization. Enforces "require valid-user" only.  IOW, 
+if a user is specified, they are authorized.  If no user
+has been specified (via the authen_handler), the request is
+redirected to the login application.
+
+Also, if C<PasswordChangeTime> is set to a non-zero value,
+we check to see if the user's C<force_pw_change> has been
+set. If it has, the user is redirected to C<force_pw_change>
+runmode of the C<CGI::MyPref> class.
+
+=cut
+
 # Authorization
 sub authz_handler ($$) {
     my $self = shift;
@@ -547,6 +507,73 @@ sub authz_handler ($$) {
     return $self->_redirect_to_login($r, $flavor, $instance);
 }
 
+=item Krang::Handler->log_handler
+
+Logging.  When the application is running under Apache::Registry (not
+in CGI_MODE) this handler gets error messages out of
+C<< $r->notes() >> and logs them with Krang::Log.
+
+=back
+
+=cut
+
+sub log_handler ($$) {
+    my $pkg = shift;
+    my $r   = shift;
+
+    # in Apache::Registry mode this is where we collect die() and
+    # warn()s since they don't get caught by Krang::ErrorHandler
+    if ($ENV{GATEWAY_INTERFACE} =~ /Perl/) {
+        if (my $err = $r->notes('error-notes')) {
+            critical($err);
+        }
+    }
+
+    # must make sure the cache is off at the end of the request
+    if (Krang::Cache::active()) {
+        critical("Cache still on in log handler!  This cache was started at "
+              . join(', ', @{$Krang::Cache::CACHE_STACK[-1]})
+              . ".");
+        Krang::Cache::stop() while (Krang::Cache::active());
+    }
+
+    return OK;
+}
+
+=head1 INTERFACE
+
+Following are methods which can be overridden in sub-classes.
+
+=over 4
+
+=item unprotected_uri()
+
+Return a list of URIs which should never be restricted by login.
+
+=cut
+
+sub unprotected_uri {
+    my $self = shift;
+
+    # Just the login.pl, by default
+    my @uris = ($self->login_uri);
+
+    return @uris;
+}
+
+=item login_uri()
+
+The URI to which users should be redirected if they fail authorization.
+
+=cut
+
+sub login_uri {
+    my $self = shift;
+
+    return qw(login.pl);
+}
+
+
 #############################
 ####  INTERNAL HANDLERS  ####
 #############################
@@ -589,29 +616,6 @@ sub instance_menu {
         return OK;
     }
 
-}
-
-sub log_handler ($$) {
-    my $pkg = shift;
-    my $r   = shift;
-
-    # in Apache::Registry mode this is where we collect die() and
-    # warn()s since they don't get caught by Krang::ErrorHandler
-    if ($ENV{GATEWAY_INTERFACE} =~ /Perl/) {
-        if (my $err = $r->notes('error-notes')) {
-            critical($err);
-        }
-    }
-
-    # must make sure the cache is off at the end of the request
-    if (Krang::Cache::active()) {
-        critical("Cache still on in log handler!  This cache was started at "
-              . join(', ', @{$Krang::Cache::CACHE_STACK[-1]})
-              . ".");
-        Krang::Cache::stop() while (Krang::Cache::active());
-    }
-
-    return OK;
 }
 
 # the site-server transhandler maps requests to a site's preview or
@@ -660,10 +664,6 @@ sub siteserver_trans_handler ($$) {
     $r->filename($filename);
     return OK;
 }
-
-###########################
-####  PRIVATE METHODS  ####
-###########################
 
 sub _redirect_to_login {
     my $self = shift;
@@ -714,7 +714,6 @@ sub _do_redirect {
 
 sub _can_handle_gzip {
     my ($self, $r) = @_;
-return 1;
     if( $r->header_in('Accept-Encoding') && $r->header_in('Accept-Encoding') =~ /gzip/i ) {
         my $bd = $r->pnotes('browser_detector');
         if(! $bd ) {
