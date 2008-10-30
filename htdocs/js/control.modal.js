@@ -147,7 +147,7 @@ Object.extend(Control.Modal.prototype,{
 		}).merge(options || {});
 		target_match = Control.Modal.targetRegexp.exec(link.href);
 		image_match = Control.Modal.imgRegexp.exec(link.href);
-		if(this.options.image || image_match){
+		if(this.options.get('image') || image_match){
 			this.mode = 'image';
 			this.src = link.href;
 		}else if(target_match){
@@ -159,7 +159,7 @@ Object.extend(Control.Modal.prototype,{
 			//x.remove();
 			this.href = target_match[1];
 		}else{
-			this.mode = (this.options.iframe) ? 'iframe' : 'ajax';
+                    this.mode = (this.options.get('iframe')) ? 'iframe' : 'ajax';
 			this.href = link.href;
 		}
 		link.onclick = function(){
@@ -172,26 +172,26 @@ Object.extend(Control.Modal.prototype,{
 				height: Control.Modal.getDocumentHeight() + 'px',
 				width: Control.Modal.getDocumentWidth() + 'px'
 			});
-			if(this.options.position == 'absolute')
+			if(this.options.get('position') == 'absolute')
 				Control.Modal.center();
 			else{
 				yx = Position.cumulativeOffset(this.link);
 				Control.Modal.container.setStyle({
 					position: 'absolute',
-					top: yx[1] + this.options.offsetTop,
-					left: yx[0] + this.options.offsetLeft
+                                            top: yx[1] + this.options.get('offsetTop'),
+                                            left: yx[0] + this.options.get('offsetLeft')
 				});
 			}
 		}.bind(this);
 		if(this.mode == 'image'){
 			this.afterImageLoad = function(){
-				if(this.options.imageAutoDisplay && !window.opera)
+                            if(this.options.get('imageAutoDisplay') && !window.opera)
 					$('modal_image').show();
 				this.position();
 				this.notifyResponders('afterImageLoad');
 			}.bind(this);
 		}
-		if(this.options.hover){
+		if(this.options.get('hover')){
 			this.link.observe('mouseover',this.open.bind(this));
 			this.link.observe('mouseout',this.close.bind(this));
 		}
@@ -199,34 +199,34 @@ Object.extend(Control.Modal.prototype,{
 			this.open();
 	},
 	open: function(){
-		if(!this.options.hover)
+            if(!this.options.get('hover'))
 			Event.observe($(document.getElementsByTagName('body')[0]),'keydown',Control.Modal.onKeyDown);
 		Control.Modal.current = this;
 		this.notifyResponders('beforeOpen');
-		if(!this.options.hover){
+		if(!this.options.get('hover')){
 			Control.Modal.overlay.setStyle({
-				zIndex: this.options.zIndex
+                            zIndex: this.options.get('zIndex')
 			});
-			Control.Modal.setOpacity(Control.Modal.overlay,this.options.opacity);
+			Control.Modal.setOpacity(Control.Modal.overlay,this.options.get('opacity'));
 		}
 		Control.Modal.container.setStyle({
-			zIndex: this.options.zIndex + 1,
-			width: (this.options.width ? this.options.width + 'px' : ''),
-			height: (this.options.height ? this.options.height + 'px' : '')
+                    zIndex: this.options.get('zIndex') + 1,
+                            width: (this.options.get('width') ? this.options.get('width') + 'px' : ''),
+                            height: (this.options.get('height') ? this.options.get('height') + 'px' : '')
 		});
-		if(Control.Modal.ie && !this.options.hover)
+		if(Control.Modal.ie && !this.options.get('hover'))
 			$$('select').invoke('setStyle',{visibility: 'hidden'});
-		Control.Modal.overlay.addClassName(this.options.overlayClassName);
-		Control.Modal.container.addClassName(this.options.containerClassName);
+		Control.Modal.overlay.addClassName(this.options.get('overlayClassName'));
+		Control.Modal.container.addClassName(this.options.get('containerClassName'));
 		switch(this.mode){
 			case 'image':
 				this.imageLoaded = false;
 				this.notifyResponders('beforeImageLoad');
-				this.update(this.options.imageTemplate.evaluate({src: this.src, id: 'modal_image'}));
+				this.update(this.options.get('imageTemplate').evaluate({src: this.src, id: 'modal_image'}));
 				this.position();
-				if(this.options.imageAutoDisplay && !window.opera)
+				if(this.options.get('imageAutoDisplay') && !window.opera)
 					$('modal_image').hide();
-				if(this.options.imageCloseOnClick)
+                                        if(this.options.get('imageCloseOnClick'))
 					$('modal_image').observe('click',Control.Modal.close);
 				$('modal_image').observe('load',this.afterImageLoad);
 				$('modal_image').observe('readystatechange',this.afterImageLoad);
@@ -236,28 +236,28 @@ Object.extend(Control.Modal.prototype,{
 				new Ajax.Request(this.href,$H({
 					method: 'get',
 					onSuccess: function(request){
-						if(this.options.evalScripts)
+						if(this.options.get('evalScripts'))
 							request.responseText.evalScripts();
 						this.notifyResponders('onLoad',request);
 						this.update(request.responseText);
 						this.position();
 						this.notifyResponders('afterLoad',request);
 					}.bind(this)
-				}).merge(this.options.requestOptions));			
+                                              }).merge(this.options.get('requestOptions')));			
 				break;
 			case 'iframe':
-				this.update(this.options.iframeTemplate.evaluate({href: this.href, id: 'modal_iframe'}));
+                            this.update(this.options.get('iframeTemplate').evaluate({href: this.href, id: 'modal_iframe'}));
 				this.position();
 				break;
 			case 'named':
 				this.update(this.html);
 				break;
 		}
-		if(!this.options.hover){
+        if(!this.options.get('hover')){
 			Control.Modal.overlay.observe('click',Control.Modal.close);
 			Control.Modal.overlay.show();
 		}
-		this.options.afterOpen();
+        this.options.get('afterOpen')();
 	},
 	update: function(html){
 		Control.Modal.container.update(html);
@@ -267,25 +267,25 @@ Object.extend(Control.Modal.prototype,{
 		Event.observe(window,'scroll',this.position,false);
 	},
 	close: function(){
-		response = this.notifyResponders('beforeClose');
+                var response = this.notifyResponders('beforeClose');
 		if(response == false && response != null)
 			return;
 		if(this.mode == 'image'){
-			if(this.options.imageCloseOnClick)
+                    if(this.options.get('imageCloseOnClick'))
 				$('modal_image').stopObserving('click',Control.Modal.close);
 			$('modal_image').stopObserving('load',this.afterImageLoad);
 			$('modal_image').stopObserving('readystatechange',this.afterImageLoad);
 		}
-		if(Control.Modal.ie && !this.options.hover)
+		if(Control.Modal.ie && !this.options.get('hover'))
 			$$('select').invoke('setStyle',{visibility: 'visible'});	
-		if(!this.options.hover)
+		if(!this.options.get('hover'))
 			Event.stopObserving(window,'keyup',Control.Modal.onKeyDown);
 		Control.Modal.current = false;	
-		Control.Modal.overlay.removeClassName(this.options.overlayClassName);
-		Control.Modal.container.removeClassName(this.options.containerClassName);
+		Control.Modal.overlay.removeClassName(this.options.get('overlayClassName'));
+		Control.Modal.container.removeClassName(this.options.get('containerClassName'));
 		Event.stopObserving(window,'resize',this.position,false);
 		Event.stopObserving(window,'scroll',this.position,false);
-		if(!this.options.hover){
+		if(!this.options.get('hover')){
 			Control.Modal.overlay.stopObserving('click',Control.Modal.close);	
 			Control.Modal.overlay.hide();
 		}
@@ -298,7 +298,7 @@ Object.extend(Control.Modal.prototype,{
 			if(responder[event_name])
 				responder[event_name](argument);
 		});
-		response = this.options[event_name](argument);
+                var response = this.options.get(event_name)(argument);
 		return response;
 	}
 });
