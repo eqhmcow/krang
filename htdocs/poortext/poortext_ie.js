@@ -126,6 +126,12 @@ Object.extend(PoorText.prototype, {
         for (type in events) {
             this.observe(type, 'builtin', this[events[type]], true);
         }
+
+        // Hook in user-provided event handlers
+        this.registeredEventHandlers.each(function(h) {
+                      // type name handler useCapture
+            this.observe(h[0], h[1], h[2], h[3]);
+        }.bind(this));
     },
 
     /**@ignore*/
