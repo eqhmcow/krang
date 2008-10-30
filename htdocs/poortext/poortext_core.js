@@ -155,11 +155,16 @@ PoorText = function (element, config) {
     this.keyHandlerFor = {};    
 
     /**
-       Array of event handlers registered on this elements eventNode.
+       Hash-like object of event handlers registered on this elements eventNode.
        @type Array
        @private
     */
     this.eventHandlers = new Object();
+
+    /**
+       Array of event handlers registered via {@link #registerEventHandler}
+    */
+    this.registeredEventHandlers = new Array();
 
     /**
        Flag to remember whether the specialCharBar (scb) is/was/should again be visible or not
@@ -167,7 +172,15 @@ PoorText = function (element, config) {
        @private
     */
     this.scbVisible = false;
-    
+
+    /**
+       Flag indicating whether we use an IFrame for the edit area.
+       This is set in {@link #makeEditable}
+       @type Boolean
+       @private
+    */
+    this.usingIFrame = false;
+
     /**
        Instance method to initialize PoorText elements.
        @param {Object} config
@@ -910,6 +923,18 @@ PoorText.prototype = {
        @return nothing
     */
     onSubmit : function(event) {
+    },
+
+    /**
+       Instance method to register named event handlers with the edit
+       area
+       @param {STRING} - the name of the event (keydown, click etc.)
+       @param {STRING} - an arbitrary string identifying this event handler
+       @param {FUNCTION} - the event handler function
+       @param {BOOL} - the useCapture flag
+    */
+    registerEventHandler : function(event, name, handler, useCapture) {
+        this.registeredEventHandlers.push([event, name, handler, useCapture]);
     },
 
     /**
@@ -1858,10 +1883,10 @@ PoorText.L10N.localize = function(orig) {
    @private
 */
 PoorText.L10N.localizeDialog = function(dlg) {
-    // short-circuit for English
+    // short-circuit for English (regexp shops [theBrackets] around strings
     if (PoorText.config.lang == 'en') return dlg.replace(/\[([^\]]+)\]/g, "$1");
 
-    // translate it
+    // translate it (regexp gets [bracketContent]
     return dlg.replace(/\[([^\]]+)\]/g, function(match, captured) {
         return PoorText.L10N.localize(captured)
     });
