@@ -109,6 +109,8 @@ my @languages     = grep { $_ ne 'en' } AvailableLanguages;
 my @universal_files = (
     'poortext_core.js',
     'poortext_dialog_html.js',
+##    'poortext_krang.js',
+    'poortext_w3c_range.js',
 );
 my @lang_files      = map { catfile('lang', "$_.js") } @languages;
 my @browser_engines = (
