@@ -131,6 +131,8 @@ Object.extend(PoorText.prototype, {
     makeEditable : function () {
         var srcElement = this.srcElement;
 
+        this.usingIFrame = true;
+
         if (this.config.deferIframeCreation) {
             // Using mouse
             srcElement.addEventListener('mouseover', this._makeEditable.bindAsEventListener(this), false);
@@ -258,22 +260,19 @@ Object.extend(PoorText.prototype, {
                 setTimeout( function() { this._finishIframe() }.bind(this), 50);
                 return false;
         } else {
-            // Create EditNode
-            this._createEditNode();
+            // record the node used for editing
+            this.editNode = this.document.body;
 
-            // Apply inFilters
+            // fill it with content
             this.setHtml(this.srcElement, PoorText.inFilters);
 
-            // make cursor visible when there's no text
-            if (/^\s*$/.test(this.editNode.innerHTML)) {
-                this.editNode.innerHTML = '<br>';
-            }
-                
             // Finally make it editable
             this.document.designMode = 'on';
-                
+
+            // insert a BR even when pressing RET at EOL
+            this.document.execCommand('insertbronreturn', false, true);                                
             // The Node to style attributes enumerated in PoorText.bodyStyles
-            this.styleNode = this.document.body;
+            this.styleNode = this.editNode;
                 
             // The Node to style attributes enumerated in PoorText.iframeStyles
             this.frameNode = this.iframe;
@@ -287,6 +286,12 @@ Object.extend(PoorText.prototype, {
                 this.observe(type, 'builtin', this[events[type]], true);
             }
                 
+            // Hook in user-provided event handlers
+            this.registeredEventHandlers.each(function(h) {
+                          // type name handler useCapture
+                this.observe(h[0], h[1], h[2], h[3]);
+            }.bind(this));
+
             // Don't use SPAN tags for markup
             try {
                 this.document.execCommand('styleWithCSS', false, false);
@@ -310,32 +315,6 @@ Object.extend(PoorText.prototype, {
                 this._activateIframe();
             }
         }
-    },
-
-    _createEditNode : function() {
-        var editNode = document.createElement('div');
-        var editNode = new Element('div', { id : 'pt-edit-node' });
-        var body = this.document.body;
-        body.replaceChild(editNode, body.firstChild);
-        this.editNode = body.firstChild;
-    },
-
-    _recreateEditNode : function() {
-        // create the editNode DIV as the first body child
-        this._createEditNode();
-
-        // care for text flavor fields
-        if (this.config.type == 'text') this.editNode.setAttribute('class', 'pt-text-height');
-
-        // add the break
-        var br = document.createElement('br');
-        this.editNode.appendChild(br);
-
-        // When recreating, place cursor within editNode and
-        // before the break
-        var range = this.window.getSelection().getRangeAt(0);
-        range.selectNode(br);
-        range.collapse(true); // collapse to range start
     },
 
     /**@ignore*/
@@ -422,22 +401,62 @@ Object.extend(PoorText.prototype, {
         return null;
     },
 
-    storeSelection : function(range) {
-        if (!range) range = this.window.getSelection().getRangeAt(0);
-        this.selection = range;
+    select : function(node) {
+        var range = this.document.createRange();
+        range.selectNode(node);
+        return range;
     },
 
-    restoreSelection : function(range) {
-        if (!range)  range = this.selection;
+    getSelection : function(range) {
+        // maybe get range object
+        if (!range) range = this.window.getSelection().getRangeAt(0);
+
+        // get an index array used to find container nodes upon restoring
+        var startContainer = PoorText.getRangeContainerIndices(range.startContainer, this.editNode);
+
+        // create a bookmark
+        var bookmark = {
+            sc : startContainer,
+            so : range.startOffset,
+            ec : range.endContainer===range.startContainer
+               ? startContainer
+               : PoorText.getRangeContainerIndices(range.endContainer, this.editNode),
+            eo : range.endOffset
+        };
+
+        return bookmark;
+    },
+
+    storeSelection : function(range) {
+        var bookmark = this.getSelection(range);
+
+        this.selection = bookmark;
+
+        return bookmark;
+    },
+
+    restoreSelection : function(bookmark) {
+        if (!bookmark) {
+            bookmark = this.selection;
+        } else {
+            this.selection = bookmark;
+        }
+
+        // create a range from our bookmark
+        var range = this.document.createRange();
+        range.setStart(PoorText.getRangeContainerNode(bookmark.sc, this.editNode), bookmark.so);
+        range.setEnd(PoorText.getRangeContainerNode(bookmark.ec, this.editNode), bookmark.eo);
+
+        // select the range
         var selection = this.window.getSelection();
         selection.removeAllRanges();
         selection.addRange(range);
-
+        return range;
     },
 
     // Stolen from FCKeditor
     /**@ignore*/
-        doAddHTML :function (tag, url, title) {
+    doAddHTML :function (tag, url, title) {
         // Delete old elm
         this.document.execCommand("unlink", false, null);
         
@@ -495,7 +514,7 @@ Object.extend(PoorText.prototype, {
         }
         else {
             // store the cursor position
-            this.selectedAllSelection = selection.getRangeAt(0);
+            this.selectedAllSelection = this.getSelection();
             
             // select the editNode's children
             range = this.document.createRange();
@@ -587,19 +606,7 @@ Object.extend(PoorText.prototype, {
                 this.applyFiltersTo(this.editNode, PoorText.pasteFilters);
 	    }.bind(this), 1);
 	}
-        // tame the cursor at line end
-        if (keyname == 'down') {
-            setTimeout(function() {
-                this._down();
-            }.bind(this), 10);
-        }
-        // make sure we always have an editNode
-        if (keyname == 'backspace' || keyname == 'delete') {
-            if (this.styleNode.firstChild.nodeName.toLowerCase() == 'br') {
-                this._recreateEditNode();
-            }
-        }
-    },
+    }
 
 });
 
@@ -635,8 +642,8 @@ PoorText.blockLevelPasteFilter = function(editNode) {
 
             // replace <p> with <br/><br/>
             if (tagName == 'p') {
-                node.parentNode.insertBefore(document.createElement('br'), node);
-                node.parentNode.insertBefore(document.createElement('br'), node);
+                node.parentNode.insertBefore(this.document.createElement('br'), node);
+                node.parentNode.insertBefore(this.document.createElement('br'), node);
                 PoorText.replace_with_children(node, nodes);
                 continue;
             }
@@ -648,7 +655,7 @@ PoorText.blockLevelPasteFilter = function(editNode) {
 
                 if (parent) {
                     var text = node.textContent;
-                    var textNode = document.createTextNode(text);
+                    var textNode = this.document.createTextNode(text);
                     parent.replaceChild(textNode, node);
                 }
                 continue;
