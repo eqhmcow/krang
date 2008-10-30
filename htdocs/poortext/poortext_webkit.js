@@ -119,7 +119,11 @@ PoorText.outFilterWebKit = function(editNode) {
     // filter out remaining double tags, but let through BR (the 'b' in the char class, huh what a kludge!)
     var html = cloned.innerHTML;
 
-    return html.replace(/(<\/?[^>b]+>)\1/gi, "$1");
+    html.replace(/(<\/?[^>b]+>)\1/gi, "$1");
+
+    node.innerHTML = html;
+
+    return node;
 };
 
 /**@ignore*/
@@ -133,7 +137,7 @@ PoorText.inFilterWebKit = function(node) {
 
     // setup
     var elements       = $(node).childElements();
-    var interesting    = /strong|b|em|i|u|del|strike|sub|sup/i;
+    var interesting    = /^(strong|b|em|i|u|del|strike|sub|sup)$/i;
 
     // filter map
     replaceMap = {
@@ -151,7 +155,9 @@ PoorText.inFilterWebKit = function(node) {
     // the workhorse
     function replaceNodes(orig) {
         // create the span
-        var span = new Element('span', {'class' : PoorText.AppleSpanClassName}).update(orig[orig.length-1].innerHTML);
+        var innermost = orig[orig.length-1];
+        var content = innermost ? innermost.innerHTML : '';
+        var span = new Element('span', {'class' : PoorText.AppleSpanClassName}).update(content);
 
         // set the SPAN's style
         orig.each(function(node) {
@@ -160,6 +166,8 @@ PoorText.inFilterWebKit = function(node) {
 
         // replace it
         orig[0].parentNode.replaceChild(span, orig[0]);
+
+        return span;
     }
 
     // Walk the DOM, looking for parent/child markup sequences
@@ -185,11 +193,13 @@ PoorText.inFilterWebKit = function(node) {
                 elements.unshift(acc);
             } else {
                 // no child: go ahead, replace it
-                replaceNodes(acc);
+                var span = replaceNodes(acc);
+                // then consider its children
+                elements = span.childElements().concat(elements);
             }
         } else {
             // not interesting: consider its children
-            elements = elements.concat($(elm.childElements()));
+            elements = elm.childElements().concat(elements);
         }
     }
 
@@ -245,6 +255,12 @@ Object.extend(PoorText.prototype, {
         for (type in events) {
             this.observe(type, 'builtin', this[events[type]], true);
         }
+
+        // Hook in user-provided event handlers
+        this.registeredEventHandlers.each(function(h) {
+                      // type name handler useCapture
+            this.observe(h[0], h[1], h[2], h[3]);
+        }.bind(this));
     },
 
 
@@ -276,7 +292,7 @@ Object.extend(PoorText.prototype, {
             // Are we placed within a unselected elm
             if (elm = this._getLinkFromInside(range.commonAncestorContainer)) {
                 sel.selectAllChildren(elm);
-                this.storeSelection(sel);
+                this.storeSelection(range);
                 return {elm : elm};
             }
             else {
@@ -285,7 +301,7 @@ Object.extend(PoorText.prototype, {
         }
         
         // Store selection
-        this.storeSelection(sel);
+        this.storeSelection(range);
 
         // Try dblclick selection first (case 13)
         if (!elm) elm = this._getLinkFromOutside(sel, range.commonAncestorContainer.childNodes);
@@ -323,17 +339,57 @@ Object.extend(PoorText.prototype, {
         return null;
     },
 
-    storeSelection : function(sel) {
-        if (!sel) { sel = window.getSelection(); }
-        if (sel)  { this.selection = sel.getRangeAt(0); }
+    select : function(node) {
+        var range = document.createRange();
+        range.selectNode(node);
+        return range;
     },
 
-    restoreSelection : function(range) {
-        if (!range)  range = this.selection;
+    getSelection : function(range) {
+        // maybe get range object
+        if (!range) range = this.window.getSelection().getRangeAt(0);
+
+        // get an index array used to find container nodes upon restoring
+        var startContainer = PoorText.getRangeContainerIndices(range.startContainer, this.editNode);
+
+        // create a bookmark
+        var bookmark = {
+            sc : startContainer,
+            so : range.startOffset,
+            ec : range.endContainer===range.startContainer
+               ? startContainer
+               : PoorText.getRangeContainerIndices(range.endContainer, this.editNode),
+            eo : range.endOffset
+        };
+
+        return bookmark;
+    },
+
+    storeSelection : function(range) {
+        var bookmark = this.getSelection(range);
+
+        this.selection = bookmark;
+
+        return bookmark;
+    },
+
+    restoreSelection : function(bookmark) {
+        if (!bookmark) {
+            bookmark = this.selection;
+        } else {
+            this.selection = bookmark;
+        }
+
+        // create a range from our bookmark
+        var range = document.createRange();
+        range.setStart(PoorText.getRangeContainerNode(bookmark.sc, this.editNode), bookmark.so);
+        range.setEnd(PoorText.getRangeContainerNode(bookmark.ec, this.editNode), bookmark.eo);
+
+        // select the range
         var selection = this.window.getSelection();
         selection.removeAllRanges();
         selection.addRange(range);
-
+        return range;
     },
 
     // Stolen from FCKeditor
@@ -353,7 +409,7 @@ Object.extend(PoorText.prototype, {
         
         // Retrieve the just created link using XPath.
         var elm = this.document.evaluate("//a[@href='" + tmpUrl + "']", 
-                                    this.document.body, null, 9, null).singleNodeValue ;
+                                         this.document.body, null, 9, null).singleNodeValue ;
 
         if (elm) {
             if (tag == 'a') {
@@ -392,7 +448,7 @@ Object.extend(PoorText.prototype, {
         if (this.selectedAll) {
             if (this.selectedAllSelection) {
                 // restore the cursor position
-                this.restoreSelection(this.selectedAllSelection);
+                this.selectedAllSelection = this.getSelection();
 
                 // reset state
                 this.selectedAll = false;
