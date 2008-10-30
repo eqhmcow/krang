@@ -1,0 +1,112 @@
+ServerType           standalone
+ServerRoot           <tmpl_var ApacheRoot>
+ServerAdmin          root@localhost
+ServerSignature      Email
+PidFile              <tmpl_var KrangRoot>/tmp/httpd_offline.pid
+DocumentRoot         <tmpl_var KrangRoot>/htdocs/offline
+User                 <tmpl_var KrangUser>
+Group                <tmpl_var KrangGroup>
+KeepAlive            Off
+MinSpareServers      5
+MaxSpareServers      10
+StartServers         5
+MaxClients           150
+MaxRequestsPerChild  100
+ErrorLog             <tmpl_var KrangRoot>/logs/offline_error_log
+LogFormat            "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+CustomLog            <tmpl_var KrangRoot>/logs/offline_access_log combined
+LogLevel             info
+TypesConfig          <tmpl_var ApacheRoot>/conf/mime.types
+UseCanonicalName     On
+HostNameLookups      Off
+Timeout              600
+FileETag none
+
+LoadModule mime_magic_module  libexec/mod_mime_magic.so
+LoadModule rewrite_module     libexec/mod_rewrite.so
+<tmpl_if EnableSSL>
+LoadModule ssl_module         libexec/libssl.so
+LoadModule setenvif_module    libexec/mod_setenvif.so
+</tmpl_if>
+
+ClearModuleList
+AddModule mod_env.c
+AddModule mod_log_config.c
+AddModule mod_mime_magic.c
+AddModule mod_mime.c
+AddModule mod_cgi.c
+AddModule mod_access.c
+AddModule mod_so.c
+AddModule mod_rewrite.c
+<tmpl_if EnableSSL>
+AddModule mod_ssl.c
+AddModule mod_setenvif.c
+</tmpl_if>
+
+<FilesMatch "\.(conf|pid|db)$">
+    Deny from all
+</FilesMatch>
+
+ServerName <tmpl_var HostName>
+Listen <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
+NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
+<tmpl_if EnableSSL>
+Listen <tmpl_var ApacheAddr>:<tmpl_var SSLApachePort>
+NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var SSLApachePort>
+</tmpl_if>
+
+<tmpl_if EnableSSL>
+#  SSL Global Context
+SSLPassPhraseDialog  <tmpl_var SSLPassPhraseDialog default="builtin">
+SSLSessionCache         dbm:<tmpl_var KrangRoot>/tmp/ssl_scache
+SSLSessionCacheTimeout  <tmpl_var SSLSessionCacheTimeout default="3600">
+SSLMutex  file:<tmpl_var KrangRoot>/tmp/ssl_mutex
+SSLRandomSeed startup <tmpl_var SSLRandomSeedStartup default="builtin">
+SSLRandomSeed connect <tmpl_var SSLRandomSeedConnect default="builtin">
+</tmpl_if>
+
+<tmpl_loop InstanceLoop>
+  <tmpl_if InstanceApacheAddr>
+Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceApachePort><tmpl_var InstanceApachePort><tmpl_else><tmpl_var ApachePort></tmpl_if>
+  <tmpl_if EnableSSL>
+Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var InstanceSSLPort><tmpl_else><tmpl_var SSLApachePort></tmpl_if>
+</tmpl_if>
+  </tmpl_if>
+</tmpl_loop>
+
+<tmpl_loop InstanceLoop>
+<VirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>>
+    ServerName <tmpl_var HostName>
+    RewriteEngine On
+    RewriteLogLevel 4
+    RewriteLog <tmpl_var KrangRoot>/logs/apache_rewrite_log
+
+    # redirect anything that is not a .css, .js, .png, .jpg, .jpeg, .gif file to the offline page
+    RewriteCond %{REQUEST_FILENAME} !\.(css|js|png|jpg|jpeg|gif)$
+    RewriteCond %{REQUEST_FILENAME} !<tmpl_var InstanceName>\.html$
+    RewriteRule ^.*$ /<tmpl_var InstanceName>.html [L]
+</VirtualHost>
+<tmpl_if EnableSSL>
+<VirtualHost <tmpl_var ApacheAddr>:<tmpl_var SSLApachePort>>
+    ServerName <tmpl_var HostName>
+    RewriteEngine On
+    RewriteLogLevel 4
+    RewriteLog <tmpl_var KrangRoot>/logs/apache_rewrite_log
+
+    # redirect all SSL traffic to non-ssl
+    RewriteRule ^.*$ http://<tmpl_var InstanceHostName>:<tmpl_var ApachePort>%{REQUEST_URI} [R,L,NE]
+
+   SSLEngine on
+   SSLProtocol <tmpl_var SSLProtocol default="all -SSLv2">
+   SSLLog      <tmpl_var KrangRoot>/logs/ssl.log
+   SSLLogLevel <tmpl_var SSLLogLevel default="info">
+   SSLCipherSuite <tmpl_var SSLCipherSuite default="ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL">
+   SSLCertificateFile <tmpl_var KrangRoot>/conf/ssl.crt/server.crt
+   SSLCertificateKeyFile <tmpl_var KrangRoot>/conf/ssl.key/server.key
+   #SSLCertificateChainFile <tmpl_var KrangRoot>/conf/ssl.crt/ca-bundle.crt
+   SetEnvIf User-Agent ".*MSIE.*" \
+            nokeepalive ssl-unclean-shutdown \
+            downgrade-1.0 force-response-1.0
+</VirtualHost>
+</tmpl_if>
+</tmpl_loop>

@@ -21,6 +21,8 @@ krang_ctl
 
   krang_ctl restart
 
+  krang_ctl offline
+
 =head1 DESCRIPTION
 
 This is the control script for Krang.  You can use this script to
@@ -29,9 +31,10 @@ have services set to run on privileged ports (i.e. below 1024), and
 you run this script as a user other than root, it will try to run
 the individual commands with 'sudo' where necessary.
 
-This script calls krang_apachectl, krang_ftpctl and krang_schedulectl
-to do its work.  See their respective manpages for details concerning
-environment variables that may be used to control their functioning.
+This script calls F<krang_apachectl>, F<krang_ftpctl>,
+F<krang_schedulectl> and F<krang_offline> to do its work.  See their
+respective manpages for details concerning environment variables that
+may be used to control their functioning.
 
 =cut
 
@@ -80,7 +83,8 @@ my $command = shift @ARGV;
 usage()
   unless $command eq 'start'
       or $command eq 'stop'
-      or $command eq 'restart';
+      or $command eq 'restart'
+      or $command eq 'offline';
 
 my @ctl = (
     {name => 'krang_apachectl',   port => 'ApachePort'},
@@ -90,9 +94,18 @@ my @ctl = (
 push(@ctl, {name => 'krang_siteserverctl', port => 'SiteServerPort'})
   if EnableSiteServer;
 
+if( $command eq 'offline' ) {
+    push(@ctl, { name => 'krang_offline', port => 'ApachePort' });
+} else {
+    unshift(@ctl, { name => 'krang_offline', port => 'ApachePort' });
+}
+
+
+
 # call ctl scripts
 foreach my $service (@ctl) {
     my $script = catfile(KrangRoot, 'bin', $service->{'name'});
+    my $script_command = $command;
 
     # will need sudo?
     if (($< != 0 or $> != 0)
@@ -100,8 +113,19 @@ foreach my $service (@ctl) {
     {
         $script = "sudo $script";
     }
-    print STDERR "=> krang_ctl calling '$script $command'...\n";
-    system("$script $command");
+
+    if( $command eq 'offline' ) {
+        if( $service->{name} eq 'krang_offline' ) {
+            $script_command = 'start';
+        } else {
+            $script_command = 'stop';
+        }
+    } elsif( $service->{name} eq 'krang_offline' ) {
+        $script_command = 'stop';
+    }
+
+    print STDERR "=> krang_ctl calling '$script $script_command'...\n";
+    system("$script $script_command");
     print STDERR "\n";
 }
 
