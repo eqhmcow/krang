@@ -108,7 +108,7 @@ if ($command eq 'start') {
     }
 }
 
-if ($command eq 'stop') {
+if ($command eq 'stop' or $command eq 'offline') {
     unless ($running) {
         die "krang_ftpctl $command: krang_ftpd not running\n";
     }

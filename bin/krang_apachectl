@@ -16,12 +16,16 @@ krang_apachectl
 
    krang_apachectl restart
 
+   krang_apachectl offline
+
 =head1 DESCRIPTION
 
 This script controls the Krang Apache server. The usage of the script
 is the same as the normal apache "apachectl" script but only "start",
 "stop" and "restart" are supported. Also, "restart" performs a hard
-stop and start since a SIGHUP isn't enough for mod_perl.
+stop and start since a SIGHUP isn't enough for mod_perl. We've also added
+a command "offline" that stops the normal Krang Apache and restarts one
+to show an offline page.
 
 Usage information can be obtained by running the script with no arguments.
 
@@ -108,19 +112,15 @@ my @ssl_directives = qw(
 
 # the httpd command
 my $apache_bin = rel2abs(catfile(KrangRoot, APACHE_ROOT, APACHE_BIN));
+my $conf = catfile(KrangRoot, "tmp", "httpd.conf");
+my $offline_conf = catfile(KrangRoot, "tmp", "httpd_offline.conf");
 my $httpd = $apache_bin . ' -f ' . rel2abs(catfile(KrangRoot, "tmp", "httpd.conf"));
 
 # get status from the pid file
-my $pid_file = catfile(KrangRoot, "tmp", "httpd.pid");
-my $running = 0;
-my $pid;
-if (-e $pid_file) {
-    $pid = `cat $pid_file`;
-    chomp $pid;
-    if ($pid and kill(0, $pid)) {
-        $running = 1;
-    }
-}
+my $pid_file = catfile(KrangRoot, 'tmp', 'httpd.pid');
+my $offline_pid_file = catfile(KrangRoot, 'tmp', 'httpd_offline.pid');
+my $running = is_pid_running($pid_file);
+my $offline_running = is_pid_running($offline_pid_file);
 
 # make language string for messages
 my %languages = ();
@@ -133,9 +133,9 @@ usage() unless @ARGV;
 my $command = shift @ARGV;
 
 if ($command eq 'start') {
-    if ($running) {
-        die "krang_apachectl $command: httpd (pid $pid) already running\n";
-    }
+    die "krang_apachectl $command: httpd (pid $running) already running\n" if $running;
+    die "krang_apachectl $command: offline httpd (pid $offline_running) already running\n"
+      if $offline_running;
 
     # start
     start();
@@ -145,7 +145,7 @@ if ($command eq 'stop') {
     unless ($running) {
         die "krang_apachectl $command: httpd not running\n";
     }
-    if (kill 15, $pid) {
+    if (kill 15, $running) {
         print "krang_apachectl $command: httpd stopped\n";
         exit;
     } else {
@@ -154,37 +154,17 @@ if ($command eq 'stop') {
 }
 
 if ($command eq 'restart') {
-
-    # stop
-    if ($running) {
-        if (kill 15, $pid) {
-            print "krang_apachectl $command: waiting for httpd to stop";
-        } else {
-            die "krang_apachectl $command: httpd could not be stopped\n";
-        }
-
-        # wait for stop - check pid file for removal
-        my $stopped = 0;
-        for my $wait (0 .. MAX_RESTART_WAIT) {
-            if (not -e $pid_file) {
-                $stopped = 1;
-                last;
-            }
-            print ".";
-            sleep 1;
-        }
-
-        if ($stopped) {
-            print "\nkrang_apachectl $command: httpd stopped\n";
-        } else {
-            die "\nkrang_apachectl $command: httpd not stopped in time\n";
-        }
-
-    }
-
-    # start
+    stop_pid($running, $pid_file, 'httpd') if $running;
+    stop_pid($offline_running, $offline_pid_file, 'offline httpd') if $offline_running;
     start();
 }
+
+if ($command eq 'offline') {
+    stop_pid($running, $pid_file, 'httpd') if $running;
+    stop_pid($offline_running, $offline_pid_file, 'offline httpd') if $offline_running;
+    offline();
+}
+
 
 usage();
 
@@ -226,7 +206,9 @@ sub write_conf {
     require HTML::Template;
 
     # find template file, looking addons first then in the root
-    my $file = pkg('File')->find("conf/httpd.conf.tmpl");
+    my $file =
+      pkg('File')
+      ->find($command eq 'offline' ? "conf/httpd_offline.conf.tmpl" : "conf/httpd.conf.tmpl");
 
     # create the httpd.conf by processing it as a template, using conf
     # directives as params
@@ -397,3 +379,87 @@ sub make_js_for_poortext {
     system(catfile(KrangRoot, 'htdocs', 'poortext', 'bin', 'krang_make_poortext'), '--verbose')
       and die "Couldn't make browser engine-specific JavaScript for Krang::ElementClass::PoorText: $?";
 }
+
+sub is_pid_running {
+    my $pid_file = shift;
+    my $running = 0;
+    my $pid;
+    if (-e $pid_file) {
+        $pid = `cat $pid_file`;
+        chomp $pid;
+        if ($pid and kill(0, $pid)) {
+            $running = 1;
+        }
+    }
+    return $running ? $pid : undef;
+}
+
+sub stop_pid {
+    my ($pid, $pid_file, $which) = @_;
+    if (kill 15, $pid) {
+        print "krang_apachectl $command: waiting for $which to stop";
+    } else {
+        die "krang_apachectl $command: $which could not be stopped\n";
+    }
+
+    # wait for stop - check pid file for removal
+    my $stopped = 0;
+    for my $wait (0 .. MAX_RESTART_WAIT) {
+        if (not -e $pid_file) {
+            $stopped = 1;
+            last;
+        }
+        print ".";
+        sleep 1;
+    }
+    if ($stopped) {
+        print "\nkrang_apachectl $command: $which stopped\n";
+    } else {
+        die "\nkrang_apachectl $command: $which not stopped in time\n";
+    }
+}
+
+sub make_offline_pages {
+    require HTML::Template;
+    # find template file, looking addons first then in the root
+    my $file = pkg('File')->find("templates/offline.tmpl");
+
+    foreach my $instance (pkg('Conf')->instances) {
+        pkg('Conf')->instance($instance);
+        my $template = HTML::Template->new(
+            filename          => $file,
+            global_vars       => 1,
+            die_on_bad_params => 0,
+        );
+        my %params = (
+            InstanceName        => $instance,
+            InstanceDisplayName => scalar pkg('Conf')->get('InstanceDisplayName'),
+            CustomCSS           => scalar pkg('Conf')->get('CustomCSS'),
+        );
+        $template->param(%params);
+        my $out_file = catfile(KrangRoot, 'htdocs', 'offline', "$instance.html");
+        open(my $OUT, '>', $out_file) or die "Could not open file $out_file for output: $!";
+        print $OUT $template->output;
+        close($OUT);
+    }
+}
+
+sub offline {
+    setup_logs();
+    write_conf();
+    apply_skin();
+    make_offline_pages();
+
+    print "krang_apachectl offline: starting httpd\n";
+    unless (system($httpd)) {
+        print "krang_apachectl offline: httpd started";
+        print " (SSL enabled)" if EnableSSL;
+        print "\n";
+        exit;
+    } else {
+        die "krang_apachectl offline: httpd could not be started\n";
+    }
+}
+
+
+

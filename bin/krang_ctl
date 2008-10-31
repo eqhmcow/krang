@@ -94,18 +94,9 @@ my @ctl = (
 push(@ctl, {name => 'krang_siteserverctl', port => 'SiteServerPort'})
   if EnableSiteServer;
 
-if( $command eq 'offline' ) {
-    push(@ctl, { name => 'krang_offline', port => 'ApachePort' });
-} else {
-    unshift(@ctl, { name => 'krang_offline', port => 'ApachePort' });
-}
-
-
-
 # call ctl scripts
 foreach my $service (@ctl) {
     my $script = catfile(KrangRoot, 'bin', $service->{'name'});
-    my $script_command = $command;
 
     # will need sudo?
     if (($< != 0 or $> != 0)
@@ -114,28 +105,19 @@ foreach my $service (@ctl) {
         $script = "sudo $script";
     }
 
-    if( $command eq 'offline' ) {
-        if( $service->{name} eq 'krang_offline' ) {
-            $script_command = 'start';
-        } else {
-            $script_command = 'stop';
-        }
-    } elsif( $service->{name} eq 'krang_offline' ) {
-        $script_command = 'stop';
-    }
-
-    print STDERR "=> krang_ctl calling '$script $script_command'...\n";
-    system("$script $script_command");
+    print STDERR "=> krang_ctl calling '$script $command'...\n";
+    system("$script $command");
     print STDERR "\n";
 }
 
 sub usage {
     print <<END;
-usage: krang_ctl (start|stop|restart)
+usage: krang_ctl (start|stop|restart|offline)
 
   start      - start krang services
   stop       - stop krang services
   restart    - restart krang services
+  offline    - stop krang services and start offline Apache
 
 END
 
