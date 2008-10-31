@@ -112,8 +112,6 @@ my @ssl_directives = qw(
 
 # the httpd command
 my $apache_bin = rel2abs(catfile(KrangRoot, APACHE_ROOT, APACHE_BIN));
-my $conf = catfile(KrangRoot, "tmp", "httpd.conf");
-my $offline_conf = catfile(KrangRoot, "tmp", "httpd_offline.conf");
 my $httpd = $apache_bin . ' -f ' . rel2abs(catfile(KrangRoot, "tmp", "httpd.conf"));
 
 # get status from the pid file
