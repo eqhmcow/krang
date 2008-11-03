@@ -84,18 +84,24 @@ sub db2browser {
     my $t = HTML::TreeBuilder->new_from_content($arg{html});
     $t->elementify;
 
-    while (my $orig = $t->look_down("_tag" => $regexp)) {
+    for my $orig ($t->look_down("_tag" => $regexp)) {
 
         # remember style for the will-be-span
-        my %style = (%{$map->{$orig->tag}});
+        my $style = $map->{$orig->tag};
+        my %style = ();
+        if ($style) {
+            %style = %$style;
+        } else {
+            next;
+        }
 
         my $child          = undef;
         my $content_parent = $orig;
 
         # maybe first child of this markup tag is another markup tag;
         # if so, pack it in the same span with multiple style properties
-        while (
-            $child = $content_parent->look_down(
+        for my $child (
+            $content_parent->look_down(
                 sub {
                     $_[0]->tag ne $content_parent->tag and $_[0]->tag =~ $regexp;
                 }
@@ -114,10 +120,10 @@ sub db2browser {
         }
 
         # build the span's style attrib
-        my $style = join('; ', map { "$_: $style{$_}" } keys %style);
+        my $new_style = join('; ', map { "$_: $style{$_}" } keys %style);
 
         # create the span,
-        my $repl = HTML::Element->new('span', 'style' => $style);
+        my $repl = HTML::Element->new('span', 'style' => $new_style);
 
         # replace original tag(s) with span and insert its/their content
         $orig->replace_with($repl);
@@ -153,12 +159,7 @@ sub browser2db {
     $t->elementify;
 
     # look for SPAN tags with a style attrib
-    while (
-        my $span = $t->look_down(
-            "_tag"  => "span",
-        )
-      )
-    {
+    for my $span ($t->look_down("_tag" => "span",)) {
 
         my $repl  = undef;
         my $child = undef;
@@ -170,8 +171,19 @@ sub browser2db {
             next;
         }
 
+        # workaround: protect <span style="font-weight: normal">normal text</span>
+        # we need a more elaborate conversion algorithm, simple tag
+        # replacement is not enough
+        next if $style =~ /normal/;
+
+        if ($style !~ /$regexp/) {
+            $span->replace_with($span->content_list)->delete;
+            next;
+        }
+
         # make (nested) tags for style props
         while ($style =~ /$regexp/g) {
+
             my $tag = $map->{$1};
 
             my $elm = HTML::Element->new($tag);
@@ -194,7 +206,11 @@ sub browser2db {
 
     }
 
-    return $pkg->tidy_up_after_treebuilder(tree => $t);
+    # some more clean up
+    my $html = $pkg->tidy_up_after_treebuilder(tree => $t);
+    $pkg->remove_junk(\$html);
+
+    return $html;
 }
 
 1;
