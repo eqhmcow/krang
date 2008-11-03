@@ -126,7 +126,7 @@ sub new_story {
 
     # sort the type by their display name, not their real name
     @types = sort {
-        lc localize(pkg('ElementLibrary')->top_level(name => $a)->display_name) cmp
+        lc localize(pkg('ElementLibrary')->top_level(name   => $a)->display_name) cmp
           lc localize(pkg('ElementLibrary')->top_level(name => $b)->display_name)
     } @types;
 
@@ -483,8 +483,8 @@ sub edit {
     # set fields shown everywhere
     $template->param(
         story_id => $story->story_id || "N/A",
-        type     => localize($story->element->display_name),
-        url      => $story->url
+        type => localize($story->element->display_name),
+        url  => $story->url
         ? format_url(
             url    => $story->url,
             linkto => "javascript:preview_and_stay()",
@@ -1316,7 +1316,10 @@ sub save_and_find_story_link {
 
     # call internal _save and return output from it on error
     my $output = $self->_save();
-    return $output if length $output;
+    if (length $output) {
+        $self->add_json_header(saveError => 1);
+        return $output;
+    }
 
     # get target
     my $query   = $self->query;
@@ -2241,7 +2244,7 @@ sub steal_selected {
         if (@owned_ids) {
             (@owned_ids > 1)
               ? add_message('multiple_stories_yours', ids => join(' & ', @owned_ids))
-              : add_message('one_story_yours',        id  => $owned_ids[0]);
+              : add_message('one_story_yours', id => $owned_ids[0]);
         }
         if (@stolen_ids) {
             (@stolen_ids > 1)

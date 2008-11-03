@@ -299,9 +299,9 @@ sub element_edit {
         push(
             @child_loop,
             {
-                form => $form,
+                form           => $form,
                 element_widget => $element_widget,
-                path => $child->xpath(),
+                path           => $child->xpath(),
                 (
                     order_select => $child->reorderable && $multiple_reorders
                     ? $query->popup_menu(
@@ -650,9 +650,10 @@ sub find_story_link {
     );
 
     $template->param(
-        pager_html => $pager->output(),
-        row_count  => $pager->row_count,
-        action     => $self->_get_script_name,
+        pager_html               => $pager->output(),
+        row_count                => $pager->row_count,
+        action                   => $self->_get_script_name,
+        story_link_is_for_editor => $query->param('story_link_is_for_editor'),
     );
 
     return $template->output;
@@ -908,7 +909,22 @@ sub select_story {
 
     # find story and set it in element data
     my ($story) = pkg('Story')->find(story_id => $story_id);
-    $element->data($story);
+
+    if ($query->param('story_link_is_for_editor')) {
+
+        # StoryLink for a WYSIWYG element
+        $self->add_json_header(
+            storyLink => {
+                id    => $story_id,
+                url   => $story->url,
+                title => $story->title,
+            }
+        );
+    } else {
+
+        # StoryLink for the StoryLink element
+        $element->data($story);
+    }
 
     # back to edit, in the parent and out of find_story_link mode
     $query->delete_all();
@@ -1111,10 +1127,11 @@ sub element_save {
 
     # validate data
     my @msgs;
-    my $clean = 1;
-    my $index = 0;
-    my @invalid;
-    my $rm = $self->get_current_runmode();
+    my $clean   = 1;
+    my $index   = 0;
+    my @valid   = ();
+    my @invalid = ();
+    my $rm      = $self->get_current_runmode();
     foreach my $child ($element->children()) {
 
         # ignore storylinks and medialinks if entering find_story or
@@ -1134,6 +1151,8 @@ sub element_save {
                 add_alert('invalid_element_data', msg => $msg);
                 push @invalid, $index;
                 $clean = 0;
+            } else {
+                push @valid, $child;
             }
         }
         $index++;
@@ -1151,6 +1170,9 @@ sub element_save {
     # toss back to edit with an error message if not clean
     if (not $clean) {
         $query->param(invalid => join(',', @invalid)) if @invalid;
+        foreach my $child (@valid) {
+            $child->load_query_data(query => $query) unless $child->hidden;
+        }
         return 0;
     }
 
