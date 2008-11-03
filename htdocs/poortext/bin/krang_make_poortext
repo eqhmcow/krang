@@ -109,28 +109,36 @@ my @languages     = grep { $_ ne 'en' } AvailableLanguages;
 my @universal_files = (
     'poortext_core.js',
     'poortext_dialog_html.js',
-##    'poortext_krang.js',
-    'poortext_w3c_range.js',
+    'poortext_krang.js',
 );
 my @lang_files      = map { catfile('lang', "$_.js") } @languages;
 my @browser_engines = (
-    ['gecko' , 'Gecko'  ],
-    ['ie'    , 'IE'     ],
-    ['webkit', 'WebKit' ],
+    {
+     name  => 'Gecko',
+     files => [ 'poortext_gecko.js', 'poortext_w3c_range.js' ],
+    },
+    {
+     name  => 'IE',
+     files => [ 'poortext_ie.js' ],
+    },
+    {
+     name  => 'WebKit',
+     files => [ 'poortext_webkit.js', 'poortext_w3c_range.js' ],
+    },
 );
 
 # combine into engine-specific JavaScript files
 for my $engine (@browser_engines) {
 
-    print "Making PoorText JavaScript for $engine->[1]\n" if $verbose;
+    print "Making PoorText JavaScript for $engine->{name}\n" if $verbose;
 
     # engine-specific JavaScript file combining all poortext JavaScript files
-    my $of = catfile($poortext_root, "poortext_$engine->[1].js");
+    my $of = catfile($poortext_root, "poortext_$engine->{name}.js");
     open my $OUT, '>', $of
       or die "Can't open '$of' for writing: $!";
 
 
-    for my $file (@universal_files, "poortext_$engine->[0].js", @lang_files) {
+    for my $file (@universal_files, @{$engine->{files}}, @lang_files) {
         my $if = catfile($poortext_root, $file);
         open my $IN, '<', $if
           or die "Can't open '$if' for reading: $!";

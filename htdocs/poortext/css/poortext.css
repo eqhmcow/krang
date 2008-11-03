@@ -244,6 +244,9 @@ a.pt-btnLink:hover, a.pt-btn-pressed, a.pt-charLink:hover {
 #pt-btn-help { 
   background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -400px;
 }
+#pt-btn-add_story_link { 
+  background: transparent url("/poortext/images/button_sprite.png") no-repeat scroll -420px;
+}
 
 
 /*    Special Char Images      */

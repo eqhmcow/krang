@@ -120,6 +120,9 @@ PoorText.htmlFor = {
    +'<li class="pt-btn" id="pt-btn-delete_html">'
       +'<a href="javascript:void(0)" class="pt-btnLink"></a>'
    +'</li>'
+   +'<li class="pt-btn" id="pt-btn-add_story_link">'
+      +'<a href="javascript:void(0)" class="pt-btnLink"></a>'
+   +'</li>'
 
    +'<li class="pt-btn" id="pt-btn-cut">'
       +'<a href="javascript:void(0)" class="pt-btnLink"></a>'

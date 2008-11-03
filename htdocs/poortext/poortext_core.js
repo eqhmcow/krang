@@ -555,7 +555,9 @@ PoorText.prototype = {
         /**@ignore*/ align_right      : function() {this.setTextAlign('right'  )},
         /**@ignore*/ justify          : function() {this.setTextAlign('justify')},
         /**@ignore*/ indent           : function() {this.setTextIndent()        },
-        /**@ignore*/ outdent          : function() {this.setTextOutdent()       }
+        /**@ignore*/ outdent          : function() {this.setTextOutdent()       },
+// Krang CMS StoryLink
+        /**@ignore*/ add_story_link   : function() {this.addStoryLink()         }
     },
 
     /**
@@ -581,6 +583,7 @@ PoorText.prototype = {
             toggle_selectall : 'ctrl_a',
             add_html         : 'ctrl_l',
             delete_html      : 'ctrl_shift_l',
+            add_story_link   : 'ctrl_shift_s',
             redo             : 'ctrl_y',
             undo             : 'ctrl_z',
             help             : 'ctrl_h',
@@ -934,7 +937,11 @@ PoorText.prototype = {
        @param {BOOL} - the useCapture flag
     */
     registerEventHandler : function(event, name, handler, useCapture) {
-        this.registeredEventHandlers.push([event, name, handler, useCapture]);
+        if (this.editNode) {
+            this.observe(event, name, handler, useCapture);
+        } else {
+            this.registeredEventHandlers.push([event, name, handler, useCapture]);
+        }
     },
 
     /**
@@ -1029,6 +1036,8 @@ PoorText.prototype = {
 	// No link && no selection
 	if (sel.msg == 'showAlert') {
 	    this.notify("You have to select some text to insert a HTML element.");
+            this.focusEditNode();
+            this.restoreSelection();
 	    return;
 	} 
 
@@ -1102,6 +1111,8 @@ PoorText.prototype = {
 
 	if (sel.msg == 'showAlert') {
 	    this.notify("You didn't select any HTML element to delete!");
+            this.focusEditNode();
+            this.restoreSelection();
 	    return;
 	}
 
