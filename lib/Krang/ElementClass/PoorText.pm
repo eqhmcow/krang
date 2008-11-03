@@ -29,7 +29,8 @@ use Krang::MethodMaker get_set => [
       width  special_char_bar   shortcut_for
       height command_button_bar indent_size
       )
-], hash => [ qw(find) ];
+  ],
+  hash => [qw(find)];
 
 our %js_name_for = (
     type               => 'type',
@@ -43,8 +44,8 @@ our %js_name_for = (
 sub new {
     my $pkg  = shift;
     my %args = (
-        width  => 400,
-        height => 120,    # for 'textarea' flavour. For 'text' flavour see poortext.css '.pt-text'
+        width  => 380,
+        height => 140,    # for 'textarea' flavour. For 'text' flavour see poortext.css '.pt-text'
         command_button_bar => 1,
         special_char_bar   => 0,
         @_
@@ -102,7 +103,7 @@ sub input_form {
 
     # data has multiple fields: HTML INDENT ALIGN
     my $data   = $element->data;
-    my $text   = $data->[0] || $query->param($param) || '';
+    my $text   = defined($data->[0]) ? $data->[0] : $query->param($param);
     my $indent = $data->[1] || $query->param("${param}_indent") || 0;
     my $align  = $data->[2] || $query->param("${param}_align") || 'left';
 
@@ -141,7 +142,7 @@ if (!Krang.PoorTextLoaded) {
 // init function
 poortext_elements = new Array();
 poortext_init = function() {
-    // is poortext.js loaded ?
+    // is poortext_<BROWSER_ENGINE>.js loaded ?
     if (typeof PoorText == 'undefined') {
         setTimeout(poortext_init, 10);
         return;
@@ -150,12 +151,6 @@ poortext_init = function() {
     // deactivate the autoload handler
     PoorText.autoload = false;
 
-    // is poortext_<browser-specific>.js loaded ?
-    if (typeof PoorText.prototype.makeEditable == 'undefined') {
-        setTimeout(poortext_init, 10);
-        return;
-    }
-
     // language is a global config
     PoorText.config = {
         lang              : "$lang",
@@ -163,8 +158,34 @@ poortext_init = function() {
     };
 
     // make them all fields
-    poortext_elements.each(function(pt) {
-        new PoorText(pt[0], pt[1]);
+    poortext_elements.each(function(pts) {
+        pt = new PoorText(pts[0], pts[1]);
+
+        // add a preview handler for links and StoryLinks
+        // IE does dispatch no 'click' event on contenteditable elements
+        // so we use mouseup
+        pt.registerEventHandler('mousedown', 'krang_preview', function(e) {
+            if (e.target.nodeName.toLowerCase() != 'a') { return }
+            if (e.ctrlKey
+                || (Prototype.Browser.IE && e.button == 4)
+                || (!Prototype.Browser.IE && e.button == 1))
+              {
+                  var elm = e.target;
+                  if (elm.getAttribute('_poortext_tag') == 'a') {
+                      var storyID = elm.getAttribute('_story_id');
+                      if (storyID) {
+                          // StoryLink
+                          Krang.preview('story', storyID);
+                          Event.stop(e);
+                      } else {
+                          // other links
+                          var instance = Krang.instance;
+                          instance = instance.toLowerCase().replace(/[^a-z]/g, '' );
+                          window.open(elm.getAttribute('href'), instance);
+                      }
+                  }
+              }
+            }, false);
     });
 
     // finish with some global stuff
@@ -177,7 +198,7 @@ Krang.onload(function() {
 });
 END
 
-        $html .=<<'END';
+        $html .= <<'END';
 // save away the last focused PoorText field to avoid race conditions
 // and hide our popups
 Krang.ElementEditor.add_save_hook(function() {
@@ -264,7 +285,7 @@ sub freeze_data {
     my ($self, %arg) = @_;
     my $element = $arg{element};
     my $data    = $element->data || [];
-    my $sep     = $self->get_separator();
+    my $sep     = $self->field_separator();
     return join($sep, @$data);
 }
 
@@ -273,7 +294,7 @@ sub thaw_data {
     my ($element, $data) = @arg{qw(element data)};
 
     if ($data) {
-        my $sep = $self->get_separator();
+        my $sep = $self->field_separator();
         return $element->data([split(/\Q$sep/, $data)]);
     } else {
 
@@ -293,7 +314,7 @@ sub get_pt_config {
     for my $c (
         qw(
         type
-        special_char_bar    shortcut_for
+        special_char_bar
         command_button_bar  indent_size
         )
       )
@@ -313,6 +334,10 @@ sub get_pt_config {
     # add the commands spec
     my $cmd = $self->get_command_spec(%arg);
     push @conf, $cmd if $cmd;
+
+    # add shortcuts spec
+    my $shortcuts = $self->get_shortcut_spec(%arg);
+    push @conf, $shortcuts if $shortcuts;
 
     # if there's no text yet, we assume it's a newly added field,
     # hence we don't defer creating the IFrame (in browsers that
@@ -396,31 +421,75 @@ sub command_spec {
         basic => [
             qw(bold     italic      underline
               cut      copy        paste
-              add_html delete_html
+              add_html delete_html add_story_link
               redo     undo
-              help)
+              help     toggle_selectall)
         ],
         basic_with_special_chars => [
             qw(bold         italic      underline
               cut          copy        paste
-              add_html     delete_html
+              add_html     delete_html add_story_link
               redo         undo
-              specialchars help)
+              specialchars help        toggle_selectall)
         ],
         all => [
-            qw(bold          italic       underline
+            qw(bold         italic       underline
               strikethrough subscript    superscript
               cut           copy         paste
               align_left    align_center align_right justify
               indent        outdent
-              add_html      delete_html
+              add_html      delete_html  add_story_link
               redo          undo
-              specialchars  help)
+              specialchars  help         toggle_selectall)
         ],
     };
 }
 
-sub get_separator { return "\x{E000}" }
+sub get_shortcut_spec {
+    my ($self, %arg) = @_;
+
+    my $spec = $arg{element}->class->shortcut_for;
+
+    if ($spec) {
+        return 'shortcutFor: ' . JSON::Any->objToJson($spec);
+    } else {
+        return 'shortcutFor: '
+          . JSON::Any->objToJson(
+            {
+                bold             => 'ctrl_b',
+                italic           => 'ctrl_i',
+                underline        => 'ctrl_u',
+                subscript        => 'ctrl_d',
+                superscript      => 'ctrl_s',
+                strikethrough    => 'ctrl_t',
+                toggle_selectall => 'ctrl_a',
+                add_html         => 'ctrl_l',
+                delete_html      => 'ctrl_shift_l',
+                add_story_link   => 'ctrt_shift_s',
+                redo             => 'ctrl_y',
+                undo             => 'ctrl_z',
+                help             => 'ctrl_h',
+                cut              => 'ctrl_x',
+                copy             => 'ctrl_c',
+                paste            => 'ctrl_v',
+                specialchars     => 'ctrl_6',
+                align_left       => 'ctrl_q',
+                align_center     => 'ctrl_e',
+                align_right      => 'ctrl_r',
+                justify          => 'ctrl_w',
+                indent           => 'tab',
+                outdent          => 'shift_tab',
+                lsquo            => 'ctrl_4',
+                rsquo            => 'ctrl_5',
+                ldquo            => 'ctrl_2',
+                rdquo            => 'ctrl_3',
+                ndash            => 'ctrl_0',
+            }
+          );
+    }
+}
+
+sub field_separator { return "\x{E000}" }
 
 =head1 NAME
 
@@ -468,13 +537,13 @@ or an array or command names. The pre-cooked sets are:
                                     cut      copy        paste
                                     add_html delete_html
                                     redo     undo
-                                    help)
+                                    help     toggle_selectall)
                                ],
    basic_with_special_chars => [ qw(bold         italic      underline
                                     cut          copy        paste
                                     add_html     delete_html
                                     redo         undo
-                                    specialchars help)
+                                    specialchars help        toggle_selectall)
                                ],
    all                      => [ qw(bold          italic       underline
                                     strikethrough subscript    superscript
@@ -483,7 +552,7 @@ or an array or command names. The pre-cooked sets are:
                                     indent        outdent
                                     add_html      delete_html
                                     redo          undo
-                                    specialchars  help) ],
+                                    specialchars  help         toggle_selectall) ],
 
 Most of these commands should be self-evident. Some, however, are not:
 
@@ -533,6 +602,7 @@ is:
     toggle_selectall  => 'ctrl_a',
     add_html          => 'ctrl_l',
     delete_html       => 'ctrl_shift_l',
+    add_story_link    => 'ctrt_shift_s',
     redo              => 'ctrl_y',
     undo              => 'ctrl_z',
     help              => 'ctrl_h',
@@ -558,6 +628,13 @@ is:
 
 If the commands 'indent' and 'outdent' are configured, this option
 specifies the number of pixels to indent and outdent. Defaults to 20.
+
+=item toggle_selectall
+
+This command is only accessible via the keyboard using the default
+shortcut Ctrl-a.  PoorText implements this command as a toggle. When
+deselecting, the original position of the cursor or the original
+selection is restituted.
 
 =back
 
