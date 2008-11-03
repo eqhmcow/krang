@@ -255,15 +255,8 @@ Object.extend(PoorText.prototype, {
         for (type in events) {
             this.observe(type, 'builtin', this[events[type]], true);
         }
-
-        // Hook in user-provided event handlers
-        this.registeredEventHandlers.each(function(h) {
-                      // type name handler useCapture
-            this.observe(h[0], h[1], h[2], h[3]);
-        }.bind(this));
     },
-
-
+         
     /**@ignore*/
     getStyle : function (style) {
         var node = PoorText.styleRE.test(style) ? this.styleNode : this.frameNode;
@@ -292,7 +285,7 @@ Object.extend(PoorText.prototype, {
             // Are we placed within a unselected elm
             if (elm = this._getLinkFromInside(range.commonAncestorContainer)) {
                 sel.selectAllChildren(elm);
-                this.storeSelection(range);
+                this.storeSelection();
                 return {elm : elm};
             }
             else {
@@ -301,7 +294,7 @@ Object.extend(PoorText.prototype, {
         }
         
         // Store selection
-        this.storeSelection(range);
+        this.storeSelection();
 
         // Try dblclick selection first (case 13)
         if (!elm) elm = this._getLinkFromOutside(sel, range.commonAncestorContainer.childNodes);
@@ -315,7 +308,7 @@ Object.extend(PoorText.prototype, {
         
         // Try <a>|...|</a> (case 14, 19, 21)
         if (!elm) elm = this._getLinkFromInside(range.startContainer);
-        
+
         return {elm : elm};
     },
 
@@ -339,15 +332,18 @@ Object.extend(PoorText.prototype, {
         return null;
     },
 
-    select : function(node) {
+    selectNode : function(node) {
         var range = document.createRange();
         range.selectNode(node);
+        var selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
         return range;
     },
 
-    getSelection : function(range) {
+    getSelection : function() {
         // maybe get range object
-        if (!range) range = this.window.getSelection().getRangeAt(0);
+        range = this.window.getSelection().getRangeAt(0);
 
         // get an index array used to find container nodes upon restoring
         var startContainer = PoorText.getRangeContainerIndices(range.startContainer, this.editNode);
@@ -365,8 +361,8 @@ Object.extend(PoorText.prototype, {
         return bookmark;
     },
 
-    storeSelection : function(range) {
-        var bookmark = this.getSelection(range);
+    storeSelection : function() {
+        var bookmark = this.getSelection();
 
         this.selection = bookmark;
 
@@ -374,11 +370,16 @@ Object.extend(PoorText.prototype, {
     },
 
     restoreSelection : function(bookmark) {
+
+        this.focusEditNode();
+
         if (!bookmark) {
             bookmark = this.selection;
         } else {
             this.selection = bookmark;
         }
+
+        if (!bookmark) { return; }
 
         // create a range from our bookmark
         var range = document.createRange();
@@ -423,6 +424,9 @@ Object.extend(PoorText.prototype, {
             PoorText.setClass(elm, 'pt-' + tag);
             elm.setAttribute('title', title);
         }
+
+        this.storeSelection();
+
         return elm;
     },
     
@@ -431,6 +435,7 @@ Object.extend(PoorText.prototype, {
         this.restoreSelection();
         this.document.execCommand('unlink', false, null);
         this.window.getSelection().collapseToEnd();
+        this.storeSelection();
     },
 
     /**
@@ -448,7 +453,13 @@ Object.extend(PoorText.prototype, {
         if (this.selectedAll) {
             if (this.selectedAllSelection) {
                 // restore the cursor position
-                this.selectedAllSelection = this.getSelection();
+                try {
+                    // fails when deleting the selection
+                    this.restoreSelection(this.selectedAllSelection);
+                } catch(e) {
+                    // hence restore
+                    this.storeSelection();
+                }
 
                 // reset state
                 this.selectedAll = false;
@@ -458,7 +469,7 @@ Object.extend(PoorText.prototype, {
         }
         else {
             // remember the cursor position
-            this.selectedAllSelection = selection.getRangeAt(0);
+            this.selectedAllSelection = this.getSelection();
             this.selectedAll = true;
 
             // selectall
@@ -485,6 +496,7 @@ Object.extend(PoorText.prototype, {
     markup : function(cmd) {
         this.restoreSelection();
         this.document.execCommand(cmd, false, null);
+        this.storeSelection();
     },
 
     /**@ignore*/
@@ -517,6 +529,7 @@ Object.extend(PoorText.prototype, {
 
     insertHTML : function(html, viaButton) {
         this.document.execCommand('insertHTML', false, html);
+        this.storeSelection();
     },
 
     undo : function() {
@@ -524,6 +537,7 @@ Object.extend(PoorText.prototype, {
     },
 
     afterShowHideSpecialCharBar : function() {
+        this.restoreSelection();
     },
 
     /**
@@ -689,6 +703,7 @@ Object.extend(PoorText.Popup, {
         if (PoorText.focusedObj) {
             PoorText.focusedObj.restoreSelection();
         }
+
     }
 });
 

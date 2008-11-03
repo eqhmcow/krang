@@ -326,7 +326,7 @@ Object.extend(PoorText.prototype, {
                 Event.stopObserving(this.srcElement, 'click');
             }
             srcElement.hide();
-            this.window.focus();
+            this.focusEditNode();
         }
     },
 
@@ -358,6 +358,7 @@ Object.extend(PoorText.prototype, {
             // Are we placed within a unselected elm
             if (elm = this._getLinkFromInside(range.commonAncestorContainer)) {
                 sel.selectAllChildren(elm);
+                this.storeSelection();
                 return {elm : elm};
             }
             else {
@@ -365,17 +366,19 @@ Object.extend(PoorText.prototype, {
             }
         }
         
-        // Try dblclick selection first (case 13)
+        // Store selection
+        this.storeSelection();
+
+        // Try dblclick selection first
         if (!elm) elm = this._getLinkFromOutside(sel, range.commonAncestorContainer.childNodes);
         
-        // Try |<a>...|</a> (case 15, 17, 23, 24)
+        // Try |<a>...|</a>
         if (!elm) elm = this._getLinkFromInside(range.endContainer.parentNode);
         
         // Try |<a>...</a>|, beginning in TextNode, ending in TextNode, a-tag is in between
-        //                   (case 16, 18, 20, 22, 
         if (!elm) elm = this._getLinkFromOutside(sel, sel.anchorNode.parentNode.childNodes);
         
-        // Try <a>|...|</a> (case 14, 19, 21)
+        // Try <a>|...|</a>
         if (!elm) elm = this._getLinkFromInside(range.startContainer);
 
         return {elm : elm};
@@ -401,15 +404,18 @@ Object.extend(PoorText.prototype, {
         return null;
     },
 
-    select : function(node) {
-        var range = this.document.createRange();
-        range.selectNode(node);
-        return range;
+    selectNode : function(node) {
+            var selection = this.window.getSelection();
+            var range = this.document.createRange();
+            range.selectNode(node);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            return range;
     },
 
-    getSelection : function(range) {
-        // maybe get range object
-        if (!range) range = this.window.getSelection().getRangeAt(0);
+    getSelection : function() {
+        // get range object
+        var range = this.window.getSelection().getRangeAt(0);
 
         // get an index array used to find container nodes upon restoring
         var startContainer = PoorText.getRangeContainerIndices(range.startContainer, this.editNode);
@@ -427,20 +433,19 @@ Object.extend(PoorText.prototype, {
         return bookmark;
     },
 
-    storeSelection : function(range) {
-        var bookmark = this.getSelection(range);
-
-        this.selection = bookmark;
-
-        return bookmark;
+    storeSelection : function() {
+        return this.selection = this.getSelection();
     },
 
     restoreSelection : function(bookmark) {
+        // pass it around
         if (!bookmark) {
             bookmark = this.selection;
         } else {
             this.selection = bookmark;
         }
+
+        if (!bookmark) { return; }
 
         // create a range from our bookmark
         var range = this.document.createRange();
@@ -482,13 +487,16 @@ Object.extend(PoorText.prototype, {
             PoorText.setClass(elm, 'pt-' + tag);
             elm.setAttribute('title', title);
         }
+
+        this.storeSelection();
+
         return $(elm);
     },
     
     /**@ignore*/
     doDeleteHTML :function() {
         this.document.execCommand('unlink', false, null);
-        this.window.getSelection().collapseToEnd();
+        this.window.getSelection().collapseToStart();
     },
 
     /**
@@ -505,7 +513,13 @@ Object.extend(PoorText.prototype, {
         
         if (this.selectedAll) {
             // restore the cursor position
-            this.restoreSelection(this.selectedAllSelection);
+            try {
+                // fails when deleting the selection
+                this.restoreSelection(this.selectedAllSelection);
+            } catch(e) {
+                // hence restore
+                this.storeSelection();
+            }
 
             // clean up
             this.selectedAll = false;
@@ -515,13 +529,7 @@ Object.extend(PoorText.prototype, {
         else {
             // store the cursor position
             this.selectedAllSelection = this.getSelection();
-            
-            // select the editNode's children
-            range = this.document.createRange();
-            range.selectNodeContents(this.editNode);
-            selection.removeAllRanges();
-            selection.addRange(range);
-            
+            this.document.execCommand('selectall', false, null);
             this.selectedAll = true;
 
             this.observe('click', 
@@ -554,7 +562,7 @@ Object.extend(PoorText.prototype, {
     /**@ignore*/
     selectionCollapseToEnd : function () {
         var selection = this.window.getSelection();
-        if (selection) selection.collapseToEnd();
+        if (selection) selection.collapseToStart();
     },
 
     /**
@@ -607,7 +615,6 @@ Object.extend(PoorText.prototype, {
 	    }.bind(this), 1);
 	}
     }
-
 });
 
 /**
@@ -729,7 +736,7 @@ Object.extend(PoorText.Popup, {
                [nsIAutoCompletePopup::selectedIndex]" nsresult: "0x8057001e
                (NS_ERROR_XPC_JS_THREW_STRING)" location: ...
             */
-            try { PoorText.focusedObj.window.focus() } catch(e) {} // keep Gecko happy
+            try { PoorText.focusedObj.focusEditNode() } catch(e) {} // keep Gecko happy
         }.bind(this), 50);
     }
 });

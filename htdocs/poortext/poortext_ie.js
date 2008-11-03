@@ -126,12 +126,6 @@ Object.extend(PoorText.prototype, {
         for (type in events) {
             this.observe(type, 'builtin', this[events[type]], true);
         }
-
-        // Hook in user-provided event handlers
-        this.registeredEventHandlers.each(function(h) {
-                      // type name handler useCapture
-            this.observe(h[0], h[1], h[2], h[3]);
-        }.bind(this));
     },
 
     /**@ignore*/
@@ -176,13 +170,29 @@ Object.extend(PoorText.prototype, {
         return {elm : elm};
     },
 
-    storeSelection : function(range) {
-        if (!range) range = document.selection.createRange();
-        this.selection = range;
+    selectNode : function(node) {
+        var range = this.getSelection();
+        range.moveToElementText(node);
+        range.select();
+        return range;
     },
 
-    restoreSelection : function() {
-        if (this.selection) this.selection.select();
+    getSelection : function() {
+       return document.selection.createRange();
+    },
+
+    storeSelection : function() {
+        return this.selection = this.getSelection();
+    },
+
+    restoreSelection : function(range) {
+            if (!range) {
+                range = this.selection;
+            } else {
+                this.selection = range;
+            }
+            range.select();
+            return range;
     },
 
     // Stolen from FCKeditor
@@ -245,8 +255,6 @@ Object.extend(PoorText.prototype, {
        @private
     */
     toggleSelectAll : function() {
-        
-        var range = document.selection.createRange();
 
         if (this.selectedAll) {
             // restore the cursor position
@@ -259,7 +267,7 @@ Object.extend(PoorText.prototype, {
             
         } else {
             // remember the cursor position
-            this.selectedAllSelection = document.selection.createRange();
+            this.selectedAllSelection = this.getSelection();
             this.selectedAll = true;
             
             // select all
@@ -278,7 +286,7 @@ Object.extend(PoorText.prototype, {
                          function(e) {
                 if (e.ctrlKey == true) return;
                 // gimmi the focus for edit commands
-                this.editNode.focus();
+                this.focusEditNode();
                 this.selectedAll = false;
                 this.stopObserving('click', 'toggleSelectAll');
                 this.stopObserving('keydown', 'toggleSelectAll');
@@ -290,10 +298,10 @@ Object.extend(PoorText.prototype, {
     /**@ignore*/
     markup : function(cmd) {
         // don't use the bookmark here: it messes up cut/copy selections
-        this.editNode.focus();
+        this.focusEditNode();
         
         // get the selected range
-        var range = document.selection.createRange();
+        var range = this.getSelection();
         
         // mark it up
         this.document.execCommand(cmd, false, null);
@@ -336,12 +344,12 @@ Object.extend(PoorText.prototype, {
         var range;
         if (viaButton) {
             setTimeout(function() {
-                this.editNode.focus();
-                range = document.selection.createRange();
+                this.focusEditNode();
+                range = this.getSelection();
                 range.pasteHTML(html);
             }.bind(this),10);
         } else {
-            range = document.selection.createRange();
+            range = this.getSelection();
             range.pasteHTML(html);
         }
     },
@@ -351,7 +359,7 @@ Object.extend(PoorText.prototype, {
     },
 
     afterShowHideSpecialCharBar : function() {
-        this.editNode.focus();
+            this.focusEditNode();
     },
 
     onCut : function(event) {
@@ -364,7 +372,7 @@ Object.extend(PoorText.prototype, {
 
     _onCutCopy : function(event) {
         // remember internal cut or copy
-        var range = document.selection.createRange();
+        var range = this.getSelection();
         if (range) {
             PoorText._internalPasteText = range.text;
         }
@@ -376,7 +384,7 @@ Object.extend(PoorText.prototype, {
         if (clipText == PoorText._internalPasteText) return;
         
         // extermal paste: copy text only
-        var range = document.selection.createRange();
+        var range = this.getSelection();
         range.pasteHTML(window.clipboardData.getData('Text'));
         Event.stop(event);
     }
