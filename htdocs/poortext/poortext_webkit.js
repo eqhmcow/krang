@@ -472,6 +472,12 @@ Object.extend(PoorText.prototype, {
             this.selectedAllSelection = this.getSelection();
             this.selectedAll = true;
 
+//            // select the editNode's children
+//            range = this.document.createRange();
+//            range.selectNodeContents(this.editNode);
+//            selection.removeAllRanges();
+//            selection.addRange(range);
+
             // selectall
             document.execCommand('selectall', false, null);
             
@@ -631,33 +637,33 @@ PoorText.spanFilter = function(editNode) {
         ['text-decoration', 'underline'   ],
         ['text-decoration', 'line-through'],
         ['vertical-align',  'sub',        ], 
-        ['vertical-align',  'super',      ]
+        ['vertical-align',  'super',      ],
+        ['font-weight',     'normal'      ]
     ]);
 
-    // replace with our own inline CSS
-    PoorText.replaceSpan(editNode, function(oldSpan, newNode) {
-
+    $$('span').each(function(span) {
+            console.log(span);
         var newStyles = 0;
         var styles = {};
 
         // create our own inline CSS
         spanStyles.each(function(spec) {
-            if (oldSpan.getStyle(spec[0]) == spec[1]) {
+            if (span.getStyle(spec[0]) == spec[1]) {
                 styles[spec[0].camelize()] = spec[1];
                 newStyles = 1;
             }
         });
 
         // get rid of old inline CSS
-        oldSpan.removeAttribute('style');
+        span.removeAttribute('style');
 
         // maybe set new style
         if (newStyles) {
             // set our styles
-            oldSpan.setStyle(styles);
+            span.setStyle(styles);
+        } else {
+            PoorText.replace_with_children(span);
         }
-
-        return oldSpan;
     });
 
     return editNode;
@@ -675,7 +681,7 @@ PoorText.replace_with_children = function(node, nodes) {
 
 PoorText.pasteFilters = [
     PoorText.inFilterWebKit,
-//    PoorText.spanFilter, // does not work as intended :(
+    PoorText.spanFilter, // does not work as intended :(
     PoorText.addUrlProtection,
     PoorText.blockLevelPasteFilter,
 ];
