@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Integrated PoorText with StoryLink interface. [Bodo Schulze]
+
+=item *
+
 Added the C<ErrorNotificationEmail> configuration directive that can contain an optional
 comma-separated list of email address that will be sent an email with details about
 any Internal Server Errors that occur. [Michael Peters]
