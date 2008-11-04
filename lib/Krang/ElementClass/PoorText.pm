@@ -9,6 +9,8 @@ use Krang::ClassLoader base => 'ElementClass';
 use Krang::ClassLoader Log          => qw(critical);
 use Krang::ClassLoader Message      => qw(add_message);
 use Krang::ClassLoader Localization => qw(localize);
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'URL';
 use Krang::ClassLoader 'Markup::Gecko';
 use Krang::ClassLoader 'Markup::IE';
 use Krang::ClassLoader 'Markup::WebKit';
@@ -266,17 +268,76 @@ $data->[0]
 END
 }
 
+#
+# Called by Krang::Story::linked_stories() to build the asset list at publish time
+#
+sub linked_stories {
+    my ($self, %args) = @_;
+
+    my ($element, $publisher, $story_links) = @args{qw(element publisher story_links)};
+
+    # pass them to template_data() via publish context
+    my %context = $publisher->publish_context();
+    my $url_for = $context{poortext_story_links} || {};
+
+    # the elements HTML
+    my $html = ${$element->data()}[0];
+
+    # get story link IDs out of '_story_id' attrib
+    while ($html =~ s/_story_id="(\d+)"//g) {
+        my $story;
+        my $id = $1;
+        if ($id && (($story) = pkg('Story')->find(story_id => $1))) {
+
+            # for asset list building: fill story_links hashref
+            $story_links->{$story->story_id} = $story;
+
+            # for template_data(): use the current URL of the linked story ID
+            $url_for->{$story->story_id} = pkg('URL')->real_url(
+                object    => $story,
+                publisher => $publisher
+            );
+        }
+    }
+
+    # remember us
+    $publisher->publish_context(poortext_story_links => $url_for);
+}
+
 sub template_data {
     my ($self, %arg) = @_;
-    my ($element) = @arg{qw(element)};
 
+    my ($element, $publisher) = @arg{qw(element publisher)};
+
+    # get StoryLinks from publish context
+    my %context = $publisher->publish_context();
+    my $url_for = $context{poortext_story_links};
+
+    # get the element's HTML
     my $data = $element->data;
+    my $html = $data->[0];
 
-    return $data->[0] if $element->class->type eq 'text';
+    if (%$url_for) {
 
+        # fix the StoryLinks' HREF according to current URL
+        while (
+            $html =~ s/_story_id="(\d+)" [^>]+ href="[^"]+"
+                         /'href="' . $url_for->{$1} . '"'
+                         /exg
+          )
+        {
+
+            # it's all done in the head
+        }
+    }
+
+    # return for 'text' flavour
+    return $html if $element->class->type eq 'text';
+
+    # return for 'textarea' flavour
     return <<END;
 <div style="padding-left: $data->[1]; padding-right: $data->[1]; text-align: $data->[2]">
-  $data->[0]
+  $html
 </div>
 END
 }

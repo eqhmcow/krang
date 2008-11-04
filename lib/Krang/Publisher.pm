@@ -1971,7 +1971,7 @@ sub _build_asset_list {
         );
         push @asset_list, $o if ($publish_ok);
         if ($check_links) {
-            push @check_list, $o->linked_stories;
+            push @check_list, $o->linked_stories(publisher => $self);
             push @check_list, $o->linked_media;
         }
     }

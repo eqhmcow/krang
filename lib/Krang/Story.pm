@@ -1717,7 +1717,7 @@ or bin/ scripts make calls to C<find()>!
 sub _search_text_to_phrases {
     my ($pkg, $text) = @_;
     return () unless (defined $text);
-    
+
     # first add any quoted text as multi-word phrase(s)
     my @phrases;
     while ($text =~ s/([\'\"])([^\1]*?)\1//) {
@@ -2395,7 +2395,7 @@ story is linked more than once.
 =cut
 
 sub linked_stories {
-    my $self    = shift;
+    my ($self, %arg) = @_;
     my $element = $self->element;
 
     # find StoryLinks and index by id
@@ -2406,7 +2406,15 @@ sub linked_stories {
             and $story = $_->data)
         {
             $story_links{$story->story_id} = $story;
+        } elsif ($_->class->isa(pkg('ElementClass::PoorText'))) {
+            use Krang::Log qw(critical);
+            $_->class->linked_stories(
+                element     => $_,
+                publisher   => $arg{publisher},
+                story_links => \%story_links
+            );
         }
+
     }
     $element;
 
