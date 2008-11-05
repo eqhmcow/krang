@@ -105,9 +105,9 @@ sub input_form {
 
     # data has multiple fields: HTML INDENT ALIGN
     my $data   = $element->data;
-    my $text   = defined($data->[0]) ? $data->[0] : $query->param($param);
-    my $indent = $data->[1] || $query->param("${param}_indent") || 0;
-    my $align  = $data->[2] || $query->param("${param}_align") || 'left';
+    my $text   = $data->[0];
+    my $indent = $data->[1] || 0;
+    my $align  = $data->[2] || 'left';
 
     # get some setup stuff
     my $lang = localize('en');
