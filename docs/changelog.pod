@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added convenience method C<root_category()> to
+L<Krang::Category>. [Bodo Schulze]
+
+=item *
+
 Integrated PoorText with StoryLink interface. [Bodo Schulze]
 
 =item *

@@ -630,9 +630,9 @@ SQL
     return 0;
 }
 
-=item * @categories = Krang::Category->ancestors()
+=item * @categories = $category->ancestors()
 
-=item * @category_ids = Krang::Category->ancestors( ids_only => 1 )
+=item * @category_ids = $category->ancestors( ids_only => 1 )
 
 Will return array of Krang::Category objects or category_ids of parents and
 parents of parents etc
@@ -663,6 +663,24 @@ sub ancestors {
     }
     return @ancestors;
 }
+
+=item * $root_category = $category->root_category()
+
+Will return the root category of $category or $category itself if it
+is the root category.
+
+=cut
+
+sub root_category {
+    my ($self) = @_;
+
+    # it's me
+    return $self unless $self->parent;
+
+    # look it up
+    return ($self->ancestors)[-1];
+}
+
 
 =item * @categories = $category->descendants()
 
