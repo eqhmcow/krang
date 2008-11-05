@@ -155,13 +155,18 @@ to be cleaned.
 sub remove_junk {
     my ($self, $html) = @_;
 
-    $$html =~ s/<([^>]+)>\s*<\/\1>//gs;        # remove tags w/o content inside
-    $$html =~ s/<\/([^>]+)>(\s*)<\1>/$2/gs;    # remove adjacent closing/opening tags
-    $$html =~ s/(\s|&nbsp;)+/ /gs;             # remove excess whitespace
-    $$html =~ s/^\s+//sg;                      # remove leading whitespace
-    $$html =~ s/\s+$//sg;                      # remove trailing whitespace
-    $$html =~ s/^(<\/?br[^>]*>)+//gsi;         # remove leading BR tags
-    $$html =~ s/(<\/?br[^>]*>)+$//gsi;         # remove trailing BR tags
+    # remove adjacent closing/opening tags and keep going (but
+    # preserve whitespace)
+    1 while $$html =~ s/<\/([^>]+)>(\s*)<\1>/$2/gs;
+
+    # remove tags w/o content inside
+    1 while $$html =~ s/<([^>]+)><\/\1>//gs;
+
+    $$html =~ s/(\s|&nbsp;)+/ /gs;        # remove excess whitespace
+    $$html =~ s/^\s+//sg;                 # remove leading whitespace
+    $$html =~ s/\s+$//sg;                 # remove trailing whitespace
+    $$html =~ s/^(<\/?br[^>]*>)+//gsi;    # remove leading BR tags
+    $$html =~ s/(<\/?br[^>]*>)+$//gsi;    # remove trailing BR tags
 }
 
 1;
