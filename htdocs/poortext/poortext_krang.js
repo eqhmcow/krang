@@ -6,6 +6,8 @@ PoorText.prototype.addStoryLink = function() {
     // No link && no selection
     if (sel.msg == 'showAlert') {
         this.notify("You have to select some text to insert a StoryLink.");
+        this.focusEditNode();
+        this.restoreSelection();
         return;
     } 
     
