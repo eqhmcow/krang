@@ -37,5 +37,6 @@ PoorText.L10N.de = {
     "Add Story Link"    : "StoryLink hinzufügen",
     "You didn't select any HTML element to delete!" : "Sie haben kein HTML Element zum Löschen markiert!",
     "You have to select some text to insert a HTML element." : "Markieren Sie zunächst Text, um ein HTML Element einzufügen.",
-    "The 'ENTER' key you pressed is not allowed in this context!" : "Die ENTER Taste kann in diesem Textfeld nicht verwendet werden."
+    "The 'ENTER' key you pressed is not allowed in this context!" : "Die ENTER Taste kann in diesem Textfeld nicht verwendet werden.",
+    "You have to select some text to insert a StoryLink." : "Markieren Sie zunächst Text, um einen StoryLink einzufügen."
 };
