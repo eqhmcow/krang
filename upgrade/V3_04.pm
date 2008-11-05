@@ -52,6 +52,9 @@ sub per_installation {
         htdocs/help/template_archived.html
         htdocs/help/user.html
         htdocs/help/workspace.html
+        src/Apache-MOD_PERL/mod_ssl-2.8.28-1.3.37.tar.gz
+        src/Apache-MOD_PERL/mm-1.4.0.tar.gz
+        src/Apache-MOD_PERL/apache_1.3.37.tar.gz
         src/Digest-MD5-2.23.tar.gz
         src/HTML-Parser-3.36.tar.gz
         src/HTML-PopupTreeSelect-Dynamic-1.3.tar.gz

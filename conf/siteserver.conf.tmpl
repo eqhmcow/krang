@@ -70,6 +70,8 @@ AddModule mod_setenvif.c
 </tmpl_if>
 AddModule mod_perl.c
 
+# Disable HTTP TRACE method [http://www.kb.cert.org/vuls/id/867593]
+TraceEnable off
 
 #
 # To use server-parsed HTML files
