@@ -4,6 +4,7 @@ use strict;
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
 use FindBin qw($RealBin);
 use Config;
+use DateTime::TimeZone::Local;
 
 BEGIN {
 
@@ -71,5 +72,9 @@ push(@ARGV, '-o', 'limit nr files=1024');
 
 # setup log
 push(@ARGV, '-o', 'error log=' . catfile(KrangRoot, "logs", 'ftp.log'));
+
+# propagate machine's timezone to FTP server
+my $tz = DateTime::TimeZone::Local->TimeZone;
+push(@ARGV, '-o', 'time zone=' . $tz->name) if $tz;
 
 pkg('FTP::Server')->run;

@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in FTP code where timezone used by FTP server (for file creation
+dates, logging, etc.) was always UTC regardless of the local machine's
+timezone (causing inconsistency in Krang dates and log entries). [Noam Weinstein]
+
+=item *
+
 Made sure a media is reported as unpublished after changing its
 category. [Bodo Schulze]
 
