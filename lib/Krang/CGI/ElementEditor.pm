@@ -133,13 +133,13 @@ substitute the 'jump_to' value for 'path' in query and return to edit.
 This mode should save, hack off the last part of path (s!/.*$!!) and
 return to edit.
 
-=item save_and_find_media
+=item save_and_find_media_link
 
 This mode is called with a 'jump_to' parameter set.  It must save,
 substitute the 'jump_to' value for 'path' in query and return to the
 find_media_link mode.
 
-=item save_and_find_story
+=item save_and_find_story_link
 
 This mode is called with a 'jump_to' parameter set.  It must save,
 substitute the 'jump_to' value for 'path' in query and return to the
@@ -162,6 +162,10 @@ Must return the element currently being edited from the session.
 Must return the name of the C<.pl> script in htdocs directory which
 uses this module. This allows the C<action> attribute for forms
 to be filled in.
+
+=item _save
+
+This method must save the query to the underlying object.
 
 =back
 
@@ -192,16 +196,16 @@ sub setup {
     my $self = shift;
     $self->mode_param('rm');
     $self->run_modes(
-        add             => 'add',
-        delete_children => 'delete_children',
-        reorder         => 'reorder',
-        delete_element  => 'delete_element',
+        add                      => 'add',
+        delete_children          => 'delete_children',
+        reorder                  => 'reorder',
+        delete_element           => 'delete_element',
         save_and_find_story_link => 'save_and_find_story_link',
-        find_story_link => 'find_story_link',
-        select_story    => 'select_story',
+        find_story_link          => 'find_story_link',
+        select_story             => 'select_story',
         save_and_find_media_link => 'save_and_find_media_link',
-        find_media_link => 'find_media_link',
-        select_media    => 'select_media',
+        find_media_link          => 'find_media_link',
+        select_media             => 'select_media',
     );
 }
 
