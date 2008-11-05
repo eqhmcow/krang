@@ -98,6 +98,7 @@ use Krang::ClassLoader Conf => qw(AvailableLanguages KrangRoot);
 use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader 'Info';
 use JavaScript::Minifier::XS qw(minify);
+use IO::Zlib;
 
 # list of files relative to /htdocs
 my @files = qw(
@@ -152,7 +153,8 @@ foreach my $lang (@langs) {
     close($JS);
 
     # now create a compressed version
-    system("gzip -c $combined_file > $combined_file.gz") == 0 or die "Could not compress file $combined_file!";
+    my $JS_GZ = IO::Zlib->new("$combined_file.gz", "rb") or die "Could not open $combined_file.gz to write compressed: $!";
+    print $JS_GZ $js_contents;
 }
 
 print " Done.\n";
