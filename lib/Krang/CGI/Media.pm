@@ -100,8 +100,6 @@ sub setup {
               save_and_bulk_edit
               save_and_leave_bulk_edit
               save_and_change_bulk_edit_sep
-              save_and_find_story_link
-              save_and_find_media_link
               view
               view_log
               view_version
@@ -1406,44 +1404,6 @@ sub save_and_leave_bulk_edit {
 
     $self->query->param(bulk_edit => 0);
     return $self->edit();
-}
-
-=item save_and_find_story_link
-
-This mode saves the current element data to the session and goes to
-the find_story_link mode in Krang::CGI::ElementEditor.
-
-=cut
-
-sub save_and_find_story_link {
-    my $self   = shift;
-    my $output = $self->_save();
-    return $output if $output;
-
-    my $query = $self->query;
-    my $jump_to = $query->param('jump_to') || croak("Missing jump_to on save_and_find_story_link!");
-
-    $query->param(path => $jump_to);
-    return $self->find_story_link();
-}
-
-=item save_and_find_media_link
-
-This mode saves the current element data to the session and goes to
-the find_media_link mode in Krang::CGI::ElementEditor.
-
-=cut
-
-sub save_and_find_media_link {
-    my $self   = shift;
-    my $output = $self->_save();
-    return $output if $output;
-
-    my $query = $self->query;
-    my $jump_to = $query->param('jump_to') || croak("Missing jump_to on save_and_find_media_link!");
-
-    $query->param(path => $jump_to);
-    return $self->find_media_link();
 }
 
 =item save_and_go_up

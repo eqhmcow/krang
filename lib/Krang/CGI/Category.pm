@@ -68,8 +68,6 @@ sub setup {
         save_and_bulk_edit            => 'save_and_bulk_edit',
         save_and_leave_bulk_edit      => 'save_and_leave_bulk_edit',
         save_and_change_bulk_edit_sep => 'save_and_change_bulk_edit_sep',
-        save_and_find_story_link      => 'save_and_find_story_link',
-        save_and_find_media_link      => 'save_and_find_media_link',
         autocomplete                  => 'autocomplete',
         prepare_copy                  => 'prepare_copy',
         execute_copy                  => 'execute_copy',
@@ -460,54 +458,6 @@ sub save_and_leave_bulk_edit {
 
     $self->query->param(bulk_edit => 0);
     return $self->edit();
-}
-
-=item save_and_find_story_link
-
-This mode saves the current element data to the session and goes to
-the find_story_link mode in Krang::CGI::ElementEditor.
-
-=cut
-
-sub save_and_find_story_link {
-    my $self = shift;
-
-    # call internal _save and return output from it on error
-    my $output = $self->_save();
-    return $output if length $output;
-
-    # get target
-    my $query   = $self->query;
-    my $jump_to = $query->param('jump_to');
-    croak("Missing jump_to on save_and_find_story_link!") unless $jump_to;
-
-    # set target and show find screen
-    $query->param(path => $jump_to);
-    return $self->find_story_link();
-}
-
-=item save_and_find_media_link
-
-This mode saves the current element data to the session and goes to
-the find_media_link mode in Krang::CGI::ElementEditor.
-
-=cut
-
-sub save_and_find_media_link {
-    my $self = shift;
-
-    # call internal _save and return output from it on error
-    my $output = $self->_save();
-    return $output if length $output;
-
-    # get target
-    my $query   = $self->query;
-    my $jump_to = $query->param('jump_to');
-    croak("Missing jump_to on save_and_find_media_link!") unless $jump_to;
-
-    # set target and show find screen
-    $query->param(path => $jump_to);
-    return $self->find_media_link();
 }
 
 =item save_and_go_up

@@ -196,8 +196,10 @@ sub setup {
         delete_children => 'delete_children',
         reorder         => 'reorder',
         delete_element  => 'delete_element',
+        save_and_find_story_link => 'save_and_find_story_link',
         find_story_link => 'find_story_link',
         select_story    => 'select_story',
+        save_and_find_media_link => 'save_and_find_media_link',
         find_media_link => 'find_media_link',
         select_media    => 'select_media',
     );
@@ -465,6 +467,63 @@ sub element_bulk_edit {
     );
 
     return 1;
+}
+
+=item save_and_find_story_link
+
+This mode saves the current element data to the session and goes to
+the find_story_link mode.  Classes inheriting these methods, including
+L<Krang::CGI::Story>, L<Krang::CGI::Media> and
+L<Krang::CGI::Category>, are supposed to implement the underlying
+_save() method.
+
+=cut
+
+sub save_and_find_story_link {
+    my $self = shift;
+
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    if (length $output) {
+        $self->add_json_header(saveError => 1);
+        return $output;
+    }
+
+    # get target
+    my $query   = $self->query;
+    my $jump_to = $query->param('jump_to');
+    croak("Missing jump_to on save_and_find_story_link!") unless $jump_to;
+
+    # set target and show find screen
+    $query->param(path => $jump_to);
+    return $self->find_story_link();
+}
+
+=item save_and_find_media_link
+
+This mode saves the current element data to the session and goes to
+the find_media_link mode. Classes inheriting these methods, including
+L<Krang::CGI::Story>, L<Krang::CGI::Media> and
+L<Krang::CGI::Category>, are supposed to implement the underlying
+_save() method.
+
+=cut
+
+sub save_and_find_media_link {
+    my $self = shift;
+
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    # get target
+    my $query   = $self->query;
+    my $jump_to = $query->param('jump_to');
+    croak("Missing jump_to on save_and_find_media_link!") unless $jump_to;
+
+    # set target and show find screen
+    $query->param(path => $jump_to);
+    return $self->find_media_link();
 }
 
 sub find_story_link {
