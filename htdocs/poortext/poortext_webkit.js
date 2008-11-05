@@ -501,6 +501,10 @@ Object.extend(PoorText.prototype, {
     /**@ignore*/
     markup : function(cmd) {
         this.restoreSelection();
+        // as of WebKit 3.1 'superscript' and 'subscript' don't toggle
+        if ((cmd == 'subscript' || cmd == 'superscript') && this.queryCommandState(cmd)) {
+            cmd = 'removeformat';
+        }
         this.document.execCommand(cmd, false, null);
         this.storeSelection();
     },
