@@ -2,10 +2,14 @@ package Krang::Markup::WebKit;
 use warnings;
 use strict;
 
+use Krang::ClassLoader base => qw(Markup);
+
+use Krang::ClassLoader Log => qw(debug);
+
 use HTML::TreeBuilder;
 use HTML::Element;
-
-use Krang::ClassLoader base => qw(Markup);
+use HTML::TokeParser;
+use Data::Dumper;
 
 =head1 NAME
 
@@ -34,12 +38,14 @@ in the DB to a version understood by WebKit's WYSIWYG commands.
 
 sub db2browser_map {
     return {
-        strong => {'font-weight'     => 'bold'},
-        em     => {'font-style'      => 'italic'},
-        u      => {'text-decoration' => 'underline'},
-        strike => {'text-decoration' => 'line-through'},
-        sub    => {'vertical-align'  => 'sub'},
-        sup    => {'vertical-align'  => 'super'}
+
+        # markup => inline CSS for SPAN.Apple-style-span
+        strong => 'font-weight: bold',
+        em     => 'font-style: italic',
+        u      => 'text-decoration: underline',
+        strike => 'text-decoration: line-through',
+        sub    => 'vertical-align: sub',
+        sup    => 'vertical-align: super'
     };
 }
 
@@ -47,18 +53,22 @@ sub db2browser_map {
 
 This method returns a list of markup mappings from the version
 understood by WebKit's WYSIWYG commands to the version stored in the
-DB.
+DB. 
 
 =cut
 
 sub browser2db_map {
     return {
-        'bold'         => 'strong',
-        'italic'       => 'em',
-        'underline'    => 'u',
-        'line-through' => 'strike',
-        'sub'          => 'sub',
-        'super'        => 'sup',
+
+        # canonical form of inline CSS => markup tag
+        font_weight_normal           => 'just_a_placeholder_for_true',
+        font_weight_bold             => 'strong',
+        font_style_normal            => 'just_a_placeholder_for_true',
+        font_style_italic            => 'em',
+        text_decoration_underline    => 'u',
+        text_decoration_line_through => 'strike',
+        vertical_align_sub           => 'sub',
+        vertical_align_super         => 'sup',
     };
 }
 
@@ -75,65 +85,35 @@ those mappings applied to it.
 sub db2browser {
     my ($pkg, %arg) = @_;
 
-    # build the tag regexp
-    my $map    = $pkg->db2browser_map();
-    my $tmp    = '^(?:' . join('|', keys(%$map)) . ')$';
-    my $regexp = qr($tmp);
+    my $html      = $arg{html};
+    my $style_for = $pkg->db2browser_map();
+    my @open_tags = ();
+    my @output    = ();
 
-    # build the tree
-    my $t = HTML::TreeBuilder->new_from_content($arg{html});
-    $t->elementify;
+    my $tmp = '^(' . join('|', keys(%$style_for)) . ')$';
+    my $tag_regexp = qr($tmp);
 
-    for my $orig ($t->look_down("_tag" => $regexp)) {
+    # proceed by tokens
+    my $p = HTML::TokeParser->new(\$html);
 
-        # remember style for the will-be-span
-        my $style = $map->{$orig->tag};
-        my %style = ();
-        if ($style) {
-            %style = %$style;
+    while (my $token = $p->get_token) {
+
+        debug(__PACKAGE__ . "->db2browser() - Token:\n  " . Dumper($token));
+
+        if ($token->[0] eq 'S') {
+            $pkg->db2browser_start_tag($token, \@open_tags, \@output, $tag_regexp);
+        } elsif ($token->[0] eq 'E') {
+            $pkg->db2browser_end_tag($token, \@open_tags, \@output, $tag_regexp);
+        } elsif ($token->[0] eq 'T') {
+            $pkg->db2browser_text_node($token, \@open_tags, \@output, $style_for);
         } else {
-            next;
+
+            # discard comments, CData and processor instructions
         }
-
-        my $child          = undef;
-        my $content_parent = $orig;
-
-        # maybe first child of this markup tag is another markup tag;
-        # if so, pack it in the same span with multiple style properties
-        for my $child (
-            $content_parent->look_down(
-                sub {
-                    $_[0]->tag ne $content_parent->tag and $_[0]->tag =~ $regexp;
-                }
-            )
-          )
-        {
-
-            # consider only first child
-            last unless $child->pindex == 0;
-
-            # remember additional style for will-be-span
-            %style = (%style, %{$map->{$child->tag}});
-
-            # recurse
-            $content_parent = $child;
-        }
-
-        # build the span's style attrib
-        my $new_style = join('; ', map { "$_: $style{$_}" } keys %style);
-
-        # create the span,
-        my $repl = HTML::Element->new('span', 'style' => $new_style);
-
-        # replace original tag(s) with span and insert its/their content
-        $orig->replace_with($repl);
-        $repl->push_content($content_parent->content_list);
-
-        # cleanup
-        $orig->delete();
     }
 
-    return $pkg->tidy_up_after_treebuilder(tree => $t);
+    # put the pieces together
+    return $html = join('', @output);
 }
 
 =item pkg('Markup::WebKit')->browser2db(html => $html)
@@ -149,66 +129,186 @@ with those mappings applied.
 sub browser2db {
     my ($pkg, %arg) = @_;
 
-    # build the tag regexp
-    my $map    = $pkg->browser2db_map();
-    my $tmp    = '(' . join('|', keys(%$map)) . ')';
-    my $regexp = qr($tmp);
+    my $html       = $arg{html};
+    my $markup_for = $pkg->browser2db_map();
+    my @open_tags  = ();
+    my @output     = ();
 
-    # build the tree
-    my $t = HTML::TreeBuilder->new_from_content($arg{html});
-    $t->elementify;
+    # proceed by tokens
+    my $p = HTML::TokeParser->new(\$html);
 
-    # look for SPAN tags with a style attrib
-    for my $span ($t->look_down("_tag" => "span",)) {
+    while (my $token = $p->get_token) {
 
-        my $repl  = undef;
-        my $child = undef;
-        my $style = $span->attr('style');
+        debug(__PACKAGE__ . "->browser2db() - Token:\n  " . Dumper($token));
 
-        # remove SPANs with empty style attrib
-        unless ($style) {
-            $span->replace_with($span->content_list)->delete;
-            next;
+        if ($token->[0] eq 'S') {
+            $pkg->browser2db_start_tag($token, \@open_tags, \@output, $markup_for);
+        } elsif ($token->[0] eq 'E') {
+            $pkg->browser2db_end_tag($token, \@open_tags, \@output);
+        } elsif ($token->[0] eq 'T') {
+            $pkg->browser2db_text_node($token, \@open_tags, \@output, $markup_for);
+        } else {
+
+            # discard comments, CData and processor instructions
         }
-
-        # workaround: protect <span style="font-weight: normal">normal text</span>
-        # we need a more elaborate conversion algorithm, simple tag
-        # replacement is not enough
-        next if $style =~ /normal/;
-
-        if ($style !~ /$regexp/) {
-            $span->replace_with($span->content_list)->delete;
-            next;
-        }
-
-        # make (nested) tags for style props
-        while ($style =~ /$regexp/g) {
-
-            my $tag = $map->{$1};
-
-            my $elm = HTML::Element->new($tag);
-
-            if ($child) {
-                $child->push_content($elm);
-            } else {
-                $repl = $elm;
-            }
-
-            $child = $elm;
-        }
-
-        # replace the span
-        $span->replace_with($repl);
-        $child->push_content($span->content_list);
-
-        # cleanup
-        $span->delete();
-
     }
 
-    # some more clean up
-    my $html = $pkg->tidy_up_after_treebuilder(tree => $t);
+    # put the pieces together
+    $html = join('', @output);
+
+    # maybe some further cleaning
     $pkg->remove_junk(\$html);
+
+    # uff!
+    return $html;
+}
+
+#
+# Parser callbacks
+#
+
+sub browser2db_start_tag {
+    my ($pkg, $token, $open_tags, $output, $markup_for) = @_;
+
+    if ($token->[1] eq 'span') {
+
+        # the interesting stuff to tweak
+        my $style  = $token->[2]{style};
+        my @styles = ();
+
+        # normalize the styles' string
+        if ($style) {
+            @styles = grep {
+                $markup_for->{$_}    # discard undesired styles
+              } map {
+                s/\s+//g;            # chop whitespace
+                s/\W/_/g;            # replace non-word chars with underscores
+                $_;                  # return the result
+              } grep {
+                $_
+              } split(';', $style);
+
+            debug(__PACKAGE__ . "->browser2db_start_tag() - Span Styles: " . Dumper(\@styles));
+        }
+
+        # and record the them as open tags
+        push @$open_tags, \@styles;
+    } else {
+
+        # other HTMLElement start tag: copy to output
+        push @$output, $token->[4];
+    }
+}
+
+sub browser2db_end_tag {
+    my ($pkg, $token, $open_tags, $output) = @_;
+
+    if ($token->[1] eq 'span') {
+
+        # adjust the list of open tags
+        pop(@$open_tags);
+    } else {
+
+        # copy to output
+        push @$output, $token->[2];
+    }
+}
+
+sub browser2db_text_node {
+    my ($pkg, $token, $open_tags, $output, $markup_for) = @_;
+
+    # the text node
+    my $text = $token->[1];
+
+    # list of currently active styles
+    my @styles = map { ref($_) ? @$_ : $_ } @$open_tags;
+
+    debug(__PACKAGE__ . "->browser2db_text_node() - Unfiltered open tags:\n  " . Dumper(\@styles));
+
+    # filter the style list for oppositions
+    for my $attrib ([qw(weight_normal weight_bold)], [qw(style_normal style_italic)]) {
+
+        my $saw_normal = 0;
+
+        for (my $i = $#styles ; $i >= 0 ; --$i) {
+            if ($styles[$i] eq "font_$attrib->[0]") {
+                splice(@styles, $i, 1);
+                $saw_normal = 1;
+                next;
+            }
+            if ($styles[$i] eq "font_$attrib->[1]" && $saw_normal) {
+                splice(@styles, $i, 1);
+                next;
+            }
+        }
+    }
+
+    # uniq'ify 'em styles
+    my %uniq = ();
+    @uniq{@styles} = ();
+
+    # make the new node(s) and copy to output
+    push @$output, $pkg->make_nodes($text, [keys %uniq], $markup_for);
+
+    debug(  __PACKAGE__
+          . "->browser2db_text_node() - Created node\n  Text: $text\n  Tags: "
+          . Dumper(\@styles));
+}
+
+sub db2browser_start_tag {
+    my ($pkg, $token, $open_tags, $output, $tag_regexp) = @_;
+
+    if ($token->[1] =~ $tag_regexp) {
+        push @$open_tags, $1;
+    } else {
+
+        # other HTMLElement start tag: copy to output
+        push @$output, $token->[4];
+    }
+}
+
+sub db2browser_end_tag {
+    my ($pkg, $token, $open_tags, $output, $tag_regexp) = @_;
+
+    if ($token->[1] =~ $tag_regexp) {
+
+        # close the last open tag
+        pop(@$open_tags);
+    } else {
+
+        # copy to output
+        push @$output, $token->[2];
+    }
+}
+
+sub db2browser_text_node {
+    my ($pkg, $token, $open_tags, $output, $style_for) = @_;
+
+    # the text node
+    my $text = $token->[1];
+
+    # the SPAN's style attrib according to currently open markup tags
+    my $style = @$open_tags ? join('; ', map { $style_for->{$_} } @$open_tags) : '';
+
+    # one more piece
+    push @$output, ($style ? qq{<span style="$style">$text</span>} : $text);
+
+    debug(__PACKAGE__ . "->db2browser_text_node() - Open tags:\n  " . Dumper($open_tags));
+    debug(
+        __PACKAGE__ . "->db2browser_text_node() - Resulting node\n  Text: $text\n  Style: $style");
+}
+
+sub make_nodes {
+    my ($pkg, $text, $styles, $markup_for) = @_;
+
+    # start tag(s)
+    my $html = join('', map { "<$markup_for->{$_}>" } @$styles);
+
+    # text
+    $html .= $text;
+
+    # end tag(s)
+    $html .= join('', map { "</$markup_for->{$_}>" } reverse @$styles);
 
     return $html;
 }

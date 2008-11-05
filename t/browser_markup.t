@@ -49,11 +49,28 @@ my @mappings = (
     },
     {
         tag   => 'nested markup',
-        db    => 'This is <u><strong><em>bold italic underlined</em></strong></u> text.',
-        ie    => 'This is <u><strong><em>bold italic underlined</em></strong></u> text.',
-        gecko => 'This is <u><b><i>bold italic underlined</i></b></u> text.',
+        db    => 'This is <em><strong><u>bold italic underlined</u></strong></em> text.',
+        ie    => 'This is <em><strong><u>bold italic underlined</u></strong></em> text.',
+        gecko => 'This is <i><b><u>bold italic underlined</u></b></i> text.',
         webkit =>
-          'This is <span style="text-decoration: underline; font-weight: bold; font-style: italic">bold italic underlined</span> text.'
+          'This is <span style="font-style: italic; font-weight: bold; text-decoration: underline">bold italic underlined</span> text.'
+    },
+);
+
+my @more_webkit = (
+    {
+        tag => 'Crazy nesting 1',
+        webkit =>
+          'normal<span style="text-decoration: underline"> underline </span><span style="font-style: italic; font-weight: bold; text-decoration: underline">unde</span><span style="font-style: italic; text-decoration: underline">rline</span><span style="font-style: italic; font-weight: bold; text-decoration: underline">bolditalic</span><span style="text-decoration: underline"> </span>normal<span style="text-decoration: underline"> </span><span style="font-weight: bold; text-decoration: underline">boldunderline </span><span style="font-style: italic">italic</span><span style="font-style: italic; font-weight: bold; text-decoration: underline"> </span>normal',
+        db =>
+          'normal<u> underline </u><em><strong><u>unde</u></strong><u>rline</u><strong><u>bolditalic</u></strong></em><u> </u>normal<u> </u><strong><u>boldunderline </u></strong><em>italic<strong><u> </u></strong></em>normal'
+    },
+    {
+        tag => 'Crazy nesting 2',
+        webkit =>
+          '<span style="font-style: italic; font-weight: bold">bolditalic</span><span style="font-style: italic; font-weight: bold; text-decoration: underline"> </span><span style="vertical-align: sub">normalsubscript</span><span style="font-style: italic; font-weight: bold; text-decoration: underline"> </span><span style="font-style: italic; text-decoration: underline">underlineitalic </span><span style="text-decoration: underline; vertical-align: sub">underlinesubscript</span><span style="font-style: italic; text-decoration: underline"> </span>normal<span style="font-style: italic; text-decoration: underline"> </span><span style="font-style: italic; font-weight: bold; vertical-align: super">boldsuperscript</span><span style="font-style: italic; text-decoration: underline"> </span><span style="font-weight: bold; text-decoration: underline">boldunderline</span><span style="font-style: italic; text-decoration: underline"> </span>normal<span style="font-weight: bold"> bold</span>',
+        db =>
+          '<em><strong>bolditalic<u> </u></strong></em><sub>normalsubscript</sub><em><strong><u> </u></strong><u>underlineitalic </u></em><u><sub>underlinesubscript</sub></u><em><u> </u></em>normal<em><u> </u><strong><sup>boldsuperscript</sup></strong><u> </u></em><strong><u>boldunderline</u></strong><em><u> </u></em>normal<strong> bold</strong>',
     },
 );
 
@@ -82,5 +99,11 @@ for my $mapping (@mappings) {
         $mapping->{webkit}, "DB -> WebKit ($mapping->{tag})");
     is(pkg('Markup::WebKit')->browser2db(html => $mapping->{webkit}),
         $mapping->{db}, "WebKit -> DB ($mapping->{tag})");
+}
 
+for my $mapping (@more_webkit) {
+    is(pkg('Markup::WebKit')->browser2db(html => $mapping->{webkit}),
+        $mapping->{db}, "WebKit -> DB ($mapping->{tag})");
+    is(pkg('Markup::WebKit')->db2browser(html => $mapping->{db}),
+        $mapping->{webkit}, "DB -> WebKit ($mapping->{tag})");
 }
