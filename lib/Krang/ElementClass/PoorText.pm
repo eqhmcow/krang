@@ -311,7 +311,7 @@ sub template_data {
 
     # get StoryLinks from publish context
     my %context = $publisher->publish_context();
-    my $url_for = $context{poortext_story_links};
+    my $url_for = $context{poortext_story_links} || {};
 
     # get the element's HTML
     my $data = $element->data;
