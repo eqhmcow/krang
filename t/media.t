@@ -297,7 +297,12 @@ $m2->mark_as_published();
 
 isnt($m2->publish_date, undef, 'Krang::Media->mark_as_published()');
 is($m2->published_version, $m2->version(), 'Krang::Media->mark_as_published()');
-is($m2->checked_out(), 0, 'Krang::Media->mark_as_published()');
+is($m2->checked_out(),     0,              'Krang::Media->mark_as_published()');
+is($m2->published(),       1,              "Media's is set");
+
+# test resetting published flag through category change
+$media2->category_id($category_id);
+is($media2->published, 0, "Resetting published flag through category change");
 
 # test mark_as_previewed
 $m2->checkout();
@@ -539,6 +544,7 @@ sub _test_copy {
     diag("Verifying redefined properties on copy");
 
     is($copy->version,           1,                 "Version ok");
+    is($copy->published,         0,                 "Published flag ok");
     is($copy->published_version, 0,                 "Published Version ok");
     is($copy->preview_version,   0,                 "Previewed Version ok");
     is($copy->publish_date,      undef,             "Publish Date ok");

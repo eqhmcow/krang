@@ -1628,7 +1628,7 @@ sub update_media {
     # Make sure object hasn't been modified elsewhere
     if (my $id = $m->media_id) {
         if (my ($media_in_db) = pkg('Media')->find(media_id => $id)) {
-            if (  !$media_in_db->checked_out
+            if (   !$media_in_db->checked_out
                 || $media_in_db->checked_out_by ne $ENV{REMOTE_USER}
                 || $media_in_db->version > $m->version)
             {
@@ -1656,6 +1656,11 @@ sub update_media {
       alt_tag
       notes
     );
+
+    # unset the 'published' flag if the category has changed
+    if ($m->category_id != $q->param('category_id')) {
+        $m->published(0);
+    }
 
     foreach my $mf (@m_fields) {
 

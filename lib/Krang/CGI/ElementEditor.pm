@@ -893,7 +893,7 @@ sub find_media_link_row_handler {
     $row->{creation_date} = $self->_numeric_date_format($tp);
 
     # pub_status
-    $row->{pub_status} = $media->published_version() ? '<b>' . localize('P') . '</b>' : '&nbsp;';
+    $row->{pub_status} = $media->published ? '<b>' . localize('P') . '</b>' : '&nbsp;';
 }
 
 sub select_story {

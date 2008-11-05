@@ -633,12 +633,14 @@ sub unpublish_media {
     # unset the publish flags
     $media->{published_version} = undef;
     $media->{publish_date}      = undef;
+    $media->{published}         = 0;
 
     # update the DB.
     $dbh->do(
         'UPDATE media
               SET published_version = ?,
-                  publish_date = ?
+                  publish_date = ?,
+                  published = 0
               WHERE media_id = ?',
         undef,
         $media->{published_version},

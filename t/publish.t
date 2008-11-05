@@ -1539,6 +1539,7 @@ sub test_maintain_versions {
     my $media = $story->element->child('page')->child_data('photo');
     ok($story->published_version > 0);
     ok($media->published_version > 0);
+    ok($media->published);
 
     # increment version numbers (so latest versions are newer than published versions)
     $story->checkout;
@@ -1720,6 +1721,7 @@ sub test_media_unpublish {
     $publisher->unpublish_media(media => $media);
     ok(!$media->published_version, 'published_version reset');
     ok(!$media->publish_date,      'published_date reset');
+    ok(!$media->published,         'published flag reset');
 
     # make sure it's really gone
     ok((not -e $preview_path), 'delete removed published media');

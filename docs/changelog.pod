@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Made sure a media is reported as unpublished after changing its
+category. [Bodo Schulze]
+
+=item *
+
 Added convenience method C<root_category()> to
 L<Krang::Category>. [Bodo Schulze]
 

@@ -31,7 +31,7 @@ use FileHandle;
 use constant THUMBNAIL_SIZE     => 35;
 use constant MED_THUMBNAIL_SIZE => 200;
 use constant FIELDS =>
-  qw(media_id media_uuid element_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published_version preview_version publish_date checked_out_by retired trashed);
+  qw(media_id media_uuid element_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published published_version preview_version publish_date checked_out_by retired trashed);
 
 # setup exceptions
 use Exception::Class (
@@ -197,6 +197,10 @@ User id of person who has media object checked out, undef if not checked out.
 
 Last published version
 
+=item published
+
+Returns true if the media has been published under its current URL.
+
 =item preview_version
 
 Last preview version
@@ -225,6 +229,7 @@ use Krang::ClassLoader MethodMaker => new_with_init => 'new',
       alt_tag
       version
       checked_out_by
+      published
       published_version
       preview_version
       publish_date
@@ -278,6 +283,7 @@ sub init {
 
     $self->{contrib_ids}       = [];
     $self->{version}           = 0;                   # versions start at 0
+    $self->{published}         = 0;
     $self->{published_version} = 0;
     $self->{preview_version}   = 0;
     $self->{checked_out_by}    = $ENV{REMOTE_USER};
@@ -373,14 +379,7 @@ Returns id of user who has object checked out, if checked out.
 
 =item $media->published()
 
-Returns 1 if published version >= 1.  (Unnecessary convenience method)
-
-=cut
-
-sub published {
-    my $self = shift;
-    return 1 if $self->published_version();
-}
+Returns true if the media has been published under its current URL.
 
 =item $media->published_version()
 
@@ -1275,7 +1274,7 @@ sub find {
     # return only objects that have been published previously
     if ($args{published}) {
         $where_string .= " and " if $where_string;
-        $where_string .= "(published_version > 0)";
+        $where_string .= "published";
     }
 
     # add mime_type_like to where_string if present
@@ -1475,9 +1474,10 @@ sub find {
             }
 
             # add contrib ids to object
-            my $sth2 = $dbh->prepare(
+            my $sth2 =
+              $dbh->prepare(
                 'select contrib_id, contrib_type_id from media_contrib where media_id = ? order by ord'
-            );
+              );
             $sth2->execute($row->{media_id});
             $obj->{contrib_ids} = [];
             while (my ($contrib_id, $contrib_type_id) = $sth2->fetchrow_array()) {
@@ -1777,12 +1777,14 @@ sub mark_as_published {
     $self->{published_version} = $self->{version};
     $self->{publish_date}      = localtime;
     $self->{checked_out_by}    = undef;
+    $self->{published}         = 1;
 
     # update the DB.
     my $dbh = dbh();
     $dbh->do(
         'UPDATE media
               SET checked_out_by = ?,
+                  published = 1,
                   published_version = ?,
                   publish_date = ?
               WHERE media_id = ?',
@@ -2146,6 +2148,7 @@ sub serialize_xml {
     $writer->dataElement(alt_tag           => $self->{alt_tag});
     $writer->dataElement(notes             => $self->{notes});
     $writer->dataElement(version           => $self->{version});
+    $writer->dataElement(published         => $self->{published});
     $writer->dataElement(published_version => $self->{published_version})
       if $self->{published_version};
     $writer->dataElement(creation_date => $self->{creation_date}->datetime);
@@ -2659,6 +2662,7 @@ sub clone {
     $copy->{version}           = 0;
     $copy->{creation_date}     = undef;
     $copy->{preview_version}   = 0;
+    $copy->{published}         = 0;
     $copy->{published_version} = 0;
     $copy->{publish_date}      = undef;
     $copy->{retired}           = 0;
