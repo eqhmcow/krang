@@ -153,7 +153,8 @@ foreach my $lang (@langs) {
     close($JS);
 
     # now create a compressed version
-    my $JS_GZ = IO::Zlib->new("$combined_file.gz", "rb") or die "Could not open $combined_file.gz to write compressed: $!";
+    my $JS_GZ = IO::Zlib->new();
+    $JS_GZ->open("$combined_file.gz", "wb") or die "Could not open $combined_file.gz to write compressed: $!";
     print $JS_GZ $js_contents;
 }
 
