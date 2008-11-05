@@ -133,23 +133,21 @@ foreach my $lang (@langs) {
     if( -e $combined_file ) {
         unlink $combined_file or die "Could not remove old combined JS file $combined_file: $!";
     }
+
+    my $js_contents;
+    local $/;
     foreach my $file (@files) {
         $file =~ s/\$lang/$lang/g;
         if( -e $file ) {
-            system("cat $file >> $combined_file") == 0
-              or die "Could not add file $file to combined file $combined_file!";
+            open(my $IN, '<', $file) or die "Could not open file $file: $!";
+            # minify the JS file
+            $js_contents .= minify(<$IN>);
         } else {
             warn "File $file does not exist.";
         }
     }
 
-    # minimize the JS file
-    local $/;
-    open(my $JS, '<', $combined_file) or die "Could not open file $combined_file for reading: $!";
-    my $js_contents = <$JS>;
-    close($JS);
-    $js_contents = minify($js_contents);
-    open($JS, '>', $combined_file) or die "Could not open file $combined_file for writing: $!";
+    open(my $JS, '>', $combined_file) or die "Could not open file $combined_file for writing: $!";
     print $JS $js_contents;
     close($JS);
 
