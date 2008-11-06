@@ -6,8 +6,6 @@ use Krang::ClassLoader base => qw(Markup);
 
 use Krang::ClassLoader Log => qw(debug);
 
-use HTML::TreeBuilder;
-use HTML::Element;
 use HTML::TokeParser;
 use Data::Dumper;
 
@@ -85,6 +83,9 @@ those mappings applied to it.
 sub db2browser {
     my ($pkg, %arg) = @_;
 
+    # return if we have nothing to filter
+    return '' unless $arg{html};
+
     my $html      = $arg{html};
     my $style_for = $pkg->db2browser_map();
     my @open_tags = ();
@@ -128,6 +129,9 @@ with those mappings applied.
 
 sub browser2db {
     my ($pkg, %arg) = @_;
+
+    # return if we have nothing to filter
+    return '' unless $arg{html};
 
     my $html       = $arg{html};
     my $markup_for = $pkg->browser2db_map();

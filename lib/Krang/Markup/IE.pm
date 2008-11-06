@@ -63,6 +63,9 @@ sub db2browser {
     # no mappings: return as-is
     return $arg{html} unless %map;
 
+    # return if we have nothing to filter
+    return '' unless $arg{html};
+
     # return with mappings applied
     return $pkg->_replace_tags(%arg, map => \%map);
 }
@@ -85,6 +88,9 @@ sub browser2db {
 
     # no mappings
     return $arg{html} unless %map;
+
+    # return if we have nothing to filter
+    return '' unless $arg{html};
 
     # return with mappings applied
     return $pkg->_replace_tags(%arg, map => \%map);
