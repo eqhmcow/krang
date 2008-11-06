@@ -1338,11 +1338,6 @@ sub revise {
     }
     $query->param($_ => @{$params{$_}}) for keys %params;
 
-    # call internal _save and return output from it on error
-    $self->{_dont_revise_because_called_by_revise} = 1; # uh, what a kludge
-    my $output = $self->_save();
-    return $output if length $output;
-
     # deletions get a message listing deleted elements
     if ($op eq 'delete') {
         my %msg = get_messages(keys => 1);
@@ -1352,7 +1347,15 @@ sub revise {
         add_message('reordered_elements') unless $no_return;
     }
 
-    return $self->edit() unless $no_return;
+    unless ($no_return) {
+
+        # call internal _save and return output from it on error
+        $self->{_dont_revise_because_called_by_revise} = 1;    # uh, what a kludge
+        my $output = $self->_save();
+        return $output if length $output;
+
+        return $self->edit();
+    }
 }
 
 # delete this element
@@ -1439,8 +1442,9 @@ sub _save {
 
     my $class = ref($self);
 
-    croak("Call to abstract method ${class}::_save() - Classes derived from Krang::CGI::ElementEditor must implement this underlying save method.");
+    croak(
+        "Call to abstract method ${class}::_save() - Classes derived from Krang::CGI::ElementEditor must implement this underlying save method."
+    );
 }
-
 
 1;
