@@ -61,8 +61,10 @@ sub per_installation {
           src/Apache-MOD_PERL/mm-1.4.0.tar.gz
           src/Apache-MOD_PERL/apache_1.3.37.tar.gz
           src/Digest-MD5-2.23.tar.gz
+          src/Pod-Simple-0.96.tar.gz
           src/HTML-Parser-3.36.tar.gz
           src/HTML-PopupTreeSelect-Dynamic-1.3.tar.gz
+          src/WWW-Mechanize-1.10.tar.gz
           templates/footer.tmpl
           templates/header.tmpl
           templates/nav.tmpl
