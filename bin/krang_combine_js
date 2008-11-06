@@ -142,7 +142,7 @@ foreach my $lang (@langs) {
         if( -e $file ) {
             open(my $IN, '<', $file) or die "Could not open file $file: $!";
             # minify the JS file
-            $js_contents .= minify(<$IN>);
+            $js_contents .= minify(<$IN>) . ';';
         } else {
             warn "File $file does not exist.";
         }
@@ -153,8 +153,12 @@ foreach my $lang (@langs) {
     close($JS);
 
     # now create a compressed version
+    $combined_file = "$combined_file.gz";
+    if( -e $combined_file ) {
+        unlink $combined_file;
+    }
     my $JS_GZ = IO::Zlib->new();
-    $JS_GZ->open("$combined_file.gz", "wb") or die "Could not open $combined_file.gz to write compressed: $!";
+    $JS_GZ->open($combined_file, "wb") or die "Could not open $combined_file to write compressed: $!";
     print $JS_GZ $js_contents;
 }
 
