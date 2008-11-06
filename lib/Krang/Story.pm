@@ -2406,15 +2406,13 @@ sub linked_stories {
             and $story = $_->data)
         {
             $story_links{$story->story_id} = $story;
-        } elsif ($_->class->isa(pkg('ElementClass::PoorText'))) {
-            use Krang::Log qw(critical);
+        } else {
             $_->class->linked_stories(
                 element     => $_,
                 publisher   => $arg{publisher},
                 story_links => \%story_links
             );
         }
-
     }
     $element;
 

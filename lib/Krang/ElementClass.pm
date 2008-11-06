@@ -597,6 +597,20 @@ sub template_data {
     return $args{element}->data();
 }
 
+=item C<< $class->linked_stories(element => $element, publisher => $publisher, story_link => $story_links) >>
+
+This method allows elementclasses such as text fields or WYSIWYG
+editors to hook into the publishers linked-stories-mechanism.  The
+$story_link hashref passed in is supposed to be filled with key/value
+pairs mapping story IDs to story objects. The default implementation
+does nothing. For an example implementation see
+L<Krang::ElementClass::PoorText> and the latter's template_data()
+method.
+
+=cut
+
+sub linked_stories { }
+
 =item C<< $html_tmpl = $class->find_template(element => $element, publisher => $publisher) >>
 
 Part of the publish/output section of Krang::ElementClass.  This call searches the filesystem for the appropriate output template to use with this element.  
@@ -1280,20 +1294,20 @@ sub init {
       unless exists $args{display_name};
 
     # setup defaults for unset parameters
-    $args{min}           = 0     unless exists $args{min};
-    $args{max}           = 0     unless exists $args{max};
-    $args{bulk_edit}     = 0     unless exists $args{bulk_edit};
-    $args{bulk_edit_tag} = undef unless exists $args{bulk_edit_tag};
+    $args{min}              = 0     unless exists $args{min};
+    $args{max}              = 0     unless exists $args{max};
+    $args{bulk_edit}        = 0     unless exists $args{bulk_edit};
+    $args{bulk_edit_tag}    = undef unless exists $args{bulk_edit_tag};
     $args{before_bulk_edit} = undef unless exists $args{before_bulk_edit};
     $args{before_bulk_save} = undef unless exists $args{before_bulk_save};
-    $args{required}      = 0     unless exists $args{required};
-    $args{children}      = []    unless exists $args{children};
-    $args{hidden}        = 0     unless exists $args{hidden};
-    $args{reorderable}   = 1     unless exists $args{reorderable};
-    $args{allow_delete}  = 1     unless exists $args{allow_delete};
-    $args{default}       = undef unless exists $args{default};
-    $args{indexed}       = 0     unless exists $args{indexed};
-    $args{lazy_loaded}   = 0     unless exists $args{lazy_loaded};
+    $args{required}         = 0     unless exists $args{required};
+    $args{children}         = []    unless exists $args{children};
+    $args{hidden}           = 0     unless exists $args{hidden};
+    $args{reorderable}      = 1     unless exists $args{reorderable};
+    $args{allow_delete}     = 1     unless exists $args{allow_delete};
+    $args{default}          = undef unless exists $args{default};
+    $args{indexed}          = 0     unless exists $args{indexed};
+    $args{lazy_loaded}      = 0     unless exists $args{lazy_loaded};
 
     # call generated inititalizer
     $self->hash_init(%args);

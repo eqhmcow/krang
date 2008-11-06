@@ -6,6 +6,12 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item * 
+
+Added linked_stories() to L<Krang::ElementClass> to make this interface
+available to all elementclasses, especially WYSIWYG editors and the
+like. [Bodo Schulze]
+
 =item *
 
 Fixed bug in FTP code where timezone used by FTP server (for file creation
