@@ -27,8 +27,10 @@ Krang.onload( function() {
   select_story = function( id )
   {
     Krang.Form.submit('select_story_form', { rm: 'select_story', selected_story_id: id }
-       <tmpl_if story_link_is_for_editor>
-          , { onComplete: function(args, transport, json) { PoorText.Krang.insertStoryLink(json); }}
+       <tmpl_if editor_insert_storylink_function>
+          , { onComplete: function(args, transport, json) {
+                  <tmpl_var editor_insert_storylink_function>(json); 
+            }}
        </tmpl_if>
     );
   }
@@ -37,8 +39,10 @@ Krang.onload( function() {
 cancel_select = function()
 {
   Krang.Form.submit('select_story_form', { rm: 'edit', path: '<tmpl_var escape=js parent_path>' }
-   <tmpl_if story_link_is_for_editor>
-       , { onComplete: function(args, transport, json) { PoorText.Krang.insertStoryLink(json); }}
+   <tmpl_if editor_insert_storylink_function>
+       , { onComplete: function(args, transport, json) {
+               <tmpl_var editor_insert_storylink_function>(json); 
+         }}
    </tmpl_if>
   );
 }
@@ -58,7 +62,7 @@ cancel_select = function()
 <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
 <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
-<input name="story_link_is_for_editor" value="<tmpl_var story_link_is_for_editor>" type="hidden">
+<input name="editor_insert_storylink_function" value="<tmpl_var editor_insert_storylink_function>" type="hidden">
 <tmpl_var hard_find_hidden>
 
 <div class="tabset finder">

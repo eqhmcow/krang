@@ -39,7 +39,7 @@ PoorText.prototype.addStoryLink = function() {
         {
           rm      : 'save_and_find_story_link',
           jump_to : jumpTo,
-          story_link_is_for_editor : '1'
+          editor_insert_storylink_function : 'PoorText.Krang.insertStoryLink'
         },
         {
             // delete link placeholder when a save error occurs (e.g. failed element validation)

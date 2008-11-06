@@ -714,10 +714,10 @@ sub find_story_link {
     );
 
     $template->param(
-        pager_html               => $pager->output(),
-        row_count                => $pager->row_count,
-        action                   => $self->_get_script_name,
-        story_link_is_for_editor => $query->param('story_link_is_for_editor'),
+        pager_html                       => $pager->output(),
+        row_count                        => $pager->row_count,
+        action                           => $self->_get_script_name,
+        editor_insert_storylink_function => $query->param('editor_insert_storylink_function'),
     );
 
     return $template->output;
@@ -974,7 +974,7 @@ sub select_story {
     # find story and set it in element data
     my ($story) = pkg('Story')->find(story_id => $story_id);
 
-    if ($query->param('story_link_is_for_editor')) {
+    if ($query->param('editor_insert_storylink_function')) {
 
         # StoryLink for a WYSIWYG element
         $self->add_json_header(
