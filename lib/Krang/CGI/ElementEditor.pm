@@ -1434,4 +1434,13 @@ sub _make_crumbs {
 
 sub concat_string { '|' }
 
+sub _save {
+    my ($self, %args) = @_;
+
+    my $class = ref($self);
+
+    croak("Call to abstract method ${class}::_save() - Classes derived from Krang::CGI::ElementEditor must implement this underlying save method.");
+}
+
+
 1;
