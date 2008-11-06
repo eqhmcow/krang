@@ -26,6 +26,11 @@ This module implements the following run modes:
 
 =over
 
+=item save_and_add
+
+This mode calls the underlying _save() method of child classes and
+then goes to the add run-mode described below.
+
 =item add
 
 Called when the user clicks the "Add Element" button in the element
@@ -130,11 +135,6 @@ You must implement the following run-modes in any child class:
 The edit run mode is called after a number of the run-modes available
 complete their work.
 
-=item save_and_add
-
-This mode should do a save and then go to the add run-mode described
-above.  It will only be called when adding container elements.
-
 =item save_and_jump
 
 This mode is called with a 'jump_to' parameter set.  It must save,
@@ -197,6 +197,7 @@ sub setup {
     $self->mode_param('rm');
     $self->run_modes(
         add                      => 'add',
+        save_and_add             => 'save_and_add',
         delete_children          => 'delete_children',
         reorder                  => 'reorder',
         delete_element           => 'delete_element',
@@ -1059,6 +1060,24 @@ sub element_view {
         parent_path => ($element->parent ? $element->parent->xpath : 0),
     );
 
+}
+
+=item save_and_add
+
+This mode saves the current data to the session and passes control to
+Krang::ElementEditor::add to add a new element. Child classes must
+implement the underlying _save() method.
+
+=cut
+
+sub save_and_add {
+    my $self = shift;
+
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    return $self->add();
 }
 
 # add sub-elements

@@ -95,7 +95,6 @@ sub setup {
               save_and_publish
               save_and_preview
               save_and_jump
-              save_and_add
               save_and_go_up
               save_and_bulk_edit
               save_and_leave_bulk_edit
@@ -1340,21 +1339,6 @@ sub save_and_jump {
     $query->param(path      => $jump_to);
     $query->param(bulk_edit => 0);
     return $self->edit();
-}
-
-=item save_and_add
-
-This mode saves the current data to the session and passes control to
-Krang::ElementEditor::add to add a new element.
-
-=cut
-
-sub save_and_add {
-    my $self   = shift;
-    my $output = $self->_save();
-    return $output if $output;
-
-    return $self->add();
 }
 
 =item save_and_bulk_edit
