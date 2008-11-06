@@ -6,7 +6,7 @@ use Krang::ClassFactory qw(pkg);
 
 use Krang::ClassLoader base => 'ElementClass';
 
-use Krang::ClassLoader Log          => qw(critical);
+use Krang::ClassLoader Log          => qw(debug);
 use Krang::ClassLoader Message      => qw(add_message);
 use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'Story';
@@ -79,13 +79,13 @@ sub load_query_data {
     # the HTML
     my $html = $query->param($param);
 
-    critical(__PACKAGE__ . "->load_query_data($param) - HTML coming from the browser: " . $html);
+    debug(__PACKAGE__ . "->load_query_data($param) - HTML coming from the browser: " . $html);
 
     # fix the markup
     if ($html) {
         $html = pkg("Markup::$ENV{KRANG_BROWSER_ENGINE}")->browser2db(html => $html);
 
-        critical(__PACKAGE__ . "->load_query_data($param) - HTML sent to DB: " . $html);
+        debug(__PACKAGE__ . "->load_query_data($param) - HTML sent to DB: " . $html);
     }
 
     # the INDENT and ALIGN
@@ -236,7 +236,7 @@ END
     # ... its hidden input field used to return the text
     $html .= qq[<input type="hidden" name="$param" value='$text' id="${id}_return"/>];
 
-    critical(__PACKAGE__ . "->input_form($param) - HTML sent to the browser: " . $text);
+    debug(__PACKAGE__ . "->input_form($param) - HTML sent to the browser: " . $text);
 
     # the hidden field for text indent
     $html .= qq[<input type="hidden" name="${param}_indent" value="$indent" id="${id}_indent"/>];
@@ -330,6 +330,9 @@ sub template_data {
             # it's all done in the head
         }
     }
+
+    # chop CSS class of StoryLinks
+    $html =~ s/class="pt-storylink"//g;
 
     # return for 'text' flavour
     return $html if $element->class->type eq 'text';
