@@ -99,7 +99,7 @@ sub view_data {
 sub _date_input {
     my ($self, $query, $name, $date) = @_;
 
-    my %month_labels = {
+    my %month_labels = (
         '' => ' ',
         1  => 'Jan',
         2  => 'Feb',
@@ -113,7 +113,7 @@ sub _date_input {
         10 => 'Oct',
         11 => 'Nov',
         12 => 'Dec',
-    };
+    );
 
     unless ($session{language} eq 'en') {
         @month_labels{1 .. 12} = localize('MONTH_LABELS');
