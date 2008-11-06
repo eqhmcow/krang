@@ -105,7 +105,7 @@ sub input_form {
 
     # data has multiple fields: HTML INDENT ALIGN
     my $data   = $element->data;
-    my $text   = $data->[0];
+    my $text   = $data->[0] || '';
     my $indent = $data->[1] || 0;
     my $align  = $data->[2] || 'left';
 
