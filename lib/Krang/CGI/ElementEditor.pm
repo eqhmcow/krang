@@ -61,6 +61,18 @@ subclass) element.  Requires a path to the element and will set
 $element->data() to the chosen media.  When finished, returns to the
 edit mode.
 
+=item save_and_find_media_link
+
+This mode is called with a 'jump_to' parameter set.  It must save,
+substitute the 'jump_to' value for 'path' in query and return to the
+find_media_link mode.
+
+=item save_and_find_story_link
+
+This mode is called with a 'jump_to' parameter set.  It must save,
+substitute the 'jump_to' value for 'path' in query and return to the
+find_story_link mode.
+
 =back
 
 =head2 Provided Methods
@@ -132,18 +144,6 @@ substitute the 'jump_to' value for 'path' in query and return to edit.
 
 This mode should save, hack off the last part of path (s!/.*$!!) and
 return to edit.
-
-=item save_and_find_media_link
-
-This mode is called with a 'jump_to' parameter set.  It must save,
-substitute the 'jump_to' value for 'path' in query and return to the
-find_media_link mode.
-
-=item save_and_find_story_link
-
-This mode is called with a 'jump_to' parameter set.  It must save,
-substitute the 'jump_to' value for 'path' in query and return to the
-find_story_link mode.
 
 =back
 
@@ -1184,7 +1184,7 @@ sub element_save {
     return $self->element_bulk_save(%args) if $query->param('bulk_edit');
 
     # saving should check for reorder, else confusing to the editor
-    $self->revise('reorder', 1);
+    $self->revise('reorder', 1) unless delete $self->{_dont_revise_because_called_by_revise};
 
     my $element = $self->_find_element($root, $path);
 
@@ -1318,6 +1318,11 @@ sub revise {
         }
     }
     $query->param($_ => @{$params{$_}}) for keys %params;
+
+    # call internal _save and return output from it on error
+    $self->{_dont_revise_because_called_by_revise} = 1; # uh, what a kludge
+    my $output = $self->_save();
+    return $output if length $output;
 
     # deletions get a message listing deleted elements
     if ($op eq 'delete') {
