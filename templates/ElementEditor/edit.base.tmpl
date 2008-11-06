@@ -156,12 +156,11 @@
       var f      = document.forms['edit'];
       var list   = f.elements['child'];
       var name   = list.options[ list.selectedIndex ].value;
-      var rm     = 'add';
+      var rm     = 'save_and_add';
       var to_top = false;
 
       // container elements behave differently
       if ( containers[name] ) {
-        rm     = 'save_and_add';
         to_top = true;
       }
 
