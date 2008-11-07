@@ -110,12 +110,17 @@ my @universal_files = (
     'poortext_core.js',
     'poortext_dialog_html.js',
     'poortext_krang.js',
+    'poortext_krang_io_filters.js',
 );
 my @lang_files      = map { catfile('lang', "$_.js") } @languages;
 my @browser_engines = (
     {
      name  => 'Gecko',
-     files => [ 'poortext_gecko.js', 'poortext_w3c_range.js' ],
+     files => [
+               'poortext_gecko.js',
+               'poortext_w3c_range.js',
+               'poortext_w3c_functions.js',
+              ],
     },
     {
      name  => 'IE',
@@ -123,7 +128,10 @@ my @browser_engines = (
     },
     {
      name  => 'WebKit',
-     files => [ 'poortext_webkit.js', 'poortext_w3c_range.js' ],
+     files => [ 'poortext_webkit.js',
+                'poortext_w3c_range.js',
+                'poortext_w3c_functions.js',
+              ],
     },
 );
 
@@ -139,13 +147,15 @@ for my $engine (@browser_engines) {
 
 
     for my $file (@universal_files, @{$engine->{files}}, @lang_files) {
-        my $if = catfile($poortext_root, $file);
+        my $if = catfile($poortext_root, 'src', $file);
         open my $IN, '<', $if
           or die "Can't open '$if' for reading: $!";
 
         while (<$IN>) {
             print $OUT $_;
         }
+
+        print $OUT ';';  # make sure each concatenated file ends with a semicolon
 
         close $IN;
     }
