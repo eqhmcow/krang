@@ -741,14 +741,6 @@ Object.extend(PoorText.Popup, {
     }
 });
 
-PoorText.getHref = function(element) {
-    return element.getAttribute('href');
-}
-
-PoorText.setClass = function(elm, className) {
-    elm.setAttribute('class', className);
-}
-
 /**
    onDOMContentLoader for Mozilla/Opera
 */
