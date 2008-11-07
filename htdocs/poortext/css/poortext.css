@@ -118,14 +118,21 @@ input fields.  */
   background-color: #ffffe0;
 }
 
-.pt-abbr { 
+a.pt-storylink { 
+  color: #690 !important;
+  font-size: 11px !important;
+  text-decoration: none !important;
+  font-weight: bold;
+}
+
+a.pt-abbr { 
   cursor: help !important;
   color: #000 !important;
   text-decoration: none !important;
   border-bottom: 1px dotted #333;
 }
 
-.pt-acronym {
+a.pt-acronym {
   cursor: help !important;
   color: #000 !important;
   text-decoration: none !important;

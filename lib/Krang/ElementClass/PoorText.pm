@@ -134,7 +134,7 @@ if (!Krang.PoorTextLoaded) {
     );
     document.body.appendChild(pt_script);
 
-    // I tried the same appending procedure for the CSS file poortext/poortext.css,
+    // I tried the same appending procedure for the CSS file poortext/css/poortext.css,
     // but for WebKit that comes to late, so I included it in templates/header.base.tmpl
 
     // make sure we do this only once
@@ -222,7 +222,7 @@ END
 <script type="text/javascript">
     // configure this element
     var config = {
-        iframeHead : '<link rel="stylesheet" type="text/css" href="/poortext/poortext.css">'
+        iframeHead : '<link rel="stylesheet" type="text/css" href="/poortext/css/poortext.css">'
         $config
     };
     poortext_elements.push(["$id", config]);
@@ -331,8 +331,8 @@ sub template_data {
         }
     }
 
-    # chop CSS class of StoryLinks
-    $html =~ s/class="pt-storylink"//g;
+    # finally chop CSS class from links
+    $html =~ s/(<a [^>]+) class="pt-a(?:\s+ pt-storylink)?"/$1/gx;
 
     # return for 'text' flavour
     return $html if $element->class->type eq 'text';

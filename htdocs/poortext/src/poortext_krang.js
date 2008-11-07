@@ -75,6 +75,9 @@ PoorText.Krang = {
             link.setAttribute('href', 'http://' + linkSpec.url);
             link.setAttribute('_poortext_url', 'http://' + linkSpec.url);
 
+            // set a special CSS class
+            PoorText.setClass(link, 'pt-a pt-storylink');
+
             // add the Story ID for preview handler attached to pt.editNode
             link.setAttribute('_story_id', linkSpec.id);
         }
