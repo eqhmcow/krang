@@ -286,12 +286,6 @@ Object.extend(PoorText.prototype, {
                 this.observe(type, 'builtin', this[events[type]], true);
             }
                 
-            // Hook in user-provided event handlers
-            this.registeredEventHandlers.each(function(h) {
-                          // type name handler useCapture
-                this.observe(h[0], h[1], h[2], h[3]);
-            }.bind(this));
-
             // Don't use SPAN tags for markup
             try {
                 this.document.execCommand('styleWithCSS', false, false);
@@ -328,6 +322,11 @@ Object.extend(PoorText.prototype, {
             srcElement.hide();
             this.focusEditNode();
         }
+
+        // finally call registered functions
+        this.onEditNodeReadyFunctions.each(function(func) {
+            if (func) { func() }
+        });
     },
 
     /**@ignore*/

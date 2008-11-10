@@ -162,9 +162,9 @@ PoorText = function (element, config) {
     this.eventHandlers = new Object();
 
     /**
-       Array of event handlers registered via {@link #registerEventHandler}
+       Array of functions to be executed when the edit node is ready.
     */
-    this.registeredEventHandlers = new Array();
+    this.onEditNodeReadyFunctions = new Array();
 
     /**
        Flag to remember whether the specialCharBar (scb) is/was/should again be visible or not
@@ -533,6 +533,21 @@ PoorText.prototype = {
     },
 
     /**
+       Instance method to register functions that will be executed as
+       soon as the edit node is ready.
+       @param {FUNCTION} function
+    */
+    onEditNodeReady : function(func) {
+        if ( Object.isFunction(func) ) {
+            if (this.editNode) {
+                func();
+            } else {
+                this.onEditNodeReadyFunctions.push(func);
+            }
+        }
+    },
+
+    /**
        Instance method: Return true if the given command is enabled in
        PoorText. This is just a wrapper around
        document.queryCommandEnabled()
@@ -780,22 +795,6 @@ PoorText.prototype = {
        @return nothing
     */
     onSubmit : function(event) {
-    },
-
-    /**
-       Instance method to register named event handlers with the edit
-       area
-       @param {STRING} - the name of the event (keydown, click etc.)
-       @param {STRING} - an arbitrary string identifying this event handler
-       @param {FUNCTION} - the event handler function
-       @param {BOOL} - the useCapture flag
-    */
-    registerEventHandler : function(event, name, handler, useCapture) {
-        if (this.editNode) {
-            this.observe(event, name, handler, useCapture);
-        } else {
-            this.registeredEventHandlers.push([event, name, handler, useCapture]);
-        }
     },
 
     /**
