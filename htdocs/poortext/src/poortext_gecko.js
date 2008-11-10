@@ -610,12 +610,18 @@ Object.extend(PoorText.prototype, {
     __afterKeyDispatch : function(keyname) {
         // Clean pasted text
 	if (keyname == 'ctrl_v') {
-	    setTimeout(function() {
-                this.applyFiltersTo(this.editNode, PoorText.pasteFilters);
-	    }.bind(this), 1);
+            this.onPaste();
 	}
-    }
+    },
+
+    onPaste : function() {
+	setTimeout(function() {
+            this.applyFiltersTo(this.editNode, PoorText.pasteFilters);
+	}.bind(this), 1);
+    }    
 });
+
+
 
 /**
    Clean the pasted text: If a node is of an allowed type, leave it
