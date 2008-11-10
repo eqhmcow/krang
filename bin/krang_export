@@ -119,7 +119,7 @@ Omits all related/linked objects, limiting the KDS file to the specific
 items you specify. Use this with caution: this is a new, only lightly-tested
 feature, and if you're going to do anything other than re-importing to the same 
 system (or aren't sure the related objects will be present and have unchanged 
-IDs when you do), you'll be missing essential data!
+IDs when you import), you'll be missing essential data!
 
 =item --verbose
 
