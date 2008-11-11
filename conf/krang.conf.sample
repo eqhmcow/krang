@@ -134,7 +134,12 @@ Secret 'ad0243-1j!@LdaAWEOIGFa-39021-:skj'
 # template variable.
 # ContactEmail cms@company.org
 
+# ErrorNotificationEmail provides the ability to specify one
+# or more (comma-separated) email addresses to notify when
+# a Krang ISE is triggered.
 #
+# ErrorNotificationEmail example@address1.com,example@address2.com
+
 
 # Localization directives
 #
