@@ -126,7 +126,7 @@ sub input_form {
 <script type="text/javascript">
     // pull in the JavaScript
 if (!Krang.PoorTextLoaded) {
-    // the core poortext.js which will also pull in a browser-specific JavaScript
+    // pull in a browser-engine-specific version of PoorText's JavaScript
     var pt_script = new Element(
        'script',
        { type: "text/javascript",
@@ -165,29 +165,31 @@ poortext_init = function() {
 
         // add a preview handler for links and StoryLinks
         // IE does dispatch no 'click' event on contenteditable elements
-        // so we use mouseup
-        pt.registerEventHandler('mousedown', 'krang_preview', function(e) {
-            if (e.target.nodeName.toLowerCase() != 'a') { return }
-            if (e.ctrlKey
-                || (Prototype.Browser.IE && e.button == 4)
-                || (!Prototype.Browser.IE && e.button == 1))
-              {
-                  var elm = e.target;
-                  if (elm.getAttribute('_poortext_tag') == 'a') {
-                      var storyID = elm.getAttribute('_story_id');
-                      if (storyID) {
-                          // StoryLink
-                          Krang.preview('story', storyID);
-                          Event.stop(e);
-                      } else {
-                          // other links
-                          var instance = Krang.instance;
-                          instance = instance.toLowerCase().replace(/[^a-z]/g, '' );
-                          window.open(elm.getAttribute('href'), instance);
-                      }
-                  }
-              }
+        // so we use mousedown
+        pt.onEditNodeReady(function() {
+            this.observe('mousedown', 'krang_preview', function(e) {
+                if (e.target.nodeName.toLowerCase() != 'a') { return }
+                if (e.ctrlKey
+                    || (Prototype.Browser.IE && e.button == 4)
+                    || (!Prototype.Browser.IE && e.button == 1))
+                    {
+                        var elm = e.target;
+                        if (elm.getAttribute('_poortext_tag') == 'a') {
+                            var storyID = elm.getAttribute('_story_id');
+                            if (storyID) {
+                                // StoryLink
+                                Krang.preview('story', storyID);
+                                Event.stop(e);
+                            } else {
+                                // other links
+                                var instance = Krang.instance;
+                                instance = instance.toLowerCase().replace(/[^a-z]/g, '' );
+                                window.open(elm.getAttribute('href'), instance);
+                            }
+                        }
+                    }
             }, false);
+        }.bind(pt));
     });
 
     // finish with some global stuff
