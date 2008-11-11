@@ -1422,7 +1422,7 @@ Krang.Widget.update_time_chooser = function(inputName, use_ampm_time) {
 
     var ampm   = use_ampm_time ? (clock.down('select', 2).value + ' ') : '';
     if( hour && minute && ((use_ampm_time && ampm) || true ) ) {
-        $(inputName).value = hour + ':' + minute + ampm;
+        $(inputName).value = hour + ':' + minute + ' ' + ampm;
     }
 };
 
