@@ -78,6 +78,13 @@ This mode is called with a 'jump_to' parameter set.  It must save,
 substitute the 'jump_to' value for 'path' in query and return to the
 find_story_link mode.
 
+=item filter_element_data
+
+This Ajaxy runmode may be called behind the scenes by WYSIWYG widgets
+to clean pasted-in HTML on the server. It dispatches to an equally
+named method of the element's class and returns what it gets back from
+there.
+
 =back
 
 =head2 Provided Methods
@@ -207,6 +214,7 @@ sub setup {
         save_and_find_media_link => 'save_and_find_media_link',
         find_media_link          => 'find_media_link',
         select_media             => 'select_media',
+        filter_element_data      => 'filter_element_data',
     );
 }
 
@@ -1445,6 +1453,19 @@ sub _save {
     croak(
         "Call to abstract method ${class}::_save() - Classes derived from Krang::CGI::ElementEditor must implement this underlying save method."
     );
+}
+
+sub filter_element_data {
+    my ($self) = @_;
+    my $query = $self->query;
+
+    my $path    = $query->param('filter_element');
+    my $root    = $self->_get_element;
+    my $element = $self->_find_element($root, $path);
+
+    return $element
+      ? $element->class->filter_element_data(element => $element, query => $query)
+      : '';
 }
 
 1;

@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added a server-side paste filter to L<Krang::ElementClass::PoorText>,
+triggered by the onPaste event. [Bodo Schulze]
+
+=item *
+
 Upgraded: Apache from 1.3.37 to 1.3.41, mm from 1.4.2 to 1.4.2, and mod_ssl 
 from 2.8.28 to 2.8.31 to incorporate latest upstream security bug fixes; 
 Disabled use of HTTP TRACE method in krang httpd and siteserver conf templates 

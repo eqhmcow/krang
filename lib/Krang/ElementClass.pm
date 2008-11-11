@@ -611,6 +611,26 @@ method.
 
 sub linked_stories { }
 
+=item C<< $filtered = $class->filter_element_data(element => $element, query => $query) >>
+
+This method is called by L<Krang::CGI::ElementEditor>'s dispatcher
+method filter_element_data(). It should return the filtered
+(scrubbed/sanitized/cleaned) data for the element it recieves. The
+default implementation returns the element's data as-is.
+
+=cut
+
+sub filter_element_data {
+    my ($self, %args) = @_;
+
+    # get HTML to be cleaned
+    my $element = $args{element};
+    my ($param) = $self->param_names(element => $element);
+    my $html = $args{query}->param($param) || '';
+
+    return $html;
+}
+
 =item C<< $html_tmpl = $class->find_template(element => $element, publisher => $publisher) >>
 
 Part of the publish/output section of Krang::ElementClass.  This call searches the filesystem for the appropriate output template to use with this element.  

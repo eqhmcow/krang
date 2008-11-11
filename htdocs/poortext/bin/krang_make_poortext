@@ -109,6 +109,8 @@ my @languages     = grep { $_ ne 'en' } AvailableLanguages;
 my @universal_files = (
     'poortext_core.js',
     'poortext_dialog_html.js',
+);
+my @krang_specific = (
     'poortext_krang.js',
     'poortext_krang_io_filters.js',
 );
@@ -146,7 +148,7 @@ for my $engine (@browser_engines) {
       or die "Can't open '$of' for writing: $!";
 
 
-    for my $file (@universal_files, @{$engine->{files}}, @lang_files) {
+    for my $file (@universal_files, @{$engine->{files}}, @lang_files, @krang_specific) {
         my $if = catfile($poortext_root, 'src', $file);
         open my $IN, '<', $if
           or die "Can't open '$if' for reading: $!";

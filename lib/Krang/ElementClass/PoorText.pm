@@ -15,6 +15,7 @@ use Krang::ClassLoader 'Markup::Gecko';
 use Krang::ClassLoader 'Markup::IE';
 use Krang::ClassLoader 'Markup::WebKit';
 
+use HTML::Scrubber;
 use Digest::MD5 qw(md5_hex);
 use JSON::Any;
 use Carp qw(croak);
@@ -268,6 +269,35 @@ sub view_data {
 </div>
 $data->[0]
 END
+}
+
+sub filter_element_data {
+    my ($self, %args) = @_;
+
+    # get HTML to be cleaned
+    my $element = $args{element};
+    my ($param) = $self->param_names(element => $element);
+    my $html = $args{query}->param($param);
+
+    return '' unless $html && length $html;
+
+    debug(__PACKAGE__ . "->filter_element_data() - HTML coming from the browser: " . $html);
+
+    # clean it
+    $html = pkg('Markup::Gecko')->browser2db(
+        html => pkg('Markup::IE')->browser2db(
+            html => pkg('Markup::WebKit')->browser2db(html => $self->html_scrubber(html => $html))
+        )
+    );
+
+    debug(__PACKAGE__ . "->filter_element_data() - Cleaned HTML: " . $html);
+
+    # return the correct markup
+    $html = pkg("Markup::$ENV{KRANG_BROWSER_ENGINE}")->db2browser(html => $html);
+
+    debug(__PACKAGE__ . "->filter_element_data() - HTML to the browser: " . $html);
+
+    return $html;
 }
 
 #
@@ -553,6 +583,41 @@ sub get_shortcut_spec {
             }
           );
     }
+}
+
+sub html_scrubber {
+    my ($pkg, %arg) = @_;
+
+    my @block_elements  = (qw());
+    my @inline_elements = (qw(a b br del em i span strong strike u sub sup));
+
+    my $scrubber = HTML::Scrubber->new(
+
+        # deny all tags and all attribs
+        default => [0, {'*' => 0}],
+
+        # however allow some tags
+        allow => [@block_elements, @inline_elements],
+
+        # and allow some attribs with A tags
+        rules => [
+            a => {
+                '*'           => 0,    # deny all attribs on A tags
+                href          => 1,    # allow some attribs
+                title         => 1,
+                class         => 1,
+                _poortext_tag => 1,
+                _poortext_url => 1,
+                _story_id     => 1,
+            },
+            span => {
+                '*'   => 0,
+                style => 1,
+            },
+        ],
+    );
+
+    return $scrubber->scrub($arg{html});
 }
 
 sub field_separator { return "\x{E000}" }

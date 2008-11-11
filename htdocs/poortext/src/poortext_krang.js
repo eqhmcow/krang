@@ -1,3 +1,12 @@
+
+
+/*
+                  Hook into Krang's StoryLink Interface
+*/
+
+/**
+   Instance method called to go to Krang's "Select Story" screen.
+ */
 PoorText.prototype.addStoryLink = function() {
 
     // Get possibly existing link
@@ -144,3 +153,57 @@ PoorText.Krang = {
         }
     }
 }
+
+/*
+        Postback to clean HTML on the server
+ */
+// override the core's onPaste method
+PoorText.prototype.onPaste = function() { 
+    setTimeout(function() {
+        this.clean_pasted_html();
+    }.bind(this), 10);
+}
+
+/**
+   Instance method to clean pasted text via an Ajax call.
+ */
+PoorText.prototype.clean_pasted_html = function() {
+    //
+    // don't call storeForPostBack() to bypass IO filters
+    //
+    // synchronize query data
+    var pt = this;
+    pt.returnHTML.value = pt.editNode.innerHTML;
+
+    // get all vars for Ajax request
+    var element     = pt.returnHTML.name;
+    var form        = $('edit');
+    var url         = form.readAttribute('action').replace(/\?.*/, '');
+    var params      = {rm : 'filter_element_data', filter_element : element};
+    params[element] = pt.editNode.innerHTML;
+
+    // post back for cleaning
+    Krang.Ajax.request(
+        { 
+          url        : url,
+          params     : params,
+          indicator  : 'indicator',
+          method     : form.readAttribute('method'),
+          onComplete : function(args, transport, json) {
+              // update the edit area
+              pt.editNode.innerHTML = pt.returnHTML.value = transport.responseText;
+
+              // focus it
+              pt.focusEditNode;
+
+              // and put the caret at the beginning of the edit node
+              if (Prototype.Browser.IE) {
+                  pt.toggleSelectAll();
+                  pt.toggleSelectAll();
+              } else {
+                  pt.restoreSelection({sc : [0,0], so : 0, ec : [0,0], eo: 0});
+              }
+          }
+    });
+}
+
