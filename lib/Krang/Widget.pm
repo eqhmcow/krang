@@ -666,10 +666,17 @@ sub decode_datetime {
 
     my $date = $query->param($name);
     my $time = $query->param($name . '_time');
+    $time = '12:59 PM' if !$time && $ntie;
+    my $format = '%m/%d/%Y';
 
     if ($date && $time) {
+        $format .= ' %I:%M %p';
+        $date = "$date $time";
+    }
+
+    if ($date) {
         my $piece;
-        eval { $piece = Time::Piece->strptime("$date $time", localize('%m/%d/%Y %I:%M %p')) };
+        eval { $piece = Time::Piece->strptime($date, localize($format)) };
         return $piece unless $@;
     }
     return;
