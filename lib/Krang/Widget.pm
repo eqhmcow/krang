@@ -666,7 +666,7 @@ sub decode_datetime {
 
     my $date = $query->param($name);
     my $time = $query->param($name . '_time');
-    $time = '12:59 PM' if !$time && $ntie;
+    $time = '11:59 PM' if !$time && $ntie;
     my $format = '%m/%d/%Y';
 
     if ($date && $time) {
