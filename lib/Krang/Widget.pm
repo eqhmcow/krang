@@ -1005,6 +1005,13 @@ The phrase typed by the user. If none is given it will be pulled from
 the C<phrase> param of the query string.
 This is optional.
 
+=item no_split
+
+By default after we find the matching entries we split them up 
+into individual words. But sometimes it's useful to have the whole
+phrase returned instead. Set this flag to true to accomplish this.
+This is optional
+
 =item dbh
 
 The database handle to use. If none is provided it will default
@@ -1022,7 +1029,8 @@ using C<AND>.
 
 sub autocomplete_values {
     my %args = @_;
-    my ($phrase, $table, $fields, $dbh, $where) = @args{qw(phrase table fields dbh where)};
+    my ($phrase, $table, $fields, $dbh, $where, $no_split) =
+      @args{qw(phrase table fields dbh where no_split)};
     $dbh ||= dbh();
     if (!$phrase) {
         my $cgi = CGI->new();
@@ -1051,21 +1059,26 @@ sub autocomplete_values {
             # remove any potential file suffixes
             $answer =~ s/\.\w{3,5}$//;
 
-            # remove these characters
-            $answer =~ s/['"\.\,:]//g;
 
-            # split on '_' or \s to make words and only keep the ones that
-            # start with our phrase
-            foreach (split(/(?:_|\s|\/)+/, $answer)) {
-                my $w = lc($_);
-                if (index($w, $phrase) == 0) {
-                    $words{$w} = 1;
-                }
-            }
-
-            # if it has an '_' and no spaces, keep the whole word as well
-            if ($answer =~ /_/ && $answer !~ /\s/ && (index($answer, $phrase) == 0)) {
+            if( $no_split ) {
                 $words{$answer} = 1;
+            } else {
+                # remove these characters
+                $answer =~ s/['"\.\,:]//g;
+
+                # split on '_' or \s to make words and only keep the ones that
+                # start with our phrase
+                foreach (split(/(?:_|\s|\/)+/, $answer)) {
+                    my $w = lc($_);
+                    if (index($w, $phrase) == 0) {
+                        $words{$w} = 1;
+                    }
+                }
+
+                # if it has an '_' and no spaces, keep the whole word as well
+                if ($answer =~ /_/ && $answer !~ /\s/ && (index($answer, $phrase) == 0)) {
+                    $words{$answer} = 1;
+                }
             }
         }
     }
