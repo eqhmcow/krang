@@ -1732,7 +1732,7 @@ var rules = {
                     paramName: 'phrase',
                     tokens   : [' '],
                     callback : function(el, url) {
-                        url = url + '&rm=autocomplete';
+                        url = url + '&rm=autocomplete&input=' + el.name;
                         return url;
                     }
                 }
