@@ -275,7 +275,7 @@ sub log {
     croak("Required argument level parameter was not passed.")
       unless $level;
     croak("Required argument message parameter was not passed.")
-      unless $message;
+      unless defined($message);
 
     # check for valid log level
     my ($level_IV, $level_PV);
