@@ -280,7 +280,7 @@ sub access_handler ($$) {
     }
 
     # failure
-    debug("Unsupported browser detected: " . $r->header_in('User-Agent'));
+    debug("Unsupported browser detected: " . ($r->header_in('User-Agent') || ''));
     $r->custom_response(FORBIDDEN,
         "<h1>Unsupported browser detected.</h1><p>This application requires Firefox 1.5+, Safari 1.3+, Internet Explorer 6+, Mozilla 1.7+, Netscape 7+ or Konqueror 1+.</p>"
     );
