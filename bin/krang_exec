@@ -153,7 +153,7 @@ GetOptions(
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
-$code ||= <STDIN>;
+$code ||= do { local $/; <STDIN> };
 unless ($code) {
     print "No code to run!\n";
     exit(1);
