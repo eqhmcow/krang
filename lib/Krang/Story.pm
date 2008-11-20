@@ -1795,7 +1795,7 @@ sub transform_stories {
         my $story_id = $story->story_id;
 
         # transform and save the live story
-        $story = $callback->(story => $story, live => 1);
+        $story = $callback->(story => $story, live => 1, version => $story->version);
         $story->save(keep_version => 1, no_history => 1, no_verify_checkout => 1);
 
         if ($past_versions) {
@@ -1818,7 +1818,7 @@ sub transform_stories {
                     }
                     next;
                 }
-                $old_story = $callback->(story => $old_story, live => 0);
+                $old_story = $callback->(story => $old_story, live => 0, version => $v);
 
                 # re-save version
                 $dbh->do('REPLACE INTO story_version (story_id, version, data) VALUES (?,?,?)',
