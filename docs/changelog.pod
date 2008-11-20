@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed broken JS for ListGroup management in Edit Story UI. [Noam Weinstein]
+
+=item *
+
 Added a server-side paste filter to L<Krang::ElementClass::PoorText>,
 triggered by the onPaste event. [Bodo Schulze]
 

@@ -89,7 +89,7 @@ END
         # setup function to update lists
         $html_output .= <<END;
 
-function ${jparam}_update( e, which ) {
+${jparam}_update = function( e, which ) {
    var i = e.selectedIndex;
    if (i < 0) return;
    var list_item_id = e.options[i].value;
