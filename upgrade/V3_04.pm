@@ -149,7 +149,7 @@ sub per_instance {
     my ($self, %args) = @_;
     return if $args{no_db};
     my $dbh = dbh();
-    print "\n";
+    print "\nUPGRADING INSTANCE " . InstanceElementSet . "\n";
 
     # 1. add the 'language' preference
     print "Adding 'language' preference to pref table... ";
@@ -316,7 +316,7 @@ sub new {
     my \%args = (
       name => '$class',
       children => [],
-      @_,
+      \@_,
     );
     return \$pkg->SUPER::new(\%args);
 }
