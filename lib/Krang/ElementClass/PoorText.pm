@@ -261,8 +261,6 @@ sub view_data {
 
     return '' unless $data->[0];
 
-    return $data->[0] if $element->class->type eq 'text';
-
     return <<END;
 <div style="border-bottom: 1px solid #99999">
     Indent: $data->[1]px &mdash; Text Alignment: $data->[2]
@@ -316,16 +314,17 @@ sub linked_stories {
     my $html = ${$element->data()}[0];
 
     # get story link IDs out of '_story_id' attrib
-    while ($html =~ s/_story_id="(\d+)"//g) {
+    while ($html =~ /_story_id="(\d+)"/g) {
         my $story;
         my $id = $1;
-        if ($id && (($story) = pkg('Story')->find(story_id => $1))) {
+
+        if ($id && (($story) = pkg('Story')->find(story_id => $id))) {
 
             # for asset list building: fill story_links hashref
-            $story_links->{$story->story_id} = $story;
+            $story_links->{$id} = $story;
 
             # for template_data(): use the current URL of the linked story ID
-            $url_for->{$story->story_id} = pkg('URL')->real_url(
+            $url_for->{$id} = pkg('URL')->real_url(
                 object    => $story,
                 publisher => $publisher
             );
@@ -354,8 +353,8 @@ sub template_data {
         # fix the StoryLinks' HREF according to current URL
         while (
             $html =~ s/_story_id="(\d+)" [^>]+ href="[^"]+"
-                         /'href="' . $url_for->{$1} . '"'
-                         /exg
+                      /'href="' . $url_for->{$1} . '"'
+                      /exg
           )
         {
 
@@ -366,10 +365,7 @@ sub template_data {
     # finally chop CSS class from links
     $html =~ s/(<a [^>]+) class="pt-a(?:\s+ pt-storylink)?"/$1/gx;
 
-    # return for 'text' flavour
-    return $html if $element->class->type eq 'text';
-
-    # return for 'textarea' flavour
+    # return it
     return <<END;
 <div style="padding-left: $data->[1]; padding-right: $data->[1]; text-align: $data->[2]">
   $html
