@@ -30,12 +30,12 @@
                 <xs:element name="alt_tag" type="xs:string"/>
                 <xs:element name="notes" type="xs:string"/>
                 <xs:element name="version" type="xs:int"/>
+                <xs:element name="published"  type="xs:boolean"/>
                 <xs:element name="published_version" type="xs:int" minOccurs="0"/>
                 <xs:element name="creation_date" type="xs:dateTime"/>
                 <xs:element name="publish_date" type="xs:dateTime" minOccurs="0"/>
                 <xs:element name="retired" type="xs:boolean"/>
                 <xs:element name="trashed"  type="xs:boolean"/>
-                <xs:element name="published"  type="xs:boolean"/>
                 <xs:element name="contrib" minOccurs="0" maxOccurs="unbounded">
                     <xs:complexType>
                         <xs:sequence>
