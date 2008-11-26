@@ -19,7 +19,7 @@ sub per_instance {
     # add the new published flag to media
     my @media_columns = @{$dbh->selectcol_arrayref('SHOW columns FROM media')};
     print "Adding 'published' column to media table... ";
-    if (grep { $_ eq 'published' } @alert_columns) {
+    if (grep { $_ eq 'published' } @media_columns) {
         print "already exists (skipping)\n\n";
     } else {
         $dbh->do('ALTER TABLE media ADD published bool NOT NULL DEFAULT 0');
