@@ -118,7 +118,7 @@ Output results of upgrade to console.
 
  --no-db             - Skip any database related changes for the upgrade. This
                        is mainly used if you have multiple machines running Krang
-                       but which share a common database.
+                       which share a common database.
 
  --help              - Show usage
 
