@@ -434,9 +434,9 @@ element just before adding a new child. It is passed the elementclass
 (not its name) the new child would normally belong to, the data it
 would receive and the parent element. Based on these parameters the
 name of a sibling class may be calculated, and the data modified. If
-either of the arguments has been modified, this method must return a
-list containing the (new) class and the (modified) data. The default
-implementation returns the class and data unchanged.
+this method is overridden, it must return a list containing the
+new class and the new data, whether or not they match the old values.
+The default implementation returns them unchanged.
 
 =cut
 
