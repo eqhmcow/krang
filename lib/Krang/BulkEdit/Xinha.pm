@@ -301,7 +301,10 @@ sub add_element {
         my $class = $arg{elementclass_for}->{$tag} || $arg{elementclass_for}->{p};
 
         # maybe change the element's class
-        ($class, $html) = $element->bulk_save_change(class => $class, data => $html);
+        if (my ($new_class, $new_html) = $element->bulk_save_change(class => $class, data => $html)) {
+            $class = $new_class;
+            $html  = $new_html;
+        }
 
         # make a new Krang element for this tag's content
         my $child = $element->add_child(class => $class);
