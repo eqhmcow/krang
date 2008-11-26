@@ -2,13 +2,9 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 3.04 - IN DEVELOPMENT
+=head2 3.05 - IN DEVELOPMENT
 
 =over
-
-=item *
-
-Fixed broken JS for ListGroup management in Edit Story UI. [Noam Weinstein]
 
 =item *
 
@@ -27,12 +23,6 @@ to address a security vulnerability in the apache default configurarion
 Added linked_stories() to L<Krang::ElementClass> to make this interface
 available to all elementclasses, especially WYSIWYG editors and the
 like. [Bodo Schulze]
-
-=item *
-
-Fixed bug in FTP code where timezone used by FTP server (for file creation
-dates, logging, etc.) was always UTC regardless of the local machine's
-timezone (causing inconsistency in Krang dates and log entries). [Noam Weinstein]
 
 =item *
 
@@ -86,6 +76,24 @@ that had been left unsaved in their session. [Noam Weinstein]
 Fixed bug where it was possible from the View Schedule screen to 'View' the 
 version of a Story or Media currently open for edit, causing confusion and
 the possible loss of changes if the user clicked 'Edit' again. [Noam Weinstein]
+
+=back
+
+
+
+=head2 3.04
+
+=over
+
+=item *
+
+Fixed bug in FTP code where timezone used by FTP server (for file creation
+dates, logging, etc.) was always UTC regardless of the local machine's
+timezone (causing inconsistency in Krang dates and log entries). [Noam Weinstein]
+
+=item *
+
+Fixed broken JS for ListGroup management in Edit Story UI. [Noam Weinstein]
 
 =item *
 

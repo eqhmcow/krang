@@ -208,16 +208,6 @@ sub per_instance {
 
     # 5. add element support to media objects
     $self->add_elements_to_media();
-
-    # 6. add the new published flag to media
-    my @media_columns = @{$dbh->selectcol_arrayref('SHOW columns FROM media')};
-    print "Adding 'published' column to media table... ";
-    if (grep { $_ eq 'published' } @alert_columns) {
-        print "already exists (skipping)\n\n";
-    } else {
-        $dbh->do('ALTER TABLE media ADD published bool NOT NULL DEFAULT 0');
-        print "DONE\n\n";
-    }
 }
 
 sub add_elements_to_media {
@@ -394,7 +384,7 @@ EOF
     }
     if ($warn_about_chown_failure) {
         print
-          "\n* * * WARNING * * * \t The Krang upgrade script was unable to correct the ownership of $element_lib/$class.pm\n";
+          "\n* * * WARNING * * * \t The Krang upgrade script was unable to verify/fix the ownership of $element_lib/$class.pm\n";
     }
     if ($warn_about_set_conf) {
         print
