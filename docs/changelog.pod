@@ -81,7 +81,7 @@ the possible loss of changes if the user clicked 'Edit' again. [Noam Weinstein]
 
 
 
-=head2 3.04
+=head2 3.04 - November 25th, 2008
 
 =over
 
