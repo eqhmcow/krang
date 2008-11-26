@@ -149,7 +149,7 @@ sub per_instance {
     my ($self, %args) = @_;
     return if $args{no_db};
     my $dbh = dbh();
-    print "\nUPGRADING INSTANCE " . InstanceElementSet . "\n";
+    print "\n\nUPGRADING INSTANCE " . InstanceElementSet . "\n\n";
 
     # 1. add the 'language' preference
     print "Adding 'language' preference to pref table... ";
@@ -385,7 +385,7 @@ EOF
               "Adding root element to $media_without_elements_total media rows... $written written\r"
               unless (++$written % 50);
         }
-        print "Adding root element to $media_without_elements_total media rows... done\n";
+        print "\ndone\n";
     }
 
     if ($warn_about_new_pm) {
