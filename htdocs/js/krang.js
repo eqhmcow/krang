@@ -914,8 +914,13 @@ Krang.to_top = function() {
 Krang.row_checked = function( form, inputName ) {
     form = typeof form == 'object' ? form : document.forms[form];
 
-    return $(form).getInputs('checkbox').any(function(ckbx) {
-        return ckbx.checked && ckbx.name.indexOf(inputName) == 0;
+    var acc;
+
+    return $(form).getInputs('checkbox').inject(0, function(acc, ckbx) {
+        if (ckbx.checked && ckbx.name.indexOf(inputName) == 0) {
+            acc++;
+        }
+        return acc;
     });
 };
 
