@@ -5,7 +5,7 @@ use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader base => 'Upgrade';
 use Krang::ClassLoader DB   => 'dbh';
 use Krang::ClassLoader 'ElementLibrary';
-use Krang::Conf qw(KrangRoot InstanceElementSet);
+use Krang::Conf qw(KrangUser KrangGroup KrangRoot InstanceElementSet);
 use File::Spec::Functions qw(catfile catdir);
 
 sub per_installation {
@@ -221,7 +221,7 @@ sub per_instance {
 }
 
 sub add_elements_to_media {
-    my ($element_lib, $warn_about_new_pm, $warn_about_set_conf);
+    my ($element_lib, $warn_about_new_pm, $warn_about_set_conf, $warn_about_chown_failure);
 
     # 1. add column to media table
     my $dbh = dbh();
@@ -325,6 +325,13 @@ sub new {
 EOF
         print "done\n\n";
         $warn_about_new_pm = 1;
+        eval { 
+             my ($uid, $gid);
+             (undef, undef, $uid, undef) = getpwnam(KrangUser);
+             (undef, undef, $gid, undef) = getgrnam(KrangGroup);
+             chown($uid, $gid, $path_to_module);
+        };
+        $warn_about_chown_failure = 1 if $@;
 
         # 6. add media element to set.conf
         print "Adding an entry to $element_lib/set.conf... ";
@@ -384,6 +391,10 @@ EOF
     if ($warn_about_new_pm) {
         print
           "\n* * * WARNING * * * \t The Krang upgrade script has created a new file: $element_lib/$class.pm\n";
+    }
+    if ($warn_about_chown_failure) {
+        print
+          "\n* * * WARNING * * * \t The Krang upgrade script was unable to correct the ownership of $element_lib/$class.pm\n";
     }
     if ($warn_about_set_conf) {
         print
