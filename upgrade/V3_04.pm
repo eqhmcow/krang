@@ -149,7 +149,7 @@ sub per_instance {
     my ($self, %args) = @_;
     return if $args{no_db};
     my $dbh = dbh();
-    print "\n\nUPGRADING INSTANCE " . InstanceElementSet . "\n\n";
+    print "\n\nUPGRADING INSTANCE " . uc(InstanceElementSet) . ":\n\n";
 
     # 1. add the 'language' preference
     print "Adding 'language' preference to pref table... ";
