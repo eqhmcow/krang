@@ -74,7 +74,12 @@ push(@ARGV, '-o', 'limit nr files=1024');
 push(@ARGV, '-o', 'error log=' . catfile(KrangRoot, "logs", 'ftp.log'));
 
 # propagate machine's timezone to FTP server
-my $tz = DateTime::TimeZone::Local->TimeZone;
-push(@ARGV, '-o', 'time zone=' . $tz->name) if $tz;
+eval {
+    my $tz = DateTime::TimeZone::Local->TimeZone;
+    push(@ARGV, '-o', 'time zone=' . $tz->name) if $tz;
+};
+if ($@) {
+    print "Could not determine local timezone, so it was not propagated to FTP server\n";
+}
 
 pkg('FTP::Server')->run;
