@@ -355,6 +355,9 @@ Krang.Ajax.request = function(args) {
     onComplete: a callback function to be executed after the normal processing (optional)
                 Receives as arguments, the same args passed into Ajax.update() the AJAX transport
                 object, and any JSON object returned in the X-JSON HTTP header.
+    onSuccess : a callback function to be executed only after a successful request (optional)
+                Receives as arguments, the same args passed into Ajax.update() the AJAX transport
+                object, and any JSON object returned in the X-JSON HTTP header.
     onFailure : a callback function to be executed in case of an error. Receives as arguments
                 the AJAX transport object and the exception thrown. This is in addition to the
                 normal error message the Krang will show to in the UI.
