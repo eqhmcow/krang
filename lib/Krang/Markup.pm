@@ -155,10 +155,6 @@ to be cleaned.
 sub remove_junk {
     my ($self, $html) = @_;
 
-    # remove adjacent closing/opening tags and keep going (but
-    # preserve whitespace)
-    1 while $$html =~ s/<\/([^>]+)>(\s*)<\1>/$2/gs;
-
     # remove tags w/o content inside
     1 while $$html =~ s/<([^>]+)><\/\1>//gs;
 
