@@ -147,10 +147,10 @@ form { margin: 0; padding: 0; }
 #C table.result { border-bottom: 1px solid #DDD; border-collapse: separate; border-spacing: 0; margin: 0; }
 #C table.result thead { background-color: <tmpl_var XLightColor>; }
 #C table.result tbody th, #C table.result td { padding-top: .27em; padding-bottom: .27em; }
-#C table.result th.f { border-left:  1px solid <tmpl_var XLightColor>; padding-left: 10px}
-#C table.result th.l { border-right: 1px solid <tmpl_var XLightColor>; }
-#C table.result td.f { border-left:  1px solid #DDD !important; padding-left: 10px}
-#C table.result td.l { border-right: 1px solid #DDD !important; }
+#C table.result thead th.f { border-left:  1px solid <tmpl_var XLightColor>; padding-left: 10px}
+#C table.result thead th.l { border-right: 1px solid <tmpl_var XLightColor>; }
+#C table.result tbody td.f, #C table.result tbody th.f { border-left:  1px solid #DDD !important; padding-left: 10px}
+#C table.result tbody td.l, #C table.result tbody th.l { border-right: 1px solid #DDD !important; }
 #C table.compact { width: auto; table-layout: auto; }
 #C table.compact th, #C table.compact td { overflow: visible; word-wrap: normal; white-space: nowrap; }
 #C table table    { margin-top: 0; table-layout: auto; }/*:ONLY ElementEditor?(db2)*/
