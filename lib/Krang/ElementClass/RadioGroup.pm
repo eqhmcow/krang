@@ -193,7 +193,7 @@ sub labels {
 
         # We've got labels
         while (my ($key, $val) = each %{$self->{labels}}) {
-            $localized_labels{$key} = localize($key);
+            $localized_labels{$key} = localize($val);
         }
     } else {
 

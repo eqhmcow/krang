@@ -6,6 +6,13 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item * 
+
+Fixed Bug in RadiGroup labels (was calling localize() on the 
+labels-hashref key instead of its value to populate the label) 
+[David Kaufman]
+
+
 =item *
 
 Added a server-side paste filter to L<Krang::ElementClass::PoorText>,
