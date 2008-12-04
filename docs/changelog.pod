@@ -6,9 +6,16 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Fixed bug in L<Krang::Handler>: Make sure, each application request
+has a window_id, even if the URL was entered manually in a newly
+opened tab/window after the user has already been authenticated. [Bodo
+Schulze]
+
 =item * 
 
-Fixed Bug in RadiGroup labels (was calling localize() on the 
+Fixed Bug in RadioGroup labels (was calling localize() on the 
 labels-hashref key instead of its value to populate the label) 
 [David Kaufman]
 
