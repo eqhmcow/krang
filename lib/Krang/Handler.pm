@@ -444,7 +444,7 @@ sub authen_handler ($$) {
 
     # after being authentified user manually opened new window and
     # typed in an URI which has no window id
-    if ($uri_needs_window_id) {
+    if ($uri_needs_window_id && $args{rm} ne 'logout') {
         return $self->_attach_window_id($r, $instance, $window_id);
     }
 
