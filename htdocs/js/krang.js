@@ -115,8 +115,6 @@ document.onunload = function() {
     // Log out the current window
     Krang.Window.log_out();
 
-    // Log out all Krang windows
-    Krang.Window.log_out_all();
 */
 Krang.Window = {
     init : function(id) {
