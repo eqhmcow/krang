@@ -374,10 +374,7 @@ sub authen_handler ($$) {
     }
 
     # No window ID means no session for this window: create a new one
-    my $uri_needs_window_id = 0;
     unless ($window_id) {
-
-        $uri_needs_window_id = 1;
 
         # new window ID
         $window_id = $cookie{next_wid}++;
@@ -430,9 +427,6 @@ sub authen_handler ($$) {
     $r->subprocess_env('KRANG_SESSION_ID' => $session_id);
     $r->subprocess_env('KRANG_WINDOW_ID'  => $window_id);
 
-    # session will be loaded via Krang::CGI: unload it here to avoid endless spinning
-    pkg('Session')->unload();
-
     # We are authenticated, we've got a window_id and a valid session:
     # Redirect to workspace if user typed a login URI in a new window
     my $login_uri = $self->login_uri;
@@ -441,12 +435,7 @@ sub authen_handler ($$) {
             return $self->_redirect_to_workspace($r, $instance, $window_id);
         }
     }
-
-    # after being authentified user manually opened new window and
-    # typed in an URI which has no window id
-    if ($uri_needs_window_id && $args{rm} ne 'logout') {
-        return $self->_attach_window_id($r, $instance, $window_id);
-    }
+    pkg('Session')->unload();
 
     return OK;
 }
@@ -749,14 +738,6 @@ sub _redirect_to_workspace {
 
     my $app = "workspace.pl?window_id=$window_id";
     my $new_uri = $r->dir_config('flavor') eq 'instance' ? "/$app" : "/$instance/$app";
-
-    return $self->_do_redirect($r, $new_uri);
-}
-
-sub _attach_window_id {
-    my ($self, $r, $instance, $window_id) = @_;
-
-    my $new_uri = $r->uri . "?window_id=$window_id";
 
     return $self->_do_redirect($r, $new_uri);
 }
