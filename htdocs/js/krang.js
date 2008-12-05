@@ -726,7 +726,16 @@ Krang.Nav = {
                 });
             } else {
                 Krang.show_indicator();
-                window.location = Krang.Window.pass_id(url);
+                if (Prototype.Browser.IE) {
+                    // we need the referer to be sent
+                    // see http://webbugtrack.blogspot.com/search/label/HTTP%20Referer
+                    var a = new Element('a', {href : Krang.Window.pass_id(url)});
+                    document.body.appendChild(a);
+                    console.log(a);
+                    a.click();
+                } else {
+                    window.location = Krang.Window.pass_id(url);
+                }
             }
             Krang.Nav.edit_mode_flag = false;
         }
