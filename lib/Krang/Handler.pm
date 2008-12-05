@@ -363,6 +363,13 @@ sub authen_handler ($$) {
     my %args = $r->args();
     my $window_id = $args{window_id} || '';
 
+    # User opened a new window manually, typed or copied URL or
+    # accessed it via History: make sure we create a new id for this
+    # new window
+    if ($window_id && not $r->header_in("Referer")) {
+        undef $window_id;
+    }
+
     # Get session_id for window_id
     if ($window_id) {
 
