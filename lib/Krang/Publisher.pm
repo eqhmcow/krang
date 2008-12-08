@@ -546,9 +546,8 @@ sub unpublish_story {
         next unless -f $path;
 
         # make sure this path isn't claimed by another story
-        my ($claimed) =
-          $dbh->selectrow_array(
-            "SELECT 1 FROM publish_story_location " . "WHERE path = ? AND story_id != ?",
+        my ($claimed) = $dbh->selectrow_array(
+            "SELECT 1 FROM publish_story_location WHERE path = ? AND story_id != ?",
             undef, $path, $story->story_id);
 
         next if $claimed;
@@ -571,7 +570,7 @@ sub unpublish_story {
 
             opendir(DIRH, $dir)
               or croak("Unable to open directory $dir during unpublish: $!");
-            my @files = grep { not /^\./ } readdir(DIRH);
+            my @files = grep { not /^\.\.?$/ } readdir(DIRH);
             closedir(DIRH);
             next if @files;
 
@@ -587,11 +586,7 @@ sub unpublish_story {
     $story->{published_version} = undef;
     $story->{publish_date}      = undef;
     $dbh->do(
-        'UPDATE story
-              SET
-                  published_version = ?,
-                  publish_date = ?
-              WHERE story_id = ?',
+        'UPDATE story SET published_version = ?, publish_date = ?  WHERE story_id = ?',
         undef,
         $story->{published_version},
         $story->{publish_date},
