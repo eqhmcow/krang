@@ -448,12 +448,12 @@ sub find {
           unless exists $site_cols{$lookup_field}
               || $arg eq 'simple_search';
 
-        if ($arg eq 'site_id' && ref $args{$arg} eq 'ARRAY') {
-            my $tmp = join(" OR ", map { "site_id = ?" } @{$args{$arg}});
+        if ($arg eq 'site_id' && ref $args{site_id} eq 'ARRAY' && @{$args{site_id}} > 0) {
+            my $tmp = join(" OR ", map { "site_id = ?" } @{$args{site_id}});
             $where_clause .= " ($tmp)";
-            push @params, @{$args{$arg}};
+            push @params, @{$args{site_id}};
         } elsif ($arg eq 'simple_search') {
-            my @words = split(/\s+/, $args{$arg});
+            my @words = split(/\s+/, $args{simple_search});
             for my $word (@words) {
                 my $numeric = $word =~ /^\d+$/ ? 1 : 0;
                 if ($where_clause) {
@@ -505,6 +505,7 @@ sub find {
     }
 
     my $dbh = dbh();
+warn "\nSQL: $query\n";
     my $sth = $dbh->prepare($query);
     $sth->execute(@params);
 
