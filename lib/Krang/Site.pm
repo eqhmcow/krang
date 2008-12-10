@@ -505,7 +505,6 @@ sub find {
     }
 
     my $dbh = dbh();
-warn "\nSQL: $query\n";
     my $sth = $dbh->prepare($query);
     $sth->execute(@params);
 
