@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug to let the a template's Log be viewed from its "View Detail"
+screen. [Bodo Schulze]
+
+=item *
+
 Fixed a bug in L<Krang::Handler> reported by Alice Lincoln: Make sure
 a manually created window gets its own id when the user types/copies a
 Krang URL into it or accesses another windows URL via the History.

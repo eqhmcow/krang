@@ -119,7 +119,9 @@ Krang.onload( function() {
 </tmpl_if></tmpl_unless>
 
 <form name="view_log_form" action="history.pl" method="post">
-<input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
+<input name="class" value="Template" type="hidden">
+<input name="id" value="<tmpl_var escape=html template_id>" type="hidden">
+<input name="id_meth" value="template_id" type="hidden">
 <input name="history_return_script" value="template.pl" type="hidden">
 <input name="history_return_script" value="return_script" type="hidden">
 <input name="history_return_script" value="template.pl" type="hidden">
