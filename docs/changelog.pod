@@ -22,27 +22,14 @@ referer when a link is passed through JavaScript. [Bodo Schulze]
 
 =item * 
 
-Fixed Bug in RadioGroup labels (was calling localize() on the 
-labels-hashref key instead of its value to populate the label) 
-[David Kaufman]
-
-
-=item *
-
 Added a server-side paste filter to L<Krang::ElementClass::PoorText>,
 triggered by the onPaste event. [Bodo Schulze]
 
-=item *
-
-Upgraded: Apache from 1.3.37 to 1.3.41, mm from 1.4.2 to 1.4.2, and mod_ssl 
-from 2.8.28 to 2.8.31 to incorporate latest upstream security bug fixes; 
-Disabled use of HTTP TRACE method in krang httpd and siteserver conf templates 
-to address a security vulnerability in the apache default configurarion
 
 =item * 
 
 Added linked_stories() to L<Krang::ElementClass> to make this interface
-available to all elementclasses, especially WYSIWYG editors and the
+available to all element classes, especially WYSIWYG editors and the
 like. [Bodo Schulze]
 
 =item *
@@ -83,7 +70,7 @@ C<ChangeableElementClasses> directive in F<set.conf>). [Michael Peters]
 
 =item *
 
-Added a new WYSIWYG elementclass L<Krang::ElementClass::PoorText> and all
+Added a new WYSIWYG element class L<Krang::ElementClass::PoorText> and all
 it takes. [Bodo Schulze]
 
 =item *
@@ -101,36 +88,47 @@ the possible loss of changes if the user clicked 'Edit' again. [Noam Weinstein]
 =back
 
 
-
-=head2 3.04 - November 25th, 2008
+=head2 3.04 - December 12, 2008
 
 =over
 
 =item *
 
-Fixed bug in FTP code where timezone used by FTP server (for file creation
-dates, logging, etc.) was always UTC regardless of the local machine's
-timezone (causing inconsistency in Krang dates and log entries). [Noam Weinstein]
+Fixed Bug in RadioGroup labels (was calling localize() on the 
+labels-hashref key instead of its value to populate the label) 
+[David Kaufman]
 
 =item *
 
-Fixed broken JS for ListGroup management in Edit Story UI. [Noam Weinstein]
+Fixed broken JS for ListGroup management in Edit Story UI. 
+[Noam Weinstein]
 
 =item *
 
-Ported fix to unpreview a media object when it is deleted 
-(instead of just unpublishing it). [David Kaufman]
+Fixed Safari errors in Xinha-based bulk-editing
+
+=item *
+
+Fixed bug in FTP code where timezone used by FTP server (for 
+file creation dates, logging, etc.) was always UTC regardless of 
+the local machine's timezone (causing inconsistency in Krang dates 
+and log entries). [Noam Weinstein]
+
+=item *
+
+Fix to unpreview a media object when it is deleted (instead of just 
+unpublishing it). [David Kaufman]
 
 =item *
 
 Refactored bulk edit in its own classes.  The legacy textarea-based
 bulk editing is in L<Krang::BulkEdit::Textarea>.  Xinha-based bulk
 editing is provided by L<Krang::BulkEdit::Xinha>. This module largely
-use parsing instead of regexes to sanitize/scrub the HTML coming from
-Xinha. Xinha's toolbar and the set of allowed block-level is
+uses parsing instead of regexes to sanitize/scrub the HTML coming from
+Xinha. Xinha's toolbar and the set of allowed block-level tags are
 configurable via subclassing L<Krang::BulkEdit::Xinha::Config>.  This
-module also allows to configure whether paragraphs should be split on
-BR tags. [Bodo Schulze]
+module also permits configuration of whether paragraphs should be split 
+on BR tags. [Bodo Schulze]
 
 =item *
 
@@ -216,7 +214,7 @@ according to Michael Peters' renaming in r5180. [Bodo Schulze]
 
 =item *
 
-Added initial support for Xinha-backed bulk edit, based on code by
+Added initial support for Xinha-based bulk edit, based on code by
 Noam Weinstein. [Bodo Schulze]
 
 =item * 
@@ -226,9 +224,10 @@ Edit screen (thanx Noam). [Bodo Schulze]
 
 =item *
 
-Added elements to Media objects, enhanced Media Edit UI to take advantage of the ability 
-to create, edit, and publish element data along with media objects. Wrote upgrade code 
-to instantiate skeletal media element class. [Noam Weinstein]
+Added elements to Media objects, enhanced Media Edit UI to take 
+advantage of the ability to create, edit, and publish element data 
+along with media objects. Wrote upgrade code to instantiate skeletal 
+media element class. [Noam Weinstein]
 
 =item *
 
@@ -237,14 +236,15 @@ implementation of WYSIWYG-based bulk edit areas. [Bodo Schulze]
 
 =item *
 
-Standardized locations of bottom-panel buttons on Edit screens. [Noam Weinstein]
+Standardized locations of bottom-panel buttons on Edit screens. 
+[Noam Weinstein]
 
 =item *
 
 Made it possible to associate contributors with a story or media
 object even if the user doesn't have the manage_contribs permission,
-which should presumably be required only for the ability to add or delete
-contributors from the system. [Noam Weinstein]
+which should presumably be required only for the ability to add or 
+delete contributors from the system. [Noam Weinstein]
 
 =item *
 
@@ -253,8 +253,8 @@ Fixed bug where cloning a read-only story doesn't reset may_edit flag.
 
 =item *
 
-Added ability to rename media files (through code, not GUI) without re-uploading 
-object. [Noam Weinstein]
+Added ability to rename media files (through code, not GUI) without 
+re-uploading object. [Noam Weinstein]
 
 =item *
 
@@ -277,7 +277,8 @@ from the command-line. [Noam Weinstein]
 
 =item *
 
-Added option to krang_backup to backup a single instance. [Noam Weinstein]
+Added option to krang_backup to backup a single instance. 
+[Noam Weinstein]
 
 =item *
 
@@ -339,8 +340,9 @@ to use the localization API (L<localization_api.html>). [Bodo Schulze]
 
 =item *
 
-Added F<bin/krang_smoke_test> to make it as easy as possible to create a smoke server
-to send the results to L<http://smolder.plusthree.com>. [Michael Peters]
+Added F<bin/krang_smoke_test> to make it as easy as possible to create 
+a smoke server to send the results to L<http://smolder.plusthree.com>. 
+[Michael Peters]
 
 =item *
 
@@ -364,23 +366,27 @@ Added support for Ubuntu [Peter Leonard and Michael Peters]
 
 =item *
 
-Added support for Story Type-based category behavior, including auto-selection of category based on
-type, cover-date, slug, and/or title, and validation of manually selected categories. [Noam Weinstein]
+Added support for Story Type-based category behavior, including 
+auto-selection of category based on type, cover-date, slug, and/or 
+title, and validation of manually selected categories. 
+[Noam Weinstein]
 
 =item *
 
-Added 'Cancel' button to Story, Template, and Media Edit screens - clicking it returns the 
-given object to its previous location (i.e. owner, desk, etc.) and sends user to the page 
-from where he/she opened it. [Noam Weinstein]
+Added 'Cancel' button to Story, Template, and Media Edit screens - 
+clicking it returns the given object to its previous location (i.e. 
+owner, desk, etc.) and sends user to the page from where he/she 
+opened it. [Noam Weinstein]
 
 =item *
 
-Removed requirement to upload a file when creating new media; can now use inline 
-editor without specifying a file. [Noam Weinstein]
+Removed requirement to upload a file when creating new media; can now 
+use inline editor without specifying a file. [Noam Weinstein]
 
 =item *
 
-Added ability to search full text of stories and templates from CMS. [Noam Weinstein]
+Added ability to search full text of stories and templates from CMS. 
+[Noam Weinstein]
 
 =item *
 
@@ -1668,7 +1674,7 @@ Replaced template selector in 'New Template' and 'Find Template'
 
 =item *
 
-Simplied use of --module option with bin/krang_build [Bodo Schulze]
+Simplified use of --module option with bin/krang_build [Bodo Schulze]
 
 =item *
 
