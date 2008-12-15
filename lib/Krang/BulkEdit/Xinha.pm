@@ -461,7 +461,9 @@ sub split_block_on_br {
                 push(@html, $html);
                 $html = '';
             } else {
-                $html .= $node->as_HTML('<>&', undef, {});
+                my $tmp = $node->as_HTML('<>&', undef, {});
+                $tmp =~ s/\n$//;
+                $html .= $tmp;
             }
         } else {    # text node
             $html .= $node;
