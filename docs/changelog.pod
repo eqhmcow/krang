@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Made L<Krang::Element>'s children() method accept one argument to
+return a list of children having the given name only, and added
+convenience method children_data(). [Bodo Schulze]
+
+=item *
+
 Fixed bug to let the a template's Log be viewed from its "View Detail"
 screen. [Bodo Schulze]
 

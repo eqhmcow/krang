@@ -23,8 +23,8 @@ use Krang::ClassLoader Log => qw(assert ASSERT debug info);
 use Storable qw(nfreeze thaw);
 use Krang::Cache;
 use Exception::Class (
-    'Krang::Element::MaxChildClassViolation' => { fields => [qw(parent child max)] },
-    'Krang::Element::MinChildClassViolation' => { fields => [qw(parent child min)] },
+    'Krang::Element::MaxChildClassViolation' => {fields => [qw(parent child max)]},
+    'Krang::Element::MinChildClassViolation' => {fields => [qw(parent child min)]},
 );
 
 =head1 NAME
@@ -337,22 +337,42 @@ sub root {
     return $self;
 }
 
-=item C<< @children = $element->children() >>
+=item C<< @children = $element->children($name) >>
 
 Returns a list of child elements for this element.  These will be
-Krang::Element objects.  For adding a new child, see C<< add_child() >>.
-To delete a child from the list of children, see 
-C<< remove_children() >>.  To reorder the list of children, use 
-C<< reorder_children() >>.
+Krang::Element objects.  Passing the optional $name argument will
+return a list of child elements having this name only.  For adding a
+new child, see C<< add_child() >>.  To delete a child from the list of
+children, see C<< remove_children() >>.  To reorder the list of
+children, use C<< reorder_children() >>.
 
 =cut
 
 sub children {
-    my $self = shift;
-    croak(
-        "Illegal attempt to set children with children()!  Use add_child(), remove_children() or reorder_children() instead."
-    ) if @_;
+    my ($self, $name) = @_;
+
+    if ($name) {
+        return (grep { $_->name eq $name } @{$self->{children}});
+    }
+
     return @{$self->{children}};
+}
+
+=item C<< @children_data = $element->children_data($name) >>
+
+Returns a list of the data slots of the element's children, optionally
+limited to children having the name passed in as the first argument.
+The return list's items are guaranteed to be defined.
+
+=cut
+
+sub children_data {
+    my ($self, $name) = @_;
+
+    return (
+        grep  { defined($_) }
+          map { $_->data } $self->children($name)
+    );
 }
 
 =item C<< $count = $element->children_count() >>
