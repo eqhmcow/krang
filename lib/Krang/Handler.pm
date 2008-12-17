@@ -790,10 +790,10 @@ sub _can_handle_gzip {
 sub _minify_and_gzip {
     my ($self, $r, $file, $type) = @_;
     my $new_file   = $file;
-    $new_file =~ s/\.$type$/.minified.$type/;
 
     # can we minify it?
     if( $type eq 'css' || $type eq 'js' ) {
+        $new_file =~ s/\.$type$/.minified.$type/;
 
         unless (-e $new_file) {
 
