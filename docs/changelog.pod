@@ -91,6 +91,10 @@ Fixed bug where it was possible from the View Schedule screen to 'View' the
 version of a Story or Media currently open for edit, causing confusion and
 the possible loss of changes if the user clicked 'Edit' again. [Noam Weinstein]
 
+=item *
+
+Bug fix for templates that had wide UTF-8 characters. [Michael Peters]
+
 =back
 
 
