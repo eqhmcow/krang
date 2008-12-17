@@ -133,6 +133,12 @@ than one story.
 Using the --story-id flag will cause krang_publish to ignore the
 --site-id, --category-id and --below-category-id options.
 
+=item --story-class
+
+Publishes only those stories that are of the specified element class.
+You can specify this option multiple times to publish stories from
+multiple element classes.
+
 =item --media-id
 
 Publish a single media object, specified by its media-id.  B<CURRENTLY
