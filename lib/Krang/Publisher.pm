@@ -197,7 +197,7 @@ sub init {
     return;
 }
 
-=item C<< $url = $publisher->preview_story(story => \@stories) >>
+=item C<< $url = $publisher->preview_story(story => $story) >>
 
 Generates a story, saving it to the preview doc root on the
 filesystem.  Returns a URL to the story if successful, or will throw
@@ -211,9 +211,7 @@ Arguments:
 
 =item * C<story>
 
-Either a single L<Krang::Story> object, or a reference to an array of
-L<Krang::Story> objects.
-
+A single L<Krang::Story> object.
 
 =item * C<unsaved>
 
