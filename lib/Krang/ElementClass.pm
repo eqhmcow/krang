@@ -7,7 +7,7 @@ use Carp qw(croak);
 use CGI ();
 
 use HTML::Template::Expr;
-use Encode qw(decode_utf8);
+use Encode qw(decode_utf8 encode_utf8);
 
 use Krang::ClassLoader Log          => qw(debug info critical);
 use Krang::ClassLoader Conf         => qw(PreviewSSL);
@@ -720,7 +720,7 @@ sub find_template {
                   . ref($filter) . "'";
             }
         }
-        push @filters, sub { ${$_[0]} = decode_utf8(${$_[0]}) };
+        push @filters, sub { ${$_[0]} = decode_utf8(encode_utf8(${$_[0]})) };
         $args{filter} = \@filters;
     }
 
