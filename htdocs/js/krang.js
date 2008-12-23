@@ -505,6 +505,7 @@ Krang.Ajax.update = function(args) {
 Krang.Form = {
     set : function(form, inputs) {
         form = typeof form == 'object' ? form : document.forms[form];
+        form = $(form);
         var err = 'Krang.Form.set(): ';
 
         if( !form ) alert(err + 'form "' + form.name + '" does not exist!');
@@ -519,6 +520,7 @@ Krang.Form = {
     },
     get_field : function(form, input) {
         form = typeof form == 'object' ? form : document.forms[form];
+        form = $(form);
         var err = 'Krang.Form.get(): ';
 
         if( !form ) alert(err + 'form "' + form.name + '" does not exist!');
@@ -531,6 +533,7 @@ Krang.Form = {
     },
     submit : function(form, inputs, options) {
         form = typeof form == 'object' ? form : document.forms[form];
+        form = $(form);
         if( inputs ) Krang.Form.set(form, inputs);
 
         // take care of our default options
@@ -923,6 +926,7 @@ Krang.to_top = function() {
 */
 Krang.row_checked = function( form, inputName ) {
     form = typeof form == 'object' ? form : document.forms[form];
+    form = $(form);
 
     var acc;
 
