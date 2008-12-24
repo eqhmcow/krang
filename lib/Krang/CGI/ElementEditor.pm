@@ -31,6 +31,10 @@ This module implements the following run modes:
 This mode calls the underlying _save() method of child classes and
 then goes to the add run-mode described below.
 
+This mode saves the current data to the session and passes control to
+Krang::ElementEditor::add to add a new element. Child classes must
+implement the underlying _save() method.
+
 =item add
 
 Called when the user clicks the "Add Element" button in the element
@@ -72,11 +76,24 @@ This mode is called with a 'jump_to' parameter set.  It must save,
 substitute the 'jump_to' value for 'path' in query and return to the
 find_media_link mode.
 
+This mode saves the current element data to the session and goes to
+the find_media_link mode. Classes inheriting these methods, including
+L<Krang::CGI::Story>, L<Krang::CGI::Media> and
+L<Krang::CGI::Category>, are supposed to implement the underlying
+_save() method.
+
+
 =item save_and_find_story_link
 
 This mode is called with a 'jump_to' parameter set.  It must save,
 substitute the 'jump_to' value for 'path' in query and return to the
 find_story_link mode.
+
+This mode saves the current element data to the session and goes to
+the find_story_link mode.  Classes inheriting these methods, including
+L<Krang::CGI::Story>, L<Krang::CGI::Media> and
+L<Krang::CGI::Category>, are supposed to implement the underlying
+_save() method.
 
 =item filter_element_data
 
@@ -482,16 +499,6 @@ sub element_bulk_edit {
     return 1;
 }
 
-=item save_and_find_story_link
-
-This mode saves the current element data to the session and goes to
-the find_story_link mode.  Classes inheriting these methods, including
-L<Krang::CGI::Story>, L<Krang::CGI::Media> and
-L<Krang::CGI::Category>, are supposed to implement the underlying
-_save() method.
-
-=cut
-
 sub save_and_find_story_link {
     my $self = shift;
 
@@ -512,15 +519,6 @@ sub save_and_find_story_link {
     return $self->find_story_link();
 }
 
-=item save_and_find_media_link
-
-This mode saves the current element data to the session and goes to
-the find_media_link mode. Classes inheriting these methods, including
-L<Krang::CGI::Story>, L<Krang::CGI::Media> and
-L<Krang::CGI::Category>, are supposed to implement the underlying
-_save() method.
-
-=cut
 
 sub save_and_find_media_link {
     my $self = shift;
@@ -1069,14 +1067,6 @@ sub element_view {
     );
 
 }
-
-=item save_and_add
-
-This mode saves the current data to the session and passes control to
-Krang::ElementEditor::add to add a new element. Child classes must
-implement the underlying _save() method.
-
-=cut
 
 sub save_and_add {
     my $self = shift;
