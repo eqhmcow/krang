@@ -144,9 +144,10 @@ sub edit {
         $tag ||= 'p';
 
         # maybe filter the data
-        my $data = ref($child->before_bulk_edit) eq 'CODE'
+        my $data =
+          ref($child->before_bulk_edit) eq 'CODE'
           ? $child->before_bulk_edit->(element => $child)
-            : $child->data;
+          : $html;
 
         # concat it
         $full_text .= "<$tag>$data</$tag>";
@@ -307,10 +308,10 @@ sub add_element {
         my $child = $element->add_child(class => $class);
 
         # maybe filter the element's html before storing it
-        my $data = 
+        my $data =
           ref($child->class->before_bulk_save) eq 'CODE'
-            ? $child->class->before_bulk_save->(data => $html)
-              : $html;
+          ? $child->class->before_bulk_save->(data => $html, element => $child)
+          : $html;
 
         $child->data($data);
 
