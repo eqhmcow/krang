@@ -155,6 +155,9 @@ to be cleaned.
 sub remove_junk {
     my ($self, $html) = @_;
 
+    # remove adjacent closing/opening STRONG and EM tags
+    1 while $$html =~ s/<\/(em|strong)>(\s*)<\1>/$2/gs;
+
     # remove tags w/o content inside
     1 while $$html =~ s/<([^>]+)><\/\1>//gs;
 
