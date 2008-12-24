@@ -525,8 +525,6 @@ Logging.  When the application is running under Apache::Registry (not
 in CGI_MODE) this handler gets error messages out of
 C<< $r->notes() >> and logs them with Krang::Log.
 
-=back
-
 =cut
 
 sub log_handler ($$) {
@@ -558,6 +556,8 @@ Cleanup. We use L<Apache::SizeLimit> to limit the size of the individual
 Apache processes. Also, if an ISE occurred during the handling of this request
 we send an optional email to any addresses configured by the C<ErrorNotificationEmail>
 directive.
+
+=back
 
 =cut
 
