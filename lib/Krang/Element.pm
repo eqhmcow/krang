@@ -339,39 +339,73 @@ sub root {
 
 =item C<< @children = $element->children($name) >>
 
+=item C<< @children = $element->children(name => 'paragraph') >>
+
+=item C<< @children = $element->children(class => 'Default::image') >>
+
+=item C<< @children = $element->children(isa => 'Krang::ElementClass::Media') >>
+
 Returns a list of child elements for this element.  These will be
-Krang::Element objects.  Passing the optional $name argument will
-return a list of child elements having this name only.  For adding a
-new child, see C<< add_child() >>.  To delete a child from the list of
+Krang::Element objects.  Passing the optional $name argument (or
+B<one> of the named arguments shown in the examples above) will return
+a list of child elements filtered accordingly.  For adding a new
+child, see C<< add_child() >>.  To delete a child from the list of
 children, see C<< remove_children() >>.  To reorder the list of
 children, use C<< reorder_children() >>.
+
+This method will croak when passed more than one named argument.
 
 =cut
 
 sub children {
-    my ($self, $name) = @_;
+    my $self = shift;
 
-    if ($name) {
+    return @{$self->{children}} unless @_;
+
+    if (scalar(@_) == 1) {
+        my $name = $_[0];
         return (grep { $_->name eq $name } @{$self->{children}});
+    } elsif (scalar(@_) == 2) {
+        my ($arg, $val) = @_;
+        if ($arg eq 'name') {
+            return (grep { $_->name eq $val } @{$self->{children}});
+        } elsif ($arg eq 'class') {
+            return (grep { $_->class->name eq $val } @{$self->{children}});
+        } elsif ($arg eq 'isa') {
+            return (grep { $_->class->isa($val) } @{$self->{children}});
+        } else {
+            croak(__PACKAGE__ . "::children($arg => $val) - unrecognized named argument '$arg'");
+        }
+    } else {
+        my $args = join(', ', @_);
+        croak(__PACKAGE__ . "::children() - unrecognized arguments: $args");
     }
-
-    return @{$self->{children}};
 }
 
 =item C<< @children_data = $element->children_data($name) >>
 
+=item C<< @children = $element->children_data(name => 'paragraph') >>
+
+=item C<< @children = $element->children_data(class => 'Default::image') >>
+
+=item C<< @children = $element->children_data(isa => 'Krang::ElementClass::Media') >>
+
 Returns a list of the data slots of the element's children, optionally
 limited to children having the name passed in as the first argument.
-The return list's items are guaranteed to be defined.
+Alternatively, the list may be filtered by B<one> of the named
+parameters shown in the examples above.  The return list's items are
+guaranteed to be defined.
+
+This method will croak when passed more than one named argument.
 
 =cut
 
 sub children_data {
-    my ($self, $name) = @_;
+    my $self = shift;
 
     return (
         grep  { defined($_) }
-          map { $_->data } $self->children($name)
+          map { $_->data } $self->children(@_)
     );
 }
 
