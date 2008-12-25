@@ -1369,6 +1369,11 @@ or not to add the current L<Krang::Category> header/footer to the
 final output, as it will for the regular published output.  Defaults
 to true.
 
+C<category_tmpl_args> is an optional hashref of keys/values to add
+to the $fill_template_args hashref passed to category's fill_template()
+method (which by default includes a single key/value pair, additional_content =>
+$filename). this of course has no effect without specifying use_category => 1.
+
 C<mode> is an optional parameter which will set the permissions
 of the file which is published.  The mode should be specified in
 octal (NOT a string).  If not specified, the mode of the published
@@ -1381,7 +1386,7 @@ has been applied.
 B<WARNING:> C<additional_content_block()> can be called as many times
 as desired, however it does not perform any sanity checks on
 C<filename> - if your output contains multiple blocks of additional
-content with identical filenames, they will overwrite eachother, and
+content with identical filenames, they will overwrite each other, and
 only the last one will remain.
 
 =cut
@@ -1860,9 +1865,10 @@ sub _build_story_single_category {
     while (my $block = shift @{$self->{additional_content}}) {
         my $content = $block->{content};
         if ($block->{use_category}) {
-            my %tmpl_args = (additional_content => $block->{filename});
+            my $tmpl_args = $block->{category_tmpl_args} || {};
+            $tmpl_args->{additional_content} = $block->{filename};
             ($cat_header, $cat_footer) =
-              $self->_cat_content($category_element, fill_template_args => \%tmpl_args)
+              $self->_cat_content($category_element, fill_template_args => $tmpl_args)
               unless (($cat_header or $cat_footer)
                 and not $story_element->class->publish_category_per_page());
             $content = $cat_header . $content . $cat_footer;

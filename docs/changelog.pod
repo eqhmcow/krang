@@ -6,6 +6,10 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+Enhanced L<Krang::Publisher>'s additional_content_block() to accept an
+optional hashref of category_tmpl_args to pass to L<Krang::Category>'s
+fill_template method. [Noam Weinstein]
+
 =item *
 
 Made L<Krang::Element>'s children() method accept one argument to
