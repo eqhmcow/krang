@@ -1372,7 +1372,7 @@ to true.
 C<category_tmpl_args> is an optional hashref of keys/values to add
 to the $fill_template_args hashref passed to category's fill_template()
 method (which by default includes a single key/value pair, additional_content =>
-$filename). this of course has no effect without specifying use_category => 1.
+$filename). this of course has no effect if use_category is set to 0.
 
 C<mode> is an optional parameter which will set the permissions
 of the file which is published.  The mode should be specified in
@@ -1407,6 +1407,7 @@ sub additional_content_block {
     croak __PACKAGE__ . ": post_process is not a code block"
       if $args{post_process} && !ref $args{post_process} eq 'CODE';
     $block{post_process} = $args{post_process};
+    $block{category_tmpl_args} = $args{category_tmpl_args};
 
     push @{$self->{additional_content}}, \%block;
 
