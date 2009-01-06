@@ -6,6 +6,13 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Like Stories, find Media and Templates in Live, Retired and Trash when
+finding by ID or UUID. [Bodo Schulze]
+
+=item *
+
 Enhanced L<Krang::Publisher>'s additional_content_block() to accept an
 optional hashref of category_tmpl_args to pass to L<Krang::Category>'s
 fill_template method. [Noam Weinstein]
