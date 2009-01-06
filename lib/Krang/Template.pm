@@ -920,7 +920,7 @@ sub find {
     }
 
     # include live/retired/trashed
-    unless ($args{template_id}) {
+    unless ($args{template_id} or $args{template_uuid}) {
         if ($include_live) {
             unless ($include_retired) {
                 $where_clause .= ' and ' if $where_clause;

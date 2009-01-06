@@ -1403,7 +1403,7 @@ sub find {
     }
 
     # include live/retired/trashed
-    unless ($args{media_id}) {
+    unless ($args{media_id} or $args{media_uuid}) {
         if ($include_live) {
             unless ($include_retired) {
                 $where_string .= ' and ' if $where_string;
