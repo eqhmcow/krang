@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added new element class L<Krang::ElementClass::TextInputList>. Added
+it to L<Krang::ElementLibrary>'s autoload list, added three examples
+to L<TestSet1::page> and its template, and added some CSS to
+F<krang.css.tmpl>. [Bodo Schulze]
+
+=item *
+
 Like Stories, find Media and Templates in Live, Retired and Trash when
 finding by ID or UUID. [Bodo Schulze]
 
