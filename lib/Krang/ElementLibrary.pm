@@ -114,6 +114,8 @@ use Krang::ClassLoader 'ElementClass::Textarea';
 use Krang::ClassLoader 'ElementClass::Text';
 use Krang::ClassLoader 'ElementClass::Date';
 use Krang::ClassLoader 'ElementClass::XinhaEditor';
+use Krang::ClassLoader 'ElementClass::PoorText';
+use Krang::ClassLoader 'ElementClass::TextInputList';
 
 our ($TESTING_SET, %LOADED_SET, %PARENT_SETS, %TOP_LEVEL, %CHANGEABLE);
 
@@ -240,7 +242,7 @@ sub _set_changeable_elements {
     foreach my $first (@changeable) {
         my @group = ($first, $conf->get(ChangeableElementClasses => $first));
         foreach my $class (@group) {
-            $CHANGEABLE{$set}->{$class} = [ grep { $_ ne $class } @group ];
+            $CHANGEABLE{$set}->{$class} = [grep { $_ ne $class } @group];
         }
     }
 }
@@ -361,7 +363,6 @@ sub changeable_classes {
       ? @{$CHANGEABLE{InstanceElementSet()}->{$class}}
       : ();
 }
-
 
 =back
 

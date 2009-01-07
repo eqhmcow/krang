@@ -18,8 +18,6 @@ and leadin elements are available.
 
 use Krang::ClassLoader base => 'ElementClass';
 
-use Krang::ElementClass::PoorText;
-
 sub new {
     my $pkg  = shift;
     my %args = (
@@ -140,6 +138,25 @@ sub new {
                 command_button_bar => 1,
                 special_char_bar   => 0,
             ),
+
+            pkg('ElementClass::TextInputList')->new(
+                name          => 'unordered_list',
+                allow_delete  => 1,
+                reorderable   => 1,
+                required      => 0,
+                bulk_edit     => 'xinha',
+                bulk_edit_tag => 'ul',
+            ),
+
+            pkg('ElementClass::TextInputList')->new(
+                name          => 'ordered_list',
+                allow_delete  => 1,
+                reorderable   => 1,
+                required      => 0,
+                bulk_edit     => 'xinha',
+                bulk_edit_tag => 'ol',
+            ),
+            pkg('ElementClass::TextInputList')->new(name => 'keyword_list',),
         ],
         @_
     );
