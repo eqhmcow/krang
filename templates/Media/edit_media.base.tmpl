@@ -408,10 +408,8 @@ Krang.onload( function() {
         <tr><th class="f l"><tmpl_lang Content></th></tr>
       </thead>
       </table>
-      <textarea style="width: 100%" name="text_content" id="mediaEditor" rows="30" cols="60" 
-                <tmpl_if use_codepress>class="codepress <tmpl_var text_type>"</tmpl_if>>
-        <tmpl_var escape=html text_content>
-      </textarea>
+      <textarea style="width: 100%" name="text_content" id="mediaEditor" rows="30" cols="60" <tmpl_if use_codepress>
+        class="codepress autocomplete-off <tmpl_var text_type>"</tmpl_if>><tmpl_var escape=html text_content></textarea>
     </div>
   </tmpl_if>
 
