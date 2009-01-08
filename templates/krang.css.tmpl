@@ -198,7 +198,7 @@ form { margin: 0; padding: 0; }
 #C tr.command-row table { width: auto !important }
 #C tr.command-row table, #C tr.command-row table td { border: none }
 #C .crumbs { margin-top: 20px; padding-left: 10px; font-size: 13px; }
-#C td.notrim { overflow: visible; }
+#C td.notrim, #C th.notrim { overflow: auto; white-space: normal }
 
 /*********
  * Forms *
@@ -253,6 +253,7 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
 .buttonbar ul ul li a { width: 8em; display: block; padding: .5em 1em; }
 #C td .buttonbar ul ul li a { padding: 0 .5em; }
 .buttonbar ul li:hover ul, .buttonbar ul li.over ul { left: 8px; z-index: 32767; }
+.buttonbar ul.west li:hover ul, .buttonbar ul li.over ul { left: 0px; z-index: 32767; }
 .buttonbar ul li:hover ul.disabled, .buttonbar ul li.over ul { left: -999em; z-index: 0; }
 #C td .buttonbar ul li:hover ul, #C td .buttonbar ul li.over ul { left: 0; z-index: 32767; }
 #C td .buttonbar ul li:hover ul.disabled, #C td .buttonbar ul li.over ul { left: -999em; z-index: 0; }
