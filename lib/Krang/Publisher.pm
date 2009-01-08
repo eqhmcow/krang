@@ -78,7 +78,7 @@ will be copied into the proper output directory as part of the build
 process.
 
 Unless C<version_check> is turned off, all related assets will compare
-C<version()> with C<preview_version()> or C<publish_version()>, to see
+C<version()> with C<preview_version()> or C<published_version()>, to see
 if the currently live version (in either preview or publish, depending
 on the mode) is the latest saved version.  If so, the asset will not
 be published, though it will be checked for additional related assets
@@ -904,7 +904,7 @@ true, will croak.
 
 Defaults to true.  If true, every related asset will be checked to see
 if either C<< $object->preview_version() >> or
-C<< $object->publish_version() >> (depending on C<mode> above) is equal
+C<< $object->published_version() >> (depending on C<mode> above) is equal
 to C<< $object->version() >>.  If so, it won't be published, but its'
 related assets will still be checked.
 
