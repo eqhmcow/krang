@@ -208,13 +208,16 @@ Krang.ElementClass.TextInputList = {
 
         currItem.insert({after : newItem});
 
-        // anyway show DELETE and DOWN button
+        // anyway show DELETE and DOWN button on current item
         currItem.down().next(1).show().next().show();
 
         if (Krang.ElementClass.TextInputList.isLast(newItem)) {
-            // hide DOWN button
+            // hide DOWN button on new item
             newItem.down().next(2).hide();
         }
+
+        // focus new text input
+        newText.focus();
     },
 
     item_delete : function(currItem) {
