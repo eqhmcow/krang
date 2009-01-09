@@ -9,6 +9,7 @@ use Carp qw(croak);
 
 use Krang::ClassLoader Message      => qw(add_message);
 use Krang::ClassLoader Localization => qw(localize);
+use Krang::ClassLoader Conf         => qw(BrowserSpeedBoost);
 
 use Krang::MethodMaker get_set => [qw( toolbar_config toolbar_config_string rows cols )];
 
@@ -108,8 +109,6 @@ sub input_form {
     my $lang = localize('en');
     $lang = substr($lang, 0, 2) unless $lang eq 'en';
 
-    my $install_id = pkg('Info')->install_id();
-
     # only add this once
     my @sibs = grep { $_->class->isa(__PACKAGE__) } $element->parent()->children();
     if ($sibs[0]->xpath() eq $element->xpath()) {
@@ -128,16 +127,19 @@ sub input_form {
             qq{ xinha_config.specialReplacements['background="/'] = 'background="$serverbase'; }
           . "\n";
 
+        my $install_id = pkg('Info')->install_id();
+        my $static_url = BrowserSpeedBoost ? "/static/$install_id" : '';
+
         # I'm the first!  Insert one-time JavaScript
         $html .= <<END;
 <script type="text/javascript">
-    _editor_url  = "/static/$install_id/xinha/"
+    _editor_url  = "$static_url/xinha/"
     _editor_lang = "$lang";
 
     if (!Krang.XinhaLoaded) {
         var xinha_script = document.createElement('script');
         xinha_script.setAttribute('type', 'text/javascript');
-        xinha_script.setAttribute('src',  '/static/$install_id/xinha/htmlarea.js');
+        xinha_script.setAttribute('src',  '$static_url/xinha/htmlarea.js');
         document.body.appendChild(xinha_script);
         Krang.XinhaLoaded = 1;
     }

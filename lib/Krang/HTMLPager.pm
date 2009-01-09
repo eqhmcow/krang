@@ -5,7 +5,7 @@ use warnings;
 
 use Carp qw(croak);
 use Krang::ClassLoader 'HTMLTemplate';
-use Krang::ClassLoader Conf => qw(KrangRoot DefaultLanguage);
+use Krang::ClassLoader Conf => qw(KrangRoot DefaultLanguage BrowserSpeedBoost);
 use Krang::ClassLoader 'MyPref';
 use Krang::ClassLoader 'Info';
 use Krang::ClassLoader Session      => qw(%session);
@@ -313,8 +313,8 @@ sub make_internal_template {
 <tmpl_include pager-pagination.tmpl>
 
 <div class="table-container">
-<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
-<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<img src="<tmpl_var static_url>/images/corner-top-left.gif" class="left-corner">
+<img src="<tmpl_var static_url>/images/corner-top-right.gif" class="right-corner">
 <table cellspacing="0" class="result select_row" summary="">
 
 $colgroup
@@ -980,7 +980,6 @@ sub make_sortable_column_html {
     my ($col, $col_label) = @_;
 
     my $q = $self->cgi_query();
-    my $install_id = pkg('Info')->install_id;
 
     # Is column currently selected? If not, attempt to find in cache, or set default
     my $sort_field      = $self->calculate_order_by($q);
@@ -990,8 +989,10 @@ sub make_sortable_column_html {
     my $is_selected = ($sort_field eq $col);
     if ($is_selected) {
         $col_label = "$col_label";
+        my $install_id = pkg('Info')->install_id;
+        my $static_url = BrowserSpeedBoost ? "/static/$install_id" : '';
         $col_label .=
-            qq(<img alt="" src="/static/$install_id/images/arrow-)
+            qq(<img alt="" src="$static_url/images/arrow-)
           . ($sort_order_desc ? 'desc' : 'asc')
           . '.gif">';
     }

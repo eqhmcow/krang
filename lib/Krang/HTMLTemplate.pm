@@ -177,10 +177,14 @@ sub output {
         }
     }
 
-    # add the Krang version, product_name and install_id
-    foreach my $name qw(version product_name install_id) {
+    # add the Krang version, and product_name
+    foreach my $name qw(version product_name) {
         $template->param("krang_$name" => pkg('Info')->$name)
           if $template->query(name => "krang_$name");
+    }
+
+    if( $template->query(name => 'static_url') && BrowserSpeedBoost ) {
+        $template->param(static_url => '/static/' . pkg('Info')->install_id);
     }
 
     # add any contact info

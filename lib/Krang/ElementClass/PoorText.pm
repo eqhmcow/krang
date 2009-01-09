@@ -9,6 +9,7 @@ use Krang::ClassLoader base => 'ElementClass';
 use Krang::ClassLoader Log          => qw(debug);
 use Krang::ClassLoader Message      => qw(add_message);
 use Krang::ClassLoader Localization => qw(localize);
+use Krang::ClassLoader Conf         => qw(BrowserSpeedBoost);
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'URL';
 use Krang::ClassLoader 'Markup::Gecko';
@@ -113,7 +114,6 @@ sub input_form {
     # get some setup stuff
     my $lang = localize('en');
     $lang = substr($lang, 0, 2) unless $lang eq 'en';
-    my $install_id = pkg('Info')->install_id();
     my $config     = $self->get_pt_config(%arg, text => $text);
     my $class      = $self->get_css_class(%arg);
     my $style      = $self->get_css_style(%arg, indent => $indent, align => $align);
@@ -121,6 +121,8 @@ sub input_form {
     # JavaScript init code: add only once
     my @sibs = grep { $_->class->isa(__PACKAGE__) } $element->parent()->children();
     if ($sibs[0]->xpath() eq $element->xpath()) {
+        my $install_id = pkg('Info')->install_id();
+        my $static_url = BrowserSpeedBoost ? "/static/$install_id" : '';
 
         # I''m the first!  Insert one-time JavaScript
         $html .= <<END;
@@ -131,7 +133,7 @@ if (!Krang.PoorTextLoaded) {
     var pt_script = new Element(
        'script',
        { type: "text/javascript",
-         src: "/static/$install_id/poortext/poortext_$ENV{KRANG_BROWSER_ENGINE}.js"}
+         src: "$static_url/poortext/poortext_$ENV{KRANG_BROWSER_ENGINE}.js"}
     );
     document.body.appendChild(pt_script);
 

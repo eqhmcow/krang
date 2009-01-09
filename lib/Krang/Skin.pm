@@ -41,7 +41,7 @@ which reflect the skin settings.
 =cut
 
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot BrowserSpeedBoost);
 use Krang::ClassLoader 'Info';
 use Krang::ClassLoader 'HTMLTemplate';
 use Krang::ClassLoader 'File';
@@ -136,7 +136,8 @@ sub _install_css {
         );
 
         # pass in params
-        $template->param(%$vars, krang_install_id => pkg('Info')->install_id,);
+        my $static_url = BrowserSpeedBoost ? '/static/' . pkg('Info')->install_id : '';
+        $template->param(%$vars, static_url => $static_url);
 
         # put output in htdocs/krang.css
         my $dest_file = catfile(KrangRoot, 'htdocs', "$basename.css");
