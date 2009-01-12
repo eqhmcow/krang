@@ -94,8 +94,8 @@ Trash
   <tmpl_include HTMLPager/<tmpl_lang en>/pager-pagination.tmpl>
 
   <div class="table-container">
-  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
-  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <img src="<tmpl_var static_url>/images/corner-top-left.gif" class="left-corner">
+  <img src="<tmpl_var static_url>/images/corner-top-right.gif" class="right-corner">
   <table cellspacing="0" class="result select_row" summary="">
 
   <colgroup>
@@ -181,8 +181,8 @@ Trash
 </tmpl_unless>
 
 <!-- tooltips for media previews: -->
-<div id="tooltip"><img id="tooltip-img" src="/static/<tmpl_var krang_install_id>/images/icon-loading-small.gif" /></div>
-<img id="tooltip-pointer" src="/static/<tmpl_var krang_install_id>/images/tooltip_arrow.gif" />
+<div id="tooltip"><img id="tooltip-img" src="<tmpl_var static_url>/images/icon-loading-small.gif" /></div>
+<img id="tooltip-pointer" src="<tmpl_var static_url>/images/tooltip_arrow.gif" />
 <!-- :tooltips for media previews -->
 
 <tmpl_include footer.tmpl>
