@@ -1045,7 +1045,7 @@ sub autocomplete_values {
       . join(' OR ', map { "`$_` REGEXP ?" } @$fields) . ')';
     $sql .= " AND $where" if $where;
 
-    my $regex = '(^|[[:blank:]_//])' . $phrase;
+    my $regex = '(^|[[:blank:]_.//])' . $phrase;
     my $sth   = $dbh->prepare_cached($sql);
     my @binds = map { $regex } @$fields;
     $sth->execute(@binds);
@@ -1056,19 +1056,15 @@ sub autocomplete_values {
         foreach my $pos (0 .. (scalar @$row - 1)) {
             my $answer = lc($row->[$pos]);
 
-            # remove any potential file suffixes
-            $answer =~ s/\.\w{3,5}$//;
-
-
             if( $no_split ) {
                 $words{$answer} = 1;
             } else {
                 # remove these characters
-                $answer =~ s/['"\.\,:]//g;
+                $answer =~ s/['"\,:]//g;
 
-                # split on '_' or \s to make words and only keep the ones that
+                # split on '_', \s, '/' or '.' to make words and only keep the ones that
                 # start with our phrase
-                foreach (split(/(?:_|\s|\/)+/, $answer)) {
+                foreach (split(/(?:_|\s|\/|\.)+/, $answer)) {
                     my $w = lc($_);
                     if (index($w, $phrase) == 0) {
                         $words{$w} = 1;
