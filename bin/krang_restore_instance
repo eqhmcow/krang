@@ -125,7 +125,7 @@ unless ($output =~ /hello.*world/s) {
 
 # untar backup
 
-my $BACKUP_DIR = tempdir(CLEANUP => 0, DIR => catdir($ENV{KRANG_ROOT}, 'tmp'));
+my $BACKUP_DIR = tempdir(CLEANUP => 0, DIR => catdir(KrangRoot, 'tmp'));
 $kba = rel2abs($kba);
 my $cmd = "tar -x" . ($kba =~ /gz$/ ? 'z' : '') . "f $kba -C $BACKUP_DIR";
 system($cmd) && exit_error("Couldn't un-tar $kba to $BACKUP_DIR");
@@ -179,23 +179,23 @@ unless ($instances{$instance_name}) {
 # get DB name (which may not match old DB name)
 
 pkg('Conf')->instance($instance_name);
-my $name = InstanceDBName;
+my $dbname = InstanceDBName;
 my $user = DBUser;
 my $pass = DBPass;
 
 # check if database exists
 
-$cmd = qq{mysql -uroot -e 'select "$name exists"' $name};
+$cmd = qq{mysql -uroot -e 'select "$dbname exists"' $dbname};
 $cmd .= " -p$password" if defined $password;
 $cmd .= " -h$hostname" if defined $hostname;
 $cmd .= " -v"          if $verbose > 1;
 $cmd .= " 2>&1";
-if (`$cmd` =~ /$name exists/) {
+if (`$cmd` =~ /$dbname exists/) {
     unless ($no_prompt) {
         exit 1
           unless prompt(
             "y",
-            "\nDatabase '$name' already exists. This program will drop & recreate both the database and its /templates and /media path.\n\nAre you sure you want to proceed?",
+            "\nDatabase '$dbname' already exists. This program will drop & recreate both the database and its /templates and /media path.\n\nAre you sure you want to proceed?",
             "y/n",
             "n"
           );
@@ -206,22 +206,22 @@ if (`$cmd` =~ /$name exists/) {
     foreach ($template_dir, $media_dir) {
         if (-d $_) {
             exit_error(
-                "$_ already exists, even though database $name doesn't!\n\nIf you created this path by hand, please remove it and re-run this script."
+                "$_ already exists, even though database $dbname doesn't!\n\nIf you created this path by hand, please remove it and re-run this script."
             );
         }
     }
 
-    print "Creating database '$name'...\n" if $verbose;
+    print "Creating database '$dbname'...\n" if $verbose;
     my $charset_clause =
       Charset ? (" CHARACTER SET " . pkg('Charset')->mysql_charset(Charset)) : '';
-    $cmd = "mysql -uroot -e 'CREATE DATABASE $name $charset_clause'";
+    $cmd = "mysql -uroot -e 'CREATE DATABASE $dbname $charset_clause'";
     $cmd .= " -p$password" if defined $password;
     $cmd .= " -h$hostname" if defined $hostname;
     $cmd .= " -v"          if $verbose > 1;
     system($cmd) && exit_error("Couldn't create database: $?");
 
     # grant access to the database to DBUser
-    $cmd = "mysql -uroot -e 'grant all on $name.* to \"$user\"";
+    $cmd = "mysql -uroot -e 'grant all on $dbname.* to \"$user\"";
     $cmd .= q{@localhost}               if !defined $hostname;
     $cmd .= qq{ identified by "$pass" } if $pass;
     $cmd .= "'";
@@ -264,17 +264,17 @@ foreach ($template_dir, $media_dir) {
 
 # restore database
 
-$cmd = "cat $sql_file | mysql -u$user $name";
+$cmd = "cat $sql_file | mysql -u$user $dbname";
 $cmd .= " -p$pass"     if $pass;
 $cmd .= " -h$hostname" if defined $hostname;
 $cmd .= " -v"          if $verbose > 1;
 
-print "Loading $sql_file into database $name\n" if $verbose;
+print "Loading $sql_file into database $dbname\n" if $verbose;
 system($cmd) && exit_error("Couldn't load $sql_file into database!");
 
 # we're finished!
 
-print "\nDone!\n\n";
+print "\nDone! (Don't forget to verify the imported site preview/publish paths.)\n\n";
 
 # private helper function to display errors and exit
 
