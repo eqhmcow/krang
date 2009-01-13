@@ -208,6 +208,7 @@ sub per_instance {
 
     # 5. add element support to media objects
     $self->add_elements_to_media();
+
 }
 
 sub add_elements_to_media {
@@ -254,28 +255,29 @@ sub add_elements_to_media {
         }
     }
 
-    # unless the class has already been built...
+    # 4. locate element library
+    my $set     = InstanceElementSet;
+    my $package = $set . '::' . $class;
+    foreach (catdir(KrangRoot, 'addons', $set, 'element_lib', $set),
+             catdir(KrangRoot, 'element_lib', $set))
+      {
+          print "\nLooking for element library in $_... ";
+          if (-d $_) {
+              $element_lib = $_;
+              last;
+          }
+      }
+    if ($element_lib) {
+        print "found\n\n";
+    } else {
+        croak("failed - don't know where else to look!\n\n");
+    }
+    
+    # unless the media element module has already been built...
     unless (pkg('ElementLibrary')->find_class(name => $class)) {
 
-        # 4. locate element library
-        my $set     = InstanceElementSet;
-        my $package = $set . '::' . $class;
-        foreach (catdir(KrangRoot, 'addons', $set, 'element_lib', $set),
-            catdir(KrangRoot, 'element_lib', $set))
-        {
-            print "\nLooking for element library in $_... ";
-            if (-d $_) {
-                $element_lib = $_;
-                last;
-            }
-        }
-        if ($element_lib) {
-            print "found\n\n";
-        } else {
-            croak("failed - don't know where else to look!\n\n");
-        }
 
-        # 5. create skeletal media element
+        # 5. create skeletal media element module
         my $path_to_module;
         my $filename = 'media';
         while (1) {
@@ -322,28 +324,28 @@ EOF
              chown($uid, $gid, $path_to_module);
         };
         $warn_about_chown_failure = 1 if $@;
+     }
 
-        # 6. add media element to set.conf
-        print "Adding an entry to $element_lib/set.conf... ";
-        open SET_CONF, " < $element_lib/set.conf";
-        my @lines = <SET_CONF>;
-        close SET_CONF;
-        my $lines = join(@lines);
-        if ($lines =~ /\s$class\s/) {
-            print "already exists (skipping)\n\n";
-        } else {
-            open SET_CONF, " > $element_lib/set.conf";
-            foreach (@lines) {
-                if ($_ =~ /TopLevels (.*)/i) {
-                    print SET_CONF "TopLevels $class $1\n";
-                } else {
-                    print SET_CONF "$_";
-                }
-            }
-            close SET_CONF;
-            print "done\n";
-            $warn_about_set_conf = 1;
-        }
+     # 6. add media element to set.conf
+     print "Adding an entry for media to $element_lib/set.conf... ";
+     open SET_CONF, " < $element_lib/set.conf";
+     my @lines = <SET_CONF>;
+     close SET_CONF;
+     my $lines = join(@lines);
+     if ($lines =~ /\s$class\s/) {
+         print "already exists (skipping)\n\n";
+     } else {
+         open SET_CONF, " > $element_lib/set.conf";
+         foreach (@lines) {
+             if ($_ =~ /TopLevels (.*)/i) {
+                 print SET_CONF "TopLevels $class $1\n";
+             } else {
+                 print SET_CONF "$_";
+             }
+         }
+         close SET_CONF;
+         print "done\n";
+         $warn_about_set_conf = 1;
     }
 
     # unless all media objects already have element ids...
