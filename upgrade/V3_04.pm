@@ -332,7 +332,7 @@ EOF
      my @lines = <SET_CONF>;
      close SET_CONF;
      my $lines = join(@lines);
-     if ($lines =~ /\b$class\b/) {
+     if ($lines =~ /\s$class\s/) {
          print "already exists (skipping)\n\n";
      } else {
          open SET_CONF, " > $element_lib/set.conf";
