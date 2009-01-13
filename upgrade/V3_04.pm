@@ -332,12 +332,12 @@ EOF
      my @lines = <SET_CONF>;
      close SET_CONF;
      my $lines = join(@lines);
-     if ($lines =~ /\s$class\s/) {
+     if ($lines =~ /\b$class\b/) {
          print "already exists (skipping)\n\n";
      } else {
          open SET_CONF, " > $element_lib/set.conf";
          foreach (@lines) {
-             if ($_ =~ /TopLevels (.*)/i) {
+             if ($_ =~ /^\s*TopLevels (.*)/i) {
                  print SET_CONF "TopLevels $class $1\n";
              } else {
                  print SET_CONF "$_";
