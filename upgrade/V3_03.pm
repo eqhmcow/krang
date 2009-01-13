@@ -23,7 +23,7 @@ sub per_instance {
     my $dbh = dbh();
 
     # add syntax_highlighting option to preferences
-    $dbh->do('INSERT INTO pref (id, value) VALUES ("syntax_highlighting", "1")');
+    $dbh->do('REPLACE INTO pref (id, value) VALUES ("syntax_highlighting", "1")');
 }
 
 1;

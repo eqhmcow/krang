@@ -39,28 +39,27 @@ sub per_instance {
     return if $args{no_db};
     my $dbh = dbh();
 
-    # add 'retired' and 'trashed' columns to STORY
-    $dbh->do('ALTER TABLE story ADD COLUMN retired BOOL NOT NULL DEFAULT 0');
-    $dbh->do('ALTER TABLE story ADD COLUMN trashed  BOOL NOT NULL DEFAULT 0');
-
-    # add 'retired' and 'trashed' columns to MEDIA
-    $dbh->do('ALTER TABLE media ADD COLUMN retired BOOL NOT NULL DEFAULT 0');
-    $dbh->do('ALTER TABLE media ADD COLUMN trashed  BOOL NOT NULL DEFAULT 0');
-
-    # add 'retired' and 'trashed' columns to Template
-    $dbh->do('ALTER TABLE template ADD COLUMN retired BOOL NOT NULL DEFAULT 0');
-    $dbh->do('ALTER TABLE template ADD COLUMN trashed  BOOL NOT NULL DEFAULT 0');
+    # add 'retired' and 'trashed' columns to stories, media, and templates
+    foreach my $table ('story', 'media', 'template') {
+        my @existing_cols  = @{$dbh->selectcol_arrayref("SHOW columns FROM $table")};
+        foreach my $column ('retired', 'trashed') {
+            $dbh->do("ALTER TABLE $table ADD COLUMN $column BOOL NOT NULL DEFAULT 0")
+              unless (grep { $_ eq $column } @existing_cols);
+        }
+    }
 
     # add admin permission 'admin_delete' and give it to admin and editor group
-    $dbh->do('Alter TABLE group_permission ADD COLUMN admin_delete BOOL NOT NULL DEFAULT 0');
+    my @existing_cols  = @{$dbh->selectcol_arrayref("SHOW columns FROM group_permission")};
+    unless (grep { $_ eq "admin_delete" } @existing_cols) {
+        $dbh->do('Alter TABLE group_permission ADD COLUMN admin_delete BOOL NOT NULL DEFAULT 0');
+    }
     $dbh->do('Update group_permission SET admin_delete = 1 WHERE name = "Admin"');
     $dbh->do('Update group_permission SET admin_delete = 1 WHERE name = "Edit"');
-
-    # add 'inactive' flag to schedule table
-    $dbh->do('Alter TABLE schedule ADD COLUMN inactive BOOL NOT NULL DEFAULT 0');
-
+    
     # create the trashbin table
-    $dbh->do(<<SQL);
+    my @tables = @{$dbh->selectcol_arrayref("SHOW tables")};
+    unless (grep { $_ eq 'trash' } @tables) {
+        $dbh->do(<<SQL);
 CREATE TABLE trash (
     object_type  varchar(255)      NOT NULL,
     object_id 	 int(10) unsigned  NOT NULL,
@@ -69,10 +68,19 @@ CREATE TABLE trash (
 ) TYPE=MyISAM;
 SQL
 
+    }
+
     # add new columns to Schedule
-    $dbh->do('ALTER TABLE schedule ADD expires DATETIME AFTER next_run');
-    $dbh->do('ALTER TABLE schedule ADD day_of_month INT AFTER expires');
-    $dbh->do('ALTER TABLE schedule ADD day_interval INT UNSIGNED AFTER day_of_week');
+    @existing_cols    = @{$dbh->selectcol_arrayref("SHOW columns FROM schedule")};
+    my %existing_cols = map { $_ => 1 } @existing_cols;
+    $dbh->do('ALTER TABLE schedule ADD COLUMN inactive BOOL NOT NULL DEFAULT 0')
+      unless $existing_cols{'inactive'};
+    $dbh->do('ALTER TABLE schedule ADD expires DATETIME AFTER next_run')
+      unless $existing_cols{'expires'};
+    $dbh->do('ALTER TABLE schedule ADD day_of_month INT AFTER expires')
+      unless $existing_cols{'day_of_month'};
+    $dbh->do('ALTER TABLE schedule ADD day_interval INT UNSIGNED AFTER day_of_week')
+      unless $existing_cols{'day_interval'};
     $dbh->do("ALTER TABLE schedule CHANGE COLUMN `repeat` `repeat` ENUM('never', 'hourly', 'daily', 'weekly', 'monthly', 'interval') NOT NULL");
 
 }
