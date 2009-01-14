@@ -1021,9 +1021,8 @@ C<undef>, specifying no limit in that direction.
 
 =item class
 
-Set this to an element class name to limit results to only those
-containing that class.  Multiple classes may be passed via an array
-ref.
+Set this to an arrayref of element class name(s) to find stories of
+the corresponding type(s) only.
 
 =item contrib_simple
 
@@ -2221,9 +2220,18 @@ sub revert {
 
 =item C<< Krang::Story->delete($story_id) >>
 
-Deletes a story from the database.  This is a permanent operation and
-requires the admin permission may_delete. Throws a
-Krang::Story::NoDeleteAccess exception if user may not delete
+=item C<< Krang::Story->delete(story_id => $story_id) >>
+
+=item C<< Krang::Story->delete(class => 'article') >>
+
+=item C<< Krang::Story->delete(class => [ qw(article redirect) ]) >>
+
+Deletes the specified story/stories from the database.
+
+This is a permanent operation and requires the admin permission
+may_delete.
+
+Throws a Krang::Story::NoDeleteAccess exception if user may not delete
 assets. Stories will be checked-out before they are deleted, which
 will fail if the story is checked out to another user.
 
@@ -2231,11 +2239,47 @@ will fail if the story is checked out to another user.
 
 sub delete {
     my $self = shift;
-    unless (ref $self) {
-        my $story_id = shift;
-        ($self) = pkg('Story')->find(story_id => $story_id);
-        croak("Unable to load story '$story_id'.") unless $self;
+
+    my @stories = ();
+
+    if (ref $self) {
+        # called as object method
+        push @stories, $self;
     }
+    elsif (scalar(@_) == 1) {
+        # called as class method with a story id as only parameter
+        @stories = pkg('Story')->find(story_id => $_[0]);
+        croak(__PACKAGE__ . "::delete() - Unable to load story '$_[0]'.") unless $stories[0];
+    }
+    elsif (scalar(@_) % 2 == 0) {
+        my %args = @_;
+        if ($args{class} and ref $args{class} eq 'ARRAY') {
+            @stories = pkg('Story')->find(class => $args{class});
+        }
+        elsif ($args{class} and not ref($args{class})) {
+            @stories = pkg('Story')->find(class => [ $args{class} ]);
+        }
+        elsif ($args{story_id}) {
+            @stories = pkg('Story')->find(story_id => $args{story_id});
+            croak(__PACKAGE__ . "::delete() - Unable to load story '$_[0]'.") unless $stories[0];
+        }
+        else {
+            croak(__PACKAGE__ . "::delete() - Argument 'class' must be a string or an arrayref, "
+              . "but is a " . ref($args{class}));
+        }
+    }
+    else {
+        croak(__PACKAGE__ . "::delete() - Unsupported arguments");
+    }
+
+    # delete 'em
+    $_->_do_delete() for @stories;
+}
+
+# the delete workhorse
+sub _do_delete {
+    my $self = shift;
+
     $self->checkout;
 
     # Is user allowed to delete objects from the trashbin?

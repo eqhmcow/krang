@@ -831,7 +831,7 @@ SKIP: {
 
 }
 
-# test delete by ID
+# test delete($id)
 my $doomed = pkg('Story')->new(
     categories => [$cat[0], $cat[1]],
     title      => "Doomed",
@@ -845,6 +845,67 @@ ok($obj);
 pkg('Story')->delete($doomed_id);
 ($obj) = pkg('Story')->find(story_id => $doomed_id);
 ok(not $obj);
+
+# test delete(story_id => $id)
+$doomed = pkg('Story')->new(
+    categories => [$cat[0], $cat[1]],
+    title      => "Doomed",
+    slug       => "doomed",
+    class      => "article"
+);
+$doomed->save();
+$doomed_id = $doomed->story_id;
+($obj) = pkg('Story')->find(story_id => $doomed_id);
+ok($obj);
+pkg('Story')->delete(story_id =>$doomed_id);
+($obj) = pkg('Story')->find(story_id => $doomed_id);
+ok(not $obj);
+
+# test delete(class => 'publishtest')
+my $delete_class_name = 'publishtest';
+my @delete_class = ();
+for my $slug (qw(deji we0 jf28 4583)) {
+    push @delete_class, pkg('Story')->new(
+        categories => [$cat[0], $cat[1]],
+        title      => $slug,
+        slug       => $slug,
+        class      => $delete_class_name,
+    );
+}
+
+$_->save() for @delete_class;
+isa_ok($_, 'Krang::Story') for @delete_class;
+pkg('Story')->delete(class => $delete_class_name);
+@delete_class = pkg('Story')->find(class => [$delete_class_name]);
+is(@delete_class, 0, "Deleting by class (string)");
+
+# test delete(class => [ qw(publishtest cgi_story) ])
+my $delete_class_name_1 = 'publishtest';
+@delete_class = ();
+for my $slug (qw(deji we0 jf28 4583)) {
+    push @delete_class, pkg('Story')->new(
+        categories => [$cat[0], $cat[1]],
+        title      => $slug,
+        slug       => $slug,
+        class      => $delete_class_name_1,
+    );
+}
+
+my $delete_class_name_2 = 'cgi_story';
+for my $slug (qw(deji_2 we0_2 jf28_2 4583_2)) {
+    push @delete_class, pkg('Story')->new(
+        categories => [$cat[0], $cat[1]],
+        title      => $slug,
+        slug       => $slug,
+        class      => $delete_class_name,
+    );
+}
+
+$_->save() for @delete_class;
+isa_ok($_, 'Krang::Story') for @delete_class;
+pkg('Story')->delete(class => [$delete_class_name_1, $delete_class_name_2]);
+@delete_class = pkg('Story')->find(class => [$delete_class_name_1, $delete_class_name_2]);
+is(@delete_class, 0, "Deleting by class (arrayref)");
 
 # test that when category URL changes, story URL changes too
 my $change = pkg('Story')->new(
