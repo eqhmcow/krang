@@ -280,6 +280,10 @@ sub install {
     my $conf = $pkg->_read_conf(%args);
     $args{conf} = $conf;
 
+    # run the pre install script if required
+    system("KRANG_ROOT=" . KrangRoot . " $^X " . $conf->get('preinstallscript'))
+      if $conf->get('preinstallscript');
+
     # make sure that this is a positive upgrade, if the addon is already
     # installed
     my ($old) = pkg('AddOn')->find(name => $conf->get('name'));
@@ -505,6 +509,7 @@ sub _addon_conf {
               ObjectSchedulerActionList
               DataSetClasses
               ExtraJavascriptFiles
+              PreInstallScript
               )
         ],
         valid_blocks => []

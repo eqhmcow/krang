@@ -112,6 +112,11 @@ and any version of RacingStripes:
   RequireAddOns Nitro         2 \
                 RacingStripes 0
 
+=item * C<PreInstallScript> I<script>
+
+A script to run before the installation begins. C<KRANG_ROOT>
+will be set in the environment for this script.
+
 =item * C<PostInstallScript> I<script>
 
 A script to run after file installation is complete.  C<KRANG_ROOT>

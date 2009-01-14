@@ -272,7 +272,10 @@ Version 1.00
 # RequireKrang 1.102
 
 # files to be excluded on install (optional)
-# ExcludeFiles README postinstall
+# ExcludeFiles README preinstall postinstall
+
+# script to run before starting the installation (optional)
+# PreInstallScript preinstall
 
 # script to run after installation is complete (optional)
 # PostInstallScript postinstall
