@@ -41,7 +41,8 @@ for my $addon_file (
 }
 
 # test PostInstallScript
-ok(-e catfile(KrangRoot, 'tmp', 'created_by_turbo_postinstall'), "File created by PostInstallScript exists");
+ok(-e catfile(KrangRoot, 'tmp', 'created_by_turbo_postinstall'),
+    "File created by PostInstallScript exists");
 
 for
   my $file (catfile(KrangRoot, 'lib', 'Krang', 'Turbo.pm'), catfile(KrangRoot, 'krang_addon.conf'),)
@@ -72,7 +73,10 @@ for my $addon_file (
 }
 
 # test PreInstallScript
-ok(! -e catfile(KrangRoot, 'tmp', 'created_by_turbo_postinstall'), "File deleted by PreInstallScript does not exist");
+ok(
+    !-e catfile(KrangRoot, 'tmp', 'created_by_turbo_postinstall'),
+    "File deleted by PreInstallScript does not exist"
+);
 
 unlink(catfile(KrangRoot, 'turbo_1.01_was_here'));
 

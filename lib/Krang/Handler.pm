@@ -38,16 +38,16 @@ use Krang::ClassLoader 'ErrorHandler';
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader 'HTMLTemplate';
 use Krang::ClassLoader Conf => qw(
-    KrangRoot 
-    PasswordChangeTime 
-    ApacheMaxSize 
-    Secret 
-    ApacheMaxUnsharedSize 
-    BrowserSpeedBoost
-    DefaultLanguage
-    ErrorNotificationEmail
-    SMTPServer
-    FromAddress
+  KrangRoot
+  PasswordChangeTime
+  ApacheMaxSize
+  Secret
+  ApacheMaxUnsharedSize
+  BrowserSpeedBoost
+  DefaultLanguage
+  ErrorNotificationEmail
+  SMTPServer
+  FromAddress
 );
 use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader 'AddOn';
@@ -66,7 +66,6 @@ if (ApacheMaxSize) {
     Apache::SizeLimit->set_max_process_size(64000);    # 64MB by default
 }
 Apache::SizeLimit->set_max_unshared_size(ApacheMaxUnsharedSize) if ApacheMaxUnsharedSize;
-
 
 =item Krang::Handler->trans_handler
 
@@ -109,17 +108,20 @@ sub trans_handler ($$) {
         return NOT_FOUND unless $file;
 
         if (BrowserSpeedBoost) {
+
             # make it expire waaaaay in the future since we know the resource won't change
             $r->err_header_out('Expires'       => 'Mon, 28 Jul 2014 23:30:00 GMT');
             $r->err_header_out('Cache-Control' => 'max-age=315360000');
 
-            if( $uri =~ /combined.\w\w\.js$/ ) {
+            if ($uri =~ /combined.\w\w\.js$/) {
+
                 # the prebuilt combined JS file needs to be redirected to the gzip one if we can
-                if( $self->_can_handle_gzip($r) ) {
+                if ($self->_can_handle_gzip($r)) {
                     $file = "$file.gz";
                     $r->err_header_out('Content-Encoding' => 'gzip');
                 }
-            } elsif ($uri =~ /\.(css|js|html)$/ ) {
+            } elsif ($uri =~ /\.(css|js|html)$/) {
+
                 # if it's a CSS/JS/HTML file then let's minify it and optionally compress it
                 my $type = $1;
                 my $new_file = $self->_minify_and_gzip($r, $file, $type);
@@ -230,14 +232,12 @@ sub trans_handler ($$) {
     }
 }
 
-
 =item Krang::Handler->access_handler
 
 Access Control.  Checks to make sure the user has a browser that will
 work with Krang.
 
 =cut
-
 
 # Check the browser using HTTP::BrowserDetect and bounce old browsers
 # before they can get into trouble.
@@ -264,7 +264,8 @@ sub access_handler ($$) {
         konqueror => 'WebKit',
     );
 
-    my $bd = $r->pnotes('browser_detector') || HTTP::BrowserDetect->new($r->header_in('User-Agent'));
+    my $bd = $r->pnotes('browser_detector')
+      || HTTP::BrowserDetect->new($r->header_in('User-Agent'));
     foreach my $browser (keys %allow_browsers) {
         if ($bd->$browser) {
             $allow_browsers{$browser} =~ /(\d)+(\.\d+)?/;
@@ -295,7 +296,6 @@ method.  The effect of this is that $query->remote_user() and
 C<$ENV{REMOTE_USER}> will properly report the user who is logged in.
 
 =cut
-
 
 # Attempt to retrieve user identity from session cookie.
 # Set REMOTE_USER and KRANG_SESSION_ID if successful.
@@ -336,7 +336,7 @@ sub authen_handler ($$) {
         return OK;
     }
 
-    # A non-PERL request (e.g. image), bug, or help file: let it through 
+    # A non-PERL request (e.g. image), bug, or help file: let it through
     # (we are already authenticated)
     if ($r->uri !~ /(\.pl|\/|$instance)$/ || $r->uri =~ /\/bug\.cgi$/ || $r->uri =~ /\/help\.pl$/) {
 
@@ -566,7 +566,8 @@ sub cleanup_handler ($$) {
     return DECLINED unless $r->is_main;
 
     my $error = $r->notes('error-notes') || $ENV{ERROR_NOTES};
-    if( $error && ErrorNotificationEmail) {
+    if ($error && ErrorNotificationEmail) {
+
         # format an email message with all of the information that we want
         my $line = ('=' x 40);
         my $msg  = "PERL ERROR\n$line\n%s\nSERVER\n$line\n%s\nURL\n$line\n%s\n\n"
@@ -629,7 +630,6 @@ sub login_uri {
 
     return qw(login.pl);
 }
-
 
 #############################
 ####  INTERNAL HANDLERS  ####
@@ -771,13 +771,13 @@ sub _do_redirect {
 
 sub _can_handle_gzip {
     my ($self, $r) = @_;
-    if( $r->header_in('Accept-Encoding') && $r->header_in('Accept-Encoding') =~ /gzip/i ) {
+    if ($r->header_in('Accept-Encoding') && $r->header_in('Accept-Encoding') =~ /gzip/i) {
         my $bd = $r->pnotes('browser_detector');
-        if(! $bd ) {
+        if (!$bd) {
             $bd = HTTP::BrowserDetect->new($r->header_in('User-Agent'));
             $r->pnotes(browser_detecor => $bd);
         }
-        if( $bd->ie && $bd->version < 6 ) {
+        if ($bd->ie && $bd->version < 6) {
             return 0;
         } else {
             return 1;
@@ -789,10 +789,10 @@ sub _can_handle_gzip {
 
 sub _minify_and_gzip {
     my ($self, $r, $file, $type) = @_;
-    my $new_file   = $file;
+    my $new_file = $file;
 
     # can we minify it?
-    if( $type eq 'css' || $type eq 'js' ) {
+    if ($type eq 'css' || $type eq 'js') {
         $new_file =~ s/\.$type$/.minified.$type/;
 
         unless (-e $new_file) {
@@ -803,13 +803,13 @@ sub _minify_and_gzip {
             my $content = <$ASSET>;
             close($ASSET);
 
-            if( $type eq 'css' ) {
+            if ($type eq 'css') {
                 eval { $content = CSS::Minifier::XS::minify($content) };
-            } elsif( $type eq 'js' ) {
+            } elsif ($type eq 'js') {
                 eval { $content = JavaScript::Minifier::XS::minify($content) };
             }
 
-            if( $@ ) {
+            if ($@) {
                 warn "Could not minify file $file: $@\n";
                 return;
             } else {

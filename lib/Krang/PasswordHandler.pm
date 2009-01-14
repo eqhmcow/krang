@@ -14,7 +14,7 @@ my $SALT = $Krang::User::SALT;
 sub check_pw {
     my ($class, $pw, @info) = @_;
     use Krang::Log qw(critical);
-critical($pw);
+    critical($pw);
     my $valid = 0;
     if (length $pw < 6) {
         add_alert('password_too_short');
@@ -65,8 +65,9 @@ sub _pw_was_used {
 }
 
 sub _password_spec {
-    return
-      localize("Password must be at least 6 characters long and include at least one number and one letter.");
+    return localize(
+        "Password must be at least 6 characters long and include at least one number and one letter."
+    );
 }
 
 1;

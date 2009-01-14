@@ -114,9 +114,9 @@ sub input_form {
     # get some setup stuff
     my $lang = localize('en');
     $lang = substr($lang, 0, 2) unless $lang eq 'en';
-    my $config     = $self->get_pt_config(%arg, text => $text);
-    my $class      = $self->get_css_class(%arg);
-    my $style      = $self->get_css_style(%arg, indent => $indent, align => $align);
+    my $config = $self->get_pt_config(%arg, text => $text);
+    my $class  = $self->get_css_class(%arg);
+    my $style  = $self->get_css_style(%arg, indent => $indent, align => $align);
 
     # JavaScript init code: add only once
     my @sibs = grep { $_->class->isa(__PACKAGE__) } $element->parent()->children();

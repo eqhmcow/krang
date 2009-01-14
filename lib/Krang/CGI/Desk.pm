@@ -182,7 +182,7 @@ sub _row_handler {
 
     # reformat command_column to be in a list
     my $cc = $row->{command_column};
-    if ( $cc ) {
+    if ($cc) {
         $cc =~ s|>(\s+)?<input|></li> <li><input|g;
         $cc = '<li>' . $cc . '</li>';
         $row->{command_column} = $cc;
@@ -239,8 +239,8 @@ Moves list of checked stories to desks.
 =cut
 
 sub move_checked {
-    my $self  = shift;
-    my $query = $self->query;
+    my $self    = shift;
+    my $query   = $self->query;
     my $desk_id = $self->query->param('move_to_desk_id');
     foreach my $obj (map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked')) {
 

@@ -180,8 +180,8 @@ unless ($instances{$instance_name}) {
 
 pkg('Conf')->instance($instance_name);
 my $dbname = InstanceDBName;
-my $user = DBUser;
-my $pass = DBPass;
+my $user   = DBUser;
+my $pass   = DBPass;
 
 # check if database exists
 

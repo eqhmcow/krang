@@ -2243,32 +2243,30 @@ sub delete {
     my @stories = ();
 
     if (ref $self) {
+
         # called as object method
         push @stories, $self;
-    }
-    elsif (scalar(@_) == 1) {
+    } elsif (scalar(@_) == 1) {
+
         # called as class method with a story id as only parameter
         @stories = pkg('Story')->find(story_id => $_[0]);
         croak(__PACKAGE__ . "::delete() - Unable to load story '$_[0]'.") unless $stories[0];
-    }
-    elsif (scalar(@_) % 2 == 0) {
+    } elsif (scalar(@_) % 2 == 0) {
         my %args = @_;
         if ($args{class} and ref $args{class} eq 'ARRAY') {
             @stories = pkg('Story')->find(class => $args{class});
-        }
-        elsif ($args{class} and not ref($args{class})) {
-            @stories = pkg('Story')->find(class => [ $args{class} ]);
-        }
-        elsif ($args{story_id}) {
+        } elsif ($args{class} and not ref($args{class})) {
+            @stories = pkg('Story')->find(class => [$args{class}]);
+        } elsif ($args{story_id}) {
             @stories = pkg('Story')->find(story_id => $args{story_id});
             croak(__PACKAGE__ . "::delete() - Unable to load story '$_[0]'.") unless $stories[0];
+        } else {
+            croak(  __PACKAGE__
+                  . "::delete() - Argument 'class' must be a string or an arrayref, "
+                  . "but is a "
+                  . ref($args{class}));
         }
-        else {
-            croak(__PACKAGE__ . "::delete() - Argument 'class' must be a string or an arrayref, "
-              . "but is a " . ref($args{class}));
-        }
-    }
-    else {
+    } else {
         croak(__PACKAGE__ . "::delete() - Unsupported arguments");
     }
 

@@ -10,7 +10,7 @@ use Krang::ClassLoader Log  => qw(critical debug);
 use Krang::ClassLoader MethodMaker => get_set => [qw( size maxlength)];
 
 sub new {
-    my $pkg  = shift;
+    my $pkg     = shift;
     my %args_in = @_;
 
     my %function_for = ();
@@ -25,8 +25,8 @@ sub new {
     }
 
     my %args = (
-        name => 'text_input_list',
-        size => 40,
+        name      => 'text_input_list',
+        size      => 40,
         maxlength => 0,
         @_,
         %function_for,
@@ -41,8 +41,8 @@ sub before_bulk_edit_dispatch {
     if ($args{tag} eq 'ul' or $args{tag} eq 'ol') {
         return sub {
             my (%args) = @_;
-            return join('', map {"<li>$_</li>"} @{$args{element}->data});
-        }
+            return join('', map { "<li>$_</li>" } @{$args{element}->data});
+          }
     }
     croak(__PACKAGE__ . "::before_bulk_edit_dispatch() - Unsupported bulk edit tag '$args{tag}'");
 }
@@ -53,15 +53,18 @@ sub before_bulk_save_dispatch {
     if ($args{tag} eq 'ul' or $args{tag} eq 'ol') {
         return sub {
             my (%args) = @_;
-            my $sep = $args{element}->class->field_separator;
-            my $data = $args{data};
+            my $sep    = $args{element}->class->field_separator;
+            my $data   = $args{data};
+
             # chop leading   <li>
             $data =~ s/^<li[^>]*>//smi;
+
             # chop trailing </li>
             $data =~ s/<\/li[^>]*>$//smi;
+
             # split on </li><li>, allowing for LI attribs and whitespace
-            return [ split(/<\/li[^>]*>\s*<li[^>]*>/smi, $data) ];
-        }
+            return [split(/<\/li[^>]*>\s*<li[^>]*>/smi, $data)];
+          }
     }
     croak(__PACKAGE__ . "::before_bulk_save_dispatch() - Unsupported bulk edit tag '$args{tag}'");
 }
@@ -73,7 +76,7 @@ sub input_form {
     my $separator = $self->field_separator();
 
     # the list items
-    my @data = @{ $element->data || [] };
+    my @data = @{$element->data || []};
 
     my $size             = $self->size;
     my $maxlength        = $self->maxlength;
@@ -85,15 +88,15 @@ sub input_form {
 
     # the first
     my $first = shift(@data);
-    $first    = '' unless defined($first);
+    $first = '' unless defined($first);
 
     # maybe the last
     my $last = pop(@data);
-    $last    = '' unless defined($last);
+    $last = '' unless defined($last);
     my $first_style = $last ? '' : 'style="display: none;"';
 
     # add first input field with buttons to add, delete, maybe push-down
-    $html .=<<END;
+    $html .= <<END;
 <div>
   <input type="text"   name="${param}_0"    value="$first" $size_attrib $maxlength_attrib/><input type="button" name="item_add"                  value="+" class="krang-elementclass-textinputlist-button" /><input type="button" $first_style name="item_delete"   value="&#x2212;" class="krang-elementclass-textinputlist-button"/><input type="button" $first_style name="item_down"     value="&#x2193;" class="krang-elementclass-textinputlist-button"/><input type="button" style="display: none;" name="item_up"     value="&#x2191;" class="krang-elementclass-textinputlist-button"/>
 </div>
@@ -102,7 +105,7 @@ END
     # add the others
     my $cnt = 1;
     for my $field_text (@data) {
-        $html .=<<END;
+        $html .= <<END;
 <div>
   <input type="text"   name="${param}_$cnt" value="$field_text" $size_attrib $maxlength_attrib/><input type="button" name="item_add"      value="+" class="krang-elementclass-textinputlist-button"/><input type="button" name="item_delete"   value="&#x2212;" class="krang-elementclass-textinputlist-button"/><input type="button" name="item_down"     value="&#x2193;" class="krang-elementclass-textinputlist-button"/><input type="button" name="item_up"       value="&#x2191;" class="krang-elementclass-textinputlist-button"/>
 </div>
@@ -112,7 +115,7 @@ END
 
     # add the last
     if ($last) {
-        $html .=<<END;
+        $html .= <<END;
 <div>
   <input type="text"   name="${param}_$cnt" value="$last" $size_attrib $maxlength_attrib/><input type="button" name="item_add"      value="+" class="krang-elementclass-textinputlist-button"/><input type="button" name="item_delete"   value="&#x2212;" class="krang-elementclass-textinputlist-button"/><input type="button" style="display: none;" name="item_down"     value="&#x2193;" class="krang-elementclass-textinputlist-button"/><input type="button" name="item_up"       value="&#x2191;" class="krang-elementclass-textinputlist-button"/>
 </div>
@@ -124,8 +127,8 @@ END
 
     # put the concatenated data into the hidden field used to return the data
     my $field_sep = $self->field_separator;
-    my $data      = join($field_sep, @data);
-    $html        .= qq{<input type="hidden" id="$param" name="$param" value="$data" />};
+    my $data = join($field_sep, @data);
+    $html .= qq{<input type="hidden" id="$param" name="$param" value="$data" />};
 
     # JavaScript init code: add only once
     my @sibs = grep { $_->class->isa(__PACKAGE__) } $element->parent()->children();
@@ -134,7 +137,7 @@ END
     }
 
     # for each element add click handler and save-hook JavaScript
-    $html .=<<END;
+    $html .= <<END;
 <script type="text/javascript">
 // call just before saving to backend
 Krang.ElementEditor.add_save_hook(function() {
@@ -337,14 +340,20 @@ sub view_data {
 
 sub fill_template {
     my ($self, %args) = @_;
-    my ($element, $tmpl, $publisher) = @args{ qw(element tmpl publisher) };
+    my ($element, $tmpl, $publisher) = @args{qw(element tmpl publisher)};
 
     my $name      = $element->name;
     my $loop_name = $name . '_loop';
     my $item_name = $name . '_item';
-    my @data      = @{ $element->data || [] };
+    my @data      = @{$element->data || []};
 
-    $tmpl->param($loop_name => [ map { {$item_name => $_} } @data ]);
+    $tmpl->param(
+        $loop_name => [
+            map {
+                { $item_name => $_ }
+              } @data
+        ]
+    );
 }
 
 sub freeze_data {

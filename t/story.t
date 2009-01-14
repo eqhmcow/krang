@@ -857,13 +857,13 @@ $doomed->save();
 $doomed_id = $doomed->story_id;
 ($obj) = pkg('Story')->find(story_id => $doomed_id);
 ok($obj);
-pkg('Story')->delete(story_id =>$doomed_id);
+pkg('Story')->delete(story_id => $doomed_id);
 ($obj) = pkg('Story')->find(story_id => $doomed_id);
 ok(not $obj);
 
 # test delete(class => 'publishtest')
 my $delete_class_name = 'publishtest';
-my @delete_class = ();
+my @delete_class      = ();
 for my $slug (qw(deji we0 jf28 4583)) {
     push @delete_class, pkg('Story')->new(
         categories => [$cat[0], $cat[1]],

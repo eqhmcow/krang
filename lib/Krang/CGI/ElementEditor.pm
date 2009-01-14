@@ -519,7 +519,6 @@ sub save_and_find_story_link {
     return $self->find_story_link();
 }
 
-
 sub save_and_find_media_link {
     my $self = shift;
 

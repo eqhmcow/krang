@@ -54,15 +54,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 2]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -85,16 +88,16 @@ our ($help, $man, $v);
 use Getopt::Long;
 use Pod::Usage;
 my $result = GetOptions(
-    'verbose+'      => \$v,
-    'help'          => \$help,
-    'man'           => \$man,
+    'verbose+' => \$v,
+    'help'     => \$help,
+    'man'      => \$man,
 ) or pod2usage(2);
-pod2usage(1)             if $help;
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Script => 'instance_agnostic';
-use Krang::ClassLoader Conf => qw(AvailableLanguages KrangRoot);
+use Krang::ClassLoader Conf   => qw(AvailableLanguages KrangRoot);
 use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader 'Info';
 use JavaScript::Minifier::XS qw(minify);
@@ -102,24 +105,24 @@ use IO::Zlib;
 
 # list of files relative to /htdocs
 my @files = qw(
-    js/calendar.js
-    js/calendar-$lang.js
-    js/prototype.js
-    js/scriptaculous.js
-    js/control.modal.js
-    js/behaviour.js
-    js/lexicon.$lang.js
-    js/krang.js
-    js/popup_tree_select.js
-    js/cropper.js
+  js/calendar.js
+  js/calendar-$lang.js
+  js/prototype.js
+  js/scriptaculous.js
+  js/control.modal.js
+  js/behaviour.js
+  js/lexicon.$lang.js
+  js/krang.js
+  js/popup_tree_select.js
+  js/cropper.js
 );
 @files = map { catfile(KrangRoot, 'htdocs', $_) } @files;
 
 foreach my $addon (pkg('AddOn')->find()) {
-    my $conf = $addon->conf;
+    my $conf     = $addon->conf;
     my @extra_js = $conf->get('ExtraJavaScriptFiles');
     @extra_js = map { catfile(KrangRoot, 'addons', $addon->name, 'htdocs', $_) } @extra_js;
-    if( $v && @extra_js ) {
+    if ($v && @extra_js) {
         print "Adding extra files from " . $addon->name . "\n";
         print "  $_\n" foreach @extra_js;
     }
@@ -131,7 +134,7 @@ push(@langs, 'en') unless grep { $_ eq 'en' } @langs;
 foreach my $lang (@langs) {
     print "Combining for language $lang\n" if $v;
     my $combined_file = catfile(KrangRoot, 'htdocs', 'js', "combined.$lang.js");
-    if( -e $combined_file ) {
+    if (-e $combined_file) {
         unlink $combined_file or die "Could not remove old combined JS file $combined_file: $!";
     }
 
@@ -139,8 +142,9 @@ foreach my $lang (@langs) {
     local $/;
     foreach my $file (@files) {
         $file =~ s/\$lang/$lang/g;
-        if( -e $file ) {
+        if (-e $file) {
             open(my $IN, '<', $file) or die "Could not open file $file: $!";
+
             # minify the JS file
             $js_contents .= minify(<$IN>) . ';';
         } else {
@@ -154,11 +158,12 @@ foreach my $lang (@langs) {
 
     # now create a compressed version
     $combined_file = "$combined_file.gz";
-    if( -e $combined_file ) {
+    if (-e $combined_file) {
         unlink $combined_file;
     }
     my $JS_GZ = IO::Zlib->new();
-    $JS_GZ->open($combined_file, "wb") or die "Could not open $combined_file to write compressed: $!";
+    $JS_GZ->open($combined_file, "wb")
+      or die "Could not open $combined_file to write compressed: $!";
     print $JS_GZ $js_contents;
 }
 

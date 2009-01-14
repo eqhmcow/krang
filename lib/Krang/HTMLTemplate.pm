@@ -183,7 +183,7 @@ sub output {
           if $template->query(name => "krang_$name");
     }
 
-    if( $template->query(name => 'static_url') && BrowserSpeedBoost ) {
+    if ($template->query(name => 'static_url') && BrowserSpeedBoost) {
         $template->param(static_url => '/static/' . pkg('Info')->install_id);
     }
 

@@ -544,7 +544,8 @@ sub unpublish_story {
         next unless -f $path;
 
         # make sure this path isn't claimed by another story
-        my ($claimed) = $dbh->selectrow_array(
+        my ($claimed) =
+          $dbh->selectrow_array(
             "SELECT 1 FROM publish_story_location WHERE path = ? AND story_id != ?",
             undef, $path, $story->story_id);
 
@@ -1406,7 +1407,7 @@ sub additional_content_block {
     $block{mode}         = exists($args{mode})         ? $args{mode}         : undef;
     croak __PACKAGE__ . ": post_process is not a code block"
       if $args{post_process} && !ref $args{post_process} eq 'CODE';
-    $block{post_process} = $args{post_process};
+    $block{post_process}       = $args{post_process};
     $block{category_tmpl_args} = $args{category_tmpl_args};
 
     push @{$self->{additional_content}}, \%block;

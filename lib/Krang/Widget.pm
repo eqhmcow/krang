@@ -1056,9 +1056,10 @@ sub autocomplete_values {
         foreach my $pos (0 .. (scalar @$row - 1)) {
             my $answer = lc($row->[$pos]);
 
-            if( $no_split ) {
+            if ($no_split) {
                 $words{$answer} = 1;
             } else {
+
                 # remove these characters
                 $answer =~ s/['"\,:]//g;
 

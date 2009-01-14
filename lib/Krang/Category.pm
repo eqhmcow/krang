@@ -681,7 +681,6 @@ sub root_category {
     return ($self->ancestors)[-1];
 }
 
-
 =item * @categories = $category->descendants()
 
 =item * @category_ids = $category->descendants( ids_only => 1 )

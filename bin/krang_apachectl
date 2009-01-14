@@ -115,9 +115,9 @@ my $apache_bin = rel2abs(catfile(KrangRoot, APACHE_ROOT, APACHE_BIN));
 my $httpd = $apache_bin . ' -f ' . rel2abs(catfile(KrangRoot, "tmp", "httpd.conf"));
 
 # get status from the pid file
-my $pid_file = catfile(KrangRoot, 'tmp', 'httpd.pid');
+my $pid_file         = catfile(KrangRoot, 'tmp', 'httpd.pid');
 my $offline_pid_file = catfile(KrangRoot, 'tmp', 'httpd_offline.pid');
-my $running = is_pid_running($pid_file);
+my $running         = is_pid_running($pid_file);
 my $offline_running = is_pid_running($offline_pid_file);
 
 # make language string for messages
@@ -152,17 +152,16 @@ if ($command eq 'stop') {
 }
 
 if ($command eq 'restart') {
-    stop_pid($running, $pid_file, 'httpd') if $running;
+    stop_pid($running,         $pid_file,         'httpd')         if $running;
     stop_pid($offline_running, $offline_pid_file, 'offline httpd') if $offline_running;
     start();
 }
 
 if ($command eq 'offline') {
-    stop_pid($running, $pid_file, 'httpd') if $running;
+    stop_pid($running,         $pid_file,         'httpd')         if $running;
     stop_pid($offline_running, $offline_pid_file, 'offline httpd') if $offline_running;
     offline();
 }
-
 
 usage();
 
@@ -351,12 +350,13 @@ sub make_js_localizer {
 }
 
 sub prepare_for_browser_speed_boost {
+
     # only run if we have an instance set up with BrowserSpeedBoost
-    my $go_ahead = 0;
+    my $go_ahead      = 0;
     my $orig_instance = pkg('Conf')->instance();
     foreach my $instance (pkg('Conf')->instances) {
         pkg('Conf')->instance($instance);
-        if( BrowserSpeedBoost ) {
+        if (BrowserSpeedBoost) {
             $go_ahead = 1;
             last;
         }
@@ -375,12 +375,13 @@ sub prepare_for_browser_speed_boost {
 
 sub make_js_for_poortext {
     system(catfile(KrangRoot, 'htdocs', 'poortext', 'bin', 'krang_make_poortext'), '--verbose')
-      and die "Couldn't make browser engine-specific JavaScript for Krang::ElementClass::PoorText: $?";
+      and die
+      "Couldn't make browser engine-specific JavaScript for Krang::ElementClass::PoorText: $?";
 }
 
 sub is_pid_running {
     my $pid_file = shift;
-    my $running = 0;
+    my $running  = 0;
     my $pid;
     if (-e $pid_file) {
         $pid = `cat $pid_file`;
@@ -419,6 +420,7 @@ sub stop_pid {
 
 sub make_offline_pages {
     require HTML::Template;
+
     # find template file, looking addons first then in the root
     my $file = pkg('File')->find("templates/offline.tmpl");
 
@@ -458,6 +460,4 @@ sub offline {
         die "krang_apachectl offline: httpd could not be started\n";
     }
 }
-
-
 
