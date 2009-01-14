@@ -8,6 +8,17 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Allowed L<Krang::Story>::delete() to be called with the named
+parameters 'story_id' (a number) or 'class' (a string or an arrayref
+of class names). [Bodo Schulze]
+
+=item *
+
+Added directive B<PreInstallScript> to F<krang_addon.conf> to run a
+script before the installation process starts. [Bodo Schulze]
+
+=item *
+
 Added new element class L<Krang::ElementClass::TextInputList>. Added
 it to L<Krang::ElementLibrary>'s autoload list, added three examples
 to L<TestSet1::page> and its template, and added some CSS to
