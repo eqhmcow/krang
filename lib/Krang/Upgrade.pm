@@ -96,9 +96,12 @@ the database.
 
 =item remove_files()
 
-This convenience method is provided to help remove old files during the upgrade.
-It's best to call this method in the C<per_installation()> method since files
-are per-installation. File names are given relative to C<KRANG_ROOT>.
+This convenience method is provided to help remove old files during
+the upgrade.  It's best to call this method in the
+C<per_installation()> method since files are per-installation. File
+names are given relative to C<KRANG_ROOT>. If a directory name is
+passed to this method, the directory and all its content will be
+deleted recursively.
 
     $self->remove_files(
         'lib/Krang/Foo.pm',
