@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in F<krang.js> C<Krang.Form.submit()> where if the C<new_window>
+option was true we'd pass the existing window_id to it, in essence having
+2 windows with the same window_id which could cause some strange things
+to happen (multiple windows with the same session). [Michael Peters]
+
+=item *
+
 Allowed L<Krang::Story>::delete() to be called with the named
 parameters 'story_id' (a number) or 'class' (a string or an arrayref
 of class names). [Bodo Schulze]

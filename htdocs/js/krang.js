@@ -471,16 +471,16 @@ Krang.Ajax.update = function(args) {
     Select a form (can be either the name of the form, or the form object
     itself) and get the value of an input
 
+    Krang.Form.get_field(form, input);
+    Returns the HTML object representing the input field of the form.
+
     Krang.Form.submit(form, { input: 'value' }, { new_window: true })
     Select a form (can either be the name of the form, or the form object
     itself) optionally sets the values of those elements and then submits 
     the form. 
 
-    Krang.Form.get_field(form, input);
-    Returns the HTML object representing the input field of the form.
-
     You can also specify a third parameter which contains other optional
-    flags that can be passed to dictact the behaviour.
+    flags that can be passed to dictate the behaviour.
     These flags include:
     
         new_window : open the request into a new window.
@@ -544,7 +544,6 @@ Krang.Form = {
             // submission
             var old_target = form.target;
             form.target = window.name + '_b';
-            form.action = Krang.Window.pass_id(form.action);
             form.submit();
             form.target = old_target;
         } else {
