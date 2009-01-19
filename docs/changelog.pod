@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+At the request of Jesse Erlbaum, added a Size selector to
+Default::Image. [Bodo Schulze]
+
+=item *
+
 Fixed bug in F<krang.js> C<Krang.Form.submit()> where if the C<new_window>
 option was true we'd pass the existing window_id to it, in essence having
 2 windows with the same window_id which could cause some strange things
