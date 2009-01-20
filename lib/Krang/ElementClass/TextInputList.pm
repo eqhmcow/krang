@@ -251,43 +251,21 @@ Krang.ElementClass.TextInputList = {
     },
 
     item_down : function(currItem) {
-        var nextItem = currItem.next();
-        // insert it after its next sibling
-        nextItem.insert({after : currItem.remove()});
-        // on moved down element...
-        if (Krang.ElementClass.TextInputList.isLast(currItem)) {
-            // ... hide DOWN button ...
-            currItem.down().next(2).hide();
-        }
-        // ... and show UP button
-        currItem.down().next(3).show();
-        // on next element ...
-        if (Krang.ElementClass.TextInputList.isFirst(nextItem)) {
-            // ... hide UP button ...
-            nextItem.down().next(3).hide();
-        }
-        // ... and show DOWN button
-        nextItem.down().next(2).show();
+        var currTextField = currItem.down();
+        var nextTextField = currItem.next().down();
+
+        var tmp = currTextField.value;
+        currTextField.value = nextTextField.value;
+        nextTextField.value = tmp;
     },
 
     item_up : function(currItem) {
-        var prevItem = currItem.previous();
-        // insert it before its previous sibling
-        prevItem.insert({before : currItem.remove()});
-        // on moved up element...
-        if (Krang.ElementClass.TextInputList.isFirst(currItem)) {
-            // ... hide UP button ...
-            currItem.down().next(3).hide();
-        }
-        // ... and show DOWN button
-        currItem.down().next(2).show();
-        // on previous ...
-        if (Krang.ElementClass.TextInputList.isLast(prevItem)) {
-            // ... hide DOWN button ...
-            prevItem.down().next(2).hide();
-        }
-        // ... and  show UP button
-        prevItem.down().next(3).show();
+        var currTextField = currItem.down();
+        var prevTextField = currItem.previous().down();
+
+        var tmp = currTextField.value;
+        currTextField.value = prevTextField.value;
+        prevTextField.value = tmp;
     },
 
     isFirst : function(item) {
