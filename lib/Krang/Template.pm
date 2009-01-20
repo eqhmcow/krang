@@ -1242,9 +1242,9 @@ SQL
     # preserve version and checkout status
     my %preserve = (
         version          => $self->{version},
+        deployed_version => $self->{deployed_version},
         checked_out_by   => $self->{checked_out_by},
-        checked_out      => $self->{checked_out},
-        deployed_version => $self->{deployed_version}
+        checked_out      => $self->{checked_out}
     );
 
     # get old version
