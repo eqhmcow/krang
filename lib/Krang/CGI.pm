@@ -4,6 +4,12 @@ use warnings;
 
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'AddOn';
+
+# pull in Krang::lib when not running in mod_perl
+BEGIN { $ENV{MOD_PERL} or eval "use pkg('lib')" }
+# trigger InitHandler when not in mod_perl
+BEGIN { $ENV{MOD_PERL} or pkg('AddOn')->call_handler('InitHandler') }
+
 use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader Widget  => qw(category_chooser_object);
 use Krang::ClassLoader 'Charset';
@@ -11,11 +17,6 @@ use Krang::ClassLoader Localization => qw(localize);
 use MIME::Base64 qw(decode_base64);
 use Encode qw(decode_utf8);
 
-# pull in Krang::lib when not running in mod_perl
-BEGIN { $ENV{MOD_PERL} or eval "use pkg('lib')" }
-
-# trigger InitHandler when not in mod_perl
-BEGIN { $ENV{MOD_PERL} or pkg('AddOn')->call_handler('InitHandler') }
 
 =head1 NAME
 
