@@ -123,12 +123,19 @@ sub fill_template {
         my $orig_filename = $media->filename;
         my ($name, $extension) = $orig_filename =~ /(.*)\.([^.]+)$/;
         my $filename = "${name}_${size}.$extension";
-        my $path = $publisher->_determine_output_path(object => $publisher->story, category => $publisher->category);
-        my $file = catfile($path, $filename);
 
         # write new image
-        $new->write(file => $file)
-          or croak(__PACKAGE__ . "::fill_template() - couldn't write resized image '$file': " . $new->errstr);
+        my $content;
+        my $type = $extension =~ /^jpg$/i ? 'jpeg' : $extension;
+        $new->write(data => \$content, type => $type)
+          or croak(__PACKAGE__ . "::fill_template() - couldn't write resized image '$filename': " . $new->errstr);
+
+        $publisher->additional_content_block(
+            content      => $content,
+            filename     => $filename,
+            binary       => 1,
+            use_category => 0,
+        );
 
         # new image's size
         $width  = $new->getwidth;
