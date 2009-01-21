@@ -1732,7 +1732,7 @@ var rules = {
         // ignore 'non_auto'
         if( el.hasClassName('non_auto') ) return;
         var pref = Krang.my_prefs();
-        if( pref.use_autocomplete ) {
+        if(pref.use_autocomplete == 1) {
             // add a new div of class 'autocomplete' right below this input
             var div = Builder.node('div', { className: 'autocomplete', style : 'display:none' }); 
             el.parentNode.insertBefore(div, el.nextSibling);
