@@ -59,15 +59,20 @@ sub open {
 This returns a new L<IO::File> object and acts just like single
 arg form of C<IO::File::new()>.
 
+To read/write a file in binary mode (by-passing the Charset directive)
+pass the optional 'binary' argument in.
+
     my $io = pkg('IO')->io_file(">/some/file");
+
+    my $io = pkg('IO')->io_file(">/some/file", 'binary' => 1);
 
 =cut
 
 sub io_file {
-    my ($pkg, $file) = @_;
+    my ($pkg, $file, %arg) = @_;
     my $charset = Charset();
 
-    if ($charset) {
+    if ($charset and not $arg{binary}) {
 
         # see if the mode is specified
         my $mode;

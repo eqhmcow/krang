@@ -1384,6 +1384,9 @@ An optional C<post_process> code ref may be supplied that will receive
 the created content as a scalarref after the optional category template
 has been applied.
 
+If you want to write binary data (e.g. images), you B<must> specify
+the 'binary' argument.
+
 B<WARNING:> C<additional_content_block()> can be called as many times
 as desired, however it does not perform any sanity checks on
 C<filename> - if your output contains multiple blocks of additional
@@ -1401,6 +1404,7 @@ sub additional_content_block {
 
     $block{content}  = $args{content};
     $block{filename} = $args{filename};
+    $block{binary}   = $args{binary};
     croak __PACKAGE__ . ": missing required argument 'content'"  unless defined $block{content};
     croak __PACKAGE__ . ": missing required argument 'filename'" unless length $block{filename};
     $block{use_category} = exists($args{use_category}) ? $args{use_category} : 1;
@@ -1883,6 +1887,7 @@ sub _build_story_single_category {
         my $output_filename = $self->_write_page(
             data     => $content,
             filename => $block->{filename},
+            binary   => $block->{binary},
             story_id => $story->story_id,
             path     => $output_path
         );
@@ -2310,7 +2315,11 @@ sub _write_story {
 }
 
 #
-# $output_filename = _write_page(path => $path, filename => $filename, data => $content, story_id => $id)
+# $output_filename = _write_page(path => $path, filename => $filename, data => $content, story_id => $id);
+#
+# To write binary data:
+#
+# $output_filename = _write_page(path => $path, filename => $filename, data => $content, story_id => $id, binary => 0);
 #
 # Writes the content in $data to $path/$filename.
 #
@@ -2339,7 +2348,7 @@ sub _write_page {
 
     my $output_filename = catfile($args{path}, $args{filename});
 
-    my $fh = pkg('IO')->io_file(">$output_filename")
+    my $fh = pkg('IO')->io_file(">$output_filename", 'binary' => $args{binary})
       or Krang::Publisher::FileWriteError->throw(
         message      => "Cannot output story to $output_filename: $!",
         story_id     => $args{story_id},

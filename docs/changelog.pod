@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added 'binary' argument to $publisher->additional_content_block(),
+hence to Krang::IO->io_file(), to make it possible to write images
+(and other binary data). [Bodo Schulze]
+
+=item *
+
 Fixed minor but disconcerting bug where reverting a template to an
 earlier version also reverted its "Deployed Version". [Noam Weinstein]
 
