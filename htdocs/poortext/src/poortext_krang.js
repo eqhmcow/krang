@@ -41,7 +41,8 @@ PoorText.prototype.addStoryLink = function() {
     }
 
     // Submit form: goto "Select Story" screen
-    var jumpTo = this.returnHTML.getAttribute('name');
+    var pt_id  = this.returnHTML.getAttribute('name');
+    var jumpTo = PoorText.Krang.paramFor[pt_id] || pt_id;
     Krang.ElementEditor.run_save_hooks();
     Krang.Form.submit(
         'edit',
@@ -63,9 +64,10 @@ PoorText.prototype.addStoryLink = function() {
 };
 
 PoorText.Krang = {
-    linkId     : "",
-    id         : "",
-
+    linkId     : "", // A tag id for StoryLink insertion
+    id         : "", // PT field id
+    paramFor   : [], // mapping PT field id to Krang element param
+    
     // onComplete callback for ElementEditor's runmode 'select_story'
     insertStoryLink : function(json) {
         // the placeholder created before calling find_story_link
@@ -171,12 +173,8 @@ PoorText.prototype.clean_pasted_html = function() {
     //
     // don't call storeForPostBack() to bypass IO filters
     //
-    // synchronize query data
     var pt = this;
-    pt.returnHTML.value = pt.editNode.innerHTML;
-
-    // get all vars for Ajax request
-    var element     = pt.returnHTML.name;
+    var element     = PoorText.Krang.paramFor[pt.id] || pt.id;
     var form        = $('edit');
     var url         = form.readAttribute('action').replace(/\?.*/, '');
     var params      = {rm : 'filter_element_data', filter_element : element};
@@ -191,7 +189,10 @@ PoorText.prototype.clean_pasted_html = function() {
           method     : form.readAttribute('method'),
           onComplete : function(args, transport, json) {
               // update the edit area
-              pt.editNode.innerHTML = pt.returnHTML.value = transport.responseText;
+              pt.editNode.innerHTML = transport.responseText;
+
+              // maybe also the return field
+              if (pt.returnHTML) { pt.returnHTML.value = transport.responseText; }
 
               // focus it
               pt.focusEditNode;
