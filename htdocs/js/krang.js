@@ -31,7 +31,7 @@ Krang.preload_img = function(path) {
 Krang.run_code = function(code_array) {
     var size = code_array.length;
     for(var i=0; i< size; i++) {
-        var code = code_array.pop();
+        var code = code_array.shift();
         if( code ) code();
     }
 }
