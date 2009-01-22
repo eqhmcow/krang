@@ -877,6 +877,16 @@ PoorText.prototype = {
 	return node;
     },
 
+    getCurrHtml : function() {
+        return (this.editNode === null) ? this.srcElement.innerHTML : this.editNode.innerHTML;
+    },
+
+    setCurrHtml : function(html) {
+        if (this.srcElement != null) { this.srcElement.innerHTML = html }
+        if (this.editNode   != null) { this.editNode.innerHTML   = html }
+        if (this.returnHTML != null) { this.returnHTML.value     = html }
+    },
+
     /**@ignore*/
     notify : function(a) { alert(PoorText.L10N.localize(a)) },
 
