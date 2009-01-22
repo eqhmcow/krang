@@ -239,6 +239,8 @@ END
     $html .= qq{<div class="$class" style="$style" id="$id">} . $text . qq{</div>\n};
 
     # ... its hidden input field used to return the text
+    # !! escape single quotes and enclose $text in single quotes !!
+    $text =~ s/'/&#39;/g;
     $html .= qq[<input type="hidden" name="$param" value='$text' id="${id}_return"/>];
 
     debug(__PACKAGE__ . "->input_form($param) - HTML sent to the browser: " . $text);
