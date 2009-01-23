@@ -101,15 +101,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 2]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -129,7 +132,7 @@ END
 
 our ($help, $man, $only_lang, $pkg, $tmpl);
 our $print_missing = 0;
-our $verbose = 0;
+our $verbose       = 0;
 
 use Getopt::Long;
 use Pod::Usage;
@@ -144,23 +147,25 @@ my $result = GetOptions(
     'tmpl=s'        => \$tmpl,
 ) or pod2usage(2);
 
-pod2usage(1)             if $help;
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Script => 'instance_agnostic';
-use Krang::ClassLoader Conf => qw(AvailableLanguages);
-use Krang::ClassLoader Localization => qw(localize_template %LANG %missing);
+use Krang::ClassLoader Script       => 'instance_agnostic';
+use Krang::ClassLoader Conf         => qw(AvailableLanguages);
+use Krang::ClassLoader Localization => qw(localize_template %LANG %MISSING);
+use Krang::ClassLoader 'IO';
 
 # record missing localizations
 $ENV{KRANG_RECORD_MISSING_LOCALIZATIONS} = $print_missing;
 
-my @single_templates = ( qw(
-    footer
-    header
-    nav
-));
-
+my @single_templates = (
+    qw(
+      footer
+      header
+      nav
+      )
+);
 
 # also localize addon /templates
 for my $tmpl_root (pkg('File')->find_all('templates')) {
@@ -170,10 +175,9 @@ for my $tmpl_root (pkg('File')->find_all('templates')) {
     my $templates = collect_templates_in_root($tmpl_root);
 
     # add templates in tmpl root to collection
-    push @$templates, map  { {root => $tmpl_root,
-			      dir  => $tmpl_root,
-			      file => "$_.base.tmpl"} }
-                      grep { -e catfile($tmpl_root, "$_.base.tmpl") } @single_templates;
+    push @$templates, map { {root => $tmpl_root, dir => $tmpl_root, file => "$_.base.tmpl"} }
+      grep { -e catfile($tmpl_root, "$_.base.tmpl") } @single_templates;
+
     # localize it
     localize_templates($templates);
 }
@@ -190,28 +194,33 @@ sub collect_templates_in_root {
     opendir(my $dh, $template_root) or die "Couldn't opendir($template_root): $!";
 
     my @subdirs =
-	 sort { $a cmp $b                  }
-	 grep { -d $_                      }
-	 map  { catdir($template_root, $_) }
-         grep { $_ !~ m{^\.(\.?|svn)}      } readdir($dh);
+      sort { $a cmp $b }
+      grep { -d $_ }
+      map { catdir($template_root, $_) }
+      grep { $_ !~ m{^\.(\.?|svn)} } readdir($dh);
 
-    find({
-	  wanted => sub {
-	      # only for one package
-	      return if $pkg && $File::Find::dir !~ /$pkg$/;
+    find(
+        {
+            wanted => sub {
 
-	      # only for one template
-	      return if $tmpl && $_ ne "$tmpl.base.tmpl";
+                # only for one package
+                return if $pkg && $File::Find::dir !~ /$pkg$/;
 
-	      return unless m{\.base\.tmpl$};
+                # only for one template
+                return if $tmpl && $_ ne "$tmpl.base.tmpl";
 
-	      push @templates, {root => $template_root,
-				dir  => $File::Find::dir,
-				file => $_};
-	  },
-	  no_chdir => 0,
-	 },
-         @subdirs
+                return unless m{\.base\.tmpl$};
+
+                push @templates,
+                  {
+                    root => $template_root,
+                    dir  => $File::Find::dir,
+                    file => $_
+                  };
+            },
+            no_chdir => 0,
+        },
+        @subdirs
     ) if @subdirs;
 
     closedir($dh) or warn "Couldn't closedir($template_root): $!";
@@ -228,55 +237,54 @@ sub localize_templates {
 
     for my $lang (@languages) {
 
-	# only for one language?
-	next if $only_lang && $only_lang ne $lang;
+        # only for one language?
+        next if $only_lang && $only_lang ne $lang;
 
-	show("    Localizing templates for '$LANG{$lang}'", 2);
+        show("    Localizing templates for '$LANG{$lang}'", 2);
 
-	for my $template (@$templates) {
+        for my $template (@$templates) {
 
-	    # slurp the template containing <tmpl_lang ...>
-	    my $tmpltmpl = catfile($template->{dir}, $template->{file});
+            # slurp the template containing <tmpl_lang ...>
+            my $tmpltmpl = catfile($template->{dir}, $template->{file});
 
-	    my $content = '';
+            my $content = '';
 
-	    {
-		local $/ = undef;
-		open my $if, $tmpltmpl or die "Couldn't open($tmpltmpl) for reading: $!";
-		$content = <$if>;
-		close $if or warn "Couldn't close($tmpltmpl): $!";
-	    }
+            {
+                local $/ = undef;
+                open my $if, $tmpltmpl or die "Couldn't open($tmpltmpl) for reading: $!";
+                $content = <$if>;
+                close $if or warn "Couldn't close($tmpltmpl): $!";
+            }
 
-	    # localize it
-	    localize_template(\$content, $lang);
+            # localize it
+            warn "Localizing!" if $lang eq 'en' && $template->{file} eq 'forgot_pw_email.base.tmpl';
+            localize_template(\$content, $lang);
 
-	    # make sure we have a language-specific directory for our localized template
-	    my $loc_dir = catdir($template->{dir}, $lang);
-	    make_dir($loc_dir);
+            # make sure we have a language-specific directory for our localized template
+            my $loc_dir = catdir($template->{dir}, $lang);
+            make_dir($loc_dir);
 
-	    # correct the file path
-	    (my $loc_tmpl = $template->{file}) =~ s/\.base\.tmpl$/.tmpl/;
-	    $loc_tmpl = catfile($loc_dir, $loc_tmpl);
+            # correct the file path
+            (my $loc_tmpl = $template->{file}) =~ s/\.base\.tmpl$/.tmpl/;
+            $loc_tmpl = catfile($loc_dir, $loc_tmpl);
 
-	    # and print the localized template
-	    open(my $of, ">", $loc_tmpl) or die "Couldn't open($loc_tmpl) for writing: $!";
-	    print $of $content;
-	    close $of or warn "Couldn't close($loc_tmpl): $!";
+            # and print the localized template
+            open(my $of, ">", $loc_tmpl) or die "Couldn't open($loc_tmpl) for writing: $!";
+            print $of $content;
+            close $of or warn "Couldn't close($loc_tmpl): $!";
 
-	    show("      Created $loc_tmpl", 3);
-	}
+            show("      Created $loc_tmpl", 3);
+        }
     }
 }
 
 sub make_dir {
     my $dir = shift;
 
-    eval {
-	mkpath($dir, 0, 0755);
-    };
+    eval { mkpath($dir, 0, 0755); };
 
     if ($@) {
-	die "Couldn't make directory '$dir': $@";
+        die "Couldn't make directory '$dir': $@";
     }
 
     show("      Created $dir", 3);
@@ -284,14 +292,7 @@ sub make_dir {
 
 sub show {
     my ($msg, $level) = @_;
-
-    if ($verbose == 1) {
-	print "$msg\n" if $level < 2;
-    } elsif ($verbose == 2) {
-	print "$msg\n" if $level < 3;
-    } elsif ($verbose == 3) {
-	print "$msg\n" if $level < 4;
-    }
+    pkg('IO')->say("$msg") if $verbose + 1 > $level;
 }
 
 END {
@@ -299,22 +300,21 @@ END {
 
     my $message = '';
 
-    for my $language (sort keys %missing) {
-	my $missing .= join "\n", sort keys %{$missing{$language}};
-	if ($missing) {
-	    $missing = "###\n"
-	             . "### Missing in '$LANG{$language}' lexicon lang/$language/perl.dict\n"
-                     . "###\n".$missing;
-	    $message .= $missing."\n";
-	}
+    for my $language (sort keys %MISSING) {
+        my $missing .= join "\n", sort keys %{$MISSING{$language}};
+        if ($missing) {
+            $missing = "###\n"
+              . "### Missing in '$LANG{$language}' lexicon lang/$language/perl.dict\n" . "###\n"
+              . $missing;
+            $message .= $missing . "\n";
+        }
     }
 
     if (length($message)) {
-	print STDERR "###\n"
-                   . "### There are missing entries in one or more lexicons\n"
-	           . "### for localizing static template strings\n"
-                   . "###\n"
-	           . $message
-                   . "###\n\n";
+        pkg('IO')->warn("###\n"
+          . "### There are missing entries in one or more lexicons\n"
+          . "### for localizing static template strings\n" . "###\n"
+          . $message
+          . "###\n");
     }
 }

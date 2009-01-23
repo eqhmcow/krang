@@ -45,5 +45,19 @@ is(localize('Workspace'), 'Workspace', "localize('Workspace') for English defaul
 # ... for other languages
 for my $lang (grep { $_ ne 'en' } AvailableLanguages) {
     $session{language} = $lang;
-    ok(localize('Preferences'), "localize('Workspace') for $LANG{$lang}");
+    isnt(localize('Preferences'), 'Preferences', "localize() translated phrase for $LANG{$lang}");
+    is(localize('Just a Test'), 'Just a Test', "localize() untranslated phrase for $LANG{$lang}");
 }
+
+# with extra args, so it goes through sprintf
+for my $lang (grep { $_ ne 'en' } AvailableLanguages) {
+    $session{language} = $lang;
+    is(
+        localize('Just a Test %s', 123),
+        'Just a Test 123',
+        "localize() with sprintf() for $LANG{$lang}"
+    );
+}
+
+
+

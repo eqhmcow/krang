@@ -24,6 +24,15 @@ Krang::IO - abstract away any IO operations that need to be Charset-aware
     # get an IO::File object with the right encoding
     my $io = pkg('IO')->io_file(">/some/file");
 
+    # print to STDOUT with the correct encoding
+    pkg('IO')->print($some_string);
+
+    # print to STDOUT with a trailing newline with the correct encoding
+    pkg('IO')->say($some_string);
+
+    # print to STDERR with a trailing newline with the correct encoding
+    pkg('IO')->warn($some_string);
+
 =head1 DESCRIPTION
 
 Krang can be setup to run on multiple character sets. A lot of the common
@@ -85,12 +94,55 @@ sub io_file {
             $mode = '<';
         }
 
-        $mode .= ":encoding($charset)" if $charset;
+        $mode .= ":encoding($charset)";
 
         return IO::File->new($file, $mode);
     } else {
         return IO::File->new($file);
     }
+}
+
+=head2 print
+
+Prints a message to C<STDOUT> (or the default C<select()>ed file handle)
+with the correct character set encoding.
+
+=cut
+
+sub print {
+    my ($pkg, $string) = @_;
+    my $charset = Charset();
+    if( my $charset = Charset() ) {
+        binmode(select(), ":encoding($charset)");
+    }
+    print $string;
+}
+
+=head2 say
+
+Prints a message to C<STDOUT> (or the default C<select()>ed file handle)
+with a trailing newline added, with the correct character set encoding.
+
+=cut
+
+sub say {
+    my ($pkg, $string) = @_;
+    $pkg->print("$string\n");
+}
+
+=head2 warn
+
+Prints a message to C<STDERR> with a trailing newline added.
+
+=cut
+
+sub warn {
+    my ($pkg, $string) = @_;
+    my $charset = Charset();
+    if( my $charset = Charset() ) {
+        binmode(STDERR, ":encoding($charset)");
+    }
+    print STDERR "$string\n";
 }
 
 1;

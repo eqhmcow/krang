@@ -18,13 +18,13 @@ use Archive::Tar;
 use File::Copy qw(copy);
 use Cwd qw(fastcwd);
 
-our @EXPORT_OK = qw(%LANG %missing localize localize_template);
+our @EXPORT_OK = qw(%LANG %MISSING localize localize_template);
 
 use Carp qw(croak);
 
 use base 'Exporter';
 
-our (%LANG, %L10N, %missing);
+our (%LANG, %L10N, %MISSING);
 
 =head1 NAME
 
@@ -90,7 +90,7 @@ language setting. For French, the lexicon entry should read
 =cut
 
 sub localize {
-    my $key = shift;
+    my ($key, @list) = @_;
 
     my $language = $session{language} || DefaultLanguage;
 
@@ -105,73 +105,80 @@ sub localize {
     my @localized = $L10N{$language}->get($key);
 
     unless (defined($localized[0])) {
+open(my $FH, '>>', '/home/mpeters/development/arcos/missing_localizations') or die "Could not open missing_localizations file";
+print $FH "$key\n";
+close $FH;
         debug("Unable to find key '$key' in lang/$language/perl.dict.");
         return $key;
     }
 
-    return wantarray ? @localized : $localized[0];
+    if( @list ) {
+        if( wantarray ) {
+            return map { sprintf($_, @list) } (@localized);
+        } else {
+            return sprintf($localized[0], @list);
+        }
+    } else {
+        return wantarray ? @localized : $localized[0];
+    }
 }
 
-=item C<< localize_template($textref, $language_tag) >>
+=item C<< localize_template($textref, $language) >>
 
-All strings in $textref wrapped in <tmpl_lang ...> tags are localized
+All strings in $textref wrapped in C<< <tmpl_lang> >> tags are localized
 for the language indicated by $language_tag. $textref should contain a
 reference to a string containing a template, $language_tag is supposed
 to be a valid RFC3066-style tag representing a valid entry into the
 %L10N lexicon hash.
 
+There are 2 syntax flavors for C<< <tmpl_lang> >> tags. The 1st is just a simple
+
+    <tmpl_lang String to be translated>
+
+Where everything inside is translated as-is. The 2nd is more complicated to deal
+with situations where there are words to be substituted into the the translation
+that don't need translation, but the rest of the sentence does. Something like
+
+    <tmpl_lang "Your username is %s", username>
+
+Which will get translated and rendered into something like this (example in Spanish)
+
+    Su Nombre de Usuario es <tmpl_var username escape=html>
+
+If C<$ENV{KRANG_RECORD_MISSING_LOCALIZATIONS}> is set to true, then any
+strings which do not have corresponding translations will be collected
+in the C<%Krang::Localization::MISSING> hash (which is exportable).
+
 =cut
 
 sub localize_template {
-    my ($textref, $language) = @_;
+    my ($textref, $lang) = @_;
+    my $lexicon = $lang eq 'en' ? undef : pkg('Localization')->get_lexicon($lang);
 
-    if ($language eq 'en') {
-
-        $$textref =~ s|<tmpl_lang\s+([^>]+)>|$1|gx;
-
-    } else {
-
-        my $lexicon = pkg('Localization')->get_lexicon($language);
-
-        if ($ENV{KRANG_RECORD_MISSING_LOCALIZATIONS}) {
-            debug_template_localization->($textref, $language);
-        } else {
-            $$textref =~ s{<tmpl_lang\s+([^>]+)>}{$lexicon->get($1) || $1}egx;
-        }
-    }
-}
-
-=item C<< debug_localize_template($textref, $language) >>
-
-This method is only useful for debugging and testing.  It's used when
-calling L<lang/bin/krang_localize_templates> with the C<--print_missing>
-option to find strings in templates whose localization is missing in
-the lexicon indicated by $language.
-
-This method is triggered if $ENV{KRANG_RECORD_MISSING_LOCALIZATIONS} is set to a
-true value.
-
-=cut
-
-sub debug_template_localization {
-    my ($textref, $language) = @_;
-
-    my $lexicon = pkg('Localization')->get_lexicon($language);
-
-    while ($$textref =~ m|<tmpl_lang ([^>]+)>|g) {
-        my $key         = $1;
+    while ($$textref =~ m/<tmpl_lang ([^>]+)>/g) {
+        my $key = $1;
         my $pos         = $-[0];
-        my $translation = $lexicon->get($key);
-
-        if (defined($translation)) {
-            pos($pos);
-            $$textref =~ s|<tmpl_lang\s+([^>]+)>|$translation|;
-        } else {
-
-            # remember missing localizations in templates
-            $$textref =~ s|<tmpl_lang\s+([^>]+)>|$1|;
-            $missing{$language}{$key}++;
+        my @subs;
+        
+        if( $key =~ /^"/ ) {
+            $key =~ /^"([^"]+)"\s*(,.*)?$/;
+            $key = $1;
+            if( my $extras = $2 ) {
+                $extras =~ s/^,\s*//; # remove the initial comma
+                @subs = map { "<tmpl_var $_ escape=html>" } (split(/\s*,\s*/, $extras));
+            }
         }
+        my $translation = $lang eq 'en' ? $key : $lexicon->get($key);
+
+        if(!defined $translation) {
+            # remember missing localizations in templates
+            $MISSING{$lang}{$key}++;
+            $translation = $key;
+        }
+
+        $translation = sprintf($translation, @subs) if @subs;
+        pos($pos);
+        $$textref =~ s/<tmpl_lang\s+([^>]+)>/$translation/;
     }
 }
 

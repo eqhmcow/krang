@@ -95,6 +95,7 @@ use Krang::ClassLoader Conf => qw(KrangRoot InstanceHostName Skin KrangUser Kran
 );
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader Localization => qw(%LANG);
+use Krang::ClassLoader 'IO';
 
 # SSL directives
 my @ssl_directives = qw(
@@ -317,7 +318,7 @@ sub do_make_links {
 
 # setup the configured skin
 sub apply_skin {
-    print "Loading configured skin: " . Skin . "\n";
+    pkg('IO')->say("Loading configured skin: " . Skin);
     system(catfile(KrangRoot, 'bin', 'krang_load_skin'), Skin);
 }
 
@@ -338,13 +339,13 @@ sub setup_logs {
 }
 
 sub make_templates {
-    print "Making localized templates for $langs.\n";
+    pkg('IO')->say("Making localized templates for $langs.");
     system(catfile(KrangRoot, 'lang', 'bin', 'krang_localize_templates'))
       and die "Couldn't localize templates: $?";
 }
 
 sub make_js_localizer {
-    print "Making JavaScript localizer for $langs.\n";
+    pkg('IO')->say("Making JavaScript localizer for $langs.");
     system(catfile(KrangRoot, 'lang', 'bin', 'krang_make_js_loc'))
       and die "Couldn't make JavaScript localizer: $?";
 }
@@ -364,7 +365,7 @@ sub prepare_for_browser_speed_boost {
 
     return unless $go_ahead;
 
-    print "Making Combined JavaScript files for $langs.\n";
+    pkg('IO')->say("Making Combined JavaScript files for $langs.");
     system(catfile(KrangRoot, 'bin', 'krang_combine_js'))
       and die "Couldn't make JavaScript combined files: $?";
 
@@ -375,7 +376,7 @@ sub prepare_for_browser_speed_boost {
 
 sub make_js_for_poortext {
     system(catfile(KrangRoot, 'htdocs', 'poortext', 'bin', 'krang_make_poortext'), '--verbose')
-      and die
+      and warn 
       "Couldn't make browser engine-specific JavaScript for Krang::ElementClass::PoorText: $?";
 }
 
