@@ -145,7 +145,6 @@ if (!Krang.PoorTextLoaded) {
 }
 
 // init function
-poortext_elements = new Array();
 poortext_init = function() {
     // is poortext_<BROWSER_ENGINE>.js loaded ?
     if (typeof PoorText == 'undefined') {
@@ -163,8 +162,16 @@ poortext_init = function() {
     };
 
     // make them all fields
-    poortext_elements.each(function(pts) {
-        pt = new PoorText(pts[0], pts[1]);
+    Krang.PoorTextCreationArguments.each(function(pts) {
+        var pt_id  = pts[0];
+        var param  = pts[1];
+        var config = pts[2];
+
+        // map PoorText field id to Krang element param
+        PoorText.Krang.paramFor[pt_id] = param;
+
+        // make PoorText fields
+        pt = new PoorText(pt_id, config);
 
         // add a preview handler for links and StoryLinks
         // IE does dispatch no 'click' event on contenteditable elements
@@ -230,7 +237,7 @@ END
         iframeHead : '<link rel="stylesheet" type="text/css" href="/poortext/css/poortext.css">'
         $config
     };
-    poortext_elements.push(["$id", config]);
+    Krang.PoorTextCreationArguments.push(["$id", "$param", config]);
 </script>
 END
 
