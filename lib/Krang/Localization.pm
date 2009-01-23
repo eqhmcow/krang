@@ -105,9 +105,6 @@ sub localize {
     my @localized = $L10N{$language}->get($key);
 
     unless (defined($localized[0])) {
-open(my $FH, '>>', '/home/mpeters/development/arcos/missing_localizations') or die "Could not open missing_localizations file";
-print $FH "$key\n";
-close $FH;
         debug("Unable to find key '$key' in lang/$language/perl.dict.");
         return $key;
     }
