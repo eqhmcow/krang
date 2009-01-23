@@ -1132,7 +1132,7 @@ PoorText.finish_init = function() {
     Event.observe(document, 'click', PoorText.onBlur);
 
     // Make sure no PT field has focus
-    window.blur(); window.focus();
+    try { window.blur(); window.focus(); } catch(er) {}
 }
 
 /**
