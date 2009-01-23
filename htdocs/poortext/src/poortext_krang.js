@@ -202,7 +202,7 @@ PoorText.prototype.clean_pasted_html = function() {
                   pt.toggleSelectAll();
                   pt.toggleSelectAll();
               } else {
-                  pt.restoreSelection({sc : [0,0], so : 0, ec : [0,0], eo: 0});
+                  pt.restoreSelection({sc : [0], so : 0, ec : [0], eo: 0});
               }
           }
     });
