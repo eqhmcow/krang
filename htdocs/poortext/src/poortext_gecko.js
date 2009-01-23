@@ -325,7 +325,7 @@ Object.extend(PoorText.prototype, {
 
         // finally call registered functions
         this.onEditNodeReadyFunctions.each(function(func) {
-            if (func) { func() }
+                if (Object.isFunction(func)) { func() }
         });
     },
 
@@ -585,11 +585,13 @@ Object.extend(PoorText.prototype, {
     },
 
     undo : function() {
-        this.document.execCommand('undo', false, null);
-        var sel = this.getLink();
-        if (sel.elm) {
-            PoorText.setClass(sel.elm, 'pt-'+sel.elm.getAttribute('_poortext_tag'));
-        }
+        try {
+            this.document.execCommand('undo', false, null);
+            var sel = this.getLink();
+            if (sel.elm) {
+                PoorText.setClass(sel.elm, 'pt-'+sel.elm.getAttribute('_poortext_tag'));
+            }
+        } catch(er) {}
     },
 
     // when pressing DOWN remove last BR when previousSibling is *not* a BR
