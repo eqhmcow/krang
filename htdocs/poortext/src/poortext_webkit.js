@@ -343,7 +343,10 @@ Object.extend(PoorText.prototype, {
 
     getSelection : function() {
         // maybe get range object
-        range = this.window.getSelection().getRangeAt(0);
+        var sel = this.window.getSelection();
+        if (!sel) { return null }
+
+        var range = sel.getRangeAt(0);
 
         // get an index array used to find container nodes upon restoring
         var startContainer = PoorText.getRangeContainerIndices(range.startContainer, this.editNode);
