@@ -3,7 +3,7 @@ use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::ClassLoader Conf    => qw(KrangRoot AvailableLanguages);
+use Krang::ClassLoader Conf    => qw(KrangRoot AvailableLanguages DefaultLanguage);
 use Krang::ClassLoader Session => qw(%session);
 use File::Spec::Functions qw(catfile catdir);
 use Carp qw(croak);
@@ -236,7 +236,7 @@ they can be provided by using passing in extra C<%args>.
 sub get_message_text {
     my ($key, $class, %args) = @_;
 
-    my $language = $session{language} || 'en';
+    my $language = $session{language} || DefaultLanguage || 'en';
 
     my $CONF = $CONF{$language};
 
