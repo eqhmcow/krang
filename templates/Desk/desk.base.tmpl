@@ -99,7 +99,7 @@ move_checked = function(desk_id) {
   <tmpl_if may_move>
     <li><input value="<tmpl_lang Check Out>" onclick="checkout_checked()" type="button" class="list-btn"></li>
     <li class="menu">
-      <input value="<tmpl_lang Move to> &#9660;" onclick="move_checked()" type="button" class="list-btn">
+      <input value="<tmpl_lang Move To> &#9660;" onclick="move_checked()" type="button" class="list-btn">
       <ul>
       <tmpl_loop desk_loop>
         <li><a href="#" onclick="move_checked(<tmpl_var choice_desk_id escape=html>);"><tmpl_var choice_desk_name escape=html> Desk</a></li>

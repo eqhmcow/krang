@@ -441,7 +441,7 @@ if( ! class_changer ) alert('no class_changer');
   <input value="<tmpl_var delete_this_element>" onclick="remove_element()" type="button" class="button">
 </p></tmpl_if>
 
-<div class="crumbs"><strong><tmpl_lang Go to:></strong> <tmpl_loop crumbs>
+<div class="crumbs"><strong><tmpl_lang Go To:></strong> <tmpl_loop crumbs>
   <tmpl_unless __last__><a href="javascript:jump_to('<tmpl_var escape=html path>')"></tmpl_unless><tmpl_var escape=html name><tmpl_unless __last__></a> &raquo;</tmpl_unless>
 </tmpl_loop>
 
