@@ -38,7 +38,7 @@ PoorText.iframeStyles = [
    @private
 */
 PoorText.bodyStyles = [
-    'backgroundColor', 'color',        'width',
+    'backgroundColor', 'color',
     'lineHeight',      'textAlign',    'textIndent',
     'letterSpacing',   'wordSpacing',  'textDecoration', 'textTransform',
     'fontFamily',      'fontSize',     'fontStyle',      'fontVariant',   'fontWeight',
