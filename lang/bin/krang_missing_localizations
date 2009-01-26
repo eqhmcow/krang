@@ -153,6 +153,9 @@ my %skip_localize = ();
     q{pkg('ElementLibrary')->top_level(name => $b)->display_name},
     q{ucfirst($alert->object_type},
     q{ucfirst($type},
+    q{$e->child},
+    q{$e->parent},
+    q{$format},
 } = ();
 
 # skip some message keys only known at runtime

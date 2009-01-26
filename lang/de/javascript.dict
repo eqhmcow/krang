@@ -80,6 +80,7 @@
 "Object ID must either be empty or a (non-zero) number."  "Die Object ID muss entweder leer oder eine Zahl ungleich 'Null' sein."
 "Save this Media object and return to your Workspace?"  "Die Mediendatei speichern und zum Arbeitsplatz zurückkehren?"
 "Some items you want to copy conflict with existing ones.\n\nIf you wish to copy those that don't conflict, click OK.\n\nIf not, click Cancel."  "Einige Kopien würden zu einem Konflikt mit bereits vorhandenen Objekten führen.\n\nWenn Sie die anderen ('konfliktlosen') Objecte kopieren möchten, klicken Sie auf OK, andernfall auf Abbrechen."
+"That is the version you are currently editing - please use Back instead." "Sie bearbeiten diese Version gerade. Bitte klicken Sie stattdessen auf 'Zurück'."
 
 # In krang.js
 "Are you sure? This will discard any unsaved changes in any window."  "Sind Sie sicher, dass Sie sich in allen Fenstern/Tabs, in denen Sie Krang geöffnet haben, abmelden wollen? Dadurch gehen alle noch nicht gespeicherten Veränderungen verloren."
