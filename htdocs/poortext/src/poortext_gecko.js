@@ -316,11 +316,11 @@ Object.extend(PoorText.prototype, {
         if (event) Event.stop(event);
         var srcElement = this.srcElement;
         if (srcElement) {
+            srcElement.hide();
             if (this.config.deferIframeCreation) {
                 Event.stopObserving(this.srcElement, 'click');
+                this.focusEditNode();
             }
-            srcElement.hide();
-            this.focusEditNode();
         }
 
         // finally call registered functions
