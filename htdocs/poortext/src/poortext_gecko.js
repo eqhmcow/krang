@@ -7,7 +7,7 @@
    when using iframes.  It ends right before the closing HEAD tag.
    @type Class String
 */
-PoorText.iframeSrcStart = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd"><html><head><style type="text/css">body { margin:0; padding:0 }</style>';
+PoorText.iframeSrcStart = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd"><html style="cursor: text; height: 100%"><head><style type="text/css">body { margin:0; padding:0 }</style>';
 
 /**
    The closing part of the HTML string written to the iframe
