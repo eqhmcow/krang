@@ -1808,6 +1808,11 @@ Behaviour.register( rules );
 /**
 
 /**
+   Krang element class namespace
+*/
+Krang.ElementClass = {};
+
+/**
    Array of arrays holding the arguments (id and config) necessary to
    create a PoorText field.  This array is used in element classes
    creating PoorText fields, like Krang::ElementClass::PoorText
