@@ -257,7 +257,6 @@ sub localize_templates {
             }
 
             # localize it
-            warn "Localizing!" if $lang eq 'en' && $template->{file} eq 'forgot_pw_email.base.tmpl';
             localize_template(\$content, $lang);
 
             # make sure we have a language-specific directory for our localized template
