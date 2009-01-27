@@ -1074,10 +1074,16 @@ PoorText.prototype = {
     },
 
     setTextIndent : function() {
-        var oldIndent = this.getTextIndent();
         var oldWidth  = parseInt(this.getStyle('width'));
-        var newIndent = oldIndent + this.config.indentSize + 'px';
-        var newWidth  = oldWidth - (this.config.indentSize * 2) + 'px';
+        var oldIndent = this.getTextIndent();
+        var newWidth  = oldWidth - (this.config.indentSize * 2);
+        if (newWidth < 10) {
+            newWidth  = oldWidth + 'px';
+            var newIndent = oldIndent + 'px';
+        } else {
+            newWidth += 'px';
+            var newIndent = oldIndent + this.config.indentSize + 'px';
+        }
         this.setStyle({paddingLeft : newIndent, paddingRight: newIndent, width: newWidth});
         if (Prototype.Browser.WebKit) {
             this.restoreSelection();
