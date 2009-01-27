@@ -157,6 +157,21 @@ sub new {
                 bulk_edit_tag => 'ol',
             ),
             pkg('ElementClass::TextInputList')->new(name => 'keyword_list',),
+
+            pkg('ElementClass::PoorTextList')->new(
+                name         => 'poortext_list',
+                type         => 'text',
+                width        => 300,
+                height       => 100
+            ),
+
+            pkg('ElementClass::PoorTextList')->new(
+                name         => 'poortext_list_area',
+                type         => 'textarea',
+                width        => 300,
+                height       => 50,
+            ),
+
         ],
         @_
     );

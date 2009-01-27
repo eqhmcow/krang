@@ -11,6 +11,8 @@
 <tmpl_if is_xinha_bulk_edit_header_1><h1><tmpl_var xinha_bulk_edit_header_1></h1></tmpl_if>
 <tmpl_if is_xinha_bulk_edit_header_2><h2><tmpl_var xinha_bulk_edit_header_2></h2></tmpl_if>
 <tmpl_if is_correction><pre><tmpl_var correction></pre></tmpl_if>
+<tmpl_if is_poortext_list><tmpl_var poortext_list></tmpl_if>
+<tmpl_if is_poortext_list_area><tmpl_var poortext_list_area></tmpl_if>
 </tmpl_loop>
 
 <P>Page number <tmpl_if current_page_number><tmpl_var current_page_number><tmpl_else>1</tmpl_if> of <tmpl_if total_pages><tmpl_var total_pages><tmpl_else>1</tmpl_if>.</p>
