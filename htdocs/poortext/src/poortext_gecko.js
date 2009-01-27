@@ -331,13 +331,29 @@ Object.extend(PoorText.prototype, {
 
     /**@ignore*/
     getStyle : function (style) {
-        var node = PoorText.styleRE.test(style) ? this.styleNode : this.frameNode;
-        return Element.getStyle((node || this.srcElement), style);
+        var node = style == 'width' ? this.styleNode : PoorText.styleRE.test(style) ? this.styleNode : this.frameNode;
+        if (!node) { node = this.srcElement }
+        
+        // copied from Prototype.js's Element.getStyle(), because,
+        // instead of the global 'document' object,
+        // we need this.document to compute body styles in our IFrame
+        style = style == 'float' ? 'cssFloat' : style.camelize();
+        var value = node.style[style];
+        if (!value || value == 'auto') {
+            if (!this.document) { this.document = document }
+            var css = this.document.defaultView.getComputedStyle(node, null);
+            value = css ? css[style] : null;
+        }
+        if (style == 'opacity') return value ? parseFloat(value) : 1.0;
+        return value == 'auto' ? null : value;
+
+//        return Element.getStyle((node || this.srcElement), style);
     },
 
     /**@ignore*/
     setStyle : function(css) {
         for (var attr in css) {
+            if (attr == 'width') { continue }
             attr = attr.camelize();
             if (PoorText.styleRE.test(attr)) {
                 this.styleNode.style[attr] = css[attr];
