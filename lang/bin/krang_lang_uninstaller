@@ -50,15 +50,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 2]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     eval { require Krang::Conf };
     warn << "END" and exit(1) if $@;
@@ -80,13 +83,14 @@ use Getopt::Long;
 our ($help, $man, $lang);
 our $verbose = 0;
 
-pod2usage(2) unless
-  GetOptions('lang=s'   => \$lang,
-	     help       => \$help,
-	     man        => \$man,
-	     'verbose+' => \$verbose,
-	    );
-pod2usage(1)             if $help;
+pod2usage(2)
+  unless GetOptions(
+          'lang=s'   => \$lang,
+          help       => \$help,
+          man        => \$man,
+          'verbose+' => \$verbose,
+  );
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 use Krang::ClassFactory qw(pkg);

@@ -311,10 +311,11 @@ END {
     }
 
     if (length($message)) {
-        pkg('IO')->warn("###\n"
-          . "### There are missing entries in one or more lexicons\n"
-          . "### for localizing static template strings\n" . "###\n"
-          . $message
-          . "###\n");
+        pkg('IO')
+          ->warn("###\n"
+              . "### There are missing entries in one or more lexicons\n"
+              . "### for localizing static template strings\n" . "###\n"
+              . $message
+              . "###\n");
     }
 }

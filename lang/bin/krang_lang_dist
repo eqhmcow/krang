@@ -7,15 +7,18 @@ use FindBin qw($RealBin);
 use Config;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 2]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -34,8 +37,8 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Script => qw(instance_agnostic);
-use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Script       => qw(instance_agnostic);
+use Krang::ClassLoader Conf         => qw(KrangRoot);
 use Krang::ClassLoader Localization => qw(%LANG);
 
 use Pod::Usage;
@@ -43,14 +46,14 @@ use Getopt::Long;
 
 our ($help, $man, $verbose, $lang);
 my $result = GetOptions(
-   'help'    => \$help,
-   'man'     => \$man,
-   'verbose' => \$verbose,
-   'lang=s'  => \$lang,
-   ) or pod2usage(1);
+    'help'    => \$help,
+    'man'     => \$man,
+    'verbose' => \$verbose,
+    'lang=s'  => \$lang,
+) or pod2usage(1);
 
 pod2usage(1) if $help;
-pod2usage( -verbose => 2 ) if $man;
+pod2usage(-verbose => 2) if $man;
 
 pod2usage(1) unless $lang;
 
@@ -90,7 +93,7 @@ for French.
 =cut
 
 # some variables
-my $lang_root = catdir(KrangRoot, 'lang');
+my $lang_root = catdir(KrangRoot,  'lang');
 my $lang_dir  = catdir($lang_root, $lang);
 my $dist_name = 'Krang-Localization-' . $LANG{$lang} . '-' . $Krang::VERSION . '.tar.gz';
 
@@ -100,7 +103,8 @@ die "Can't find localization files for '$lang': $!"
 
 # make dist
 print STDERR "Creating tarball $dist_name...\n" if $verbose;
-my $out = `tar zvcf $dist_name -C $lang_root --exclude=CVS --exclude=.svn --exclude=*.swp --exclude=*.tdy --exclude=*~ --exclude=*bak --exclude=.#* $lang`;
+my $out =
+  `tar zvcf $dist_name -C $lang_root --exclude=CVS --exclude=.svn --exclude=*.swp --exclude=*.tdy --exclude=*~ --exclude=*bak --exclude=.#* $lang`;
 print STDERR $out if $verbose;
 
 print "Success. Created language distribution in $dist_name.\n";

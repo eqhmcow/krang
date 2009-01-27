@@ -10,15 +10,18 @@ use Config;
 use Data::Dumper;
 
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 2]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -45,31 +48,31 @@ use Getopt::Long;
 my $missing = '';
 my ($help, $man, $verbose, $lang, $no_parsing, $addon, $find);
 my $result = GetOptions(
-   'help'       => \$help,
-   'man'        => \$man,
-   'verbose'    => \$verbose,
-   'lang=s'     => \$lang,
-   'no_parsing' => \$no_parsing,
-   'missing=s'  => \$missing,
-   'addon=s'    => \$addon,
-   'find=s'     => \$find,
+    'help'       => \$help,
+    'man'        => \$man,
+    'verbose'    => \$verbose,
+    'lang=s'     => \$lang,
+    'no_parsing' => \$no_parsing,
+    'missing=s'  => \$missing,
+    'addon=s'    => \$addon,
+    'find=s'     => \$find,
 ) or pod2usage(1);
 
 pod2usage(1) if $help;
-pod2usage( -verbose => 2 ) if $man;
+pod2usage(-verbose => 2) if $man;
 
 pod2usage(1) unless $lang;
 
 # check $missing option
 my %missing = ();
-@missing{ qw(tmpl_lang javascript message module) } = ();
-pod2usage(1) if $missing and not (exists $missing{$missing} or $missing eq 'all');
+@missing{qw(tmpl_lang javascript message module)} = ();
+pod2usage(1) if $missing and not(exists $missing{$missing} or $missing eq 'all');
 pod2usage(1) unless $missing || $find;
 
 # some variables
 my $dump_file = catfile(KrangRoot, 'tmp', 'krang_missing_localizations.db');
-my %required = ();
-my %existing = ();
+my %required  = ();
+my %existing  = ();
 
 # some regexps to parse templates, Perl packages and JavaScript files
 use Regexp::Common;
@@ -156,25 +159,19 @@ my %skip_localize = ();
     q{$e->child},
     q{$e->parent},
     q{$format},
-} = ();
+  }
+  = ();
 
 # skip some message keys only known at runtime
 my %skip_messages = ();
 @skip_messages{
-    q{$_},
-    q{$error},
-    q{$msg},
-    q{changed_$name},
-    q{duplicate_url$s},
-    q{error_${name}_has_bad_chars},
-    q{error_${name}_has_http},
-    q{error_${name}_has_path},
-    q{error_${name}_not_absolute},
-    q{error_invalid_$name},
-    q{$args{message}},
-    q{image_flipped_$direction},
+    q{$_},                     q{$error},                 q{$msg},
+    q{changed_$name},          q{duplicate_url$s},        q{error_${name}_has_bad_chars},
+    q{error_${name}_has_http}, q{error_${name}_has_path}, q{error_${name}_not_absolute},
+    q{error_invalid_$name},    q{$args{message}},         q{image_flipped_$direction},
     q{image_rotated_$direction},
-} = ();
+  }
+  = ();
 
 # where to find what
 my %lexicon_for = (
@@ -198,48 +195,49 @@ $missing and print_missing_for($missing);
 sub print_missing_for {
     my ($missing) = @_;
 
-    my $req =  $required{$lang}{$missing};
-    my $lex  = $existing{$lang}{$lexicon_for{$missing}};
+    my $req = $required{$lang}{$missing};
+    my $lex = $existing{$lang}{$lexicon_for{$missing}};
 
     my @missing = ();
 
     for my $r (sort keys %$req) {
-	push @missing, $r unless $lex->{$r};
+        push @missing, $r unless $lex->{$r};
     }
 
     if (@missing) {
-	print "### Missing in lang/$lang/$lexicon_for{$missing}", "\n";
-	print "$_\n" for @missing;
+        print "### Missing in lang/$lang/$lexicon_for{$missing}", "\n";
+        print "$_\n" for @missing;
     } else {
-	print "None missing for '$missing' in lang/$lang/$lexicon_for{$missing} (as far as file parsing can tell).\n"
+        print
+          "None missing for '$missing' in lang/$lang/$lexicon_for{$missing} (as far as file parsing can tell).\n";
     }
     print "---\n";
 }
 
 sub print_found {
-    for my $place ( @{$required{$find}} ) {
-	print "Found in '$place->[0]' at line $place->[1]\n";
+    for my $place (@{$required{$find}}) {
+        print "Found in '$place->[0]' at line $place->[1]\n";
     }
 }
 
 sub build_or_load_db {
     if (-e $dump_file and $no_parsing) {
-	show("Loading '$dump_file'");
-	load_db();
+        show("Loading '$dump_file'");
+        load_db();
     } else {
-	show("Parsing...");
-	build_db();
+        show("Parsing...");
+        build_db();
     }
 }
 
 sub load_db {
     my $data = do {
-	if (open(my $fh, $dump_file)) {
-	    local $/;
-	    <$fh>;
-	} else {
-	    die "Couldn't open '$dump_file' for reading: $!";
-	}
+        if (open(my $fh, $dump_file)) {
+            local $/;
+            <$fh>;
+        } else {
+            die "Couldn't open '$dump_file' for reading: $!";
+        }
     };
 
     eval $data;
@@ -247,28 +245,29 @@ sub load_db {
 
 sub build_db {
 
-    build_required($_) for (
-	{
-	 file_root => get_root_for('lib'),
-	 file_re   => qr|\.pm$|,
-	 fill_func => sub { cache_module_strings(@_) },
-	},
-	{
-	 file_root => get_root_for('element_lib'),
-	 file_re   => qr|\.pm$|,
-	 fill_func => sub { cache_module_strings(@_) },
-	},
-	{
-	 file_root => get_root_for(catdir('htdocs', 'js')),
-	 file_re   => qr|\.js$|,
-	 fill_func => sub { cache_javascript_strings(@_) },
-	},
-	{
-	 file_root => get_root_for('templates'),
-	 file_re   => qr|\.base\.tmpl$|,
-	 fill_func => sub { cache_template_strings(@_) },
-	},
-    );
+    build_required($_)
+      for (
+        {
+            file_root => get_root_for('lib'),
+            file_re   => qr|\.pm$|,
+            fill_func => sub { cache_module_strings(@_) },
+        },
+        {
+            file_root => get_root_for('element_lib'),
+            file_re   => qr|\.pm$|,
+            fill_func => sub { cache_module_strings(@_) },
+        },
+        {
+            file_root => get_root_for(catdir('htdocs', 'js')),
+            file_re   => qr|\.js$|,
+            fill_func => sub                           { cache_javascript_strings(@_) },
+        },
+        {
+            file_root => get_root_for('templates'),
+            file_re   => qr|\.base\.tmpl$|,
+            fill_func => sub { cache_template_strings(@_) },
+        },
+      );
 
     build_existing();
 
@@ -277,10 +276,7 @@ sub build_db {
 
 sub dump_db {
 
-    my $dd = Data::Dumper->new(
-        [ \%required,  \%existing ],
-	[ qw(*required *existing) ]
-    );
+    my $dd = Data::Dumper->new([\%required, \%existing], [qw(*required *existing)]);
 
     open(my $fh, ">", $dump_file)
       or die "Couldn't dump db to '$dump_file': $!";
@@ -294,43 +290,46 @@ sub build_existing {
 
     my $dir = get_root_for('lang');
 
-    for my $dict ( 'perl.dict', 'messages.conf', 'javascript.dict') {
-	my $file = catfile($dir, $lang, $dict);
+    for my $dict ('perl.dict', 'messages.conf', 'javascript.dict') {
+        my $file = catfile($dir, $lang, $dict);
 
-	my $fh = open_read_fh($file);
+        my $fh = open_read_fh($file);
 
-	while (<$fh>) {
-	    next if /^#/;
-	    if (/$dict_re/) {
-		my $string = strip($1, q{'"}, q{'"});
-		$existing{$lang}{$dict}{$string} = $.;
-	    }
-	}
+        while (<$fh>) {
+            next if /^#/;
+            if (/$dict_re/) {
+                my $string = strip($1, q{'"}, q{'"});
+                $existing{$lang}{$dict}{$string} = $.;
+            }
+        }
 
-	close $fh;
+        close $fh;
     }
 }
 
 sub build_required {
     my $args = shift;
 
-    find({
-	  wanted => sub {
+    find(
+        {
+            wanted => sub {
 
-	      return unless m{$args->{file_re}};
+                return unless m{$args->{file_re}};
 
-	      my $dir      = (splitdir($File::Find::dir))[-1];
-	      my $lines    = get_lines($File::Find::name);
-	      my $file     = $_;
+                my $dir   = (splitdir($File::Find::dir))[-1];
+                my $lines = get_lines($File::Find::name);
+                my $file  = $_;
 
-	      $args->{fill_func}->($lines, $dir, $file);
-	  },
-	  no_chdir => 0,
-	 }, $args->{file_root}
+                $args->{fill_func}->($lines, $dir, $file);
+            },
+            no_chdir => 0,
+        },
+        $args->{file_root}
     );
 }
 
 my $perl_pkg = '';
+
 sub cache_module_strings {
     my ($lines, $dir, $file) = @_;
 
@@ -344,32 +343,32 @@ sub cache_module_strings {
 
     # localize()
     my $line_num = 1;
-    while ( $content =~ /$localize_re/xg ) {
-	my $string = $1;
-	$string = strip($string, q{\s'"(}, q{\s'")});
-	next unless $string;
-	next if exists $skip_localize{$string}; # example in Krang::Localization POD
-	$line_num = get_line_num($lines, $string, $line_num);
+    while ($content =~ /$localize_re/xg) {
+        my $string = $1;
+        $string = strip($string, q{\s'"(}, q{\s'")});
+        next unless $string;
+        next if exists $skip_localize{$string};    # example in Krang::Localization POD
+        $line_num = get_line_num($lines, $string, $line_num);
         $required{$lang}{module}{$string} = 's';
-	push @{$required{$string}}, [$perl_pkg, $line_num];
+        push @{$required{$string}}, [$perl_pkg, $line_num];
     }
 
     # add_message() and add_alert()
-    for my $regexp ( $add_message_re, $add_alert_re ) {
-	$line_num = 1;
-	while ( $content =~ /$regexp/g ) {
-	    my $string = $1;
-	    $string = strip($string, q{\s'"(}, q{\s'")});
-	    $string =~ s{^([^,\s=]+).*}{$1}ms;
-	    $string =~ s{['"]$}{};
+    for my $regexp ($add_message_re, $add_alert_re) {
+        $line_num = 1;
+        while ($content =~ /$regexp/g) {
+            my $string = $1;
+            $string = strip($string, q{\s'"(}, q{\s'")});
+            $string =~ s{^([^,\s=]+).*}{$1}ms;
+            $string =~ s{['"]$}{};
 
-	    next unless $string;
-	    next if exists $skip_messages{$string};
+            next unless $string;
+            next if exists $skip_messages{$string};
 
-	    $line_num = get_line_num($lines, $string, $line_num);
-	    $required{$lang}{message}{$string} = 's';
-	    push @{$required{$string}}, [$perl_pkg, $line_num];
-	}
+            $line_num = get_line_num($lines, $string, $line_num);
+            $required{$lang}{message}{$string} = 's';
+            push @{$required{$string}}, [$perl_pkg, $line_num];
+        }
     }
 }
 
@@ -381,11 +380,11 @@ sub cache_javascript_strings {
     # JavaScript strings
     my $line_num = 1;
     while ($content =~ /$js_re/g) {
-	my $string = strip($1, q{\s'"(}, q{\s'")});
-	next unless $string;
-	$line_num = get_line_num($lines, $string, $line_num);
-	$required{$lang}{javascript}{$string} = 's';
-	push @{$required{$string}}, [$file, $line_num];
+        my $string = strip($1, q{\s'"(}, q{\s'")});
+        next unless $string;
+        $line_num = get_line_num($lines, $string, $line_num);
+        $required{$lang}{javascript}{$string} = 's';
+        push @{$required{$string}}, [$file, $line_num];
     }
 }
 
@@ -394,27 +393,27 @@ sub cache_template_strings {
 
     my $content = join '', @$lines;
 
-    $dir = 'templates/'. $dir;
+    $dir = 'templates/' . $dir;
 
     # <tmpl_lang ...> strings
     my $line_num = 1;
     while ($content =~ /$tmpl_lang_re/g) {
-	my $string = $1;
-	next unless $string;
-	$line_num = get_line_num($lines, $string, $line_num);
-	$required{$lang}{tmpl_lang}{$string} = 's';
-	push @{$required{$string}}, ["$dir/$file", $line_num];
+        my $string = $1;
+        next unless $string;
+        $line_num = get_line_num($lines, $string, $line_num);
+        $required{$lang}{tmpl_lang}{$string} = 's';
+        push @{$required{$string}}, ["$dir/$file", $line_num];
     }
 
     # JavaScript strings
     $line_num = 1;
     while ($content =~ /$js_re/g) {
-	my $string = $1;
-	$string = strip($string, q{\s'"(}, q{\s'")});
-	next unless $string;
-	$line_num = get_line_num($lines, $string, $line_num);
-	$required{$lang}{javascript}{$string} = 's';
-	push @{$required{$string}}, ["$dir/$file", $line_num];
+        my $string = $1;
+        $string = strip($string, q{\s'"(}, q{\s'")});
+        next unless $string;
+        $line_num = get_line_num($lines, $string, $line_num);
+        $required{$lang}{javascript}{$string} = 's';
+        push @{$required{$string}}, ["$dir/$file", $line_num];
     }
 }
 
@@ -441,16 +440,17 @@ sub open_read_fh {
 sub get_root_for {
     my $what = shift;
 
-    my $dir = $addon
+    my $dir =
+      $addon
       ? catdir(KrangRoot, 'addons', $addon, $what)
       : catdir(KrangRoot, $what);
 
     $dir = catdir($dir, 'Krang') if $what eq 'lib';
 
     if (-e $dir and -d _) {
-	return $dir;
+        return $dir;
     } else {
-	die "Directory '$dir' does not exist: $!"
+        die "Directory '$dir' does not exist: $!";
     }
 }
 
@@ -465,8 +465,8 @@ sub strip {
 
 sub show {
     if ($verbose) {
-	print join ' ', @_;
-	print "\n";
+        print join ' ', @_;
+        print "\n";
     }
 }
 
@@ -477,10 +477,10 @@ sub get_line_num {
 
     no warnings 'numeric';
 
-    for (my $i=$begin; $i<$num_lines; $i++) {
-	if ($lines->[$i] =~ /\Q$string/) {
-	    return $i+1;
-	}
+    for (my $i = $begin ; $i < $num_lines ; $i++) {
+        if ($lines->[$i] =~ /\Q$string/) {
+            return $i + 1;
+        }
     }
 
     return '??';
