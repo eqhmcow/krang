@@ -4,46 +4,18 @@ use warnings;
 
 use Krang::ClassFactory qw(pkg);
 
-use Krang::ClassLoader base => 'ElementClass';
+use Krang::ClassLoader base => 'ElementClass::_PoorTextBase';
 
-use Krang::ClassLoader Log          => qw(debug);
-use Krang::ClassLoader Message      => qw(add_message);
-use Krang::ClassLoader Localization => qw(localize);
-use Krang::ClassLoader Conf         => qw(BrowserSpeedBoost);
-use Krang::ClassLoader 'Story';
-use Krang::ClassLoader 'URL';
-use Krang::ClassLoader 'Markup::Gecko';
-use Krang::ClassLoader 'Markup::IE';
-use Krang::ClassLoader 'Markup::WebKit';
+use Krang::ClassLoader Log => qw(debug);
 
-use HTML::Scrubber;
 use Digest::MD5 qw(md5_hex);
-use JSON::Any;
 use Carp qw(croak);
 
 # For *Link hard find feature
 use Storable qw(nfreeze);
 use MIME::Base64 qw(encode_base64);
 
-use Krang::ClassLoader MethodMaker => hash => [qw( find )];
-
-use Krang::MethodMaker get_set => [
-    qw(
-      type   commands
-      width  special_char_bar   shortcut_for
-      height command_button_bar indent_size
-      )
-  ],
-  hash => [qw(find)];
-
-our %js_name_for = (
-    type               => 'type',
-    commands           => 'availableCommands',
-    special_char_bar   => 'attachSpecialCharBar',
-    command_button_bar => 'attachButtonBar',
-    shortcut_for       => 'shortcutFor',
-    indent_size        => 'indentSize',
-);
+use Krang::ClassLoader MethodMaker => get_set => [qw( indent_size )];
 
 sub new {
     my $pkg  = shift;
@@ -52,13 +24,18 @@ sub new {
         height => 140,    # for 'textarea' flavour. For 'text' flavour see poortext.css '.pt-text'
         command_button_bar => 1,
         special_char_bar   => 0,
+        commands           => 'all',
+        indent_size        => 20,
         @_
     );
 
     # validate commands spec
     my $command_spec = $pkg->command_spec();
     if ($args{commands}) {
-        if (!exists $command_spec->{$args{commands}}) {
+        if (ref($args{commands})) {
+            croak(__PACKAGE__ . "::new() - 'commands' option must be string or arrayref, but is " . ref($args{commands}))
+              if ref($args{commands}) ne 'ARRAY';
+        } elsif (!exists $command_spec->{$args{commands}}) {
             croak("\"$args{commands}\" is not a known set of commands");
         }
     }
@@ -112,120 +89,15 @@ sub input_form {
     my $align  = $data->[2] || 'left';
 
     # get some setup stuff
-    my $lang = localize('en');
-    $lang = substr($lang, 0, 2) unless $lang eq 'en';
-    my $config = $self->get_pt_config(%arg, text => $text);
+    my $config = $self->get_pt_config(%arg, has_content => $text);
     my $class  = $self->get_css_class(%arg);
     my $style  = $self->get_css_style(%arg, indent => $indent, align => $align);
 
     # JavaScript init code: add only once
     my @sibs = grep { $_->class->isa(__PACKAGE__) } $element->parent()->children();
     if ($sibs[0]->xpath() eq $element->xpath()) {
-        my $install_id = pkg('Info')->install_id();
-        my $static_url = BrowserSpeedBoost ? "/static/$install_id" : '';
-
         # I''m the first!  Insert one-time JavaScript
-        $html .= <<END;
-<script type="text/javascript">
-    // pull in the JavaScript
-if (!Krang.PoorTextLoaded) {
-    // pull in a browser-engine-specific version of PoorText's JavaScript
-    var pt_script = new Element(
-       'script',
-       { type: "text/javascript",
-         src: "$static_url/poortext/poortext_$ENV{KRANG_BROWSER_ENGINE}.js"}
-    );
-    document.body.appendChild(pt_script);
-
-    // I tried the same appending procedure for the CSS file poortext/css/poortext.css,
-    // but for WebKit that comes to late, so I included it in templates/header.base.tmpl
-
-    // make sure we do this only once
-    Krang.PoorTextLoaded = true;
-}
-
-// init function
-poortext_init = function() {
-    // is poortext_<BROWSER_ENGINE>.js loaded ?
-    if (typeof PoorText == 'undefined') {
-        setTimeout(poortext_init, 10);
-        return;
-    }
-
-    // deactivate the autoload handler
-    PoorText.autoload = false;
-
-    // language is a global config
-    PoorText.config = {
-        lang              : "$lang",
-        useMarkupFilters  : false
-    };
-
-    // make them all fields
-    Krang.PoorTextCreationArguments.each(function(pts) {
-        var pt_id  = pts[0];
-        var param  = pts[1];
-        var config = pts[2];
-
-        // map PoorText field id to Krang element param
-        PoorText.Krang.paramFor[pt_id] = param;
-
-        // make PoorText fields
-        pt = new PoorText(pt_id, config);
-
-        // add a preview handler for links and StoryLinks
-        // IE does dispatch no 'click' event on contenteditable elements
-        // so we use mousedown
-        pt.onEditNodeReady(function() {
-            this.observe('mousedown', 'krang_preview', function(e) {
-                if (e.target.nodeName.toLowerCase() != 'a') { return }
-                if (e.ctrlKey
-                    || (Prototype.Browser.IE && e.button == 4)
-                    || (!Prototype.Browser.IE && e.button == 1))
-                    {
-                        var elm = e.target;
-                        if (elm.getAttribute('_poortext_tag') == 'a') {
-                            var storyID = elm.getAttribute('_story_id');
-                            if (storyID) {
-                                // StoryLink
-                                Krang.preview('story', storyID);
-                                Event.stop(e);
-                            } else {
-                                // other links
-                                var instance = Krang.instance;
-                                instance = instance.toLowerCase().replace(/[^a-z]/g, '' );
-                                window.open(elm.getAttribute('href'), instance);
-                            }
-                        }
-                    }
-            }, false);
-        }.bind(pt));
-    });
-
-    // finish with some global stuff
-    PoorText.finish_init();
-}
-
-// call init function
-Krang.onload(function() {
-    poortext_init();
-});
-END
-
-        $html .= <<'END';
-// save away the last focused PoorText field to avoid race conditions
-// and hide our popups
-Krang.ElementEditor.add_save_hook(function() {
-    var pt = PoorText.focusedObj;
-    if (pt) {
-        pt.storeForPostBack();
-        if ($('pt-btnBar')) $('pt-btnBar').hide();
-        if ($('pt-specialCharBar')) $('pt-specialCharBar').hide();
-        if ($('pt-popup-addHTML')) $('pt-popup-addHTML').hide();
-    }
-});
-</script>
-END
+        $html .= $self->poortext_init(%arg);
     }
 
     # configure the element
@@ -233,11 +105,7 @@ END
     $html .= <<END;
 <script type="text/javascript">
     // configure this element
-    var config = {
-        iframeHead : '<link rel="stylesheet" type="text/css" href="/poortext/css/poortext.css">'
-        $config
-    };
-    Krang.PoorTextCreationArguments.push(["$id", "$param", config]);
+    Krang.PoorTextCreationArguments.push(["$id", "$param", $config]);
 </script>
 END
 
@@ -280,70 +148,15 @@ $data->[0]
 END
 }
 
-sub filter_element_data {
-    my ($self, %args) = @_;
-
-    # get HTML to be cleaned
-    my $element = $args{element};
-    my ($param) = $self->param_names(element => $element);
-    my $html = $args{query}->param($param);
-
-    return '' unless $html && length $html;
-
-    debug(__PACKAGE__ . "->filter_element_data() - HTML coming from the browser: " . $html);
-
-    # clean it
-    $html = pkg('Markup::Gecko')->browser2db(
-        html => pkg('Markup::IE')->browser2db(
-            html => pkg('Markup::WebKit')->browser2db(html => $self->html_scrubber(html => $html))
-        )
-    );
-
-    debug(__PACKAGE__ . "->filter_element_data() - Cleaned HTML: " . $html);
-
-    # return the correct markup
-    $html = pkg("Markup::$ENV{KRANG_BROWSER_ENGINE}")->db2browser(html => $html);
-
-    debug(__PACKAGE__ . "->filter_element_data() - HTML to the browser: " . $html);
-
-    return $html;
-}
-
 #
-# Called by Krang::Story::linked_stories() to build the asset list at publish time
+# Called by pkg('Story)->linked_stories() to build the asset list at publish time
 #
 sub linked_stories {
-    my ($self, %args) = @_;
+    my ($self, %arg) = @_;
+    my ($element) = @arg{qw(element)};
 
-    my ($element, $publisher, $story_links) = @args{qw(element publisher story_links)};
-
-    # pass them to template_data() via publish context
-    my %context = $publisher->publish_context();
-    my $url_for = $context{poortext_story_links} || {};
-
-    # the elements HTML
-    my $html = ${$element->data()}[0];
-
-    # get story link IDs out of '_story_id' attrib
-    while ($html =~ /_story_id="(\d+)"/g) {
-        my $story;
-        my $id = $1;
-
-        if ($id && (($story) = pkg('Story')->find(story_id => $id))) {
-
-            # for asset list building: fill story_links hashref
-            $story_links->{$id} = $story;
-
-            # for template_data(): use the current URL of the linked story ID
-            $url_for->{$id} = pkg('URL')->real_url(
-                object    => $story,
-                publisher => $publisher
-            );
-        }
-    }
-
-    # remember us
-    $publisher->publish_context(poortext_story_links => $url_for);
+    my $data = $element->data;
+    $self->_do_linked_stories(%arg, html => [ $data->[0] ]);
 }
 
 sub template_data {
@@ -357,24 +170,9 @@ sub template_data {
 
     # get the element's HTML
     my $data = $element->data;
-    my $html = $data->[0];
 
-    if (%$url_for) {
-
-        # fix the StoryLinks' HREF according to current URL
-        while (
-            $html =~ s/_story_id="(\d+)" [^>]+ href="[^"]+"
-                      /'href="' . $url_for->{$1} . '"'
-                      /exg
-          )
-        {
-
-            # it's all done in the head
-        }
-    }
-
-    # finally chop CSS class from links
-    $html =~ s/(<a [^>]+) class="pt-a(?:\s+ pt-storylink)?"/$1/gx;
+    # replace Story IDs with their URL
+    my $html = $self->replace_story_id_with_url(html => $data->[0], url_for => $url_for);
 
     # return it
     return <<END;
@@ -406,64 +204,6 @@ sub thaw_data {
     }
 }
 
-sub get_pt_config {
-    my ($self,  %arg)     = @_;
-    my ($query, $element) = @arg{qw(query element)};
-
-    my $class = $element->class;
-    my @conf  = ();
-
-    # $conf will be part of a JavaScript object litteral
-    for my $c (
-        qw(
-        type
-        special_char_bar
-        command_button_bar  indent_size
-        )
-      )
-    {
-
-        my $conf;
-        if ($conf = $class->$c) {
-            if (ref($conf)) {
-                push @conf, "$js_name_for{$c} : " . JSON::Any->objToJson($conf);
-            } else {
-                $conf = '' unless $conf;    # make sure '0' evalutes to false in JS
-                push @conf, "$js_name_for{$c} : \"$conf\"";
-            }
-        }
-    }
-
-    # add the commands spec
-    my $cmd = $self->get_command_spec(%arg);
-    push @conf, $cmd if $cmd;
-
-    # add shortcuts spec
-    my $shortcuts = $self->get_shortcut_spec(%arg);
-    push @conf, $shortcuts if $shortcuts;
-
-    # if there's no text yet, we assume it's a newly added field,
-    # hence we don't defer creating the IFrame (in browsers that
-    # require it)
-    my $defer = $arg{text} ? 'true' : 'false';
-    push @conf, "deferIframeCreation: $defer";
-
-    # stringify
-    my $conf = join(',', @conf);
-
-    # prepend a comma since its gonna be part of a JS object
-    return $conf ? ",\n$conf" : '';
-}
-
-sub get_css_class {
-    my ($self, %arg) = @_;
-
-    # CSS class property
-    return $arg{element}->class->type eq 'text'
-      ? "poortext pt-text"
-      : "poortext";
-}
-
 sub get_css_style {
     my ($self, %arg) = @_;
     my $element = $arg{element};
@@ -490,32 +230,6 @@ sub get_css_style {
 
 }
 
-sub get_command_spec {
-    my ($self, %arg) = @_;
-
-    my $spec = $arg{element}->class->commands;
-
-    # use the default coming with poortext.js
-    return unless $spec;
-
-    # custom command spec
-    if (ref($spec) eq 'ARRAY') {
-        return 'availableCommands: ' . JSON::Any->objToJson($spec);
-    }
-
-    # cooked spec
-    my $command_spec = $self->command_spec();
-
-    for my $cooked (keys %$command_spec) {
-        if ($spec eq $cooked) {
-            return 'availableCommands: ' . JSON::Any->objToJson($command_spec->{$cooked});
-        }
-    }
-
-    # unknown command spec
-    croak __PACKAGE__ . "->get_command_spec() : Unknow value for key 'commands' -> [ $spec ]";
-}
-
 sub command_spec {
     my ($self, %arg) = @_;
 
@@ -523,111 +237,30 @@ sub command_spec {
     return {
         basic => [
             qw(bold     italic      underline
-              cut      copy        paste
-              add_html delete_html add_story_link
-              redo     undo
-              help     toggle_selectall)
+               cut      copy        paste
+               add_html delete_html add_story_link
+               redo     undo
+               help     toggle_selectall)
         ],
         basic_with_special_chars => [
             qw(bold         italic      underline
-              cut          copy        paste
-              add_html     delete_html add_story_link
-              redo         undo
-              specialchars help        toggle_selectall)
+               cut          copy        paste
+               add_html     delete_html add_story_link
+               redo         undo
+               specialchars help        toggle_selectall)
         ],
         all => [
-            qw(bold         italic       underline
-              strikethrough subscript    superscript
-              cut           copy         paste
-              align_left    align_center align_right justify
-              indent        outdent
-              add_html      delete_html  add_story_link
-              redo          undo
-              specialchars  help         toggle_selectall)
+            qw(bold          italic       underline
+               strikethrough subscript    superscript
+               cut           copy         paste
+               align_left    align_center align_right justify
+               indent        outdent
+               add_html      delete_html  add_story_link
+               redo          undo
+               specialchars  help         toggle_selectall)
         ],
     };
 }
-
-sub get_shortcut_spec {
-    my ($self, %arg) = @_;
-
-    my $spec = $arg{element}->class->shortcut_for;
-
-    if ($spec) {
-        return 'shortcutFor: ' . JSON::Any->objToJson($spec);
-    } else {
-        return 'shortcutFor: '
-          . JSON::Any->objToJson(
-            {
-                bold             => 'ctrl_b',
-                italic           => 'ctrl_i',
-                underline        => 'ctrl_u',
-                subscript        => 'ctrl_d',
-                superscript      => 'ctrl_s',
-                strikethrough    => 'ctrl_t',
-                toggle_selectall => 'ctrl_a',
-                add_html         => 'ctrl_l',
-                delete_html      => 'ctrl_shift_l',
-                add_story_link   => 'ctrt_shift_s',
-                redo             => 'ctrl_y',
-                undo             => 'ctrl_z',
-                help             => 'ctrl_h',
-                cut              => 'ctrl_x',
-                copy             => 'ctrl_c',
-                paste            => 'ctrl_v',
-                specialchars     => 'ctrl_6',
-                align_left       => 'ctrl_q',
-                align_center     => 'ctrl_e',
-                align_right      => 'ctrl_r',
-                justify          => 'ctrl_w',
-                indent           => 'tab',
-                outdent          => 'shift_tab',
-                lsquo            => 'ctrl_4',
-                rsquo            => 'ctrl_5',
-                ldquo            => 'ctrl_2',
-                rdquo            => 'ctrl_3',
-                ndash            => 'ctrl_0',
-            }
-          );
-    }
-}
-
-sub html_scrubber {
-    my ($pkg, %arg) = @_;
-
-    my @block_elements  = (qw());
-    my @inline_elements = (qw(a b br del em i span strong strike u sub sup));
-
-    my $scrubber = HTML::Scrubber->new(
-
-        # deny all tags and all attribs
-        default => [0, {'*' => 0}],
-
-        # however allow some tags
-        allow => [@block_elements, @inline_elements],
-
-        # and allow some attribs with A tags
-        rules => [
-            a => {
-                '*'           => 0,    # deny all attribs on A tags
-                href          => 1,    # allow some attribs
-                title         => 1,
-                class         => 1,
-                _poortext_tag => 1,
-                _poortext_url => 1,
-                _story_id     => 1,
-            },
-            span => {
-                '*'   => 0,
-                style => 1,
-            },
-        ],
-    );
-
-    return $scrubber->scrub($arg{html});
-}
-
-sub field_separator { return "\x{E000}" }
 
 =head1 NAME
 
@@ -644,7 +277,8 @@ Krang::ElementClass::PoorText - WYSIWYG element
 =head1 DESCRIPTION
 
 This element provides a WYSIWYG text editor for HTML by integrating
-with the PoorText WYSIWYG element
+with the PoorText WYSIWYG element. It is based on
+L<Krang::ElementClass::_PoorTextBase>.
 
 =head1 INTERFACE
 
@@ -673,13 +307,13 @@ or an array or command names. The pre-cooked sets are:
 
    basic                    => [ qw(bold     italic      underline
                                     cut      copy        paste
-                                    add_html delete_html
+                                    add_html delete_html add_story_link
                                     redo     undo
                                     help     toggle_selectall)
                                ],
    basic_with_special_chars => [ qw(bold         italic      underline
                                     cut          copy        paste
-                                    add_html     delete_html
+                                    add_html     delete_html add_story_link
                                     redo         undo
                                     specialchars help        toggle_selectall)
                                ],
@@ -688,7 +322,7 @@ or an array or command names. The pre-cooked sets are:
                                     cut           copy         paste
                                     align_left    align_center align_right justify
                                     indent        outdent
-                                    add_html      delete_html
+                                    add_html      delete_html  add_story_link
                                     redo          undo
                                     specialchars  help         toggle_selectall) ],
 
@@ -705,10 +339,21 @@ A, ABBR or ACRONYM tag.
 
 Deletes an A, ABBR or ACRONYM around the current selection.
 
+=item add_story_link
+
+This command hooks Krang's StoryLink selection into PoorText fields.
+
 =item specialchars
 
 This command displays a second toolbar allowing to insert double and
 single curly quotes as well as the ndash.
+
+=item toggle_selectall
+
+This command is only accessible via the keyboard using the default
+shortcut Ctrl-a.  PoorText implements this command as a toggle. When
+deselecting, the original position of the cursor or the original
+selection is restituted.
 
 =back
 
@@ -740,7 +385,7 @@ is:
     toggle_selectall  => 'ctrl_a',
     add_html          => 'ctrl_l',
     delete_html       => 'ctrl_shift_l',
-    add_story_link    => 'ctrt_shift_s',
+    add_story_link    => 'ctrl_shift_s',
     redo              => 'ctrl_y',
     undo              => 'ctrl_z',
     help              => 'ctrl_h',
@@ -760,25 +405,20 @@ is:
     rdquo             => 'ctrl_3',
     ndash             => 'ctrl_0',
 
-(See F<htdocs/poortext/poortext_core.js> for more information)
+
+(See F<htdocs/poortext/src/poortext_core.js> for more information)
 
 =item indent_size
 
 If the commands 'indent' and 'outdent' are configured, this option
 specifies the number of pixels to indent and outdent. Defaults to 20.
 
-=item toggle_selectall
-
-This command is only accessible via the keyboard using the default
-shortcut Ctrl-a.  PoorText implements this command as a toggle. When
-deselecting, the original position of the cursor or the original
-selection is restituted.
-
 =back
 
 =head1 SEE ALSO
 
-The PoorText source in F<htdocs/poortext/>.
+The base class L<Krang::ElementClass::_PoorTextBase> and the PoorText
+source in F<htdocs/poortext/src/>.
 
 =cut
 
