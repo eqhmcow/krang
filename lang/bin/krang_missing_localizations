@@ -439,13 +439,14 @@ sub open_read_fh {
 
 sub get_root_for {
     my $what = shift;
-
-    my $dir =
-      $addon
-      ? catdir(KrangRoot, 'addons', $addon, $what)
-      : catdir(KrangRoot, $what);
-
-    $dir = catdir($dir, 'Krang') if $what eq 'lib';
+    my $dir;
+    if( $addon ) {
+        $dir = catdir(KrangRoot, 'addons', $addon, $what);
+    } elsif( $what eq 'lib' ) {
+        $dir = catdir(KrangRoot, $what, 'Krang');
+    } else {
+        $dir = catdir(KrangRoot, $what);
+    }
 
     if (-e $dir and -d _) {
         return $dir;
