@@ -75,10 +75,10 @@ update_prefs = function() {
 <tr>
 <td class="f"><tmpl_lang Change Account Password></td>
 <td class="l">
-<input name="new_password" type="password">
+<input name="new_password" type="password" autocomplete="false">
 <tmpl_lang (new password)>
 <br>
-<input name="new_password_repeat" type="password">
+<input name="new_password_repeat" type="password" autocomplete="false">
 <tmpl_lang (repeat)>
 </td>
 </tr>
@@ -98,6 +98,16 @@ update_prefs = function() {
 </div>
 
 </form>
+
+<script type="text/javascript">
+Krang.onload(function() { 
+    // reset password fields to be blank in case the browser has remembered them from before
+    setTimeout(function() {
+        document.forms['edit_pref_form'].elements['new_password'].value = '';
+        document.forms['edit_pref_form'].elements['new_password_repeat'].value = '';
+    }, 100);
+});
+</script>
 
 <tmpl_include footer.tmpl>
 
