@@ -346,8 +346,6 @@ Object.extend(PoorText.prototype, {
         }
         if (style == 'opacity') return value ? parseFloat(value) : 1.0;
         return value == 'auto' ? null : value;
-
-//        return Element.getStyle((node || this.srcElement), style);
     },
 
     /**@ignore*/
