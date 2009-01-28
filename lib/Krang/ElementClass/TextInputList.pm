@@ -102,7 +102,6 @@ sub input_form {
 
     # maybe the last
     my $last = pop(@data);
-    $last = '' unless defined($last);
     my $first_style = defined($last) ? '' : 'style="display: none;"';
 
     # add first input field with buttons to add, delete, maybe push-down
