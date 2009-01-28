@@ -36,7 +36,7 @@ sub per_instance {
         if (-e (my $lists_conf = catfile(cwd, 'upgrade', ref($self), 'lists.conf'))) {
             print "Importing new 'Image Size' listgroup...\n\n";
             my $cmd = catfile(KrangRoot, 'bin', 'krang_create_lists');
-            $cmd .= ' --verbose --input_file $lists_conf';
+            $cmd .= " --verbose --input_file $lists_conf";
             local $ENV{KRANG_INSTANCE} = Krang::Conf->instance();
             system($cmd) && die "'cmd' failed: $?";
         }
