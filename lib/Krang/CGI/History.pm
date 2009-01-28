@@ -201,7 +201,7 @@ sub show_row_handler {
     my ($row, $history, $pager) = @_;
 
     # setup action
-    my $object_label = $self->object_label($history->object_type);
+    my $object_label = $self->object_label($history);
     $row->{action} =
       $q->escapeHTML("$object_label " . localize($self->action_label($history->action)));
 
