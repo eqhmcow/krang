@@ -201,9 +201,9 @@ sub show_row_handler {
     my ($row, $history, $pager) = @_;
 
     # setup action
-    my $object_type = ucfirst((split('::', $history->object_type))[-1]);
+    my $object_label = $self->object_label($history->object_type);
     $row->{action} =
-      $q->escapeHTML("$object_type " . localize($self->action_label($history->action)));
+      $q->escapeHTML("$object_label " . localize($self->action_label($history->action)));
 
     # setup user
     my ($user) = pkg('User')->find(user_id => $history->user_id);
@@ -226,6 +226,11 @@ sub show_row_handler {
       localize("Desk:") . ' ' . localize((pkg('Desk')->find(desk_id => $history->desk_id))[0]->name)
       if $history->desk_id;
     $row->{attr} = $q->escapeHTML($attr);
+}
+
+sub object_label {
+    my ($self, $history) = @_;
+    return ucfirst((split('::', $history->object_type))[-1]);
 }
 
 sub action_label {
