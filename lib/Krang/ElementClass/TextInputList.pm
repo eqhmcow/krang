@@ -7,7 +7,7 @@ use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader base => 'ElementClass';
 use Krang::ClassLoader Log  => qw(critical debug);
 
-use Krang::ClassLoader MethodMaker => get_set => [qw( size maxlength)];
+use Krang::ClassLoader MethodMaker => get_set => [qw( size maxlength defaults )];
 
 sub new {
     my $pkg     = shift;
@@ -28,6 +28,7 @@ sub new {
         name      => 'text_input_list',
         size      => 40,
         maxlength => 0,
+        defaults  => [],
         @_,
         %function_for,
     );
@@ -78,6 +79,15 @@ sub input_form {
     # the list items
     my @data = @{$element->data || []};
 
+    unless (@data) {
+        my $defaults = $self->defaults;
+        @data = $defaults
+          ? (ref($defaults) and ref($defaults) eq 'ARRAY')
+            ? @{$defaults}
+            : ( ('') x $defaults )
+          : ();
+    }
+
     my $size             = $self->size;
     my $maxlength        = $self->maxlength;
     my $size_attrib      = ' size="' . $size . '"';
@@ -93,7 +103,7 @@ sub input_form {
     # maybe the last
     my $last = pop(@data);
     $last = '' unless defined($last);
-    my $first_style = $last ? '' : 'style="display: none;"';
+    my $first_style = defined($last) ? '' : 'style="display: none;"';
 
     # add first input field with buttons to add, delete, maybe push-down
     $html .= <<END;
@@ -114,7 +124,7 @@ END
     }
 
     # add the last
-    if ($last) {
+    if (defined($last)) {
         $html .= <<END;
 <div>
   <input type="text"   name="${param}_$cnt" value="$last" $size_attrib $maxlength_attrib/><input type="button" name="item_add"      value="+" class="krang-elementclass-textinputlist-button"/><input type="button" name="item_delete"   value="&#x2212;" class="krang-elementclass-textinputlist-button"/><input type="button" style="display: none;" name="item_down"     value="&#x2193;" class="krang-elementclass-textinputlist-button"/><input type="button" name="item_up"       value="&#x2191;" class="krang-elementclass-textinputlist-button"/>
@@ -366,6 +376,7 @@ Krang::ElementClass::TextInputList - a manageable list of text input fields
         name => "keywords",
         maxlength => 10,
         size      => 12,
+        defaults  => 3,  # create three empty input fields in the list
    );
 
    $class = pkg('ElementClass::TextInputList')->new(
@@ -421,6 +432,12 @@ The size of the text box on the edit screen.  Defaults to 30.
 
 The maximum number of characters the user will be allowed to enter.
 Defaults to 0, meaning no limit.
+
+=item defaults
+
+Either a number specifying the number of text input fields to be
+created when creating the element, or an arrayref of strings that will
+prepopulate the list of input fields.
 
 =back
 
