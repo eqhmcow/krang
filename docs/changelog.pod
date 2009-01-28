@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added optional C<level>, C<dir_only> and C<depth_only> arguments to
+method signature of L<Krang::Story>::category(). [Bodo Schulze]
+
+=item *
+
 Added new element class L<Krang::ElementClass::PoorTextList> which
 joins the WYSIWYG capabilities of L<Krang::ElementClass::PoorText>
 with the list management controls of
