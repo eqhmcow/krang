@@ -209,6 +209,9 @@ foreach my $ancestor (@ancestors) {
     isa_ok($ancestor, 'Krang::Category');
 }
 
+# test root_category()
+is($ancestors[-1]->category_id, $parent->category_id, '$category->root_category()');
+
 # test for decendant ids
 #####################
 my @descendants = $parent->descendants(ids_only => 1);
