@@ -194,7 +194,31 @@ is($story_cat[1]->category_id, $cat[3]->category_id);
 is($story_cat[2]->category_id, $cat[4]->category_id);
 
 # test category shortcut
+my $root_cat_story = pkg('Story')->new(title => "Root Cat Story", slug => "root_cat_story_1", class => 'article',
+                                       categories => [ $root_cat ]);
+$root_cat_story->save();
 is($story->category, $story_cat[0]);
+is($story->category(dir_only => 1), $story_cat[0]->dir,
+   "Krang::Story->category(dir_only => 1)");
+is($story->category(level => 1)->category_id, $story_cat[0]->category_id,
+   "Krang::Story->category(level => 1)");
+is($story->category(level => 0)->category_id, $root_cat->category_id,
+   "Krang::Story->category(level => 0)");
+is($story->category(level => 1, dir_only => 1), $story_cat[0]->dir,
+   "Krang::Story->category(level => 1, dir_only => 1)");
+is($story->category(level => 0, dir_only => 1), $root_cat->dir,
+   "Krang::Story->category(level => 0, dir_only => 1)");
+is($story->category(level => 2), undef,
+   "Krang::Story->category(level => 2) - (unexisting category)");
+is($story->category(level => 2, dir_only => 1), '',
+   "Krang::Story->category(level => 2, dir_only => 1) - (unexisting category)");
+is($story->category(depth_only => 1), 1,
+   "Krang::Story->category(depth_only => 1)");
+is($root_cat_story->category(depth_only => 1), 0,
+   "Krang::Story->category(depth_only => 0)");
+$root_cat_story->delete();
+
+# test urls
 my @urls = $story->urls;
 is(@urls, 3);
 my $cat_url = $cat[2]->url;

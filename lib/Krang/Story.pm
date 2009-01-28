@@ -242,9 +242,27 @@ Returns 0 if the story has never been previewed.
 
 =item C<category> (readonly)
 
-The primary category for the story.  C<undef> until at least one
-category is assigned.  This is just a convenience method that returns
-the first category in C<categories>.
+=item C<< $story->category(level => $integer) >>
+
+=item C<< $story->category(level => $integer, dir_only => 1) >>
+
+=item C<< $story->category(depth_only => 1) >>
+
+Without arguments returns the primary category for the story.
+C<undef> until at least one category is assigned.  This is just a
+convenience method that returns the first category in C<categories>.
+
+Given the C<level> argument, it returns the corresponding ancestor
+category, level zero signifying the root category, level one the first
+level category below the root category and so on.  If the specified
+category does not exist, returns undef.
+
+If C<dir_only> is true, the category's 'dir' property will be returned
+If the category does not exist, returns undef.
+
+Given the C<depth_only> argument, returns the depth of the story's
+primary category, zero signifying that the story primarily lives in
+the root category.
 
 =cut
 
@@ -252,15 +270,59 @@ sub category {
     my $self = shift;
     return undef unless @{$self->{category_ids}};
 
-    # return from the category cache if available
-    return $self->{category_cache}[0]
-      if $self->{category_cache} and $self->{category_cache}[0];
+    my (%arg);
 
-    # otherwise, lookup from id list
-    my ($category) = pkg('Category')->find(category_id => $self->{category_ids}[0]);
-    $self->{category_cache}[0] = $category;
+    if ($self->{category_cache} and $self->{category_cache}[0]) {
+        # return cached primary category
+        return $self->{category_cache}[0]
+          if scalar(@_) == 0;
+    } else {
+        # put primary category into cache and return it
+        my ($category) = pkg('Category')->find(category_id => $self->{category_ids}[0]);
+        $self->{category_cache}[0] = $category;
+        return $category if scalar(@_) == 0;
+    }
 
-    return $category;
+    # we've got 'dir_only', 'level' or 'depth'
+
+    if (not scalar(@_) % 2) {
+        %arg = @_;
+        croak(__PACKAGE__ . "::category() - arguments 'level' and 'depth_only' are mutually exclusive")
+          if defined($arg{level}) and $arg{depth_only};
+    } else {
+        croak(__PACKAGE__ . "::category() - uneven argument list");
+    }
+
+    # shortcut for $story->category->dir
+    return $self->{category_cache}[0]->dir
+      if $arg{dir_only} and not defined($arg{level});
+
+    # return the category corresponding to $level in the category
+    # hiearchy, level 0 being the root category
+    if (defined(my $level = $arg{level})) {
+        my $cat = (reverse($self->{category_cache}[0]->ancestors), $self->{category_cache}[0])[$level];
+        unless ($cat) {
+            return $arg{dir_only} ? '' : undef;
+        }
+        # maybe return only the category's dir property
+        return $arg{dir_only} ? $cat->dir : $cat;
+    }
+
+    # return the depth of the story's category, depth 0 signifying the
+    # root category
+    if ($arg{depth_only}) {
+        my $ret = scalar($self->{category_cache}[0]->ancestors());
+        return ($ret == undef) ? 0 : $ret;
+    }
+
+    # unrecognized arguments
+
+    delete @arg{ qw(level dir_only depth_only) };
+
+    if (%arg) {
+        my $wrong_args = join(', ', keys(%arg));
+        croak(__PACKAGE__ . "::category() - unrecognized argument(s) '$wrong_args'");
+    }
 }
 
 =item C<url> (readonly)
