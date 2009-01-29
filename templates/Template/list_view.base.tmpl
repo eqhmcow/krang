@@ -2,62 +2,62 @@
 
 <script type="text/javascript">
 Krang.onload( function() {
-  Krang.Help.set( 'template_find' );
-  Krang.Form.toggle_list_btn();
+    Krang.Help.set('template_find');
+    Krang.Form.toggle_list_btn();
 } );
 
 add_template = function() {
     Krang.Form.submit('template_search_form', { rm: 'add'});
 }
 
-show_advanced_search = function( show_advanced )
-  {
-  Krang.Form.submit( 'template_search_form', { do_advanced_search: show_advanced }, { to_top: false } );
+show_advanced_search = function(show_advanced) {
+    Krang.Form.submit('template_search_form', { do_advanced_search: show_advanced }, { to_top: false });
 }
 
 other_search_rm = function() {
-  Krang.Form.submit('template_search_form', { rm: 'list_retired', other_search_place: 'Search in Live' });
-  }
+    Krang.Form.submit('template_search_form', { rm: 'list_retired', other_search_place: 'Search in Live' });
+}
 
 <tmpl_if do_advanced_search>
-  clear_advanced_search = function()
-  {
+clear_advanced_search = function() {
     Krang.Form.submit('clear_advanced_search_form', {}, { to_top: false });
-  }
+}
 </tmpl_if>
 
 <tmpl_if row_count>
-  edit_template = function( id )
-  {
+edit_template = function(id) {
     Krang.Form.submit('find_template', { rm: 'checkout_and_edit', template_id: id });
-  }
+}
 
-  view_template = function( id )
-  {
+view_template = function(id) {
     Krang.Form.submit('find_template', { rm: 'view', template_id: id });
-  }
+}
 
-  delete_selected = function()
-  {
+delete_selected = function() {
     if ( !Krang.pager_row_checked() )
-      alert( Krang.L10N.loc('Nothing selected to delete!') );
-    else if ( confirm( Krang.L10N.loc('Are you SURE you want to delete the checked Templates?') ) )
-      Krang.Form.submit('krang_pager_form', { rm: 'delete_selected' }, { to_top: false });
-  }
+        alert(Krang.L10N.loc('Nothing selected to delete!'));
+    else if ( confirm(Krang.L10N.loc('Are you SURE you want to delete the checked Templates?')) )
+        Krang.Form.submit('krang_pager_form', { rm: 'delete_selected' }, { to_top: false });
+}
 
-  do_deploy = function()
-  {
+retire_selected = function() {
     if ( !Krang.pager_row_checked() )
-      alert( Krang.L10N.loc('Nothing selected to deploy!') );
+        alert(Krang.L10N.loc('Nothing selected to retire!'));
+    else if ( confirm(Krang.L10N.loc('Are you SURE you want to retire the checked Templates?')) )
+        Krang.Form.submit('krang_pager_form', { rm: 'retire_selected' }, { to_top: false });
+}
+
+do_deploy = function() {
+    if ( !Krang.pager_row_checked() )
+        alert( Krang.L10N.loc('Nothing selected to deploy!') );
     else if ( confirm( Krang.L10N.loc('Are you SURE you want to deploy the checked Templates?') ) )
-      Krang.Form.submit('krang_pager_form', { rm: 'deploy_selected' }, { to_top: false });
-  }
+        Krang.Form.submit('krang_pager_form', { rm: 'deploy_selected' }, { to_top: false });
+}
 
-  retire_template = function(id)
-  {
-    if (confirm('Are you SURE you want to retire this Template?'))
-      Krang.Form.submit('find_template', { rm: 'retire', template_id: id });
-  }
+retire_template = function(id) {
+    if ( confirm('Are you SURE you want to retire this Template?') )
+        Krang.Form.submit('find_template', { rm: 'retire', template_id: id });
+}
 </tmpl_if>
 </script>
 
@@ -164,8 +164,9 @@ other_search_rm = function() {
 <div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <input value="<tmpl_lang Add Template>" onclick="add_template()" type="button" class="west">
   <tmpl_if row_count>
-    <input value="<tmpl_lang Deploy>" onclick="do_deploy()" type="button" class="list-btn">
     <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
+    <input value="<tmpl_lang Retire>" onclick="retire_selected()" type="button" class="list-btn">
+    <input value="<tmpl_lang Deploy>" onclick="do_deploy()" type="button" class="list-btn">
   </tmpl_if>
 </form></div>
 </tmpl_unless>
@@ -178,8 +179,9 @@ other_search_rm = function() {
 <div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <input value="<tmpl_lang Add Template>" onclick="add_template()" type="button" class="west">
   <tmpl_if row_count>
-    <input value="<tmpl_lang Deploy>" onclick="do_deploy()" type="button" class="list-btn">
     <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
+    <input value="<tmpl_lang Retire>" onclick="retire_selected()" type="button" class="list-btn">
+    <input value="<tmpl_lang Deploy>" onclick="do_deploy()" type="button" class="list-btn">
   </tmpl_if>
 </form></div>
 </tmpl_unless>

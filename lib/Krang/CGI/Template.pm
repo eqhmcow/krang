@@ -92,6 +92,7 @@ sub setup {
               autocomplete
               template_chooser_node
               retire
+              retire_selected
               unretire
               /
         ]
@@ -377,6 +378,47 @@ sub delete_selected {
     }
 
     return $q->param('retired') ? $self->list_retired : $self->search;
+}
+
+=item retire_selected
+
+Retires template objects selected from the 'search' screen and returns to
+'search'.
+
+This mode expects the C<krang_pager_rows_checked> query param to contain
+the ids of the objects to be retired.  If none are passed, the user is
+returned to the 'search' screen.
+
+=cut
+
+sub retire_selected {
+    my $self = shift;
+    my $q    = $self->query();
+
+    my @template_ids = $q->param('krang_pager_rows_checked');
+
+    return $self->search unless @template_ids;
+
+    my @bad_ids;
+    for my $t (@template_ids) {
+        debug(__PACKAGE__ . ": attempting to delete template id '$t'.");
+        eval { pkg('Template')->retire(template_id => $t); };
+        if ($@) {
+            if (ref $@ && $@->isa('Krang::Template::Checkout')) {
+                critical("Unable to delete template id '$t': $@");
+                push @bad_ids, $t;
+            } else {
+                croak($@);
+            }
+        }
+    }
+
+    if (@bad_ids) {
+        add_alert('error_retirement_failure', template_id => join(", ", @bad_ids));
+    } else {
+        add_message('message_selected_retired');
+    }
+    return $self->search;
 }
 
 =item deploy

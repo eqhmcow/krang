@@ -45,9 +45,8 @@ show_advanced_search = function( show_advanced )
         }
       }
   }
-  unretire_template = function(id)
-  {
-    Krang.Form.submit('find_template', { rm: 'unretire', template_id: id });
+  unretire_template = function(id) {
+    Krang.Form.submit('find_template', { rm: 'unretire', template_id: id }, { to_top: false });
   }
 
 </tmpl_if>
