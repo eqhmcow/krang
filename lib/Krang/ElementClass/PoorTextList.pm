@@ -370,9 +370,9 @@ Krang.ElementClass.PoorTextList = {
 
         // create new PoorText field
         var ptConfig = itemConfig.ptConfig;
-//        ptConfig["deferIframeCreation"] = false;
+        ptConfig["deferIframeCreation"] = false;
         var pt = new PoorText(newPT, ptConfig);
-//        pt.onEditNodeReady(setTimeout(function() { pt.focusEditNode() }, 50));
+        pt.onEditNodeReady(setTimeout(function(){pt.focusEditNode()},10));
 
         // record this field
         PoorText.Krang.paramFor[id] = param;
