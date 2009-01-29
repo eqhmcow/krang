@@ -193,6 +193,9 @@ Object.extend(PoorText.prototype, {
         container.style.height = (marginTop + borderTop + paddingTop
                                   + height 
                                   + paddingBottom + borderBottom + marginBottom) + 'px';
+
+        this.container = container;
+
         // Put ptElement inside the container
         var srcElement = this.srcElement;
         srcElement = srcElement.parentNode.replaceChild(container, srcElement);

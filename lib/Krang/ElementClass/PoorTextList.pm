@@ -98,12 +98,14 @@ sub input_form {
     my $class  = $self->get_css_class(%arg);
     my $style  = $self->get_css_style(%arg);
     my $not_first_style = $style;
-    my $button_class = 'krang-elementclass-poortextlist-button';
+    my $button_class    = 'krang-elementclass-poortextlist-button';
+    my $item_style      = "height: 2.5em";
 
     # type dependant CSS
     if ($self->type eq 'textarea') {
         $not_first_style .= ' margin-top: 3px';
-        $button_class = 'krang-elementclass-poortextlist-button-top-margin';
+        $button_class     = 'krang-elementclass-poortextlist-button-top-margin';
+        $item_style       = '';
     }
 
     # JavaScript init code: add only once
@@ -113,19 +115,7 @@ sub input_form {
         $html .= $self->get_one_time_javascript(%arg);
     }
 
-    # data store for this element
-    $html .= <<END;
-<script type="text/javascript">
-// data store for this element
-Krang.ElementClass.PoorTextList["$param"] = {
-    className   : "$class",
-    style       : "$not_first_style",
-    buttonClass : "$button_class",
-    ptConfig    : $config
-}
-</script>
-END
-    # starting the container DIV
+    # starting the overall container DIV
     $html .= qq{<div id="${param}_container" class="krang-elementclass-poortextlist">};
 
     # the first
@@ -149,6 +139,7 @@ END
         up_btn_style     => 'style="display: none;"',
         delete_btn_style => (defined($last_data) ? '' : 'style="display: none;"'),
         button_class     => 'krang-elementclass-poortextlist-button',
+        item_style       => $item_style,
     );
 
     # add the others
@@ -167,6 +158,7 @@ END
             up_btn_style     => '',
             delete_btn_style => '',
             button_class     => $button_class,
+            item_style       => $item_style,
         );
         $cnt++;
     }
@@ -186,11 +178,30 @@ END
             up_btn_style     => '',
             delete_btn_style => '',
             button_class     => $button_class,
+            item_style       => $item_style,
         );
     }
 
+
+
     # close container
     $html .= '</div>';
+
+    # data store for this element
+    $cnt++;
+    $html .= <<END;
+<script type="text/javascript">
+// data store for this element
+Krang.ElementClass.PoorTextList["$param"] = {
+    className        : "$class",
+    style            : "$not_first_style",
+    buttonClass      : "$button_class",
+    ptConfig         : $config,
+    nextItemNumber   : $cnt,
+    itemStyle        : "$item_style"
+}
+</script>
+END
 
     # put the concatenated data into the hidden field used to return the data
     # !! escape single quotes and enclose $data in single quotes !!
@@ -224,14 +235,11 @@ sub add_item {
     my $html = '';
 
     # pt field id
-    my $id = md5_hex("$arg{param}_$arg{cnt}");
-
-    # container style
-    my $container_style = $self->type eq 'text' ? 'style="height: 2.5em"' : '';
+    my $id = "$arg{param}_$arg{cnt}";
 
     # create the edit area DIV and ...
     return <<END;
-<div class="$id" $container_style>
+<div class="$id poortextlist_item" style="$arg{item_style}">
   <div class="$arg{class}" style="$arg{style}" id="$id">$arg{text}</div><input type="button" name="item_add" value="+" class="$arg{button_class}" /><input type="button" $arg{delete_btn_style} name="item_delete"   value="&#x2212;" class="$arg{button_class}"/><input type="button" $arg{down_btn_style} name="item_down"     value="&#x2193;" class="$arg{button_class}"/><input type="button" $arg{up_btn_style} name="item_up"     value="&#x2191;" class="$arg{button_class}"/>
 </div>
 
@@ -337,10 +345,10 @@ Krang.ElementClass.PoorTextList = {
         var hidden      = currItem.up().next();
         var param       = hidden.id;
         var itemConfig  = Krang.ElementClass.PoorTextList[param];
+        var id          = param + '_' + itemConfig.nextItemNumber;
 
-        var newPT = new Element('div', {className : itemConfig.className, style : itemConfig.style});
-        var id = newPT.identify();
-        var newItem = new Element('div', {className : id});
+        var newPT = new Element('div', {id : id, className : itemConfig.className, style : itemConfig.style});
+        var newItem = new Element('div', {className : id + ' poortextlist_item', style : itemConfig.itemStyle});
         newItem.appendChild(newPT);
         ['+', '\\u2212', '\\u2193', '\\u2191'].each(function(btn) {
                 newItem.appendChild(new Element('input',
@@ -362,8 +370,9 @@ Krang.ElementClass.PoorTextList = {
 
         // create new PoorText field
         var ptConfig = itemConfig.ptConfig;
-        ptConfig["deferIframeCreation"] = false;
-        new PoorText(newPT, ptConfig);
+//        ptConfig["deferIframeCreation"] = false;
+        var pt = new PoorText(newPT, ptConfig);
+//        pt.onEditNodeReady(setTimeout(function() { pt.focusEditNode() }, 50));
 
         // record this field
         PoorText.Krang.paramFor[id] = param;
@@ -446,7 +455,7 @@ Krang.ElementClass.PoorTextList = {
         var children = \$(param+'_container').childElements();
 
         var html = children.inject([], function(acc, item) {
-           var pt = PoorText.id2obj[item.readAttribute('class')];
+           var pt = PoorText.id2obj[item.readAttribute('class').replace('poortextlist_item', '').strip()];
            if (pt) {
                var field = pt.returnHTML;
                if (field) { acc.push(field.value) }
@@ -472,7 +481,7 @@ sub get_css_style {
     #
     # text flavour
     #
-    return "width: ${w}px; float: left" if $element->class->type eq 'text';
+    return "width: ${w}px; float: left" if $self->type eq 'text';
 
     #
     # textarea flavour

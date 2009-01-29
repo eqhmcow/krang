@@ -244,8 +244,12 @@ Object.extend(PoorText.prototype, {
         // text fields should not wrap the text
         if (this.config.type == 'text') {
             var nobr = document.createElement('nobr');
-            srcElement.wrap(nobr);
+            srcElement = srcElement.wrap(nobr);
         }
+
+        // Wrap in container (Gecko's IFrame needs it, so we need it, too)
+        var container = this.container = new Element('div', {id : this.id+'_container'});
+        srcElement.wrap(container);
 
         // Filter the input
         this.setHtml(this.srcElement, PoorText.inFilters);

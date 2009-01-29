@@ -9,6 +9,20 @@
  */
 PoorText.prototype.addStoryLink = function() {
 
+    // Krang element param
+    var param  = PoorText.Krang.paramFor[this.id];
+
+    // Remember the PoorText object's ID: we'll need when returning from "Select Story"
+    var item = this.container.up();
+    if (item.hasClassName('poortextlist_item')) {
+        // Krang::ElementClass::PoorTextList
+        var idx = item.previousSiblings().length;
+        PoorText.Krang.id = param + '_' + idx;
+    } else {
+        // Krang::ElementClass::PoorText 
+        PoorText.Krang.id = this.id;
+    }
+
     // Get possibly existing link
     var sel = this.getLink();
     
@@ -28,11 +42,8 @@ PoorText.prototype.addStoryLink = function() {
     }
 
     // Give it an ID to find it when returning from "Select Story"
-    PoorText.Krang.linkId = this.id+'_storyLink';
+    PoorText.Krang.linkId = 'poortext_krang_storylink';
     link.setAttribute('id', PoorText.Krang.linkId);
-
-    // Remember the PoorText object's ID: we'll need when returning from "Select Story"
-    PoorText.Krang.id = this.id;
 
     // Gecko seems dumb here and needs special treatment
     if (Prototype.Browser.Gecko) {
@@ -41,14 +52,12 @@ PoorText.prototype.addStoryLink = function() {
     }
 
     // Submit form: goto "Select Story" screen
-    var pt_id  = this.returnHTML.getAttribute('name');
-    var jumpTo = PoorText.Krang.paramFor[pt_id] || pt_id;
     Krang.ElementEditor.run_save_hooks();
     Krang.Form.submit(
         'edit',
         {
           rm      : 'save_and_find_story_link',
-          jump_to : jumpTo,
+          jump_to : param,
           editor_insert_storylink_function : 'PoorText.Krang.insertStoryLink'
         },
         {
