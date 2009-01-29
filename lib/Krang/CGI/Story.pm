@@ -92,6 +92,7 @@ sub setup {
         save_and_change_bulk_edit_sep => 'save_and_change_bulk_edit_sep',
         autocomplete                  => 'autocomplete',
         retire                        => 'retire',
+        retire_selected               => 'retire_selected',
         unretire                      => 'unretire',
     );
 
@@ -2051,6 +2052,35 @@ sub delete_selected {
 
     add_message('selected_stories_deleted');
     return $q->param('retired') ? $self->list_retired : $self->find();
+}
+
+=item retire_selected
+
+Retire all stories which were checked on the find screen.
+
+=cut
+
+sub retire_selected {
+    my $self = shift;
+
+    my $q                 = $self->query();
+    my @story_retire_list = ($q->param('krang_pager_rows_checked'));
+    $q->delete('krang_pager_rows_checked');
+
+    # No selected stories?  Just return to find without any message
+    return $self->find() unless (@story_retire_list);
+
+    foreach my $story_id (@story_retire_list) {
+        my ($story) = pkg('Story')->find(story_id => $story_id);
+        if( $story ) {
+            $story->retire();
+        } else {
+            warn "No story found to retire with story_id $story_id!";
+        }
+    }
+
+    add_message('selected_stories_retired');
+    return $self->find();
 }
 
 =item checkout_selected

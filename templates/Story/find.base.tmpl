@@ -78,22 +78,38 @@ other_search_rm = function() {
 
   <tmpl_if may_publish>
   publish_selected = function() {
-      var question = '';
-      var num_rows_checked = Krang.pager_row_checked();
-
-      if (!num_rows_checked) {
+    var question = '';
+    var num_rows_checked = Krang.pager_row_checked();
+    if (!num_rows_checked) {
         alert( Krang.L10N.loc('Nothing selected to publish!') );
-      } else {
+    } else {
         if (num_rows_checked > 1) {
-	  question = Krang.L10N.loc('Are you SURE you want to publish the checked Stories?');
+            question = Krang.L10N.loc('Are you SURE you want to publish the checked Stories?');
         } else {
-	  question = Krang.L10N.loc('Are you SURE you want to publish the checked Story?');
+            question = Krang.L10N.loc('Are you SURE you want to publish the checked Story?');
         }
         if (confirm(question)) {
-      document.forms[ 'krang_pager_form' ].action = 'publisher.pl';
-      Krang.Form.submit( 'krang_pager_form', { rm: 'publish_story_list' } );
+            document.forms[ 'krang_pager_form' ].action = 'publisher.pl';
+            Krang.Form.submit( 'krang_pager_form', { rm: 'publish_story_list' } );
+        }
     }
   }
+
+  retire_selected = function() {
+    var question = '';
+    var num_rows_checked = Krang.pager_row_checked();
+    if (!num_rows_checked) {
+        alert( Krang.L10N.loc('Nothing selected to retire!') );
+    } else {
+        if (num_rows_checked > 1) {
+            question = Krang.L10N.loc('Are you SURE you want to retire the checked Stories?');
+        } else {
+            question = Krang.L10N.loc('Are you SURE you want to retire the checked Story?');
+        }
+        if (confirm(question)) {
+            Krang.Form.submit( 'krang_pager_form', { rm: 'retire_selected' }, { to_top: false } );
+        }
+    }
   }
   </tmpl_if>
 
@@ -238,9 +254,10 @@ other_search_rm = function() {
 <div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <input value="<tmpl_lang Add Story>" onclick="add_story()" type="button" class="west">
   <tmpl_if row_count>
+    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
+    <input value="<tmpl_lang Retire>" onclick="retire_selected()" type="button" class="list-btn">
     <input value="<tmpl_lang Check Out>" onclick="checkout_selected()" type="button" class="list-btn">
     <tmpl_if may_publish><input value="<tmpl_lang Publish>" onclick="publish_selected()" type="button" class="list-btn"></tmpl_if>
-    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
   </tmpl_if>
 </form></div>
 </tmpl_unless>
@@ -253,9 +270,10 @@ other_search_rm = function() {
 <div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <input value="<tmpl_lang Add Story>" onclick="add_story()" type="button" class="west">
   <tmpl_if row_count>
+    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
+    <input value="<tmpl_lang Retire>" onclick="retire_selected()" type="button" class="list-btn">
     <input value="<tmpl_lang Check Out>" onclick="checkout_selected()" type="button" class="list-btn">
     <tmpl_if may_publish><input value="<tmpl_lang Publish>" onclick="publish_selected()" type="button" class="list-btn"></tmpl_if>
-    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
   </tmpl_if>
 </form></div>
 </tmpl_unless>

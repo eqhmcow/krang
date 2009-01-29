@@ -36,27 +36,25 @@ other_search_rm = function() {
     Krang.Form.submit('find_story', { rm: 'copy', story_id: id, retired: 1 });
   }
 
-  delete_selected = function()
-  {
-      var question = '';
-      var num_rows_checked = Krang.pager_row_checked();
+  delete_selected = function() {
+    var question = '';
+    var num_rows_checked = Krang.pager_row_checked();
 
-      if (!num_rows_checked) {
+    if (!num_rows_checked) {
         alert( Krang.L10N.loc('Nothing selected to delete!') );
-      } else {
+    } else {
         if (num_rows_checked > 1) {
-	  question = Krang.L10N.loc('Are you SURE you want to delete the checked Stories?');
+            question = Krang.L10N.loc('Are you SURE you want to delete the checked Stories?');
         } else {
-	  question = Krang.L10N.loc('Are you SURE you want to delete the checked Story?');
+            question = Krang.L10N.loc('Are you SURE you want to delete the checked Story?');
         }
         if (confirm(question)) {
-          Krang.Form.submit( 'krang_pager_form', { rm : 'delete_selected' }, { to_top : false } );
+            Krang.Form.submit( 'krang_pager_form', { rm : 'delete_selected' }, { to_top : false } );
         }
-      }
+    }
   }
 
-  unretire_story = function(id)
-  {
+  unretire_story = function(id) {
     Krang.Form.submit('find_story', { rm: 'unretire', story_id: id });
   }
 </tmpl_if>
