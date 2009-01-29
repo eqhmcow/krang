@@ -15,6 +15,8 @@ use Carp qw(croak);
 use Storable qw(nfreeze);
 use MIME::Base64 qw(encode_base64);
 
+use Krang::ClassLoader MethodMaker => get_set => [qw( defaults )];
+
 sub new {
     my $pkg  = shift;
     my %arg = (
@@ -24,6 +26,7 @@ sub new {
         special_char_bar   => 0,
         commands           => 'basic_with_special_chars',
         find               => '',
+        defaults           => [],
         @_
     );
 
@@ -79,7 +82,16 @@ sub input_form {
     my $html = "";
 
     # data has multiple fields
-    my @data   = @{$element->data || []};
+    my @data = @{$element->data || []};
+
+    unless (@data) {
+        my $defaults = $self->defaults;
+        @data = $defaults
+          ? (ref($defaults) and ref($defaults) eq 'ARRAY')
+            ? @{$defaults}
+            : ( ('') x $defaults )
+          : ();
+    }
 
     # get some setup stuff
     my $config = $self->get_pt_config(%arg, has_content => $data[0]);
@@ -122,7 +134,6 @@ END
 
     # maybe the last
     my $last_data = pop(@data);
-    $last_data = '' unless defined($last_data);
 
     # add first item
     my $text = pkg("Markup::$ENV{KRANG_BROWSER_ENGINE}")->db2browser(html => $first_data);
@@ -134,9 +145,9 @@ END
         config           => $config,
         class            => $class,
         style            => $style,
-        down_btn_style   => ($last_data ? '' : 'style="display: none;"'),
+        down_btn_style   => (defined($last_data) ? '' : 'style="display: none;"'),
         up_btn_style     => 'style="display: none;"',
-        delete_btn_style => ($last_data ? '' : 'style="display: none;"'),
+        delete_btn_style => (defined($last_data) ? '' : 'style="display: none;"'),
         button_class     => 'krang-elementclass-poortextlist-button',
     );
 
@@ -161,7 +172,7 @@ END
     }
 
     # add the last
-    if ($last_data) {
+    if (defined($last_data)) {
         my $text = pkg("Markup::$ENV{KRANG_BROWSER_ENGINE}")->db2browser(html => $last_data);
         push @text, $text;
         $html .= $self->add_item(
@@ -667,6 +678,12 @@ is:
     ndash             => 'ctrl_0',
 
 (See F<htdocs/poortext/src/poortext_core.js> for more information)
+
+=item defaults
+
+Either a number specifying the number of input fields to be created
+when creating the element, or an arrayref of strings that will
+prepopulate the list of input fields. Defaults to 1.
 
 =back
 
