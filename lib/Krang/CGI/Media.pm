@@ -106,6 +106,7 @@ sub setup {
               save_and_edit_schedule
               autocomplete
               retire
+              retire_selected
               unretire
               save_and_transform_image
               transform_image
@@ -974,11 +975,9 @@ sub delete {
 
 =item delete_selected
 
-Trashes the media objects which have been selected (checked)
-from the find mode list view.  This mode expects selected 
-media objects to be specified in the CGI param 
-'krang_pager_rows_checked'.
-
+Trashes the media objects which have been selected (checked) from the
+find mode list view.  This mode expects selected media objects to be
+specified in the CGI param C<krang_pager_rows_checked>.
 
 =cut
 
@@ -999,6 +998,32 @@ sub delete_selected {
     add_message('message_selected_deleted');
 
     return $q->param('retired') ? $self->list_retired : $self->find;
+}
+
+=item retire_selected
+
+Retires the media objects which have been selected (checked) from the
+find mode list view.  This mode expects selected media objects to be
+specified in the CGI param C<krang_pager_rows_checked>.
+
+=cut
+
+sub retire_selected {
+    my $self = shift;
+
+    my $q                 = $self->query();
+    my @media_retire_list = ($q->param('krang_pager_rows_checked'));
+    $q->delete('krang_pager_rows_checked');
+
+    # No selected media?  Just return to list view without any message
+    return $self->find() unless (@media_retire_list);
+
+    foreach my $mid (@media_retire_list) {
+        pkg('Media')->retire(media_id => $mid);
+    }
+
+    add_message('message_selected_retired');
+    return $self->find;
 }
 
 =item save_and_edit_schedule

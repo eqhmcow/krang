@@ -51,9 +51,8 @@ other_search_rm = function() {
       }
   }
 
-  unretire_media = function(id)
-  {
-    Krang.Form.submit('find_media', { rm: 'unretire', media_id: id });
+  unretire_media = function(id) {
+    Krang.Form.submit('find_media', { rm: 'unretire', media_id: id }, { to_top: false });
   }
 </tmpl_if>
 </script>

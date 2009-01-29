@@ -55,7 +55,7 @@ other_search_rm = function() {
   }
 
   unretire_story = function(id) {
-    Krang.Form.submit('find_story', { rm: 'unretire', story_id: id });
+    Krang.Form.submit('find_story', { rm: 'unretire', story_id: id }, { to_top: false });
   }
 </tmpl_if>
 </script>
