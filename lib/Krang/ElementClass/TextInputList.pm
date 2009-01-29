@@ -28,7 +28,7 @@ sub new {
         name      => 'text_input_list',
         size      => 40,
         maxlength => 0,
-        defaults  => [],
+        defaults  => 1,
         @_,
         %function_for,
     );
@@ -436,7 +436,7 @@ Defaults to 0, meaning no limit.
 
 Either a number specifying the number of text input fields to be
 created when creating the element, or an arrayref of strings that will
-prepopulate the list of input fields.
+prepopulate the list of input fields. Defaults to 1.
 
 =back
 
