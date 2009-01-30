@@ -41,6 +41,11 @@ import Krang::Localization qw(%LANG localize);
 # ... for English
 $session{language} = 'en';
 is(localize('Workspace'), 'Workspace', "localize('Workspace') for English default");
+is(
+   localize('Just a Test %s', 123),
+   'Just a Test 123',
+   "localize() with sprintf() for English default"
+);
 
 # ... for other languages
 for my $lang (grep { $_ ne 'en' } AvailableLanguages) {
@@ -55,7 +60,13 @@ for my $lang (grep { $_ ne 'en' } AvailableLanguages) {
     is(
         localize('Just a Test %s', 123),
         'Just a Test 123',
-        "localize() with sprintf() for $LANG{$lang}"
+        "localize() with sprintf() for $LANG{$lang} when translation is missing from lexicon"
+    );
+
+    is(
+        localize("Someone requested that your password on %s be reset.", 'XYZ'),
+        "Jemand will Ihr Passwort auf XYZ zurücksetzen.",
+        "localize() with sprintf() for $LANG{$lang} when translation exists in lexicon"
     );
 }
 

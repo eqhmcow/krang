@@ -87,6 +87,15 @@ language setting. For French, the lexicon entry should read
 
     "Weekdays"   Dim Lun Mar Mer Jeu Ven Sam
 
+
+=item C<< localize('This is number %s', $number) >>
+
+Additional strings may be interpolated into the localized string using
+sprintf()'s '%s' placeholder.  The Turkish lexicon entry for the above
+mentioned example would be
+
+    "This is number %s"  "Bu sayi %s"
+
 =cut
 
 sub localize {
@@ -95,20 +104,22 @@ sub localize {
     my $language = $session{language} || DefaultLanguage;
 
     # return as-is
-    return $key if not $language    # krang startup
-          or $language eq 'en'      # English default
-          or not length($key);      # empty string
+    if (not $language or $language eq 'en' or not length($key)) {
+        return scalar(@list) ? sprintf($key, @list) : $key;
+    }
 
     debug("localize($key) called from " . (caller)[0] . ", line " . (caller)[2] . ".");
 
     # localize it
     my @localized = $L10N{$language}->get($key);
 
+    # return as-is if translation is missing
     unless (defined($localized[0])) {
         debug("Unable to find key '$key' in lang/$language/perl.dict.");
-        return $key;
+        return scalar(@list) ? sprintf($key, @list) : $key;
     }
 
+    # got a translation
     if( @list ) {
         if( wantarray ) {
             return map { sprintf($_, @list) } (@localized);
