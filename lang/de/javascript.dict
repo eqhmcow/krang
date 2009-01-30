@@ -84,6 +84,8 @@
 "Are you SURE you want to retire the checked Stories?"  "Möchten Sie die markierten Storys wirklich deaktivieren?"
 "Are you SURE you want to retire the checked Story?"    "Möchten Sie die markierte Story wirklich deaktivieren?"
 "Nothing selected to retire!"  "Sie haben nichts zum Deaktivieren markiert."
+"Are you SURE you want to retire the checked Media?"     "Möchten Sie die markierten Medien wirklich deaktivieren?"
+"Are you SURE you want to retire the checked Templates?" "Möchten Sie die markierten Templates wirklich deaktivieren?"
 
 
 # In krang.js
