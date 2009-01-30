@@ -345,7 +345,7 @@ Krang.ElementClass.PoorTextList = {
         var hidden      = currItem.up().next();
         var param       = hidden.id;
         var itemConfig  = Krang.ElementClass.PoorTextList[param];
-        var id          = param + '_' + itemConfig.nextItemNumber;
+        var id          = param + '_' + itemConfig.nextItemNumber++;
 
         var newPT = new Element('div', {id : id, className : itemConfig.className, style : itemConfig.style});
         var newItem = new Element('div', {className : id + ' poortextlist_item', style : itemConfig.itemStyle});
@@ -385,7 +385,7 @@ Krang.ElementClass.PoorTextList = {
         siblings = currItem.siblings();
 
         // make PT field inaccessible
-        PoorText.id2obj[currItem.readAttribute('class')] = null;
+        PoorText.id2obj[Krang.ElementClass.PoorTextList.get_pt_id(currItem)] = null;
 
         // remove it
         currItem.remove();
@@ -412,8 +412,8 @@ Krang.ElementClass.PoorTextList = {
         var nextItem = currItem.next();
 
         // store content
-        var cpt = PoorText.id2obj[currItem.readAttribute('class')];
-        var npt = PoorText.id2obj[nextItem.readAttribute('class')];
+        var cpt = PoorText.id2obj[Krang.ElementClass.PoorTextList.get_pt_id(currItem)];
+        var npt = PoorText.id2obj[Krang.ElementClass.PoorTextList.get_pt_id(nextItem)];
         cpt.storeForPostBack();
         npt.storeForPostBack();
 
@@ -427,8 +427,8 @@ Krang.ElementClass.PoorTextList = {
         var prevItem = currItem.previous();
 
         // store content
-        var cpt = PoorText.id2obj[currItem.readAttribute('class')];
-        var ppt = PoorText.id2obj[prevItem.readAttribute('class')];
+        var cpt = PoorText.id2obj[Krang.ElementClass.PoorTextList.get_pt_id(currItem)];
+        var ppt = PoorText.id2obj[Krang.ElementClass.PoorTextList.get_pt_id(prevItem)];
         cpt.storeForPostBack();
         ppt.storeForPostBack();
 
@@ -446,8 +446,8 @@ Krang.ElementClass.PoorTextList = {
         return ! item.next();
     },
 
-    get_pt_id : function(pt_container) {
-        return pt_container.id.replace(/^(.*)_container\$/, "\$1");
+    get_pt_id : function(item) {
+        return item.readAttribute('class').replace('poortextlist_item', '').strip()
     },
 
     onSave : function(param) {
@@ -455,7 +455,7 @@ Krang.ElementClass.PoorTextList = {
         var children = \$(param+'_container').childElements();
 
         var html = children.inject([], function(acc, item) {
-           var pt = PoorText.id2obj[item.readAttribute('class').replace('poortextlist_item', '').strip()];
+           var pt = PoorText.id2obj[Krang.ElementClass.PoorTextList.get_pt_id(item)];
            if (pt) {
                var field = pt.returnHTML;
                if (field) { acc.push(field.value) }
