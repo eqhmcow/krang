@@ -401,11 +401,11 @@ sub retire_selected {
 
     my @bad_ids;
     for my $t (@template_ids) {
-        debug(__PACKAGE__ . ": attempting to delete template id '$t'.");
+        debug(__PACKAGE__ . ": attempting to retire template id '$t'.");
         eval { pkg('Template')->retire(template_id => $t); };
         if ($@) {
             if (ref $@ && $@->isa('Krang::Template::Checkout')) {
-                critical("Unable to delete template id '$t': $@");
+                critical("Unable to retire template id '$t': $@");
                 push @bad_ids, $t;
             } else {
                 croak($@);
