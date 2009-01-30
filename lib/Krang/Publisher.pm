@@ -107,7 +107,7 @@ use File::Temp qw(tempdir);
 use Time::Piece;
 use Set::IntRange;
 
-use Krang::ClassLoader Conf => qw(KrangRoot instance);
+use Krang::ClassLoader Conf => qw(KrangRoot instance PreviewSSL);
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Template';
@@ -1595,6 +1595,52 @@ sub test_publish_status {
 
     return $publish_yes;
 
+}
+
+=item C<< $url = $publisher->url_for(object => $story) >>
+
+=item C<< $url = $publisher->url_for(object => $media) >>
+
+=item C<< $url = $publisher->url_for(object => $category) >>
+
+=item C<< $url = $publisher->url_for(object => $site) >>
+
+=item C<< $url = $publisher->url_for(object => $object) >>
+
+Returns the object's URL according to the publishing context.
+Object may be a L<Krang::Story>, L<Krang::Media>,
+L<Krang::Category>, L<Krang::Site> or any other object having both methods
+url() and preview_url() .
+
+Returns the empty string if $object is not an object of any type.
+
+Croaks if $object does not have both methods url() and preview_url() .
+
+=cut
+
+sub url_for {
+    my ($self, %arg) = @_;
+
+    my $object = $arg{object};
+
+    return '' unless ref($object);
+
+    # duck typing object check
+    for my $method (qw(url preview_url)) {
+        unless ($object->can($method)) {
+            croak(__PACKAGE__ . ': ' . ref($object) . " misses required method '$method'.");
+        }
+    }
+
+    # build URL
+    if ($self->is_publish) {
+        return 'http://' . $object->url;
+    } elsif ($self->is_preview) {
+        my $scheme = PreviewSSL ? 'https' : 'http';
+        return "$scheme://" . $object->preview_url();
+    } else {
+        croak(__PACKAGE__ . ': Not in publish nor preview mode. Cannot return proper URL.');
+    }
 }
 
 =back

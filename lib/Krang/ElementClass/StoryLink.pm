@@ -159,9 +159,8 @@ sub template_data {
     my $self = shift;
     my %args = @_;
 
-    return pkg('URL')->real_url(
-        object    => $args{element}->data,
-        publisher => $args{publisher}
+    return $args{publisher}->url_for(
+        object => $args{element}->data,
     );
 }
 

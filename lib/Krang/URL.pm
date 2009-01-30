@@ -12,6 +12,8 @@ Krang::URL - adjusting Krang object URLs to their publishing context
 
 =head1 SYNOPSIS
 
+B<This module is DEPRECATED: Use $publisher-E<gt>url_for(object =E<gt> $object) instead, see L<Krang::Publisher>>
+
   use Krang::ClassLoader 'URL';
 
   # get the real URL for a story

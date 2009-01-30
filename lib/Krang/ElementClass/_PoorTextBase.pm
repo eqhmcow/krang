@@ -626,9 +626,8 @@ sub _do_linked_stories {
                 $story_links->{$id} = $story;
 
                 # for template_data(): use the current URL of the linked story ID
-                $url_for->{$id} = pkg('URL')->real_url(
-                    object    => $story,
-                    publisher => $publisher
+                $url_for->{$id} = $publisher->url_for(
+                    object => $story
                 );
             }
         }

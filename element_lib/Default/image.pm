@@ -103,7 +103,7 @@ sub fill_template {
         # keep the original size
         $width  = $media->width;
         $height = $media->height;
-        $params{media} = pkg('URL')->real_url(object => $media, publisher => $publisher);
+        $params{media} = $publisher->url_for(object => $media);
     } else {
         # get dimensions for resized image
         my ($x, $y) = split(/x/i, $size);
@@ -142,7 +142,7 @@ sub fill_template {
         $height = $new->getheight;
 
         # its URL
-        my $story_url = pkg('URL')->real_url(object => $publisher->story, publisher => $publisher);
+        my $story_url = $publisher->url_for(object => $publisher->story);
         $story_url .= '/' unless $story_url =~ /\/$/;
         $params{media} = $story_url . $filename;
     }
