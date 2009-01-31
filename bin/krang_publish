@@ -226,7 +226,7 @@ use Time::HiRes qw(gettimeofday tv_interval);
 
 # Setup - grabbing all the command-line options.
 
-my %id = map { ($_, []) } qw(story media category below_category site);
+my %id = map { ($_, []) } qw(story media category below-category site);
 
 my ($help, $man, $everything, $verbose, $all_instances) = (0, 0, 0, 0, 0);
 my $limited_to_site     = 0;
@@ -333,7 +333,7 @@ if ($everything) {
 
     # NOTE: --site_id and --category-id options are mutually
     #       exclusive from --story-id and --media-id.
-    if (@{$id{site}} || @{$id{category}} || @{$id{below_category}}) {
+    if (@{$id{site}} || @{$id{category}} || @{$id{'below-category'}}) {
         if (@{$id{site}}) {
             $find_options{site_id} = $id{site}[0];
             $arg_string .= " --site-id $find_options{site_id}";
@@ -343,8 +343,8 @@ if ($everything) {
             $arg_string .= " --category-id $find_options{category_id}";
             $publish_args{disable_related_assets} = $limited_to_category;
             $has_options = 1;
-        } elsif (@{$id{below_category}}) {
-            $find_options{below_category_id} = $id{below_category}[0];
+        } elsif (@{$id{'below-category'}}) {
+            $find_options{below_category_id} = $id{'below-category'}[0];
             $arg_string .= " --below-category-id $find_options{below_category_id}";
             $publish_args{disable_related_assets} = $limited_to_category;
             $has_options = 1;
