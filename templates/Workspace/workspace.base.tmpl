@@ -223,6 +223,7 @@ Krang.onload( function() {
             </li>
           </tmpl_loop desk_loop>
           </ul>
+          </li>
         </tmpl_if>
       <tmpl_else><tmpl_if is_media>
         <tmpl_if may_publish>
@@ -273,7 +274,7 @@ Krang.onload( function() {
     <li><input value="<tmpl_lang Publish>" onclick="publish_checked()" type="button" class="list-btn"></li>
   </tmpl_if>
   <tmpl_if desk_loop>
-   <li>
+   <li class="menu">
     <input value="<tmpl_lang Check In To> &#9660;" onclick="return false;" type="button" class="list-btn">
     <ul>
     <tmpl_loop desk_loop>
