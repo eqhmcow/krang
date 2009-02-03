@@ -1793,9 +1793,16 @@ var rules = {
     },
     // for the big green dropdown menu buttons in the panels
     // IE needs some help here (this may not be necessary for IE7)
-    '.buttonbar .menu' : function( el ) {
-        if (navigator.userAgent.indexOf('MSIE') != -1)
-            el.onmouseover = el.onmouseout = function(){ this.toggleClassName('over') };
+    '.buttonbar ul li' : function( el ) {
+        if (navigator.userAgent.indexOf('MSIE') != -1) {
+            el.observe('mouseover', function(ev) {
+                el.addClassName('over');
+            });
+
+            el.observe('mouseout', function(ev) {
+                el.removeClassName('over');
+            });
+        }
     }
 };
 
