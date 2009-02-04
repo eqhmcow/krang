@@ -44,7 +44,30 @@ sub new {
                 bulk_edit_tag      => 'p',
                 find               => {}
             ),
+            pkg('ElementClass::PoorTextList')->new(
+                name               => 'unordered_list',
+                type               => 'text',
+                commands           => 'all',
+                required           => 1,
+                command_button_bar => 1,
+                special_char_bar   => 0,
+                bulk_edit          => 'xinha',
+                bulk_edit_tag      => 'ul',
 
+            ),
+            pkg('ElementClass::PoorTextList')->new(
+                name               => 'ordered_list',
+                type               => 'textarea',
+                height             => 50,
+                commands           => 'all',
+                required           => 1,
+                command_button_bar => 1,
+                special_char_bar   => 0,
+                bulk_edit          => 'xinha',
+                bulk_edit_tag      => 'ol',
+                find               => {},
+
+            ),
         ],
         @_
     );

@@ -18,23 +18,40 @@ use MIME::Base64 qw(encode_base64);
 use Krang::ClassLoader MethodMaker => get_set => [qw( defaults )];
 
 sub new {
-    my $pkg  = shift;
+    my $pkg = shift;
+
+    my %args_in = @_;
+
+    my %function_for = ();
+    my $bulk_edit_tag = $args_in{bulk_edit_tag} || '';
+
+    if ($bulk_edit_tag && ($bulk_edit_tag eq 'ul' or $bulk_edit_tag eq 'ol')) {
+        $function_for{before_bulk_edit} = $args_in{before_bulk_edit}
+          || $pkg->before_bulk_edit_dispatch(tag => $args_in{bulk_edit_tag});
+
+        $function_for{before_bulk_save} = $args_in{before_bulk_save}
+          || $pkg->before_bulk_save_dispatch(tag => $args_in{bulk_edit_tag});
+    }
+
     my %arg = (
-        width  => 340,
+        width  => 300,
         height => 140,    # for 'textarea' flavour. For 'text' flavour see poortext.css '.pt-text'
         command_button_bar => 1,
         special_char_bar   => 0,
         commands           => 'basic_with_special_chars',
         find               => '',
         defaults           => [],
-        @_
+        @_,
+        %function_for,
     );
 
     # validate commands spec
     my $command_spec = $pkg->command_spec();
     if ($arg{commands}) {
         if (ref($arg{commands})) {
-            croak(__PACKAGE__ . "::new() - 'commands' option must be string or arrayref, but is " . ref($arg{commands}))
+            croak(  __PACKAGE__
+                  . "::new() - 'commands' option must be string or arrayref, but is "
+                  . ref($arg{commands}))
               if ref($arg{commands}) ne 'ARRAY';
         } elsif (!exists $command_spec->{$arg{commands}}) {
             croak("\"$arg{commands}\" is not a known set of commands");
@@ -42,6 +59,40 @@ sub new {
     }
 
     return $pkg->SUPER::new(%arg);
+}
+
+sub before_bulk_edit_dispatch {
+    my ($self, %args) = @_;
+
+    if ($args{tag} eq 'ul' or $args{tag} eq 'ol') {
+        return sub {
+            my (%args) = @_;
+            return join('', map { "<li>$_</li>" } @{$args{element}->data});
+          }
+    }
+    croak(__PACKAGE__ . "::before_bulk_edit_dispatch() - Unsupported bulk edit tag '$args{tag}'");
+}
+
+sub before_bulk_save_dispatch {
+    my ($self, %args) = @_;
+
+    if ($args{tag} eq 'ul' or $args{tag} eq 'ol') {
+        return sub {
+            my (%args) = @_;
+            my $sep    = $args{element}->class->field_separator;
+            my $data   = $args{data};
+
+            # chop leading   <li>
+            $data =~ s/^<li[^>]*>//smi;
+
+            # chop trailing </li>
+            $data =~ s/<\/li[^>]*>$//smi;
+
+            # split on </li><li>, allowing for LI attribs and whitespace
+            return [split(/<\/li[^>]*>\s*<li[^>]*>/smi, $data)];
+          }
+    }
+    croak(__PACKAGE__ . "::before_bulk_save_dispatch() - Unsupported bulk edit tag '$args{tag}'");
 }
 
 sub mark_form_invalid {
@@ -53,7 +104,7 @@ sub mark_form_invalid {
 sub validate { 1 }
 
 sub load_query_data {
-    my ($self,  %arg)    = @_;
+    my ($self,  %arg)     = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
@@ -70,7 +121,7 @@ sub load_query_data {
     }
 
     my $sep = $self->field_separator;
-    $element->data([ split(/$sep/, $html) ]);
+    $element->data([split(/$sep/, $html)]);
 }
 
 sub input_form {
@@ -86,17 +137,18 @@ sub input_form {
 
     unless (@data) {
         my $defaults = $self->defaults;
-        @data = $defaults
+        @data =
+            $defaults
           ? (ref($defaults) and ref($defaults) eq 'ARRAY')
-            ? @{$defaults}
-            : ( ('') x $defaults )
+              ? @{$defaults}
+              : (('') x $defaults)
           : ();
     }
 
     # get some setup stuff
-    my $config = $self->get_pt_config(%arg, has_content => $data[0]);
-    my $class  = $self->get_css_class(%arg);
-    my $style  = $self->get_css_style(%arg);
+    my $config          = $self->get_pt_config(%arg, has_content => $data[0]);
+    my $class           = $self->get_css_class(%arg);
+    my $style           = $self->get_css_style(%arg);
     my $not_first_style = $style;
     my $button_class    = 'krang-elementclass-poortextlist-button';
     my $item_style      = "height: 2.5em";
@@ -104,13 +156,14 @@ sub input_form {
     # type dependant CSS
     if ($self->type eq 'textarea') {
         $not_first_style .= ' margin-top: 3px';
-        $button_class     = 'krang-elementclass-poortextlist-button-top-margin';
-        $item_style       = '';
+        $button_class = 'krang-elementclass-poortextlist-button-top-margin';
+        $item_style   = '';
     }
 
     # JavaScript init code: add only once
     my @sibs = grep { $_->class->isa(__PACKAGE__) } $element->parent()->children();
     if ($sibs[0]->xpath() eq $element->xpath()) {
+
         # I''m the first!  Insert one-time JavaScript
         $html .= $self->get_one_time_javascript(%arg);
     }
@@ -182,8 +235,6 @@ sub input_form {
         );
     }
 
-
-
     # close container
     $html .= '</div>';
 
@@ -205,7 +256,7 @@ END
 
     # put the concatenated data into the hidden field used to return the data
     # !! escape single quotes and enclose $data in single quotes !!
-    my $sep  = $self->field_separator;
+    my $sep = $self->field_separator;
     my $data = join($sep, @text);
     $data =~ s/'/&#39;/g;
     $html .= qq{<input type="hidden" id="$param" name="$param" value='$data' />};
@@ -295,13 +346,13 @@ sub linked_stories {
 
     my ($element) = @arg{qw(element)};
     my $sep = $self->field_separator;
-    $self->_do_linked_stories(%arg, html => [ split(/$sep/, $element->data) ]);
+    $self->_do_linked_stories(%arg, html => [split(/$sep/, $element->data)]);
 }
 
-sub thaw_data   {
+sub thaw_data {
     my ($self, %arg) = @_;
     my $sep = $self->field_separator;
-    $arg{element}->data([ split(/$sep/, $arg{data}) ]);
+    $arg{element}->data([split(/$sep/, $arg{data})]);
 }
 
 sub freeze_data {
@@ -489,8 +540,7 @@ sub get_css_style {
     #
     my $h = $self->height;
 
-    return
-      "width: ${w}px; height: ${h}px; float : left;";
+    return "width: ${w}px; height: ${h}px; float : left;";
 
 }
 
@@ -500,26 +550,26 @@ sub command_spec {
     # order matters!
     return {
         basic => [
-            qw(bold     italic      underline
-               cut      copy        paste
-               add_html delete_html add_story_link
-               redo     undo
-               help     toggle_selectall)
+            qw(bold    italic      underline
+              cut      copy        paste
+              add_html delete_html add_story_link
+              redo     undo
+              help     toggle_selectall)
         ],
         basic_with_special_chars => [
-            qw(bold         italic      underline
-               cut          copy        paste
-               add_html     delete_html add_story_link
-               redo         undo
-               specialchars help        toggle_selectall)
+            qw(bold        italic      underline
+              cut          copy        paste
+              add_html     delete_html add_story_link
+              redo         undo
+              specialchars help        toggle_selectall)
         ],
         all => [
-            qw(bold          italic       underline
-               strikethrough subscript    superscript
-               cut           copy         paste
-               add_html      delete_html  add_story_link
-               redo          undo
-               specialchars  help         toggle_selectall)
+            qw(bold         italic       underline
+              strikethrough subscript    superscript
+              cut           copy         paste
+              add_html      delete_html  add_story_link
+              redo          undo
+              specialchars  help         toggle_selectall)
         ],
     };
 }
@@ -536,7 +586,6 @@ sub fill_template {
     # get StoryLinks from publish context
     my %context = $publisher->publish_context();
     my $url_for = $context{poortext_story_links} || {};
-
 
     # replace Story IDs with URL
     $tmpl->param(
@@ -629,6 +678,8 @@ Deletes an A, ABBR or ACRONYM around the current selection.
 =item add_story_link
 
 This command hooks Krang's StoryLink selection into PoorText fields.
+The hard find feature known from L<Krang::ElementClass::StoryLink> is
+also supported.
 
 =item specialchars
 
@@ -694,7 +745,25 @@ Either a number specifying the number of input fields to be created
 when creating the element, or an arrayref of strings that will
 prepopulate the list of input fields. Defaults to 1.
 
+=item find
+
+The find parameter works the way known from
+L<Krang::ElementClass::StoryLink>.
+
 =back
+
+=head2 Integrating PoorTextList with Xinha-based bulk editing
+
+This elementclass may be used to represent (un)ordered HTML lists.
+Legal values for the option C<bulk_edit_tag> are therefore limited to
+
+  ul, ol
+
+For
+
+  p, h1, h2, h3, h4, h5, h6, address, pre
+
+see L<Krang::ElementClass::PoorText>.
 
 =head1 SEE ALSO
 
