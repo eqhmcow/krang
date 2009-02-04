@@ -18,22 +18,47 @@ use MIME::Base64 qw(encode_base64);
 use Krang::ClassLoader MethodMaker => get_set => [qw( indent_size )];
 
 sub new {
-    my $pkg  = shift;
+    my $pkg = shift;
+
+    my %args_in       = @_;
+    my %function_for  = ();
+    my $bulk_edit_tag = $args_in{bulk_edit_tag};
+
+    if ($bulk_edit_tag) {
+        croak(__PACKAGE__ . "::new() - unsupported bulk_edit_tag value '$bulk_edit_tag'")
+          unless $pkg->is_supported(tag => $bulk_edit_tag);
+
+        $function_for{before_bulk_edit} = $args_in{before_bulk_edit}
+          || sub {
+            my %args = @_;
+            return ${$args{element}->data}[0];
+          };
+
+        $function_for{before_bulk_save} = $args_in{before_bulk_save}
+          || sub {
+            my %args = @_;
+            return [$args{data}, 0, 'left'];
+          };
+    }
+
     my %args = (
         width  => 380,
         height => 140,    # for 'textarea' flavour. For 'text' flavour see poortext.css '.pt-text'
         command_button_bar => 1,
         special_char_bar   => 0,
-        commands           => 'all',
+        commands           => 'all_xinha',
         indent_size        => 20,
-        @_
+        @_,
+        %function_for,
     );
 
     # validate commands spec
     my $command_spec = $pkg->command_spec();
     if ($args{commands}) {
         if (ref($args{commands})) {
-            croak(__PACKAGE__ . "::new() - 'commands' option must be string or arrayref, but is " . ref($args{commands}))
+            croak(  __PACKAGE__
+                  . "::new() - 'commands' option must be string or arrayref, but is "
+                  . ref($args{commands}))
               if ref($args{commands}) ne 'ARRAY';
         } elsif (!exists $command_spec->{$args{commands}}) {
             croak("\"$args{commands}\" is not a known set of commands");
@@ -96,6 +121,7 @@ sub input_form {
     # JavaScript init code: add only once
     my @sibs = grep { $_->class->isa(__PACKAGE__) } $element->parent()->children();
     if ($sibs[0]->xpath() eq $element->xpath()) {
+
         # I''m the first!  Insert one-time JavaScript
         $html .= $self->poortext_init(%arg);
     }
@@ -156,7 +182,7 @@ sub linked_stories {
     my ($element) = @arg{qw(element)};
 
     my $data = $element->data;
-    $self->_do_linked_stories(%arg, html => [ $data->[0] ]);
+    $self->_do_linked_stories(%arg, html => [$data->[0]]);
 }
 
 sub template_data {
@@ -237,29 +263,55 @@ sub command_spec {
     return {
         basic => [
             qw(bold     italic      underline
-               cut      copy        paste
-               add_html delete_html add_story_link
-               redo     undo
-               help     toggle_selectall)
+              cut      copy        paste
+              add_html delete_html add_story_link
+              redo     undo
+              help     toggle_selectall)
         ],
         basic_with_special_chars => [
             qw(bold         italic      underline
-               cut          copy        paste
-               add_html     delete_html add_story_link
-               redo         undo
-               specialchars help        toggle_selectall)
+              cut          copy        paste
+              add_html     delete_html add_story_link
+              redo         undo
+              specialchars help        toggle_selectall)
+        ],
+        all_xinha => [
+            qw(bold          italic       underline
+              strikethrough subscript    superscript
+              cut           copy         paste
+              add_html      delete_html  add_story_link
+              redo          undo
+              specialchars  help         toggle_selectall)
         ],
         all => [
             qw(bold          italic       underline
-               strikethrough subscript    superscript
-               cut           copy         paste
-               align_left    align_center align_right justify
-               indent        outdent
-               add_html      delete_html  add_story_link
-               redo          undo
-               specialchars  help         toggle_selectall)
+              strikethrough subscript    superscript
+              cut           copy         paste
+              align_left    align_center align_right justify
+              indent        outdent
+              add_html      delete_html  add_story_link
+              redo          undo
+              specialchars  help         toggle_selectall)
         ],
     };
+}
+
+sub is_supported {
+    my ($self, %arg) = @_;
+
+    my %supported = (
+        p       => 1,
+        pre     => 1,
+        h1      => 1,
+        h2      => 1,
+        h3      => 1,
+        h4      => 1,
+        h5      => 1,
+        h6      => 1,
+        address => 1,
+    );
+
+    return $supported{$arg{tag}};
 }
 
 =head1 NAME
@@ -269,9 +321,10 @@ Krang::ElementClass::PoorText - WYSIWYG element
 =head1 SYNOPSIS
 
    $class = pkg('ElementClass::PoorText')->new(
-        name     => "poortext",
-        type     => 'textarea',
-        commands => 'all',
+        name          => "paragraph",
+        type          => 'textarea',
+        commands      => 'all_xinha',
+        bulk_edit_tag => 'p',
    );
 
 =head1 DESCRIPTION
@@ -317,6 +370,13 @@ or an array or command names. The pre-cooked sets are:
                                     redo         undo
                                     specialchars help        toggle_selectall)
                                ],
+   all_xinha                => [ qw(bold          italic       underline
+                                    strikethrough subscript    superscript
+                                    cut           copy         paste
+                                    add_html      delete_html  add_story_link
+                                    redo          undo
+                                    specialchars  help         toggle_selectall)
+                               ],
    all                      => [ qw(bold          italic       underline
                                     strikethrough subscript    superscript
                                     cut           copy         paste
@@ -327,6 +387,11 @@ or an array or command names. The pre-cooked sets are:
                                     specialchars  help         toggle_selectall) ],
 
 Most of these commands should be self-evident. Some, however, are not:
+
+Note the difference between C<all_xinha> and C<all>. The former
+includes all commands supported when integrating PoorText with
+Xinha-based bulk editing, excluding the C<align> and C<indent/outdent>
+commands which are part of C<all>.
 
 =over
 
@@ -342,6 +407,8 @@ Deletes an A, ABBR or ACRONYM around the current selection.
 =item add_story_link
 
 This command hooks Krang's StoryLink selection into PoorText fields.
+The hard find feature known from L<Krang::ElementClass::StoryLink> is
+also supported.
 
 =item specialchars
 
@@ -413,7 +480,22 @@ is:
 If the commands 'indent' and 'outdent' are configured, this option
 specifies the number of pixels to indent and outdent. Defaults to 20.
 
+=item find
+
+The find parameter works the way known from
+L<Krang::ElementClass::StoryLink>.
+
 =back
+
+=head2 Integrating PoorText with Xinha-based bulk editing
+
+As a PoorText field may contain HTML inline-level tags only, the set
+of values allowed for the option C<bulk_edit_tag> is limited to:
+
+  p, h1, h2, h3, h4, h5, h6, address, pre
+
+(Un)ordered lists and tables are not allowed. For (un)ordered lists
+see L<Krang::ElementClass::PoorTextList>.
 
 =head1 SEE ALSO
 

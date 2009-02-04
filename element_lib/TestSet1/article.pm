@@ -110,6 +110,8 @@ sub new {
             ),
 
             'page',
+
+            'poortext_xinha',
         ],
         @_
     );
