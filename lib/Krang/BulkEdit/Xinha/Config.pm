@@ -171,19 +171,29 @@ sub html_scrubber {
         # and allow some attribs with A tags
         rules => [
             a => {
-                '*'    => 0,    # deny all attribs on A tags
-                href   => 1,    # allow some attribs
-                name   => 1,
-                title  => 1,
-                target => 1
+                '*'       => 0,    # deny all attribs on A tags
+                href      => 1,    # allow some attribs
+                name      => 1,
+                title     => 1,
+                target    => 1,
+                class     => 1,
+                _story_id => 1,
             },
             img => {
-                '*'    => 0,    # deny all attribs on IMG tags
-                src    => 1,    # allow some attribs
+                '*'    => 0,       # deny all attribs on IMG tags
+                src    => 1,       # allow some attribs
                 alt    => 1,
                 title  => 1,
                 width  => 1,
                 height => 1,
+            },
+            abbr => {
+                '*'   => 0,        # deny all attribs on ABBR tags
+                title => 1,
+            },
+            acronym => {
+                '*'   => 0,        # deny all attribs on ACRONYM tags
+                title => 1,
             },
 ##
 ## To allow tables, you might consider
