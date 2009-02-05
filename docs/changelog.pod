@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<--no-cache> option to F<krang_publish> to bypass using
+L<Krang::Cache>. [Michael Peters]
+
+=item *
+
 Added optional C<level>, C<dir_only> and C<depth_only> arguments to
 method signature of L<Krang::Story>::category(). [Bodo Schulze]
 

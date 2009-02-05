@@ -172,6 +172,11 @@ published/previewed will be skipped.
 
 Publish files to preview rather than the publish location.
 
+=item --no-cache
+
+Run the publish without using L<Krang::Cache> to speed things
+up.
+
 =item --verbose
 
 Increases the level of output to STDOUT to give a more in-depth
@@ -239,6 +244,7 @@ my $media_only          = 0;
 my $to_preview          = 0;
 my $not_on_desk         = 0;
 my @story_class         = ();
+my $no_cache            = 0;
 
 # for backwards compatibility, convert all underscores in options to hyphens
 for (0 .. $#ARGV) {
@@ -263,6 +269,7 @@ GetOptions(
     'to-preview'          => \$to_preview,
     'increment=i'         => \$increment,
     'story-class=s'       => \@story_class,
+    'no-cache'            => \$no_cache,
 
     # handle --story-id, --site-id, etc.
     (map { ("$_-id=s", $id{$_}) } keys %id)
@@ -290,7 +297,7 @@ if ($maintain_versions && !$republish_only) {
 }
 
 # turn on the cache
-Krang::Cache::start();
+Krang::Cache::start() unless $no_cache;
 
 # figure out how these command-line options affect find criteria.
 my %find_options = (limit => $increment, offset => 0);
@@ -481,11 +488,13 @@ if (keys %skipcount) {
     print "TOTAL:\t\tskipped in publish:\t$total_errors\n\n";
 }
 
-my ($hits, $loads, $fill) = Krang::Cache::stats();
-printf("CACHE HITS:\t\t%d\n", $hits)
-  if $verbose and Krang::Cache::active();
-printf("CACHE FILL AT END:\t\t%d\n\n", $fill)
-  if $verbose and Krang::Cache::active();
+unless($no_cache) {
+    my ($hits, $loads, $fill) = Krang::Cache::stats();
+    printf("CACHE HITS:\t\t%d\n", $hits)
+      if $verbose and Krang::Cache::active();
+    printf("CACHE FILL AT END:\t\t%d\n\n", $fill)
+      if $verbose and Krang::Cache::active();
+}
 
 sub publish_media {
 
