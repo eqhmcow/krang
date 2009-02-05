@@ -139,7 +139,7 @@ other_search_rm = function() {
 <p class="tab-option">
 <input name="show_type_and_version" value="1" type="checkbox"
   onclick="do_search()" <tmpl_if show_type_and_version> checked="checked"</tmpl_if>>
-<label><tmpl_lang Show Story Type and Version.></label></p>
+<label><tmpl_lang Show Story Type and Version></label></p>
 
 <ul class="tabs"><li>
 <tmpl_if do_advanced_search><a href="javascript:show_advanced_search('0')"><tmpl_else><b></tmpl_if><span>
@@ -158,7 +158,8 @@ other_search_rm = function() {
   <div class="faux-p">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
   <input value="<tmpl_lang Search>" type="submit" class="button">
-  <input name="search_filter_check_full_text" type="checkbox" <tmpl_if search_filter_check_full_text>checked</tmpl_if>><tmpl_lang Search full text?>
+  <input name="search_filter_check_full_text" type="checkbox" <tmpl_if search_filter_check_full_text>checked</tmpl_if>>
+  <tmpl_lang Search full text?>
   </div>
 
 <tmpl_else>
@@ -294,6 +295,8 @@ other_search_rm = function() {
   <input name="history_return_script" value="story.pl" type="hidden">
   <input name="history_return_params" value="rm" type="hidden">
   <input name="history_return_params" value="find" type="hidden">
+  <input name="history_return_params" value="show_type_and_version" type="hidden">
+  <input name="history_return_params" value="<tmpl_var escape=html show_type_and_version>" type="hidden">
   <tmpl_if do_advanced_search>
     <input name="history_return_params" value="search_title" type="hidden">
     <input name="history_return_params" value="<tmpl_var escape=html search_title>" type="hidden">
@@ -359,6 +362,8 @@ other_search_rm = function() {
   <input name="return_script" value="story.pl" type="hidden">
   <input name="return_params" value="rm" type="hidden">
   <input name="return_params" value="find" type="hidden">
+  <input name="history_return_params" value="show_type_and_version" type="hidden">
+  <input name="history_return_params" value="<tmpl_var escape=html show_type_and_version>" type="hidden">
   <tmpl_if do_advanced_search>
     <input name="return_params" value="search_title" type="hidden">
     <input name="return_params" value="<tmpl_var escape=html search_title>" type="hidden">
