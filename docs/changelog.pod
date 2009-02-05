@@ -159,6 +159,15 @@ the possible loss of changes if the user clicked 'Edit' again. [Noam Weinstein]
 
 Bug fix for templates that had wide UTF-8 characters. [Michael Peters]
 
+=item *
+
+Added rollover-preview to the find_media_link screen. [Michael Peters]
+
+=item *
+
+Collapsed many similar buttons into "dropdown" style buttons to make
+the UI cleaner. [Michael Peters]
+
 =back
 
 
