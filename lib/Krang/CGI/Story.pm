@@ -751,8 +751,6 @@ sub view {
       unless $query->param('return_params')
           and $query->param('return_script');
     my %return_params = $query->param('return_params');
-use Data::Dumper;
-warn Dumper \%return_params;
     $template->param(
         return_script => $query->param('return_script'),
         return_params_loop =>
@@ -1744,11 +1742,10 @@ sub _do_find {
         delete $session{KRANG_PERSIST}{pkg('Story')};
     }
 
+    # get it from the query or the session
     my $show_type_and_version = $q->param('show_type_and_version') ? 1 : 0;
-
-    # if they submitted the search form then either search_filter (simple search)
-    # or search_title (advanced search) will at least be defined
-    if (defined $q->param('search_filter') or defined $q->param('search_title')) {
+    if (defined $q->param('show_type_and_version') ) {
+        $show_type_and_version = $q->param('show_type_and_version');
         $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version} = $show_type_and_version;
     } else {
         $show_type_and_version = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version};
