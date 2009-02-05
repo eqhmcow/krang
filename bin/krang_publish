@@ -585,7 +585,9 @@ sub publish_stories {
             if ($to_preview)
             {
                 foreach my $story (@stories) {
-                    $publisher->preview_story(story => $story, %$publish_args);
+                    eval { $publisher->preview_story(story => $story, %$publish_args) };
+                    # we need to call _skip_callback ourselves since preview_story doesn't handle it
+                    _skip_callback(object => $story, error => ref $@ ? $@->isa : $@) if $@;
                 }
 
             } else {
@@ -593,8 +595,7 @@ sub publish_stories {
             }
         };
 
-        if (my $err = $@) {
-
+        if (my $err = $@) { 
             # report something, anything!
             print STDERR sprintf("Publish failed for unknown reason: '%s'\n", $err);
             exit;

@@ -13,6 +13,13 @@ L<Krang::Cache>. [Michael Peters]
 
 =item *
 
+When publishing from the command line using F<krang_publish> and
+C<--to-preview> a single error in publishing 1 story won't cause the
+whole process to stop. It will continue on and then list failures at the
+end just like publishing without C<--to-preview> does. [Michael Peters]
+
+=item *
+
 Added optional C<level>, C<dir_only> and C<depth_only> arguments to
 method signature of L<Krang::Story>::category(). [Bodo Schulze]
 
