@@ -57,10 +57,10 @@
 <tmpl_if show_thumbnails>
 <td><tmpl_var thumbnail></td>
 </tmpl_if>
-<td>
+<td class="notrim">
   <strong><tmpl_var title></strong>
   <br><tmpl_var url>
-  <br><tmpl_var commands_column>
+  <div class="buttonbar clearfix"><tmpl_var commands_column></div>
 </td>
 <td><tmpl_var creation_date></td>
 <tmpl_if __show_status__><td><tmpl_var status></td></tmpl_if>

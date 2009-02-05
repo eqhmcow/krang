@@ -1167,13 +1167,15 @@ screen but preserving where we came from.
 sub view_log {
     my $self     = shift;
     my $q        = $self->query();
+    my %return   = $q->param('return_params');
     my $media_id = $q->param('media_id');
+    $return{rm} ||= 'view';    # default to going back to the view rm
 
     # Redirect to history screen
     my $url =
-        "history.pl?history_return_script=media.pl"
-      . "&history_return_params=rm&history_return_params=view"
-      . "&history_return_params=media_id&history_return_params=$media_id"
+      "history.pl?history_return_script=media.pl&"
+      . join('&',
+        map { "history_return_params=$_&history_return_params=$return{$_}" } (keys %return))
       . "&id=$media_id&class=Media&id_meth=media_id";
     $self->header_props(-uri => $url);
     $self->header_type('redirect');
@@ -1549,12 +1551,18 @@ sub list_active_row_handler {
     $row->{title} = $q->escapeHTML($media->title);
 
     # commands column
-    $row->{commands_column} =
-        '<input value="'
-      . localize('View Detail')
-      . qq|" onclick="view_media('|
-      . $media->media_id
-      . qq|')" type="button" class="button">|;
+    my %txt = map { $_ => localize($_) } (qw(View Detail Log));
+    $row->{commands_column} = qq|
+        <ul>
+          <li class="menu">
+            <input value="$txt{View} &#9660;" onclick="return false;" class="button" type="button">
+            <ul>
+              <li><a href="javascript:view_media($media_id)">$txt{Detail}</a></li>
+              <li><a href="javascript:view_log($media_id)">$txt{Log}</a></li>
+            </ul>
+          </li>
+        </ul>
+    |;
 
     # user
     my ($user) = pkg('User')->find(user_id => $media->checked_out_by);
@@ -2073,12 +2081,18 @@ sub find_media_row_handler {
     $row->{pub_status} = $media->published() ? '<b>' . localize('P') . '</b>' : '&nbsp;';
 
     # Buttons: all may view
-    $row->{commands_column} =
-        qq|<input value="|
-      . localize('View Detail')
-      . qq|" onclick="view_media('|
-      . $media->media_id
-      . qq|')" type="button" class="button">|;
+    my %txt = map { $_ => localize($_) } (qw(View Detail Log Unretire Edit Retire));
+    my $button = 'class="button" type="button"';
+    $row->{commands_column} = qq|
+        <ul>
+          <li class="menu">
+            <input value="$txt{View} &#9660;" onclick="return false;" $button>
+            <ul>
+              <li><a href="javascript:view_media($media_id)">$txt{Detail}</a></li>
+              <li><a href="javascript:view_log($media_id)">$txt{Log}</a></li>
+            </ul>
+          </li>
+    |;
 
     # short-circuit for trashed media
     if ($media->trashed) {
@@ -2093,12 +2107,8 @@ sub find_media_row_handler {
 
         # Retired Media screen
         if ($media->retired) {
-            $row->{commands_column} .= ' '
-              . qq|<input value="|
-              . localize('Unretire')
-              . qq|" onclick="unretire_media('|
-              . $media->media_id
-              . qq|')" type="button" class="button">|
+            $row->{commands_column} .=
+              qq|<li><input value="$txt{Unretire}" onclick="unretire_media($media_id)" $button></li>|
               if $may_edit_and_retire;
             $row->{pub_status} = '';
             $row->{status}     = '&nbsp;';
@@ -2128,18 +2138,10 @@ sub find_media_row_handler {
         } else {
 
             # Media is not retired: Maybe we may edit and retire
-            $row->{commands_column} .= ' '
-              . qq|<input value="|
-              . localize('Edit')
-              . qq|" onclick="edit_media('|
-              . $media->media_id
-              . qq|')" type="button" class="button">| . ' '
-              . qq|<input value="|
-              . localize('Retire')
-              . qq|" onclick="retire_media('|
-              . $media->media_id
-              . qq|')" type="button" class="button">|
-              if $may_edit_and_retire;
+            $row->{commands_column} .= qq|
+                <li><input value="$txt{Edit}" onclick="edit_media($media_id)" $button></li>
+                <li><input value="$txt{Retire}" onclick="retire_media($media_id)" $button></li>
+            | if $may_edit_and_retire;
             if ($media->checked_out) {
                 $row->{status} =
                   localize('Checked out by') . " <b>"
@@ -2154,6 +2156,8 @@ sub find_media_row_handler {
     unless ($may_edit_and_retire) {
         $row->{checkbox_column} = "&nbsp;";
     }
+
+    $row->{commands_column} .= '</ul>';
 
 }
 

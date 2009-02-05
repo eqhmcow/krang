@@ -7,9 +7,12 @@ Krang.onload( function() {
 } );
 
 <tmpl_if row_count>
-  view_media = function( id )
-  {
+  view_media = function(id) {
     Krang.Form.submit('find_media', { rm: 'view', media_id: id });
+  }
+
+  view_log = function(id) {
+    Krang.Form.submit('find_media', { rm: 'view_log', media_id: id });
   }
 
   <tmpl_if may_checkin_all>

@@ -27,13 +27,15 @@ other_search_rm = function() {
 </tmpl_if>
 
 <tmpl_if row_count>
-  view_media = function( id )
-  {
-    Krang.Form.submit( 'find_media', { rm: 'view', media_id: id } );
+  view_media = function(id) {
+    Krang.Form.submit('find_media', { rm: 'view', media_id: id });
   }
 
-  delete_selected = function()
-  {
+  view_log = function(id) {
+    Krang.Form.submit('find_media', { rm: 'view_log', media_id: id });
+  }
+
+  delete_selected = function() {
       var question = '';
       var num_rows_checked = Krang.pager_row_checked();
 
@@ -214,6 +216,8 @@ other_search_rm = function() {
   <input name="retired" value="1" type="hidden">
   <input name="return_script" value="media.pl" type="hidden">
   <tmpl_var return_params>
+  <input name="return_params" value="rm" type="hidden">
+  <input name="return_params" value="list_retired" type="hidden">
   </form>
 </tmpl_if>
 
