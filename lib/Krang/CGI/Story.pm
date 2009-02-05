@@ -751,6 +751,8 @@ sub view {
       unless $query->param('return_params')
           and $query->param('return_script');
     my %return_params = $query->param('return_params');
+use Data::Dumper;
+warn Dumper \%return_params;
     $template->param(
         return_script => $query->param('return_script'),
         return_params_loop =>
@@ -1742,7 +1744,7 @@ sub _do_find {
         delete $session{KRANG_PERSIST}{pkg('Story')};
     }
 
-    my $show_type_and_version = $q->param('show_type_and_version');
+    my $show_type_and_version = $q->param('show_type_and_version') ? 1 : 0;
 
     # if they submitted the search form then either search_filter (simple search)
     # or search_title (advanced search) will at least be defined
@@ -2262,7 +2264,8 @@ sub find_story_row_handler {
     ) ? 0 : 1;
 
     # Columns:
-    $row->{story_id} = $story->story_id();
+    my $story_id = $story->story_id;
+    $row->{story_id} = $story_id;
     $row->{title}    = $story->title;
 
     # format url to fit on the screen and to link to preview
@@ -2283,17 +2286,18 @@ sub find_story_row_handler {
     }
 
     # command column
-    $row->{commands_column} =
-        qq|<input value="|
-      . localize('View Detail')
-      . qq|" onclick="view_story('|
-      . $story->story_id
-      . qq|')" type="button" class="button">| . ' '
-      . qq|<input value="|
-      . localize('View Log')
-      . qq|" onclick="view_story_log('|
-      . $story->story_id
-      . qq|')" type="button" class="button">|;
+    my %txt = map { $_ => localize($_) } (qw(View Log Detail Copy Unretire Edit Retire));
+    my $button = 'type="button" class="button"';
+    $row->{commands_column} = qq|
+      <ul>
+        <li class="menu">
+          <input value="$txt{View} &#9660;" onclick="return false;" $button>
+          <ul>
+            <li><a href="#" onclick="javascript:view_story($story_id)">$txt{Detail}</a></li>
+            <li><a href="#" onclick="javascript:view_story_log($story_id)">$txt{Log}</a></li>
+          </ul>
+        </li>
+    |;
 
     # short-circuit for trashed stories
     if ($story->trashed) {
@@ -2304,25 +2308,18 @@ sub find_story_row_handler {
     }
 
     # If we may edit, we may copy
-    $row->{commands_column} .= ' '
-      . qq|<input value="|
-      . localize('Copy')
-      . qq|" onclick="copy_story('|
-      . $story->story_id
-      . qq|')" type="button" class="button">|
-      if $story->may_edit;
+    if ($story->may_edit) {
+        $row->{commands_column} .=
+          qq|<li><input value="$txt{Copy}" onclick="copy_story($story_id)" $button></li>|;
+    }
 
     # other buttons and status cols
     if ($list_retired) {
 
         # Retired Stories screen
         if ($story->retired) {
-            $row->{commands_column} .= ' '
-              . qq|<input value="|
-              . localize('Unretire')
-              . qq|" onclick="unretire_story('|
-              . $story->story_id
-              . qq|')" type="button" class="button">|
+            $row->{commands_column} .=
+              qq|<li><input value="$txt{Unretire}" onclick="unretire_story($story_id)" $button></li>|
               if $may_edit_and_retire;
             $row->{pub_status} = '';
             $row->{status}     = '&nbsp;';
@@ -2356,18 +2353,10 @@ sub find_story_row_handler {
             $row->{status}          = localize('Retired');
             $row->{checkbox_column} = "&nbsp;";
         } else {
-            $row->{commands_column} .= ' '
-              . qq|<input value="|
-              . localize('Edit')
-              . qq|" onclick="edit_story('|
-              . $story->story_id
-              . qq|')" type="button" class="button">| . ' '
-              . qq|<input value="|
-              . localize('Retire')
-              . qq|" onclick="retire_story('|
-              . $story->story_id
-              . qq|')" type="button" class="button">|
-              if $may_edit_and_retire;
+            $row->{commands_column} .= qq|
+              <li><input value="$txt{Edit}" onclick="edit_story($story_id)" $button></li>
+              <li><input value="$txt{Retire}" onclick="retire_story($story_id)" $button></li>
+            | if $may_edit_and_retire;
             if ($story->checked_out) {
                 $row->{status} =
                   localize('Checked out by') . ' <b>'
@@ -2384,6 +2373,7 @@ sub find_story_row_handler {
               $story->published_version ? '<b>' . localize('P') . '</b>' : '&nbsp;';
         }
     }
+    $row->{commands_column} .= '</ul>';
 
     unless ($may_edit_and_retire) {
         $row->{checkbox_column} = "&nbsp;";
