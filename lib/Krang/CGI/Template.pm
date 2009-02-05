@@ -813,14 +813,26 @@ sub _do_simple_search {
 
     $t->param(history_return_params => $self->make_history_return_params(@history_param_list));
 
-    my $search_filter =
-      defined($q->param('search_filter'))
-      ? $q->param('search_filter')
-      : $session{KRANG_PERSIST}{pkg('Template')}{search_filter};
-    my $search_filter_check_full_text =
-      defined($q->param('search_filter'))
-      ? $q->param('search_filter_check_full_text')
-      : $session{KRANG_PERSIST}{pkg('Template')}{search_filter_check_full_text};
+    my $search_filter;
+    if (defined $q->param('search_filter')) {
+warn "Filter from query\n";
+        $search_filter = $q->param('search_filter');
+        $session{KRANG_PERSIST}{pkg('Template')}{search_filter} = $search_filter;
+    } else {
+warn "Filter from session\n";
+        $search_filter = $session{KRANG_PERSIST}{pkg('Template')}{search_filter};
+    }
+warn "Filter: $search_filter\n";
+
+    my $search_filter_check_full_text;
+    if (defined $q->param('search_filter_check_full_text')) {
+        $search_filter_check_full_text = $q->param('search_filter_check_full_text');
+        $session{KRANG_PERSIST}{pkg('Template')}{search_filter_check_full_text} =
+          $search_filter_check_full_text;
+    } else {
+        $search_filter_check_full_text =
+          $session{KRANG_PERSIST}{pkg('Template')}{search_filter_check_full_text};
+    }
 
     # ensure that $search_filter is at the very least defined.
     $search_filter = '' unless ($search_filter);
