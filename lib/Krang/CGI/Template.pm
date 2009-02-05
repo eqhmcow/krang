@@ -815,14 +815,11 @@ sub _do_simple_search {
 
     my $search_filter;
     if (defined $q->param('search_filter')) {
-warn "Filter from query\n";
         $search_filter = $q->param('search_filter');
         $session{KRANG_PERSIST}{pkg('Template')}{search_filter} = $search_filter;
     } else {
-warn "Filter from session\n";
         $search_filter = $session{KRANG_PERSIST}{pkg('Template')}{search_filter};
     }
-warn "Filter: $search_filter\n";
 
     my $search_filter_check_full_text;
     if (defined $q->param('search_filter_check_full_text')) {
