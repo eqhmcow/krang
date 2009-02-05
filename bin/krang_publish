@@ -488,7 +488,7 @@ if (keys %skipcount) {
     print "TOTAL:\t\tskipped in publish:\t$total_errors\n\n";
 }
 
-unless($no_cache) {
+unless ($no_cache) {
     my ($hits, $loads, $fill) = Krang::Cache::stats();
     printf("CACHE HITS:\t\t%d\n", $hits)
       if $verbose and Krang::Cache::active();
