@@ -1790,22 +1790,25 @@ sub copy {
             eval { $copy->save };
 
             # turn slug-provided story in category index if necessary
-            if ($@ and ref($@)) {
-                if ($@->isa('Krang::Category::DuplicateURL')) {
-                    if (my $story_id = $@->story_id) {
-                        my ($story) = pkg('Story')->find(story_id => $@->story_id);
+            if (my $e = $@) {
+                if (ref $e) {
+                    if ($e->isa('Krang::Category::DuplicateURL')) {
+                        if (my $story_id = $e->story_id) {
+                            my ($story) = pkg('Story')->find(story_id => $e->story_id);
 
-                        unless ($story->turn_into_category_index(category => $copy, steal => 0)) {
-                            $@->rethrow;
+                            unless ($story->turn_into_category_index(category => $copy, steal => 0))
+                            {
+                                $e->rethrow;
+                            }
+                        } elsif ($e->category_id) {
+                            $e->rethrow();
                         }
-                    } elsif ($@->category_id) {
-                        $@->rethrow();
+                    } else {
+                        croak("Unknown exception thrown in " . __PACKAGE__ . "->copy(): " . $e);
                     }
                 } else {
-                    croak("Unknown exception thrown in " . __PACKAGE__ . "->copy(): " . $@);
+                    die $e;
                 }
-            } elsif ($@) {
-                die $@;
             }
 
             push @{$copied->{category}}, $copy;
