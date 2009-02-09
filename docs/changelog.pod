@@ -180,6 +180,11 @@ Added rollover-preview to the find_media_link screen. [Michael Peters]
 Collapsed many similar buttons into "dropdown" style buttons to make
 the UI cleaner. [Michael Peters]
 
+=item *
+
+Fixed bug where spaces in filenames could be hidden in the "Find Media"
+screen. [Michael Peters]
+
 =back
 
 

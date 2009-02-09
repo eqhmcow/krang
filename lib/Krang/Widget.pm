@@ -737,11 +737,11 @@ sub format_url {
     # wrap URL to length using Text::Wrap
     $Text::Wrap::columns = $length;
 
-    # put spaces after /'s so that wrap() will try to wrap to them if
-    # possible
-    $url =~ s!/!/ !g;
+    $url =~ s/ /\0/g; # change spaces to null bytes so wrap() won't destroy them
+    $url =~ s!/!/ !g; # put spaces after /'s so that wrap() can use them for breaks
     $url = wrap("", "", $url);
     $url =~ s!/ !/!g;
+    $url =~ s/\0/&nbsp;/g; # translate real spaces (that are now null bytes) into &nbsp
 
     # format wrapped URL in HTML
     my $format_url_html;
