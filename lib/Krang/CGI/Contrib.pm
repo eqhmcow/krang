@@ -730,17 +730,20 @@ sub edit {
     my $q = $self->query();
 
     my ($c, $contrib_id);
-    if( $self->param('contrib') ) {
-        $c = $self->param('contrib');
-        $contrib_id = $c->contrib_id;
-    } else {
+    # look in query string else pull from session
+    if( $q->param('contrib_id' ) ) {
         $contrib_id = $q->param('contrib_id');
         ($c) = pkg('Contrib')->find(contrib_id => $contrib_id);
+    } elsif( $session{EDIT_CONTRIB}) {
+        $c = $session{EDIT_CONTRIB};
+        $contrib_id = $c->contrib_id;
+    } else {
+        die 'No contrib present in query or session!"';
     }
 
     # Did we get our contributor?  Presumbably, users get here from a list.  IOW, there is
     # no valid (non-fatal) case where a user would be here with an invalid contrib_id
-    die("No such contrib_id '$contrib_id'") unless (defined($c));
+    die("No such contrib_id '$contrib_id'") unless $c;
 
     # Stash it in the session for later
     $session{EDIT_CONTRIB} = $c;
@@ -859,7 +862,7 @@ sub save_and_find_media_link {
     # Retrieve new contrib object and do the actual save
     my $c = $session{EDIT_CONTRIB};
     die("Can't retrieve EDIT_CONTRIB from session") unless $c && ref $c;
-    my %save_errors = $self->do_update_contrib($c);
+    my %save_errors = $self->do_update_contrib($c, 1);
     return $self->edit(%save_errors) if %save_errors;
 
     # delete anything that might cause problems
@@ -869,9 +872,6 @@ sub save_and_find_media_link {
         'krang_pager_sort_order_desc'
     );
 
-    # set up to find the media link
-    $q->param(contrib_id => $c->contrib_id);
-
     return $self->find_media_link();
 }
 
@@ -880,12 +880,10 @@ sub find_media_link {
     my $q    = $self->query();
     my $tmpl = $self->load_tmpl('find_media_link.tmpl', associate => $q);
     my $adv  = $q->param('advanced') ? 1 : 0; 
-    my $contrib_id = $q->param('contrib_id');
 
     # determine appropriate find params for search
     my %find = (may_see => 1);
     my %persist = (
-        contrib_id => $contrib_id,
         rm         => 'find_media_link',
         advanced   => $adv,
     );
@@ -995,7 +993,6 @@ sub find_media_link {
     );
     $tmpl->param(
         pager_html => $pager->output,
-        contrib_id => $contrib_id,
         advanced   => $adv,
     );
 
@@ -1006,16 +1003,15 @@ sub select_media {
     my $self  = shift;
     my $q = $self->query;
     my $media_id = $q->param('selected_media_id');
-    my $contrib_id = $q->param('contrib_id');
 
     # find media and set it in element data
     my ($media) = pkg('Media')->find(media_id => $media_id);
-    my ($contrib) = pkg('Contrib')->find(contrib_id => $contrib_id);
-    $contrib->image($media);
+    my $c = $session{EDIT_CONTRIB};
+    die("Can't retrieve EDIT_CONTRIB from session") unless $c && ref $c;
+    $c->image($media);
 
     add_message('selected_media', id => $media_id);
 
-    $self->param(contrib => $contrib); # save for edit to use
     return $self->edit;
 }
 
@@ -1163,9 +1159,7 @@ sub get_ass_obj {
 # Updated the provided Contrib object with data
 # from the CGI query
 sub do_update_contrib {
-    my $self    = shift;
-    my $contrib = shift;
-
+    my ($self, $contrib, $dont_save) = @_;
     my $q = $self->query();
 
     # Get prototype for the purpose of update
@@ -1189,7 +1183,7 @@ sub do_update_contrib {
     $contrib->image($media) if defined($media);
 
     # Attempt to write back to database
-    eval { $contrib->save() };
+    eval { $contrib->save() } unless $dont_save;
 
     # Is it a dup?
     if ($@) {
@@ -1372,7 +1366,7 @@ sub upload_image {
 
         # Need to save object under a category.
         # Use first category of first site - user can always change it later.
-        my ($site) = pkg('Site')->find(limit => 1);
+        my ($site) = pkg('Site')->find(limit => 1, order_by => 'site_id');
         my ($category) = pkg('Category')->find(site_id => $site->site_id, limit => 1);
         my %media_types    = pkg('Pref')->get('media_type');
         my @media_type_ids = keys(%media_types);
