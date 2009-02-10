@@ -1,0 +1,152 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Nav.edit_mode();
+  Krang.Help.set('media_link_find');
+} );
+
+simple_search = function() {
+    Krang.Form.submit('select_media_form', { advanced: 0 }, { to_top: false });
+}
+
+clear_advanced_search = function() {
+    Krang.Form.submit('clear_advanced_search_form', {}, { to_top: false });
+}
+
+advanced_search = function() {
+    Krang.Form.submit('select_media_form', { advanced: 1 }, { to_top: false });
+}
+
+select_media = function( id ) {
+    Krang.Form.submit('select_media_form', { rm: 'select_media', selected_media_id: id });
+}
+
+cancel_select = function() {
+    Krang.Form.submit('select_media_form', { rm: 'edit' });
+}
+</script>
+
+<h2>
+<tmpl_lang Select Media>
+</h2>
+
+<form name="select_media_form" action="contributor.pl" method="post">
+<input name="rm" value="find_media_link" type="hidden">
+<input name="contrib_id" value="<tmpl_var escape=html contrib_id>" type="hidden">
+<input name="selected_media_id" type="hidden">
+<input name="advanced" value="<tmpl_var escape=html advanced>" type="hidden">
+<tmpl_if advanced>
+  <input name="search_filter" value="" type="hidden">
+</tmpl_if>
+
+<div class="tabset finder">
+
+<ul class="tabs"><li>
+<tmpl_if advanced><a href="javascript:simple_search()"><tmpl_else><b></tmpl_if><span>
+<tmpl_lang Simple Search>
+</span><tmpl_if advanced></a><tmpl_else></b></tmpl_if>
+</li><li>
+<tmpl_if advanced><b><tmpl_else><a href="javascript:advanced_search()"></tmpl_if><span>
+<tmpl_lang Advanced Search>
+</span><tmpl_if advanced></b><tmpl_else></a></tmpl_if>
+</li></ul>
+
+<div class="tabbed">
+
+<tmpl_unless advanced>
+
+  <div class="faux-p">
+  <input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
+  <input value="Search" type="submit" class="button">
+  </div>
+
+<tmpl_else>
+
+  <table class="request" summary="">
+
+  <colgroup>
+  <col class="c-label-tiny">
+  <col>
+  <col class="c-label-tiny">
+  <col>
+  </colgroup>
+
+  <tbody class="demi">
+
+  <tr>
+  <th><tmpl_lang File Name></th>
+  <td><input name="search_filename" value="<tmpl_var escape=html search_filename>"></td>
+  <th><tmpl_lang Media ID></th>
+  <td><input name="search_media_id" value="<tmpl_var escape=html search_media_id>"></td>
+  </tr>
+  </tbody>
+
+  <tbody>
+  <tr>
+  <th><tmpl_lang Title></th>
+  <td class="demi"><input name="search_title" value="<tmpl_var escape=html search_title>"></td>
+  <th><tmpl_lang Creation Date></th>
+  <td><tmpl_var date_chooser></td>
+  </tr>
+
+  <tr>
+  <th><tmpl_lang Site/Category></th>
+  <td colspan="3"><tmpl_var category_chooser></td>
+  </tr>
+
+  <tr>
+  <td colspan="4">
+  <input name="search_no_attributes" value="1" type="checkbox"<tmpl_if search_no_attributes> checked</tmpl_if>>
+  <tmpl_lang Without Attributes>
+  </td>
+  </tr>
+
+  </tbody>
+
+  </table>
+
+  <div class="panel">
+  <input value="<tmpl_lang Clear>" onclick="clear_advanced_search()" type="button">
+  <input value="<tmpl_lang Search>" type="submit">
+  </div>
+
+</tmpl_unless>
+
+</div>
+
+</div>
+
+</form>
+
+<h3>
+<tmpl_lang Search Results>
+</h3>
+
+<div class="panel lame"><form>
+<input value="<tmpl_lang Cancel>" onclick="cancel_select()" type="button" class="west">
+</form></div>
+
+<!--Krang::HTMLPager:-->
+<tmpl_var pager_html>
+<!--:Krang::HTMLPager-->
+
+<div class="panel lame capped"><form>
+<input value="<tmpl_lang Cancel>" onclick="cancel_select()" type="button" class="west">
+</form></div>
+
+<tmpl_if advanced>
+  <form name="clear_advanced_search_form" action="contributor.pl" method="post">
+  <input name="rm" value="find_media_link" type="hidden">
+  <input name="advanced" value="1" type="hidden">
+  <input name="search_filter" value="" type="hidden">
+  </form>
+</tmpl_if>
+
+<!-- tooltips for media previews: -->
+<div id="tooltip"><img id="tooltip-img" src="<tmpl_var static_url>/images/icon-loading-small.gif" /></div>
+<img id="tooltip-pointer" src="<tmpl_var static_url>/images/tooltip_arrow.gif" />
+<!-- :tooltips for media previews -->
+
+<tmpl_include footer.tmpl>
+

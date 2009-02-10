@@ -20,11 +20,15 @@ cancel_contrib_change = function()
 </tmpl_unless>
 
 <tmpl_unless associate_mode>
-  save_stay = function()
-  {
-    Krang.Form.submit( 'edit_contrib_form', { rm: 'save_stay_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' }, { to_top: false });
+  save_stay = function() {
+    Krang.Form.submit('edit_contrib_form', { rm: 'save_stay_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' }, { to_top: false });
+  }
+
+  find_media = function() {
+    Krang.Form.submit('edit_contrib_form', { rm: 'save_and_find_media_link' });
   }
 </tmpl_unless>
+
 </script>
 
 <h2>
@@ -130,6 +134,7 @@ cancel_contrib_change = function()
   <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
   <br>
 </tmpl_if>
+<input type="button" class="button" onclick="find_media()" value="<tmpl_lang Find Media>">
 <input name="media_file" type="file">
 </td>
 </tr>

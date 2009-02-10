@@ -11,6 +11,12 @@ This document contains a list of changes for each release of Krang.
 Added C<--no-cache> option to F<krang_publish> to bypass using
 L<Krang::Cache>. [Michael Peters]
 
+=item * 
+
+Added the ability to use the "Find Media" interface for selecting the
+image for a contributor instead of having to upload a new image each
+time. [Michael Peters]
+
 =item *
 
 When publishing from the command line using F<krang_publish> and

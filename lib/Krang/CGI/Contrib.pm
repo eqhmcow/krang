@@ -2,6 +2,7 @@ package Krang::CGI::Contrib;
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader base         => qw(CGI);
 use Krang::ClassLoader Localization => qw(localize);
+use Krang::ClassLoader Widget       => qw(category_chooser date_chooser decode_date format_url);
 use strict;
 use warnings;
 
@@ -104,6 +105,9 @@ sub setup {
               save_stay_edit
               delete
               autocomplete
+              save_and_find_media_link
+              find_media_link
+              select_media
               )
         ]
     );
@@ -632,7 +636,8 @@ sub save_add {
 
     $q->delete(keys(%{&CONTRIB_PROTOTYPE}));
 
-  # Are we in associate_mode?  If so, this contributor should be automagically attached to $ass_obj.
+    # Are we in associate_mode?  If so, this contributor should be automagically 
+    # attached to $ass_obj.
     if ($q->param('associate_mode')) {
 
         # Build up list for each contrib_id/type_id combo
@@ -721,13 +726,17 @@ parameter is missing or invalid.
 =cut
 
 sub edit {
-    my $self        = shift;
-    my %ui_messages = (@_);
-
+    my ($self, %ui_messages) = @_;
     my $q = $self->query();
 
-    my $contrib_id = $q->param('contrib_id');
-    my ($c) = pkg('Contrib')->find(contrib_id => $contrib_id);
+    my ($c, $contrib_id);
+    if( $self->param('contrib') ) {
+        $c = $self->param('contrib');
+        $contrib_id = $c->contrib_id;
+    } else {
+        $contrib_id = $q->param('contrib_id');
+        ($c) = pkg('Contrib')->find(contrib_id => $contrib_id);
+    }
 
     # Did we get our contributor?  Presumbably, users get here from a list.  IOW, there is
     # no valid (non-fatal) case where a user would be here with an invalid contrib_id
@@ -817,20 +826,17 @@ when they are done.
 
 sub save_stay_edit {
     my $self = shift;
-
     my $q = $self->query();
 
-    my %errors = ($self->validate_contrib());
-
     # Return to edit screen if we have errors
+    my %errors = ($self->validate_contrib());
     return $self->edit(%errors) if (%errors);
 
     # Retrieve new contrib object
-    my $c = $session{EDIT_CONTRIB} || 0;
-    die("Can't retrieve EDIT_CONTRIB from session") unless (ref($c));
-
-    my %save_errors = ($self->do_update_contrib($c));
-    return $self->edit(%save_errors) if (%save_errors);
+    my $c = $session{EDIT_CONTRIB};
+    die("Can't retrieve EDIT_CONTRIB from session") unless $c && ref $c;
+    my %save_errors = $self->do_update_contrib($c);
+    return $self->edit(%save_errors) if %save_errors;
 
     # Set up for edit mode
     my $contrib_id = $c->contrib_id();
@@ -840,6 +846,208 @@ sub save_stay_edit {
 
     add_message('message_contrib_saved');
     return $self->edit();
+}
+
+sub save_and_find_media_link {
+    my $self = shift;
+    my $q = $self->query;
+
+    # Return to edit screen if we have errors
+    my %errors = ($self->validate_contrib());
+    return $self->edit(%errors) if (%errors);
+
+    # Retrieve new contrib object and do the actual save
+    my $c = $session{EDIT_CONTRIB};
+    die("Can't retrieve EDIT_CONTRIB from session") unless $c && ref $c;
+    my %save_errors = $self->do_update_contrib($c);
+    return $self->edit(%save_errors) if %save_errors;
+
+    # delete anything that might cause problems
+    $q->delete(
+        keys %{&CONTRIB_PROTOTYPE},  'krang_pager_sort_field',
+        'krang_pager_curr_page_num', 'krang_pager_show_big_view',
+        'krang_pager_sort_order_desc'
+    );
+
+    # set up to find the media link
+    $q->param(contrib_id => $c->contrib_id);
+
+    return $self->find_media_link();
+}
+
+sub find_media_link {
+    my ($self, %args) = @_;
+    my $q    = $self->query();
+    my $tmpl = $self->load_tmpl('find_media_link.tmpl', associate => $q);
+    my $adv  = $q->param('advanced') ? 1 : 0; 
+    my $contrib_id = $q->param('contrib_id');
+
+    # determine appropriate find params for search
+    my %find = (may_see => 1);
+    my %persist = (
+        contrib_id => $contrib_id,
+        rm         => 'find_media_link',
+        advanced   => $adv,
+    );
+    if ($adv) {
+        my $search_below_category_id = $q->param('search_below_category_id');
+        if ($search_below_category_id) {
+            $persist{search_below_category_id} = $search_below_category_id;
+            $find{below_category_id}           = $search_below_category_id;
+        }
+
+        my $search_creation_date = decode_date(
+            query => $q,
+            name  => 'search_creation_date'
+        );
+        if ($search_creation_date) {
+
+            # If date is valid send it to search and persist it.
+            $find{creation_date} = $search_creation_date;
+            for (qw/day month year/) {
+                my $varname = "search_creation_date_$_";
+                $persist{$varname} = $q->param($varname);
+            }
+        } else {
+
+            # Delete date chooser if date is incomplete
+            for (qw/day month year/) {
+                my $varname = "search_creation_date_$_";
+                $q->delete($varname);
+            }
+        }
+
+        # search_filename
+        my $search_filename = $q->param('search_filename');
+        if ($search_filename) {
+            $search_filename =~ s/\W+/\%/g;
+            $find{filename_like}      = "\%$search_filename\%";
+            $persist{search_filename} = $search_filename;
+        }
+
+        # search_title
+        my $search_title = $q->param('search_title');
+        if ($search_title) {
+            $search_title =~ s/\W+/\%/g;
+            $find{title_like}      = "\%$search_title\%";
+            $persist{search_title} = $search_title;
+        }
+
+        # search_media_id
+        my $search_media_id = $q->param('search_media_id');
+        if ($search_media_id) {
+            $find{media_id}           = $search_media_id;
+            $persist{search_media_id} = $search_media_id;
+        }
+
+        # search_no_attributes
+        my $search_no_attributes = $q->param('search_no_attributes');
+        if ($search_no_attributes) {
+            $find{no_attributes}           = $search_no_attributes;
+            $persist{search_no_attributes} = $search_no_attributes;
+        }
+
+        $tmpl->param(
+            category_chooser =>
+              scalar category_chooser(query => $q, name => 'search_below_category_id'),
+            date_chooser =>
+              date_chooser(query => $q, name => 'search_creation_date', nochoice => 1),
+        );
+
+    } else {
+        my $search_filter =
+          defined($q->param('search_filter'))
+          ? $q->param('search_filter')
+          : $session{KRANG_PERSIST}{pkg('Contrib')}{find_media}{search_filter};
+        %find    = (simple_search => $search_filter);
+        $persist{search_filter} = $search_filter;
+        $tmpl->param(search_filter => $search_filter);
+    }
+
+    my $pager = pkg('HTMLPager')->new(
+        cgi_query    => $q,
+        persist_vars => \%persist,
+        use_module  => pkg('Media'),
+        cache_key   => pkg('Contrib') . '-find_media',
+        find_params => \%find,
+        columns     => [
+            qw(
+              pub_status
+              media_id
+              thumbnail
+              url
+              creation_date
+              command_column
+              )
+        ],
+        column_labels => {
+            pub_status    => '',
+            media_id      => 'ID',
+            thumbnail     => '',
+            url           => 'URL',
+            creation_date => 'Date',
+        },
+        columns_sortable        => [qw( media_id url creation_date )],
+        command_column_commands => [qw( select_media )],
+        command_column_labels   => {select_media => 'Select',},
+        row_handler             => sub { $self->_find_media_link_row_handler(@_) },
+        id_handler              => sub { shift->media_id },
+    );
+    $tmpl->param(
+        pager_html => $pager->output,
+        contrib_id => $contrib_id,
+        advanced   => $adv,
+    );
+
+    return $tmpl->output;
+}
+
+sub select_media {
+    my $self  = shift;
+    my $q = $self->query;
+    my $media_id = $q->param('selected_media_id');
+    my $contrib_id = $q->param('contrib_id');
+
+    # find media and set it in element data
+    my ($media) = pkg('Media')->find(media_id => $media_id);
+    my ($contrib) = pkg('Contrib')->find(contrib_id => $contrib_id);
+    $contrib->image($media);
+
+    add_message('selected_media', id => $media_id);
+
+    $self->param(contrib => $contrib); # save for edit to use
+    return $self->edit;
+}
+
+
+# Pager row handler for media find run-mode
+sub _find_media_link_row_handler {
+    my ($self, $row, $media, $pager) = @_;
+    my $id = $media->media_id;
+    $row->{media_id} = $id;
+
+    # format url to fit on the screen and to link to preview
+    $row->{url} = format_url(
+        url     => $media->url,
+        link_to => "javascript:Krang.preview('media', $id)",
+        length  => 60,
+    );
+
+    # thumbnail if we have it
+    my $thumbnail_path = $media->thumbnail_path(relative => 1);
+    if ($thumbnail_path) {
+        $row->{thumbnail} = qq|
+           <a href="javascript:Krang.preview('media',$id)">
+              <img alt="" src="$thumbnail_path" class="thumbnail">
+           </a>
+        |;
+    } else {
+        $row->{thumbnail} = "&nbsp;";
+    }
+
+    my $tp = $media->creation_date();
+    $row->{creation_date} = $tp ? $tp->strftime(localize('%m/%d/%Y')) : localize('[n/a]');
+    $row->{pub_status} = $media->published ? '<b>' . localize('P') . '</b>' : '&nbsp;';
 }
 
 =item delete
@@ -875,8 +1083,7 @@ sub delete {
 
     add_message('message_contrib_deleted');
     return $self->search();
-}
-
+} 
 #############################
 #####  PRIVATE METHODS  #####
 #############################
