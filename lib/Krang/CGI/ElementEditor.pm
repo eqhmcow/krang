@@ -1230,6 +1230,10 @@ sub element_save {
         {
             my ($valid, $msg) = $child->validate(query => $query);
             if (not $valid) {
+                warn "Validation for child element "
+                  . $child->name
+                  . " failed, but no message was provided!"
+                  unless $msg;
                 add_alert('invalid_element_data', msg => $msg);
                 push @invalid, $index;
                 $clean = 0;
