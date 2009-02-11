@@ -158,8 +158,11 @@ sub add_alert {
 
     # get the text of this alert including variable substitution
     my $alert = get_message_text($key, $from_module, %args);
-    croak("Unable to find alert '$key' in lang/messages.$session{language} " . "for '$from_module'")
-      unless $alert;
+    unless ($alert) {
+        my $msg_file =
+          $session{language} eq 'en' ? 'conf/messages.conf' : "lang/messages.$session{language}";
+        croak("Unable to find alert '$key' in $msg_file for '$from_module'");
+    }
 
     # push alert
     push(@{$session{alerts} ||= []}, [$key, $alert]);
