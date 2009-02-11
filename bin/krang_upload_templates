@@ -10,7 +10,7 @@ krang_upload_templates - import templates from filesystem
 
 =head1 SYNOPSIS
 
-   krang_upload_templates  --path /path/to/templates
+   krang_upload_templates  --path /path/to/templates [--url '/bleh.tmpl' --url ...]
 
 
 =head1 DESCRIPTION
@@ -54,6 +54,11 @@ If specified, templates which are checked out will be checked in rather than ski
 =item --makecats
 
 If specified, categories which do not exist in the CMS will be created instead of skipped.
+
+=item --url '/bleh.tmpl' --url 'site1.com/foo/bleh.tmpl'
+
+Limit the upload to the templates specified by their URL.  This option
+may be give more than once.
 
 =item --verbose
 
@@ -109,9 +114,7 @@ use Krang::ClassLoader 'IO';
 use Getopt::Long;
 use Pod::Usage;
 
-my ($help, $man, $path);
-my $user          = "admin";
-my $password      = "";
+my ($help, $man, $path, @url);
 my $makecats      = 0;
 my $verbose       = 0;
 my $force_checkin = 0;
@@ -119,8 +122,7 @@ my $force_checkin = 0;
 pod2usage(2)
   unless GetOptions(
     'path=s'        => \$path,
-    'user=s'        => \$user,
-    'password=s'    => \$password,
+    'url=s'        =>  \@url,
     'verbose+'      => \$verbose,
     'force-checkin' => \$force_checkin,
     'makecats'      => \$makecats,
@@ -134,6 +136,9 @@ pod2usage(-verbose => 2) if $man;
 # Does path exist?
 pod2usage("No such directory '$path'") unless (-d $path);
 print "Found template directory '$path'\n" if $verbose;
+
+# Only certain templates?
+my %upload = map {$_ => 1} @url;
 
 # Upload templates, starting with the "global" (no site/category) templates
 upload_templates($path);
@@ -164,10 +169,11 @@ sub upload_templates {
     my @files = grep { (-f catfile($fs_path, $_)) } (@found);
     my @dirs =
       grep { not(/^\.{1,2}$/) and not(/^\.svn$/) and not(/^CVS$/) and (-d catfile($fs_path, $_)) }
-      (@found);
+        (@found);
 
     print "Found dirs: '" . join("', '",  @dirs) . "'\n"  if ($verbose > 1);
     print "Found files: '" . join("', '", @files) . "'\n" if ($verbose > 1);
+
 
     # Upload template files in this dir
     foreach my $f (@files) {
@@ -176,6 +182,13 @@ sub upload_templates {
         unless ($f =~ /\.tmpl$/) {
             print "  Skipping '$f' (not a *.tmpl file)\n" if $verbose;
             next;
+        }
+
+        # Only certain templates?
+        if (@url) {
+            my $url = $category ? $category->url . $f : "/$f";
+            print "URL: $url\n";
+            next unless $upload{$url};
         }
 
         # Try to find template.
@@ -188,8 +201,6 @@ sub upload_templates {
 
         # Create it if we can't find it.
         unless ($t) {
-            my %new_params = (filename => $f);
-            $new_params{category} = $category if ($category);
             $t = pkg('Template')->new(
                 category => $category,
                 filename => $f
