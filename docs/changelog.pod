@@ -6,6 +6,12 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item
+
+Added a --url option to F<krang_upload_templates> to limit the upload
+to templates having the specified URL below path (may be given
+multiple times). [Bodo Schulze]
+
 =item *
 
 Added C<--no-cache> option to F<krang_publish> to bypass using
