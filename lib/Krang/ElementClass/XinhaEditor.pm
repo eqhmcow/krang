@@ -175,6 +175,9 @@ sub input_form {
 
       Krang.ElementEditor.add_save_hook(function() {
 	  __htmlareas.each(function(xinha) {
+              // deactivate/activate to work around a IE6/7 issue
+              xinha.deactivateEditor();
+              xinha.activateEditor();
 	      xinha._textArea.value = xinha.outwardHtml(xinha.getHTML());
 	  })
       });

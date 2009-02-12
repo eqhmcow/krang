@@ -90,6 +90,8 @@
 
       Krang.ElementEditor.add_save_hook(function() {
           __htmlareas.each(function(xinha) {
+              xinha.deactivateEditor();
+              xinha.activateEditor();
               xinha._textArea.value = xinha.outwardHtml(xinha.getHTML());
           })
               });
