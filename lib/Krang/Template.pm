@@ -282,7 +282,7 @@ of deployed versions of the template.
 
 =item * url
 
-Text field where the object's calculate virtual url is stored.  The url is
+Text field where the object's calculated virtual url is stored.  The url is
 calculated by concatenating its category's 'url' and its 'filename'.  The
 purpose of this field is to ensure the uniqueness of a template.
 
