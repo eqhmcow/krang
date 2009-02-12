@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item
 
+Added C<version> option to L<Krang::Media>'s file_path() method. [Bodo
+Schulze]
+
+=item
+
 Added a --url option to F<krang_upload_templates> to limit the upload
 to templates having the specified URL below path (may be given
 multiple times). [Bodo Schulze]

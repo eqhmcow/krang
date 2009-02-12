@@ -610,11 +610,18 @@ sub store_temp_file {
 
 =item $file_path = $media->file_path() 
 
-=item $relative_path = $media->file_path(relative => 1) 
+=item $file_path = $media->file_path(version = $version)
 
-Return filesystem path of uploaded media file.  If the relative option
-is set to 1 then the path returned is relative to KrangRoot.  Returns
-undef before upload_file() on new objects.
+=item $relative_path = $media->file_path(relative => 1)
+
+Return filesystem path of uploaded media file.  Given the C<version>
+option, returns the filesystem path for this version or undef if this
+version does not exist.
+
+If the C<relative> option is set to 1 then the path returned is relative
+to KrangRoot.  Returns undef before upload_file() on new objects.
+
+Both options may be combined.
 
 =cut
 
@@ -634,13 +641,17 @@ sub file_path {
         # return path based on media_id if object has been committed to db
         my $instance = pkg('Conf')->instance;
 
-        $path =
-          catfile($root, 'data', 'media', $instance, $self->_media_id_path(), $self->{version},
-            $self->{filename});
-    }
+        my $version = $args{version} ? $args{version} : $self->{version};
+        return undef unless $version <= $self->{version};
 
-    # no file_path found
-    return unless $path;
+        $path =
+          catfile($root, 'data', 'media', $instance, $self->_media_id_path(), $version,
+            $self->{filename});
+    } else {
+
+        # no file_path found
+        return unless $path;
+    }
 
     # make path relative if requested
     if ($args{relative}) {
