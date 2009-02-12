@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item
 
+Added IE6 behavior rules section in F<krang.js> and put the hover
+handler for the great green buttons in there. [Bodo Schulze]
+
+=item
+
 Added C<version> option to L<Krang::Media>'s file_path() method. [Bodo
 Schulze]
 

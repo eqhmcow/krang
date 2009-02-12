@@ -7,6 +7,14 @@ if (typeof Krang == 'undefined') {
 }
 
 /*
+  Know IE version (stolen from http://prototype-ui.com)
+*/
+if (Prototype.Browser.IE) {
+    Prototype.Browser.IEVersion = parseFloat(navigator.appVersion.split(';')[1].strip().split(' ')[1]);
+}
+
+
+/*
     Krang.preload_img('/path/to/image')
 
     This function simply preloads images into the browser
@@ -1790,11 +1798,17 @@ var rules = {
         el.observe('mouseout', function(event) {
             Krang.Tooltip.Media.hide();
         }.bindAsEventListener(el));
-    },
+    }
+};
+
+/*
+  IE6- rules only
+*/
+if (Prototype.Browser.IEVersion < 7) {
     // for the big green dropdown menu buttons in the panels
     // IE needs some help here (this may not be necessary for IE7)
-    '.buttonbar ul li' : function( el ) {
-        if (navigator.userAgent.indexOf('MSIE') != -1) {
+    Object.extend(rules,{
+        '.buttonbar ul li' :  function( el ) {
             el.observe('mouseover', function(ev) {
                 el.addClassName('over');
             });
@@ -1803,8 +1817,8 @@ var rules = {
                 el.removeClassName('over');
             });
         }
-    }
-};
+    });
+}
 
 Behaviour.register( rules );
 
