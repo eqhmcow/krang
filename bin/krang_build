@@ -178,7 +178,7 @@ if (!$skip_all_modules && @modules) {
 
 # check that we're not trying to build on top of an existing build
 die "A build of Krang already exists here.  Run 'make clean' to remove it"
-  . "\nbefore trying again.\n"
+  . "\nbefore trying again or run with the --rebuild option.\n"
   if -e catfile($KrangRoot, 'data', 'build.db')
       and !$rebuild;
 
