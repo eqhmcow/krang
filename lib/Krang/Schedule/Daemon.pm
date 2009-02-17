@@ -327,7 +327,8 @@ sub _child_work {
             eval { $t->execute(); };
             if (my $err = $@) {
 
-# job failed, so, if it didn't delete the schedule object (which would prevent us from doing anything)..
+                # job failed, so, if it didn't delete the schedule object 
+                # (which would prevent us from doing anything)..
                 if (
                     $t
                     && (my ($still_in_db) =
