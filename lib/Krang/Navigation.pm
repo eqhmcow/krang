@@ -334,6 +334,13 @@ sub default_tree {
 
     my $other_node = $node->new_daughter();
     $other_node->name('Other');
+    $other_node->condition(
+        sub {
+            EnableBugzilla
+              || (shift->{admin}{admin_scheduler}
+                && pkg('AddOn')->find(condition => 'EnableAdminSchedulerActions'));
+        }
+    );
 
     $sub = $other_node->new_daughter();
     $sub->name('Scheduler');
