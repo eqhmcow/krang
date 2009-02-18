@@ -413,9 +413,6 @@ sub _list_files {
     }
     @files = grep { not exists $exclude{$_} } @files;
 
-    # exclude upgrade files
-    @files = grep { not /^upgrade\// } @files;
-
     return @files;
 }
 

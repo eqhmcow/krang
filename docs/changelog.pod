@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item
 
+L<Krang::AddOn>: When installing an addon, install the upgrade/
+subdir, too - to self-document the upgrade. [Bodo Schulze]
+
+=item
+
 Reorganized Admin menu into subsections. [Michael Peters]
 
 =item
