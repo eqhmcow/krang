@@ -288,6 +288,12 @@ sub default_tree {
     $node = $admin_node;
     my $access_node = $node->new_daughter();
     $access_node->name('Access Control');
+    $access_node->condition(
+        sub {
+            ($_[0]->{admin}{admin_users} or $_[0]->{admin}{admin_users_limited})
+              || (shift->{admin}{admin_groups});
+        }
+    );
     
     $sub  = $access_node->new_daughter();
     $sub->name('Users');
@@ -301,6 +307,19 @@ sub default_tree {
 
     my $publish_node = $node->new_daughter();
     $publish_node->name('Publishing');
+    $publish_node->condition(sub {
+        (shift->{admin}{admin_sites})
+        ||
+        (shift->{admin}{admin_categories})
+        ||
+        (shift->{admin}{admin_desks})
+        ||
+        (shift->{admin}{admin_contribs})
+        ||
+        (shift->{admin}{admin_jobs})
+        ||
+        (shift->{admin}{admin_lists})
+    });
 
     $sub = $publish_node->new_daughter();
     $sub->name('Sites');
