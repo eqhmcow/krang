@@ -142,7 +142,8 @@ sub render {
         $post = qq{</dt>\n</dl></div></div>\n\n};
     } elsif ($depth == 2) {
         if ($kids) {
-            $pre = qq{<b>$name</b></dt>\n<dt>};
+            $pre = qq{<b>$name</b>\n<dl>\n<dt>};
+            $post = "</dl>";
         } else {
             $pre = $name;
         }
@@ -285,52 +286,56 @@ sub default_tree {
     );
 
     $node = $admin_node;
-    $sub  = $node->new_daughter();
+    my $access_node = $node->new_daughter();
+    $access_node->name('Access Control');
+    
+    $sub  = $access_node->new_daughter();
     $sub->name('Users');
     $sub->link('user.pl');
     $sub->condition(sub { $_[0]->{admin}{admin_users} or $_[0]->{admin}{admin_users_limited} });
 
-    $sub = $node->new_daughter();
+    $sub = $access_node->new_daughter();
     $sub->name('Groups');
     $sub->link('group.pl');
     $sub->condition(sub { shift->{admin}{admin_groups} });
 
-    $sub = $node->new_daughter();
-    $sub->name('Desks');
-    $sub->link('desk_admin.pl');
-    $sub->condition(sub { shift->{admin}{admin_desks} });
+    my $publish_node = $node->new_daughter();
+    $publish_node->name('Publishing');
 
-    $sub = $node->new_daughter();
-    $sub->name('Contributors');
-    $sub->link('contributor.pl');
-    $sub->condition(sub { shift->{admin}{admin_contribs} });
-
-    $sub = $node->new_daughter();
+    $sub = $publish_node->new_daughter();
     $sub->name('Sites');
     $sub->link('site.pl');
     $sub->condition(sub { shift->{admin}{admin_sites} });
 
-    $sub = $node->new_daughter();
+    $sub = $publish_node->new_daughter();
     $sub->name('Categories');
     $sub->link('category.pl');
     $sub->condition(sub { shift->{admin}{admin_categories} });
 
-    $sub = $node->new_daughter();
+    $sub = $publish_node->new_daughter();
+    $sub->name('Desks');
+    $sub->link('desk_admin.pl');
+    $sub->condition(sub { shift->{admin}{admin_desks} });
+
+    $sub = $publish_node->new_daughter();
+    $sub->name('Contributors');
+    $sub->link('contributor.pl');
+    $sub->condition(sub { shift->{admin}{admin_contribs} });
+
+    $sub = $publish_node->new_daughter();
+    $sub->name('Scheduled Jobs');
+    $sub->link('schedule.pl?rm=list_all');
+    $sub->condition(sub { shift->{admin}{admin_jobs} });
+
+    $sub = $publish_node->new_daughter();
     $sub->name('Lists');
     $sub->link('list_group.pl');
     $sub->condition(sub { shift->{admin}{admin_lists} });
 
-    $sub = $node->new_daughter();
-    $sub->name('Jobs');
-    $sub->link('schedule.pl?rm=list_all');
-    $sub->condition(sub { shift->{admin}{admin_jobs} });
+    my $other_node = $node->new_daughter();
+    $other_node->name('Other');
 
-    $sub = $node->new_daughter();
-    $sub->name('Submit a Bug');
-    $sub->link('bug.cgi');
-    $sub->condition(sub { EnableBugzilla });
-
-    $sub = $node->new_daughter();
+    $sub = $other_node->new_daughter();
     $sub->name('Scheduler');
     $sub->link('schedule.pl?advanced_schedule=1&amp;rm=edit_admin');
     $sub->condition(
@@ -339,6 +344,11 @@ sub default_tree {
               && pkg('AddOn')->find(condition => 'EnableAdminSchedulerActions');
         }
     );
+
+    $sub = $other_node->new_daughter();
+    $sub->name('Submit a Bug');
+    $sub->link('bug.cgi');
+    $sub->condition(sub { EnableBugzilla });
 
     return $root;
 }
