@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item
 
+Reorganized Admin menu into subsections. [Michael Peters]
+
+=item
+
 Added IE6 behavior rules section in F<krang.js> and put the hover
 handler for the great green buttons in there. [Bodo Schulze]
 
