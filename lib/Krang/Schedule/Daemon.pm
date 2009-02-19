@@ -17,8 +17,7 @@ use Krang::ClassLoader Conf =>
 use Krang::ClassLoader Log => qw/critical debug info reopen_log/;
 use Krang::ClassLoader 'Schedule';
 use Krang::ClassLoader DB => qw(dbh forget_all_dbhs);
-
-use Krang::Cache;
+use Krang::ClassLoader 'Cache';
 
 my $pidfile = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
 
@@ -306,7 +305,7 @@ sub _child_work {
     reopen_log();
 
     # start the cache
-    Krang::Cache::start();
+    pkg('Cache')->start();
     eval {
 
         # child
@@ -401,7 +400,7 @@ sub _child_work {
     my $err = $@;
 
     # turn cache off
-    Krang::Cache::stop();
+    pkg('Cache')->stop();
 
     die $err if $err;
 

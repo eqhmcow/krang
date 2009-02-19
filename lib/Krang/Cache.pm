@@ -12,7 +12,7 @@ Krang::Cache - a read-only, non-persistent, private, LRU cache
 
 Turn on the cache:
 
-  Krang::Cache::start();
+  pkg('Cache')->start();
 
 Do some *read-only* work as usual:
 
@@ -22,7 +22,7 @@ Do some *read-only* work as usual:
 
 Turn off the cache:
 
-  Krang::Cache::stop();
+  pkg('Cache')->stop();
 
 =head1 DESCRIPTION
 
@@ -60,13 +60,13 @@ Krang::Group objects, and is used solely during publishing.
 
 =over 4
 
-=item C<< Krang::Cache::start() >>
+=item C<< Krang::Cache->start() >>
 
 Start caching objects.  Calling this multiple times increments an
 internal counter, so it's safe to have nested cache contexts and the
 cache won't go off till the last one stop()s.
 
-=item C<< Krang::Cache::stop() >>
+=item C<< Krang::Cache->stop() >>
 
 Stop caching objects.  Calling this multiple times decrements an
 internal counter and doesn't take effect till the count reaches 0.
@@ -77,13 +77,13 @@ stop() and be sure to call stop() if the code die()s.  Failing to do
 so can produce very strange results in persistent environments like
 mod_perl.
 
-=item C<< Krang::Cache::active() >>
+=item C<< Krang::Cache->active() >>
 
 Returns 1 if the cache is on, 0 if it's off.
 
-=item C<< $size = Krang::Cache::size() >>
+=item C<< $size = Krang::Cache->size() >>
 
-=item C<< Krang::Cache::size($size) >>
+=item C<< Krang::Cache->size($size) >>
 
 Get or set the cache size.  This is the number of objects allowed to
 live in the cache at one time.  Setting this value less than the
@@ -91,20 +91,20 @@ current fill will cause objects to be removed.
 
 The default cache size is 1000.
 
-=item C<< ($hits, $loads, $fill) = Krang::Cache::stats() >>
+=item C<< ($hits, $loads, $fill) = Krang::Cache->stats() >>
 
 Returns how many times the cache had the object requested, how many
 objects have been loaded into the cache and how many objects currently
 reside in the cache.  This may be called after C<stop()> and the
 totals are zeroed by C<start()>.
 
-=item C<< $obj = Krang::Cache::get('Krang::Element' => $element_id) >>
+=item C<< $obj = Krang::Cache->get('Krang::Element' => $element_id) >>
 
 Request an object from the cache, using a class name and an id.
 Returns C<undef> if the object is not in the cache or if the cache is
 off.
 
-=item C<< $obj = Krang::Cache::set('Krang::Element' => $element_id => $element) >>
+=item C<< $obj = Krang::Cache->set('Krang::Element' => $element_id => $element) >>
 
 Sets an object in the cache, using a class name, an id and a
 reference to the object.
@@ -128,6 +128,7 @@ use constant KEY   => 0;
 use constant VALUE => 1;
 
 sub start {
+warn "STARTING CACHE\n";
     $CACHE_ON++;
     if ($CACHE_ON == 1) {
         $CACHE_LOADS = 0;
@@ -138,6 +139,7 @@ sub start {
 }
 
 sub stop {
+warn "STOPPING CACHE\n";
     $CACHE_ON-- if $CACHE_ON;
     if ($CACHE_ON == 0) {
         %CACHE_POS = ();
@@ -145,9 +147,9 @@ sub stop {
     }
     if (@CACHE_STACK) {
         my $frame = pop(@CACHE_STACK);
-        debug("Krang::Cache::stop : ending cache started at " . join(', ', @$frame));
+        debug("Krang::Cache->stop : ending cache started at " . join(', ', @$frame));
     } else {
-        debug("Krang::Cache::stop : stopping already stopped cache.");
+        debug("Krang::Cache->stop : stopping already stopped cache.");
     }
 }
 
@@ -163,7 +165,7 @@ sub get {
     return unless $CACHE_ON;
 
     # look up object
-    my $key = $_[0] . $_[1];
+    my $key = $_[1] . $_[2];
     my $pos = $CACHE_POS{$key};
     return unless defined $pos;
 
@@ -192,12 +194,17 @@ sub get {
 
 sub set {
     return unless $CACHE_ON;
-    my $key = $_[0] . $_[1];
-    push(@CACHE, [$key, $_[2]]);
+    my $key = $_[1] . $_[2];
+    push(@CACHE, [$key, $_[3]]);
     $CACHE_POS{$key} = $#CACHE;
     $CACHE_LOADS++;
     $CACHE_FILL++;
     _cull() if $CACHE_FILL > $CACHE_SIZE;
+}
+
+sub stack {
+    my ($pkg, $index) = @_;
+    return $CACHE_STACK[$index];
 }
 
 # remove objects from the cache unless $CACHE_FILL == $CACHE_SIZE

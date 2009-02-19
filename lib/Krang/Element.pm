@@ -21,7 +21,7 @@ use Scalar::Util qw(weaken);
 use Carp qw(croak);
 use Krang::ClassLoader Log => qw(assert ASSERT debug info);
 use Storable qw(nfreeze thaw);
-use Krang::Cache;
+use Krang::ClassLoader 'Cache';
 use Exception::Class (
     'Krang::Element::MaxChildClassViolation' => {fields => [qw(parent child max)]},
     'Krang::Element::MinChildClassViolation' => {fields => [qw(parent child min)]},
@@ -670,9 +670,9 @@ sub save {
       unless $self->{class}->isa('Krang::ElementClass::TopLevel');
 
     # saving with the cache on is verboten
-    if (Krang::Cache::active()) {
+    if (pkg('Cache')->active) {
         croak(  "Cannot save elements while cache is on!  This cache was started at "
-              . join(', ', @{$Krang::Cache::CACHE_STACK[-1]})
+              . join(', ', @{pkg('Cache')->stack(-1)})
               . ".");
     }
 
@@ -862,7 +862,7 @@ sub load {
     my $dbh = dbh;
 
     # first look in the cache
-    my $element = Krang::Cache::get('Krang::Element' => $arg{element_id});
+    my $element = pkg('Cache')->get('Krang::Element' => $arg{element_id});
     if ($element) {
         $element->object($arg{object}) unless $element->{object};
         return $element;
@@ -883,7 +883,7 @@ SQL
       if $@;
 
     # set in the cache
-    Krang::Cache::set('Krang::Element' => $arg{element_id} => $element);
+    pkg('Cache')->set('Krang::Element' => $arg{element_id} => $element);
 
     return $element;
 }

@@ -32,10 +32,10 @@ use Carp qw(croak);
 use Digest::MD5 qw(md5_hex md5);
 use File::Spec::Functions qw(splitdir rel2abs catdir catfile);
 use HTTP::BrowserDetect;
-use Krang::Cache;
 use Krang::ClassLoader 'CGI::Login';
 use Krang::ClassLoader 'ErrorHandler';
 use Krang::ClassLoader 'File';
+use Krang::ClassLoader 'Cache';
 use Krang::ClassLoader 'HTMLTemplate';
 use Krang::ClassLoader Conf => qw(
   KrangRoot
@@ -540,11 +540,11 @@ sub log_handler ($$) {
     }
 
     # must make sure the cache is off at the end of the request
-    if (Krang::Cache::active()) {
+    if (pkg('Cache')->active()) {
         critical("Cache still on in log handler!  This cache was started at "
-              . join(', ', @{$Krang::Cache::CACHE_STACK[-1]})
+              . join(', ', @{$pkg('Cache')->stack(-1)})
               . ".");
-        Krang::Cache::stop() while (Krang::Cache::active());
+        pkg('Cache')->stop() while (pkg('Cache')->active());
     }
 
     return OK;

@@ -225,7 +225,7 @@ use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Publisher';
-use Krang::Cache;
+use Krang::ClassLoader 'Cache';
 
 use Time::HiRes qw(gettimeofday tv_interval);
 
@@ -297,7 +297,7 @@ if ($maintain_versions && !$republish_only) {
 }
 
 # turn on the cache
-Krang::Cache::start() unless $no_cache;
+pkg('Cache')->start() unless $no_cache;
 
 # figure out how these command-line options affect find criteria.
 my %find_options = (limit => $increment, offset => 0);
@@ -489,11 +489,11 @@ if (keys %skipcount) {
 }
 
 unless ($no_cache) {
-    my ($hits, $loads, $fill) = Krang::Cache::stats();
+    my ($hits, $loads, $fill) = pkg('Cache')->stats();
     printf("CACHE HITS:\t\t%d\n", $hits)
-      if $verbose and Krang::Cache::active();
+      if $verbose and pkg('Cache')->active();
     printf("CACHE FILL AT END:\t\t%d\n\n", $fill)
-      if $verbose and Krang::Cache::active();
+      if $verbose and pkg('Cache')->active();
 }
 
 sub publish_media {

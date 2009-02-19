@@ -130,7 +130,7 @@ use Krang::ClassLoader 'Desk';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'UUID';
 use Krang::ClassLoader Session => qw(%session);
-use Krang::Cache;
+use Krang::ClassLoader 'Cache';
 
 # Exceptions
 use Exception::Class (
@@ -308,7 +308,7 @@ sub find {
 
     # check the cache if we're looking for a single group
     my $cache_worthy = (
-        Krang::Cache::active() and keys(%args) == 1 and (exists $args{group_id}
+        pkg('Cache')->active and keys(%args) == 1 and (exists $args{group_id}
             or exists $args{group_ids})
     ) ? 1 : 0;
     if ($cache_worthy) {
@@ -317,7 +317,7 @@ sub find {
             ? @{$args{group_ids}}
             : ($args{group_id})
         );
-        my @groups = map { Krang::Cache::get('Krang::Group' => $_) } @ids;
+        my @groups = map { pkg('Cache')->get('Krang::Group' => $_) } @ids;
         return @groups unless not @groups or grep { not defined } @groups;
     }
 
@@ -469,7 +469,7 @@ sub find {
 
         # set in the cache if this was a simple find
         if ($cache_worthy) {
-            Krang::Cache::set('Krang::Group' => $_->{group_id} => $_) for @groups;
+            pkg('Cache')->set('Krang::Group' => $_->{group_id} => $_) for @groups;
         }
 
         return @groups;

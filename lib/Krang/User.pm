@@ -105,7 +105,7 @@ use Krang::ClassLoader DB   => qw(dbh);
 use Krang::ClassLoader Log  => qw/critical debug info/;
 use Krang::ClassLoader Conf => qw/PasswordChangeTime PasswordChangeCount/;
 use Krang::ClassLoader 'UUID';
-use Krang::Cache;
+use Krang::ClassLoader 'Cache';
 
 #
 # Package Variables
@@ -597,7 +597,7 @@ sub find {
     # check the cache if we're looking for a single user
     my $cache_worthy = (keys(%args) == 1 and exists $args{user_id}) ? 1 : 0;
     if ($cache_worthy) {
-        my $user = Krang::Cache::get('Krang::User' => $args{user_id});
+        my $user = pkg('Cache')->get('Krang::User' => $args{user_id});
         return ($user) if $user;
     }
 
@@ -740,7 +740,7 @@ sub find {
     }
 
     # set in the cache if this was a simple find
-    Krang::Cache::set('Krang::User' => $args{user_id} => $users[0])
+    pkg('Cache')->set('Krang::User' => $args{user_id} => $users[0])
       if $cache_worthy and $users[0];
 
     # return number of rows if count, otherwise an array of ids or objects
@@ -828,9 +828,9 @@ sub save {
     my @save_fields = grep { $_ ne 'user_id' } $self->user_cols;
 
     # saving with the cache on is verboten
-    if (Krang::Cache::active()) {
+    if (pkg('Cache')->active()) {
         croak(  "Cannot save users while cache is on!  This cache was started at "
-              . join(', ', @{$Krang::Cache::CACHE_STACK[-1]})
+              . join(', ', @{pkg('Cache')->stack(-1)})
               . ".");
     }
 

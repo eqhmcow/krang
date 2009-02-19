@@ -27,6 +27,7 @@ use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Publisher';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'Cache';
 use Krang::ClassLoader Conf         => qw(PreviewSSL Charset);
 use Krang::ClassLoader Log          => qw(debug info critical assert ASSERT);
 use Krang::ClassLoader Widget       => qw(format_url datetime_chooser decode_datetime);
@@ -354,7 +355,7 @@ sub preview_story {
     print $template->output;
 
     # start up the cache and setup an eval{} to catch any death
-    Krang::Cache::start();
+    pkg('Cache')->start();
     my $url;
     eval {
 
@@ -425,15 +426,15 @@ sub preview_story {
             clear_alerts();
 
             # make sure to turn off caching
-            Krang::Cache::stop();
-            debug("Krang::Cache Stats " . join(' : ', Krang::Cache::stats()));
+            pkg('Cache')->stop();
+            debug("Cache Stats " . join(' : ', pkg('Cache')->stats()));
         }
     };
     my $err = $@;
 
     # cache off, regardless of $err
-    Krang::Cache::stop();
-    debug("Krang::Cache Stats " . join(' : ', Krang::Cache::stats()));
+    pkg('Cache')->stop();
+    debug("Cache Stats " . join(' : ', pkg('Cache')->stats()));
 
     # die a rightful death
     die $err if $err;
@@ -673,7 +674,7 @@ sub _publish_assets_now {
     print $template->output;
 
     # start caching and setup an eval{} to catch death
-    Krang::Cache::start();
+    pkg('Cache')->start();
     eval {
 
         # run things to the publisher
@@ -760,8 +761,8 @@ sub _publish_assets_now {
                 }
 
                 # make sure to turn off caching
-                Krang::Cache::stop();
-                debug("Krang::Cache Stats " . join(' : ', Krang::Cache::stats()));
+                pkg('Cache')->stop();
+                debug("Cache Stats " . join(' : ', pkg('Cache')->stats()));
 
                 return;
 
@@ -800,8 +801,8 @@ sub _publish_assets_now {
     my $err = $@;
 
     # done caching
-    Krang::Cache::stop();
-    debug("Krang::Cache stats " . join(' : ', Krang::Cache::stats()));
+    pkg('Cache')->stop();
+    debug("Cache stats " . join(' : ', pkg('Cache')->stats()));
 
     # die if you want to
     die $err if $err;

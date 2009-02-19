@@ -216,8 +216,12 @@ the UI cleaner. [Michael Peters]
 Fixed bug where spaces in filenames could be hidden in the "Find Media"
 screen. [Michael Peters]
 
-=back
+=item *
 
+Change L<Krang::Cache> subs to be object methods instead so they can be
+overridden by addon's via subclasses. [Michael Peters]
+
+=back
 
 =head2 3.04 - December 12, 2008
 
