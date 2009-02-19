@@ -84,14 +84,7 @@ sub load_query_data {
 sub view_data {
     my $element = $_[2];
     return "" unless $element->data;
-    my $date_format    = 'mdy';
-    my $date_separator = '/';
-
-    unless ($session{language} eq 'en') {
-        ($date_format, $date_separator) = localize('NUMERIC_DATE_FORMAT');
-    }
-
-    return $element->data->$date_format($date_separator);
+    return $element->data->strftime(localize('%m/%d/%y'));
 }
 
 # takes a name and an optional date object (Time::Piece::MySQL).
@@ -101,23 +94,19 @@ sub _date_input {
 
     my %month_labels = (
         '' => ' ',
-        1  => 'Jan',
-        2  => 'Feb',
-        3  => 'Mar',
-        4  => 'Apr',
-        5  => 'May',
-        6  => 'Jun',
-        7  => 'Jul',
-        8  => 'Aug',
-        9  => 'Sep',
-        10 => 'Oct',
-        11 => 'Nov',
-        12 => 'Dec',
+        1  => localize('Jan'),
+        2  => localize('Feb'),
+        3  => localize('Mar'),
+        4  => localize('Apr'),
+        5  => localize('May'),
+        6  => localize('Jun'),
+        7  => localize('Jul'),
+        8  => localize('Aug'),
+        9  => localize('Sep'),
+        10 => localize('Oct'),
+        11 => localize('Nov'),
+        12 => localize('Dec'),
     );
-
-    unless ($session{language} eq 'en') {
-        @month_labels{1 .. 12} = localize('MONTH_LABELS');
-    }
 
     my $m_sel = $query->popup_menu(
         -name => $name . "_month",

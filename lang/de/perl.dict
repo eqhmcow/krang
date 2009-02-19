@@ -623,53 +623,6 @@
 "small"                          "klein"
 "unknown reason"                 "unbekannter Grund"
 "white"                          "weiß"
-
-### The first value in the list represents the date format, the second the date separator
-### Possible values of date format are: ymd, mdy and dmy, for date separator whatever
-### you like
-"NUMERIC_DATE_FORMAT"            dmy .
-
-### Ordering of date popup menus: 0 = month, 1 = day, 2 = year (in Krang::ElementClass::Date)
-"DATE_ORDER"                     1 0 2
-
-### Semantic pieces in Krang::CGI::Scheduler
-"DATETIME_SEMANTIC"              "Einmalig|Stündlich|zur vollen Stunde|Minuten nach der vollen Stunde|Täglich|Wöchentlich|um"
-
-### For Krang::ElementClass::Date
-"MONTH_LABELS"                   Jan Feb März Apr Mai Juni Juli Aug Sep Okt Nov Dez
-
-### Datetime format in History, Story, Media, Schedule and ElementClass
-### From the strftime() manpage:
-### %b     The abbreviated month name according to the current locale.
-### %m     The month as a decimal number (range 01 to 12).
-### %d     The day of the month as a decimal number (range 01 to 31).
-### %e     Like %d, the day of the month as a decimal number, but a leading
-###        zero is replaced by a space.
-### %Y     The year as a decimal number including the century.
-### %I     The hour as a decimal number using a 12-hour clock (range 01 to 12).
-### %l     The hour (12-hour clock) as a decimal number (range  1  to  12);
-###        single digits are preceded by a blank.
-### %H     The hour as a decimal number using a 24-hour clock (range 00 to 23).
-### %M     The minute as a decimal number (range 00 to 59).
-### %p     Either  `AM'  or  `PM' according to the given time value, or the
-###        corresponding strings for the current locale.  Noon  is  treated
-###        as  `pm'  and  midnight as `am'.  Note that in many locales `am'
-###        and `pm' notation is unsupported  and  in  such  cases  %p  will
-###        return an empty string.
-"%b %e, %Y %l:%M %p"   "%e. %b %Y, %k:%M"   # this was for v2.* 
-"%m/%d/%Y %I:%M %p"    "%d. %m. %Y %H:%M"   # this is  for v3.*
-
-### Date format for Krang::Widget date_chooser()
-"%m/%d/%Y"    "%d. %m. %Y"
-
-### Set to 'AMPM' if your time should be in englich AM/PM format
-AMPM 0
-
-### Date format in Krang::ElementClass::Date
-"%b %e, %Y"   "%e. %b %Y"  # this was for v2.* and is for v3.*
-
-
-# Krang::CGI::History: ACTION_LABELS
 "Created"                        "angelegt"
 "Saved"                          "gesichert"
 "Checked In"                     "freigegeben"
@@ -678,8 +631,42 @@ AMPM 0
 "Deployed"                       "aktiviert"
 "Moved"                          "verschoben"
 "Reverted"                       "zu älterer Version zurück"
+"Ok"                             "OK"
 
-# Krang::Widget
-"Ok"                           "OK"
+##################################################################
+## DATES & TIMES
+##################################################################
+"One Time"              "Einmalig"
+"Hourly"                "Stündlich"
+"on the hour"           "zur vollen Stunde"
+"minutes past the hour" "Minuten nach der vollen Stunde"
+"Daily"                 "Täglich"
+"Weekly"                "Wöchentlich"
+"at"                    "um"
+"Jan"                   "Jan"
+"Feb"                   "Feb"
+"Mar"                   "März"
+"Apr"                   "Apr"
+"May"                   "Mai"
+"Jun"                   "Juni"
+"Jul"                   "Juli"
+"Aug"                   "Aug"
+"Sep"                   "Sep"
+"Oct"                   "Okt"
+"Nov"                   "Nov"
+"Dec"                   "Dez"
 
+#### Ordering of date popup menus: 0 = month, 1 = day, 2 = year 
+#### (in Krang::ElementClass::Date)
+"DATE_ORDER"    1 0 2
+### Set to 'AMPM' if your time should be in englich AM/PM format
+"AMPM"          "0"
+
+### Datetime format in History, Story, Media, Schedule and ElementClass
+### strftime format strings: http://linux.die.net/man/3/strftime
+"%b %e, %Y %l:%M %p"    "%e. %b %Y, %k:%M"
+"%m/%d/%Y %I:%M %p"     "%d. %m. %Y %H:%M"
+"%m/%d/%Y"              "%d. %m. %Y"
+"%m/%d/%y"              "%d.%m.%y"
+"%b %e, %Y"             "%e. %b %Y"
 

@@ -904,23 +904,15 @@ sub _get_weekdays {
 
 sub _get_datetime_semantic {
     my $self = shift;
-
-    our %indicators = (
-        'One Time'              => 'One Time',
-        Hourly                  => 'Hourly',
-        Daily                   => 'Daily',
-        Weekly                  => 'Weekly',
-        at                      => 'at',
-        'on the hour'           => 'on the hour',
-        'minutes past the hour' => 'minutes past the hour',
-    );
-
-    unless ($session{language} eq 'en') {
-        @indicators{'One Time', 'Hourly', 'on the hour', 'minutes past the hour', 'Daily', 'Weekly',
-            'at'} = split /\|/, localize('DATETIME_SEMANTIC');
-    }
-
-    return \%indicators;
+    return {
+        'One Time'              => localize('One Time'),
+        Hourly                  => localize('Hourly'),
+        Daily                   => localize('Daily'),
+        Weekly                  => localize('Weekly'),
+        at                      => localize('at'),
+        'on the hour'           => localize('on the hour'),
+        'minutes past the hour' => localize('minutes past the hour'),
+    };
 }
 
 1;

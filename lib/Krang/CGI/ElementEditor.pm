@@ -758,7 +758,7 @@ sub find_story_link_row_handler {
 
     # cover_date
     my $tp = $story->cover_date();
-    $row->{cover_date} = $self->_numeric_date_format($tp);
+    $row->{cover_date} = $self->_format_date($tp);
 
     # pub_status
     $row->{pub_status} = $story->published_version() ? '<b>' . localize('P') . '</b>' : '&nbsp;';
@@ -962,7 +962,7 @@ sub find_media_link_row_handler {
 
     # creation_date
     my $tp = $media->creation_date();
-    $row->{creation_date} = $self->_numeric_date_format($tp);
+    $row->{creation_date} = $self->_format_date($tp);
 
     # pub_status
     $row->{pub_status} = $media->published ? '<b>' . localize('P') . '</b>' : '&nbsp;';
@@ -1402,20 +1402,11 @@ sub _get_script_name {
     croak "_get_script_name() must be defined in child class '" . ref($self) . "'";
 }
 
-sub _numeric_date_format {
+sub _format_date {
     my ($self, $time_piece) = @_;
 
-    # default numeric date format
-    my $date_format    = 'mdy';
-    my $date_separator = '/';
-
-    # maybe change this format for other languages
-    unless ($session{language} eq 'en') {
-        ($date_format, $date_separator) = localize('NUMERIC_DATE_FORMAT');
-    }
-
     return ref($time_piece)
-      ? $self->query->escapeHTML($time_piece->$date_format($date_separator))
+      ? $self->query->escapeHTML($time_piece->strftime(localize('%m/%d/%y'))
       : localize('[n/a]');
 }
 
