@@ -128,7 +128,6 @@ use constant KEY   => 0;
 use constant VALUE => 1;
 
 sub start {
-warn "STARTING CACHE\n";
     $CACHE_ON++;
     if ($CACHE_ON == 1) {
         $CACHE_LOADS = 0;
@@ -139,7 +138,6 @@ warn "STARTING CACHE\n";
 }
 
 sub stop {
-warn "STOPPING CACHE\n";
     $CACHE_ON-- if $CACHE_ON;
     if ($CACHE_ON == 0) {
         %CACHE_POS = ();
