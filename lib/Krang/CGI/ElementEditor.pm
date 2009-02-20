@@ -1406,7 +1406,7 @@ sub _format_date {
     my ($self, $time_piece) = @_;
 
     return ref($time_piece)
-      ? $self->query->escapeHTML($time_piece->strftime(localize('%m/%d/%y'))
+      ? $self->query->escapeHTML($time_piece->strftime(localize('%m/%d/%y')))
       : localize('[n/a]');
 }
 
