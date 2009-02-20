@@ -542,7 +542,7 @@ sub log_handler ($$) {
     # must make sure the cache is off at the end of the request
     if (pkg('Cache')->active()) {
         critical("Cache still on in log handler!  This cache was started at "
-              . join(', ', @{$pkg('Cache')->stack(-1)})
+              . join(', ', @{pkg('Cache')->stack(-1)})
               . ".");
         pkg('Cache')->stop() while (pkg('Cache')->active());
     }
