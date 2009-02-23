@@ -1074,8 +1074,8 @@ sub save_and_add {
     my $self = shift;
 
     # call internal _save and return output from it on error
-    my $output = $self->_save();
-    return $output if length $output;
+#    my $output = $self->_save();
+#    return $output if length $output;
 
     return $self->add();
 }
@@ -1354,9 +1354,9 @@ sub revise {
     unless ($no_return) {
 
         # call internal _save and return output from it on error
-        $self->{_dont_revise_because_called_by_revise} = 1;    # uh, what a kludge
-        my $output = $self->_save();
-        return $output if length $output;
+#        $self->{_dont_revise_because_called_by_revise} = 1;    # uh, what a kludge
+#        my $output = $self->_save();
+#        return $output if length $output;
 
         return $self->edit();
     }
