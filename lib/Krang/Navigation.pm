@@ -143,7 +143,7 @@ sub render {
     } elsif ($depth == 2) {
         if ($kids) {
             $pre = qq{<b>$name</b>\n<dl>\n<dt>};
-            $post = "</dl>";
+            $post = "</dt>\n</dl>";
         } else {
             $pre = $name;
         }
@@ -291,7 +291,7 @@ sub default_tree {
     $access_node->condition(
         sub {
             ($_[0]->{admin}{admin_users} or $_[0]->{admin}{admin_users_limited})
-              || (shift->{admin}{admin_groups});
+              || [0]->{admin}{admin_groups};
         }
     );
     
@@ -308,17 +308,17 @@ sub default_tree {
     my $publish_node = $node->new_daughter();
     $publish_node->name('Publishing');
     $publish_node->condition(sub {
-        (shift->{admin}{admin_sites})
+        ($[0]->{admin}{admin_sites})
         ||
-        (shift->{admin}{admin_categories})
+        ($[0]->{admin}{admin_categories})
         ||
-        (shift->{admin}{admin_desks})
+        ($[0]->{admin}{admin_desks})
         ||
-        (shift->{admin}{admin_contribs})
+        ($[0]->{admin}{admin_contribs})
         ||
-        (shift->{admin}{admin_jobs})
+        ($[0]->{admin}{admin_jobs})
         ||
-        (shift->{admin}{admin_lists})
+        ($[0]->{admin}{admin_lists})
     });
 
     $sub = $publish_node->new_daughter();
