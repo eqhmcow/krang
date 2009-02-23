@@ -270,7 +270,7 @@ sub add_elements_to_media {
     if ($element_lib) {
         print "found\n\n";
     } else {
-        croak("failed - don't know where else to look!\n\n");
+        die "failed - don't know where else to look!\n\n";
     }
     
     # unless the media element module has already been built...
