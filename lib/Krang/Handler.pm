@@ -22,7 +22,7 @@ The basic order of events is:
 
 =cut
 
-use Apache::Constants qw(:response);
+use Apache::Constants qw(:response :common);
 use Apache::Cookie;
 use Apache::SizeLimit;
 use Apache::URI;
@@ -564,14 +564,18 @@ directive.
 sub cleanup_handler ($$) {
     my ($pkg, $r) = @_;
     return DECLINED unless $r->is_main;
+    my $status = $r->last->status;
+    return DECLINED unless $status == SERVER_ERROR;
 
     my $error = $r->notes('error-notes') || $ENV{ERROR_NOTES};
     if ($error && ErrorNotificationEmail) {
 
         # format an email message with all of the information that we want
         my $line = ('=' x 40);
-        my $msg  = "PERL ERROR\n$line\n%s\nSERVER\n$line\n%s\nURL\n$line\n%s\n\n"
+        my $msg  = "INSTANCE\n$line\n%s (%s)\n\nPERL ERROR\n$line\n%s\nSERVER\n$line\n%s\nURL\n$line\n%s\n\n"
           . "REQUEST\n$line\n%s\nENV\n$line\n%s\nHTTP STATUS\n$line\n%s";
+        my $instance = Arcos::Conf->instance();
+        my $instance_url = $r->hostname;
         my $server  = `hostname`;
         my $url     = $r->uri;
         my $request = $r->as_string();
@@ -580,7 +584,7 @@ sub cleanup_handler ($$) {
         $dumper->Indent(1);
         $dumper->Sortkeys(1);
         $dumper->Maxdepth(0);
-        $msg = sprintf($msg, $error, $server, $url, $request, $dumper->Dump, $r->status);
+        $msg = sprintf($msg, $instance, $instance_url, $error, $server, $url, $request, $dumper->Dump, $r->status);
 
         # now send the email to all configured recipients
         my @email = split(/\s*,\s*/, ErrorNotificationEmail);
@@ -589,7 +593,7 @@ sub cleanup_handler ($$) {
         $sender->MailMsg(
             {
                 to      => \@email,
-                subject => "[Krang] Internal Server Error",
+                subject => "[Krang] Internal Server Error - $instance",
                 msg     => $msg,
             }
         );
