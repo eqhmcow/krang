@@ -109,7 +109,7 @@ sub traverse_and_clear {
     find(
         {
             wanted      => \&clear_file,
-            follow_fast => 1,
+            follow      => 0,
             no_chdir    => 1,
         },
         $dir,
