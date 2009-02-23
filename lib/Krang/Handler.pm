@@ -572,10 +572,19 @@ sub cleanup_handler ($$) {
 
         # format an email message with all of the information that we want
         my $line = ('=' x 40);
-        my $msg  = "INSTANCE\n$line\n%s (%s)\n\nPERL ERROR\n$line\n%s\nSERVER\n$line\n%s\nURL\n$line\n%s\n\n"
+        my $msg =
+            "INSTANCE\n$line\n%s (%s)\n\nUSER\n$line\n%s (#%s)\n\nPERL ERROR\n$line\n%s\n"
+          . "SERVER\n$line\n%s\nURL\n$line\n%s\n\n"
           . "REQUEST\n$line\n%s\nENV\n$line\n%s\nHTTP STATUS\n$line\n%s";
-        my $instance = Arcos::Conf->instance();
+        my $instance     = Arcos::Conf->instance();
         my $instance_url = $r->hostname;
+        my $user_id      = $r->user;
+        my $login        = '';
+        if ($user_id) {
+            eval "require pkg('User')";
+            my ($user) = pkg('User')->find(user_id => $user_id);
+            $login = $user->login if $user;
+        }
         my $server  = `hostname`;
         my $url     = $r->uri;
         my $request = $r->as_string();
@@ -584,7 +593,9 @@ sub cleanup_handler ($$) {
         $dumper->Indent(1);
         $dumper->Sortkeys(1);
         $dumper->Maxdepth(0);
-        $msg = sprintf($msg, $instance, $instance_url, $error, $server, $url, $request, $dumper->Dump, $r->status);
+        $msg = sprintf($msg,
+            $instance, $instance_url, $login,   $user_id,      $error,
+            $server,   $url,          $request, $dumper->Dump, $r->status);
 
         # now send the email to all configured recipients
         my @email = split(/\s*,\s*/, ErrorNotificationEmail);
