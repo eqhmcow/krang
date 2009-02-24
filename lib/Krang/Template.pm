@@ -647,6 +647,8 @@ The list valid search fields is:
 
 =item * category_id
 
+=item * below_category_id
+
 =item * checked_out
 
 =item * checked_out_by
