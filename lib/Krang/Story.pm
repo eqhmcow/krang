@@ -1727,7 +1727,7 @@ or bin/ scripts make calls to C<find()>!
             # objectify dates
             for (qw(cover_date publish_date)) {
                 if ($obj->{$_} and $obj->{$_} ne '0000-00-00 00:00:00') {
-                    $obj->{$_} = Time::Piece->from_mysql_datetime($obj->{$_});
+                    $obj->{$_} = eval {Time::Piece->strptime($obj->{$_}, '%Y-%m-%d %H:%M:%S')};
                 } else {
                     $obj->{$_} = undef;
                 }

@@ -133,13 +133,13 @@ Thanx to Jesse Erlbaum for the referer-based solution to this problem.
 Also implemented a workaround in krang.js to force IE6/7 to send the
 referer when a link is passed through JavaScript. [Bodo Schulze]
 
-=item * 
+=item *
 
 Added a server-side paste filter to L<Krang::ElementClass::PoorText>,
 triggered by the onPaste event. [Bodo Schulze]
 
 
-=item * 
+=item *
 
 Added linked_stories() to L<Krang::ElementClass> to make this interface
 available to all element classes, especially WYSIWYG editors and the
@@ -194,7 +194,7 @@ that had been left unsaved in their session. [Noam Weinstein]
 
 =item *
 
-Fixed bug where it was possible from the View Schedule screen to 'View' the 
+Fixed bug where it was possible from the View Schedule screen to 'View' the
 version of a Story or Media currently open for edit, causing confusion and
 the possible loss of changes if the user clicked 'Edit' again. [Noam Weinstein]
 
@@ -220,6 +220,11 @@ screen. [Michael Peters]
 
 Change L<Krang::Cache> subs to be object methods instead so they can be
 overridden by addon's via subclasses. [Michael Peters]
+
+=item *
+
+Fixed bug in L<Krang::Story> that caused errors if an element library tried to
+use the cover_date and it was before Unix epoch time. [Brad Oaks]
 
 =back
 
