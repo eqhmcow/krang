@@ -317,12 +317,11 @@ sub load_query_data {
     $element->data(\@data);
 }
 
-# we override this method so that it won't escape the HTML
 sub view_data {
-    my ($self,    %arg)  = @_;
-    my ($element, $data) = @arg{qw(element data)};
+    my ($self, %arg) = @_;
 
-    return join('<br/>', @$data);
+    my @data = @{$arg{element}->data || []};
+    return scalar(@data) ? join("<br/>", @data) : '';
 }
 
 sub fill_template {

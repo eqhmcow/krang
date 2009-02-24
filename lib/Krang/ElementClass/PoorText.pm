@@ -162,7 +162,9 @@ END
 # we override this method so that it won't escape the HTML
 sub view_data {
     my ($self,    %arg)  = @_;
-    my ($element, $data) = @arg{qw(element data)};
+    my ($element) = @arg{qw(element)};
+
+    my $data = $arg{element}->data || [];
 
     return '' unless $data->[0];
 
