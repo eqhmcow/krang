@@ -6,9 +6,9 @@
         
         var script = info.documentRoot + "/template.pl?rm=search&do_advanced_search=1&search_template_id=" + info.id;
         
-        if (separator) {html += '<hr style="margin:3px 0px" class="__pinfo"/>';}
-        html += '<div class="__pinfo"><b class="__pinfo">File:</b> '+info.filename;
-        html += '<br/><b class="__pinfo">URL:</b> <a target="_blank" href="'+script+'" class="krang-find-template-link">'+info.url+'</a></div>';
+        if (separator) {html += '<hr style="margin:3px 0px" class="__skip_pinfo"/>';}
+        html += '<div class="__skip_pinfo"><b class="__skip_pinfo">File:</b> '+info.filename;
+        html += '<br/><b class="__skip_pinfo">URL:</b> <a target="_blank" href="'+script+'" class="krang-find-template-link __skip_pinfo">'+info.url+'</a></div>';
 
         return html;
     };
@@ -52,7 +52,7 @@
         var info    = '';
 
         // skip our info DIV
-        if (/__pinfo/.test(element.id) || element.hasClassName('__pinfo')) {
+        if (/__pinfo/.test(element.id) || element.hasClassName('__skip_pinfo')) {
             return;
         }
 
