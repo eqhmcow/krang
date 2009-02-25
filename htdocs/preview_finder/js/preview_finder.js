@@ -92,7 +92,29 @@
                 header: 'Template Info', width: '400px', cancelIconSrc : info.documentRoot + '/proto_popup/images/cancel.png'
             });
         }
-        pinfo(html);
+
+        /*
+          IE6/7 specials, still!
+
+          Under the tools/internet options menu, on the general tab,
+          when "Check for newer versions of stored pages" is set to
+          "Automatic", the following strange behavior occurs:
+
+          After a page reload via F5 (but also via Ctrl-F5) this click
+          handler, although unloaded, is somehow kept around.  A click
+          on the "Preview Finder" button (that gets redisplayed
+          because of the page reload) not only loads the JavaScript
+          file you're reading, but also executes this clickHandler!
+          Nonetheless, this stray execution fails to fill the info{}
+          object, so that the pinfo() function is created without the
+          cancelIconSrc being properly set. That's the convoluted
+          reason for the following if-else block. [Bodo Schulze]
+        */
+        if (info.documentRoot) {
+            pinfo(html);
+        } else {
+            pinfo = null;
+        }
 
         // and prevent the default behavior for links, unless it's our own link
         if (!element.hasClassName("krang-find-template-link")) {
