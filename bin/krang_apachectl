@@ -465,6 +465,6 @@ sub offline {
 
 sub combine_preview_finder_js {
     pkg('IO')->say("Making Combined JavaScript file for Preview Finder.");
-    system(catfile(KrangRoot, 'htdocs', 'preview_finder', 'bin', 'krang_combine_preview_finder_js'))
+    system(catfile(KrangRoot, 'htdocs', 'preview_finder', 'bin', 'krang_combine_preview_finder_js') . ' --minify')
       and die "Couldn't make JavaScript combined file: $?";
 }
