@@ -10,7 +10,7 @@ krang_combine_preview_finder_js - One JavaScript file for the template picker
 
 =head1 SYNOPSIS
 
-   krang_combine_preview_finder_js --verbose
+   krang_combine_preview_finder_js --minify --verbose
 
 =head1 DESCRIPTION
 
@@ -23,6 +23,10 @@ Finder" feature and puts it into htdocs/js/
 The script takes the following options:
 
 =over 4
+
+=item --minify
+
+Minify the combined file.
 
 =item --verbose
 
@@ -72,11 +76,12 @@ $@
 END
 }
 
-our ($help, $man, $verbose);
+our ($help, $man, $verbose, $minify);
 
 use Getopt::Long;
 use Pod::Usage;
 my $result = GetOptions(
+    'minify'   => \$minify,
     'verbose+' => \$verbose,
     'help'     => \$help,
     'man'      => \$man,
@@ -116,8 +121,11 @@ sub combine_files {
             open(my $IN, '<', $file) or die "Could not open file $file for reading: $!";
 
             # minify the JS file
-            $js_contents .= minify(<$IN>) . ';';
-            $js_contents .= <$IN> . ';';
+            if ($minify) {
+                $js_contents .= minify(<$IN>) . ';';
+            } else {
+                $js_contents .= <$IN> . ';';
+            }
         } else {
             warn "File $file does not exist.";
         }
