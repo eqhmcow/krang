@@ -1572,7 +1572,7 @@ sub _insert_comments_for_preview_finder {
         # infos for our instrumentation comment
         my $url  = $tmpl->url;
         my $id   = $tmpl->template_id;
-        my $json = qq[{filename : "$filename", url: "$url", documentRoot : "$document_root", id : $id}];
+        my $json = qq[{type: "template", id: $id, filename: "$filename", url: "$url", documentRoot: "$document_root"}];
 
         my $comment_start = "<!-- KrangPreviewFinder Start $json -->";
         my $comment_end   = "<!-- KrangPreviewFinder End $json -->";
@@ -1585,9 +1585,41 @@ sub _insert_comments_for_preview_finder {
         } else {
             push @$filters, sub { ${$_[0]} =~ s/(.*)/$comment_start$1$comment_end/ms };
         }
+
+        #
+        # additional instrumentation for SSIs
+        #
+        my $tmpl_content = $tmpl->content;
+        my %comment_for = ();
+
+        # get virtual include paths and map it to start/end comments
+        #               <!--#include virtual="the interesting part ending up in $2" --> 
+        my $regexp = qr{<!--#include\s+virtual\s*=\s*(["'])([^"']+)\1\s*-->};
+        while ($tmpl_content =~ /$regexp/gims) {
+            my $path = $2;
+            if (my ($ssi) = pkg('Media')->find(url_like => "%$path")) {
+                my $id    = $ssi->media_id;
+                my $url   = $ssi->url;
+                my $title = $ssi->title;
+                my $json  = qq[{type: "media", id: $id, title: "$title", url: "$url", documentRoot: "$document_root"}];
+                my $comment_start = "<!-- KrangPreviewFinder Start $json -->";
+                my $comment_end   = "<!-- KrangPreviewFinder End $json -->";
+                $comment_for{$path} = [$comment_start, $comment_end];
+            }
+        }
+
+        # push the start/end comments in
+        push @$filters, sub { ${$_[0]}
+           =~ s/$regexp/$comment_for{$2}[0]$&$comment_for{$2}[1]/gims
+        };
+
     }
 }
 
+#
+# returns the the "Preview Finder" button with the JavaScript it needs
+# to pull in the JavaScript needed by the preview finder feature.
+#
 sub _get_preview_finder_btn {
     my ($self, %arg) = @_;
     my ($document_root) = @arg{ qw(document_root) };

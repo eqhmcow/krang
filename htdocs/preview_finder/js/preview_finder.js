@@ -2,13 +2,22 @@
 (function() {
     // helper function to format infos extracted from our comment
     var formatInfo = function(info, separator) {
-        var html = '';
-        
-        var script = info.documentRoot + "/template.pl?rm=search&do_advanced_search=1&search_template_id=" + info.id;
-        
+        var html   = '';
+
+        var script = info.type == 'template'
+        ? info.documentRoot + "/template.pl?rm=search&do_advanced_search=1&search_template_id=" + info.id
+        : info.documentRoot + "/media.pl?rm=find&do_advanced_search=1&search_media_id=" + info.id;
+
         if (separator) {html += '<hr style="margin:3px 0px" class="__skip_pinfo"/>';}
-        html += '<div class="__skip_pinfo"><b class="__skip_pinfo">File:</b> '+info.filename;
-        html += '<br/><b class="__skip_pinfo">URL:</b> <a target="_blank" href="'+script+'" class="krang-find-template-link __skip_pinfo">'+info.url+'</a></div>';
+
+        html += info.type == 'template'
+        ? '<div class="__skip_pinfo"><strong class="__skip__pinfo">Template</strong> ' + info.id
+         +'<br /><strong class="__skip_pinfo">File:</strong> ' + info.filename
+        : '<div class="__skip_pinfo"><strong class="__skip__pinfo">Media</strong> ' + info.id
+         +'<br /><strong class="__skip_pinfo">Title:</strong> ' + info.title
+
+        html += '<br /><strong class="__skip_pinfo">URL:</strong> <a target="_blank" href="'
+               +script+'" class="krang-find-template-link __skip_pinfo">'+info.url+'</a></div>';
 
         return html;
     };
@@ -89,7 +98,7 @@
         // finally print it to the popup
         if (pinfo === null) {
             pinfo = ProtoPopup.makeFunction('__pinfo', {
-                header: 'Template Info', width: '400px', cancelIconSrc : info.documentRoot + '/proto_popup/images/cancel.png'
+                header: '<strong>Template / Media Info</strong>', width: '400px', cancelIconSrc : info.documentRoot + '/proto_popup/images/cancel.png'
             });
         }
 
