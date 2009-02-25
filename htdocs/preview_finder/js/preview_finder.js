@@ -89,7 +89,7 @@
         // finally print it to the popup
         if (pinfo === null) {
             pinfo = ProtoPopup.makeFunction('__pinfo', {
-                header: 'Template Info', width: '400px', documentRoot : info.documentRoot
+                header: 'Template Info', width: '400px', cancelIconSrc : info.documentRoot + '/proto_popup/images/cancel.png'
             });
         }
         pinfo(html);

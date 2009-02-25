@@ -116,8 +116,8 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
            <b>width</b> {STRING} - The width of the popup. Defaults to
            300px.<br/>
 
-           <b>documentRoot</b> {STRING} - The document root of the web
-           application. Defaults to undefined.<br/>
+           <b>cancelIconSrc</b> {STRING} - The src URL of the cancel
+           icon. Defaults to 'images/cancel.png'<br/>
 
            <b>zIndex</b> {NUMBER} - The z-index of the popup. Defaults
            to 0.<br/>
@@ -135,7 +135,7 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
             body             : undefined,
             footer           : undefined,
             width            : '300px',
-            documentRoot     : undefined,
+            cancelIconSrc    : 'images/cancel.png',
             zIndex           : 0
         };
 
@@ -157,9 +157,8 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
         this.popup = popup;
 
         // insert the cancel icon and attach click handler
-        var src = this.config.documentRoot ? this.config.documentRoot + '/images/cancel.png' : 'images/cancel.png';
         popup.insert(new Element('img', {
-            src     : src,
+            src     : this.config.cancelIconSrc,
             'class' : 'proto-popup-cancel'
         }).observe('click', function(e) { popup.hide(); Event.stop(e) }));;
 
