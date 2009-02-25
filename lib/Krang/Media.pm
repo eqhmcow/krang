@@ -1035,9 +1035,7 @@ offset - offset results by this number, else no offset.
 
 =item *
 
-=item * 
-
-url 
+url
 
 =item *
 
