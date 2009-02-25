@@ -1,0 +1,44 @@
+.proto-popup {
+  font-size: 12px;
+  font-family: Arial, Verdana, sans-serif;
+  color: #000000;
+  position: fixed;
+  cursor: move;
+  background-color: #EFEFFF;
+  border: 1px solid #6A5ACD;
+/*   overflow: auto;  */
+
+/* Required for Gecko < 2.0 (1.9) see bug #167801 overflow:auto works
+good for FF>1.5 But with FF 1.0.4 it shows the scroll bars if width
+and height are not set So we use the other workaround with
+position:fixed But that doesn't play nicely with draggables, so we
+revert to overflow, but we set it directly on a parent DIV of the text
+input fields.  */ 
+  padding: 10px;
+  width: 300px;
+}
+
+.proto-popup-header { 
+/*   border-bottom: 1px solid #6A5ACD; */
+  padding: 0px 10px 10px 0px;
+}
+
+.proto-popup-body { 
+  background-color: #FFFFE0;
+  padding: 10px;
+  clear: both;
+}
+
+.proto-popup-footer { 
+  padding: 10px 0px 0px;
+}
+
+img.proto-popup-cancel { 
+  float: right;
+  cursor: auto;
+  padding-bottom: 7px;
+}
+
+input.proto-popup-cancel-btn { 
+  margin-right: 5px;
+}

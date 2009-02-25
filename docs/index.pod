@@ -126,6 +126,10 @@ HREF[Build System|build_tech_spec.html] - How the Krang build system works.
 
 HREF[Localization API|localization_api.html] - How to use Krang's localization API.
 
+=item *
+
+HREF[JavaScript Documentation|javascript.html] - JavaScript documentation
+
 =back
 
 =head2 Technical Reference / Design Documentation

@@ -1,0 +1,11 @@
+=head1 JavaScript documentation
+
+=over
+
+=item *
+
+HREF[ProtoPopup|../htdocs/proto_popup/jsdoc/index.html] Technical documentation on ProtoPopup - a library providing draggable info boxes and alert- and confirm-like dialogs
+
+=back
+
+=cut
