@@ -188,6 +188,7 @@ sub start {
     make_js_localizer();
     prepare_for_browser_speed_boost();
     make_js_for_poortext();
+    combine_preview_finder_js();
 
     print "krang_apachectl $command: starting httpd\n";
     unless (system($httpd)) {
@@ -462,3 +463,8 @@ sub offline {
     }
 }
 
+sub combine_preview_finder_js {
+    pkg('IO')->say("Making Combined JavaScript file for Preview Finder.");
+    system(catfile(KrangRoot, 'htdocs', 'preview_finder', 'bin', 'krang_combine_preview_finder_js'))
+      and die "Couldn't make JavaScript combined file: $?";
+}

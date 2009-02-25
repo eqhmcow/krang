@@ -10,7 +10,8 @@ use HTML::Template::Expr;
 use Encode qw(decode_utf8 encode_utf8);
 
 use Krang::ClassLoader Log          => qw(debug info critical);
-use Krang::ClassLoader Conf         => qw(PreviewSSL);
+use Krang::ClassLoader Conf         => qw(HostName ApachePort InstanceHostName InstanceApachePort
+                                          InstanceSSLPort SSLApachePort PreviewSSL);
 use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'Pref';
 
@@ -721,6 +722,16 @@ sub find_template {
             }
         }
         push @filters, sub { ${$_[0]} = decode_utf8(encode_utf8(${$_[0]})) };
+
+        # Instrument the template for "Template Finder"
+        if ($publisher->is_preview) {
+            $self->_insert_comments_for_preview_finder(
+                filters   => \@filters,
+                publisher => $publisher,
+                filename  => $filename
+            );
+        }
+
         $args{filter} = \@filters;
     }
 
@@ -1527,6 +1538,91 @@ sub _build_contrib_loop {
     }
 
     return \@contributors;
+}
+
+sub _insert_comments_for_preview_finder {
+    my ($self, %arg) = @_;
+    my ($filters, $publisher, $filename) = @arg{ qw(filters publisher filename) };
+    my $category = $publisher->category;
+    my $tmpl;
+
+    # find the template that will actually be used
+    for my $cat ($category, $category->ancestors) {
+        my $cat_id = $cat->dir eq '/' ? undef : $cat->category_id;
+        ($tmpl) = pkg('Template')->find(category_id => $cat_id,
+                                        filename    => $filename);
+        last if $tmpl;
+    }
+
+    if ($tmpl) {
+        # get our document root
+        my $document_root = $ENV{HTTPS} ? 'https://' : 'http://';
+        my $host_name = HostName;
+        my $instance_host_name = InstanceHostName;
+        if ($host_name && $host_name eq $ENV{SERVER_NAME}) {
+            my $port        = $ENV{HTTPS} ? SSLApachePort : ApachePort;
+            $document_root .= $host_name . ':' . $port . '/' . pkg('Conf')->instance();
+        } elsif ($instance_host_name && $instance_host_name eq $ENV{SERVER_NAME}) {
+            my $port        = $ENV{HTTPS} ? (InstanceSSLPort || SSLApachePort) : (InstanceApachePort || ApachePort);
+            $document_root .= $instance_host_name . ':' . $port;
+        } else {
+            croak __PACKAGE__ . "::find_template() - SERVER_NAME differs from from HostName and InstanceHostName";
+        }
+
+        # infos for our instrumentation comment
+        my $url  = $tmpl->url;
+        my $id   = $tmpl->template_id;
+        my $json = qq[{filename : "$filename", url: "$url", documentRoot : "$document_root", id : $id}];
+
+        my $comment_start = "<!-- KrangPreviewFinder Start $json -->";
+        my $comment_end   = "<!-- KrangPreviewFinder End $json -->";
+
+        # instrument the template
+        if ($filename eq 'category.tmpl') {
+            my $preview_finder_btn = $self->_get_preview_finder_btn(document_root => $document_root);
+            push @$filters, sub { ${$_[0]} =~ s/(<body[^>]*>)/$1$comment_start/msi };
+            push @$filters, sub { ${$_[0]} =~ s/(<\/body[^>]*>)/$comment_end$preview_finder_btn$1/msi };
+        } else {
+            push @$filters, sub { ${$_[0]} =~ s/(.*)/$comment_start$1$comment_end/ms };
+        }
+    }
+}
+
+sub _get_preview_finder_btn {
+    my ($self, %arg) = @_;
+    my ($document_root) = @arg{ qw(document_root) };
+
+    my $btn_label = localize('Preview Finder');
+    my $loading   = localize('Loading');
+
+    my $btn_css = "background: #cee7ff; color: #690; width: 110px; border: 1px solid #bbb; border-color: #eee #bbb #bbb #eee; padding: .1em .5em; font-size: 12px; position: fixed; left: 0; bottom: 0";
+
+    my $indicator_css = "background-color: #cee7ff; color: #666; filter: alpha(opacity=90); opacity: .9; position: fixed; z-index: 32767; left: 0; bottom: 0; border: 1px solid #369; padding: 0.5em 0.6em; width: 70px; font-size: 9px; font-weight: bold; display: none";
+
+    return <<END;
+<script type="text/javascript">
+var __Krang_Preview_Finder__ = function() {
+    var btn = document.getElementById('__krang_preview_finder_btn__');
+    if (btn) { btn.style.display = 'none' }
+    var ind = document.getElementById('__krang_preview_finder_indicator__');
+    if (ind) { ind.style.display = '' }
+    var tpCSS = document.createElement('link');
+    tpCSS.type="text/css";
+    tpCSS.rel="stylesheet";
+    tpCSS.href='$document_root/proto_popup/css/proto_popup.css';
+    document.getElementsByTagName("head")[0].appendChild(tpCSS);
+    var tpScript = document.createElement('script');
+    tpScript.setAttribute('language','JavaScript');
+    tpScript.setAttribute('src','$document_root/js/preview_finder.js');
+    document.body.appendChild(tpScript);
+}
+</script>
+<div id="__krang_preview_finder_indicator__" style="$indicator_css">
+<img alt="" src="$document_root/images/indicator_small_bluebg.gif" style="padding 0 1em 0 0; vertical-align:middle">
+$loading&hellip;
+</div>
+<input type="button" id="__krang_preview_finder_btn__" onclick="__Krang_Preview_Finder__()" value="$btn_label" style="$btn_css"/>
+END
 }
 
 =back

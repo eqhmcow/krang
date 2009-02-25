@@ -1,0 +1,1 @@
+The prototype.js in this directory has the dom:loaded function call stripped of. IE chokes otherwise.
