@@ -1088,9 +1088,10 @@ Krang.update_order = function( select, prefix ) {
     (either 'story' or 'media') with a certain id (if no id is present
     it will preview the one currently in the session)
 */
-Krang.preview = function(type, id) {
+    Krang.preview = function(type, id, tmpl_picker) {
     var url = 'publisher.pl?rm=preview_' + type + '&'
-            + ( ( id == null ) ? ( 'session=' + type ) : ( type + '_id=' + id ) );
+            + ( ( id == null ) ? ( 'session=' + type ) : ( type + '_id=' + id ) )
+            + '&tmpl_picker=' + tmpl_picker;
 
     var instance = Krang.instance;
     // remove problematic characters for use as window name (IE may otherwise choke)
@@ -1798,7 +1799,21 @@ var rules = {
         el.observe('mouseout', function(event) {
             Krang.Tooltip.Media.hide();
         }.bindAsEventListener(el));
-    }
+    },
+    '.story-preview-link' : function(el) {
+        el.observe('click', function(event) {
+            var elm = event.element();
+            var name = elm.readAttribute('name');
+            if (!name) return;
+            var story_id = name.split(/_/);
+            var tmpl_picker = 0;
+            if (event.shiftKey) {
+                tmpl_picker = 1;
+            }
+            Krang.preview(story_id[0], story_id[1], tmpl_picker);
+            Event.stop(event);
+        }.bindAsEventListener(el));
+    }        
 };
 
 /*
