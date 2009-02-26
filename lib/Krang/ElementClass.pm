@@ -1665,13 +1665,6 @@ $loading&hellip;
 END
 }
 
-##<style type="text/css">
-###krang_preview_finder_btn__ {
-##position: absolute; top: expression(document.body.parentElement.scrollTop + document.documentElement.clientHeight - this.clientHeight - 4); left: expression(0 - document.documentElement.clientLeft - document.body.offsetLeft);
-##}
-##</style>
-
-
 =back
 
 =head1 TODO
