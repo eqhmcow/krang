@@ -385,8 +385,6 @@ Krang.Ajax.request = function(args) {
           // do something
         }
     });
-
-    TODO: handle GET and POST differently
 */
 Krang.Ajax.update = function(args) {
     var url       = args.url;
