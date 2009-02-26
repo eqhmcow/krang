@@ -793,7 +793,7 @@ sub _can_handle_gzip {
             $bd = HTTP::BrowserDetect->new($r->header_in('User-Agent'));
             $r->pnotes(browser_detecor => $bd);
         }
-        if ($bd->ie && $bd->version < 6) {
+        if ($bd->ie && $bd->version <= 6) {
             return 0;
         } else {
             return 1;
