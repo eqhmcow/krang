@@ -537,9 +537,12 @@ Krang.Form = {
             // save the old target of the form so we can restore it after
             // submission
             var old_target = form.target;
+            var old_url = form.action;
+            form.action = Krang.Window.pass_id(old_url);
             form.target = window.name + '_b';
             form.submit();
             form.target = old_target;
+            form.action = old_url;
         } else {
             Krang.show_indicator();
 
@@ -1076,6 +1079,7 @@ Krang.update_order = function( select, prefix ) {
 Krang.preview = function(type, id) {
     var url = 'publisher.pl?rm=preview_' + type + '&'
     + ( ( id == 'null' ) ? ( 'session=' + type ) : ( type + '_id=' + id ) )
+    url = Krang.Window.pass_id(url);
 
     var instance = Krang.instance;
     // remove problematic characters for use as window name (IE may otherwise choke)
