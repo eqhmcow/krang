@@ -122,6 +122,7 @@
         if (info.documentRoot) {
             pinfo(html);
         } else {
+            $('__pinfo').remove();
             pinfo = null;
         }
 
