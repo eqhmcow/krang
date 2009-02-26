@@ -136,11 +136,7 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
             footer           : undefined,
             width            : '300px',
             cancelIconSrc    : 'images/cancel.png',
-            zIndex           : 0,
-            top              : undefined,
-            right            : undefined,
-            bottom           : undefined,
-            left             : undefined
+            zIndex           : 0
         };
 
         // merge in the config
@@ -278,12 +274,6 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
         this.popup.show();
         if (this.config.centerOnCreation) {
             this.centerIt();
-            ['top', 'right', 'bottom', 'left'].each(function(where) {
-                if (this.config[where] != 'undefined') {
-                    console.log(where+' '+this.config[where]);
-                    this.popup.style[where] = this.config[where];
-                }
-            }.bind(this));
             this.config.centerOnCreation = false;
         }
         this.onShow.each(function(f) {
