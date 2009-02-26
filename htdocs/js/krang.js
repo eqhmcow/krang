@@ -62,18 +62,7 @@ Krang.load = function(target) {
     this at least let's you check it easier.
 */
 Krang.is_ie_6 = function() {
-    var ua = navigator.userAgent;
-    var offset = ua.indexOf('MSIE ');
-    if (offset == -1) {
-        return 0;
-    } else {
-        var version = parseFloat(ua.substring(offset+5, ua.indexOf(';', offset)));
-        if (version < 7) {
-            return 1;
-        } else {
-            return 0;
-        }
-    }
+    return Prototype.Browser.IEVersion == 6;
 }
 
 /*
@@ -1780,11 +1769,6 @@ var rules = {
             mode     : 'named'
         });
     },
-    //IE6 requires a little help with the flyout navigation menuing:
-    '#H .nav .menu' : function( el ) {
-        if ( Krang.is_ie_6() )
-            el.onmouseover = el.onmouseout = function(){ this.toggleClassName( 'over' ); };
-    },
     // popup tooltips for thumbnails
     'img.thumbnail' : function( el ) {
         var url = el.src.replace(/\/(m|t)__/, '/');
@@ -1820,7 +1804,7 @@ var rules = {
 /*
   IE6- rules only
 */
-if (Prototype.Browser.IEVersion < 7) {
+if (Krang.is_ie_6) {
     // for the big green dropdown menu buttons in the panels
     // IE needs some help here (this may not be necessary for IE7)
     Object.extend(rules,{
@@ -1832,6 +1816,9 @@ if (Prototype.Browser.IEVersion < 7) {
             el.observe('mouseout', function(ev) {
                 el.removeClassName('over');
             });
+        },
+        '#H .nav .menu' : function( el ) {
+            el.onmouseover = el.onmouseout = function(){ this.toggleClassName( 'over' ); };
         }
     });
 }
