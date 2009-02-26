@@ -1025,7 +1025,8 @@ sub _find_media_link_row_handler {
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url(
         url     => $media->url,
-        link_to => "javascript:Krang.preview('media', $id)",
+        class   => 'media-preview-link',
+        name    => "media_$id",
         length  => 60,
     );
 
@@ -1033,7 +1034,7 @@ sub _find_media_link_row_handler {
     my $thumbnail_path = $media->thumbnail_path(relative => 1);
     if ($thumbnail_path) {
         $row->{thumbnail} = qq|
-           <a href="javascript:Krang.preview('media',$id)">
+           <a href="" class="media-preview-link" name="media_$id">
               <img alt="" src="$thumbnail_path" class="thumbnail">
            </a>
         |;

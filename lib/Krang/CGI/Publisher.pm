@@ -610,7 +610,8 @@ sub _build_asset_list {
                 id  => $asset->story_id,
                 url => format_url(
                     url    => $asset->url,
-                    linkto => "javascript:Krang.preview('story','" . $asset->story_id . "')",
+                    class  => 'story-preview-link',
+                    name   => 'story_' . $asset->story_id,
                     length => 20
                 ),
                 title       => $asset->title,
@@ -623,7 +624,8 @@ sub _build_asset_list {
                 id  => $asset->media_id,
                 url => format_url(
                     url    => $asset->url,
-                    linkto => "javascript:Krang.preview('media','" . $asset->media_id . "')",
+                    class  => 'media-preview-link',
+                    name   => 'media_' . $asset->media_id,
                     length => 20
                 ),
                 title       => $asset->title,

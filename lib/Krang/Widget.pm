@@ -54,8 +54,24 @@ Krang::Widget - interface widgets for use by Krang::CGI modules
   $date_obj = decode_date(name => 'cover_date',
                           query => $query);
 
+  # event handler as HTML attribute is deprecated
   $url_html = format_url(url => 'http://my.host/some/long/url.html',
                          linkto => "javascript:Krang.preview('media','" . $id . "')");
+
+  # make DOM2 event handler instead, see the behaviors
+  # 'media-preview-link' and 'story-preview-link' in
+  # F<htdocs/js/krang.js>
+  #
+  # For media
+  $url_html = format_url(url   => 'http://my.host/some/long/media.html',
+                         class => 'media-preview-link',
+                         name  => 'media_$id');
+
+  # For stories
+  $url_html = format_url(url   => 'http://my.host/some/long/media.html',
+                         class => 'story-preview-link',
+                         name  => 'story_$id');
+
 
 =head1 DESCRIPTION
 
@@ -729,7 +745,7 @@ sub format_url {
     my %args = @_;
 
     # Validate calling input
-    my ($url, $linkto, $length) = @args{qw/url linkto length/};
+    my ($url, $linkto, $length, $name, $class) = @args{qw/url linkto length name class/};
     croak("Missing required argument 'url'") unless ($url);
 
     $length = 15 unless ($length);
@@ -750,6 +766,9 @@ sub format_url {
 
         # URL with links
         $format_url_html = qq{<a href="$linkto">} . join('<wbr>', @url_lines) . qq{</a>};
+    } elsif ($name) {
+        # DOM2 event handling
+        $format_url_html = qq{<a href="" name="$name" class="$class">} . join('<wbr>', @url_lines) . qq{</a>};
     } else {
 
         # URL without links

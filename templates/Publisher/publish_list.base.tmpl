@@ -94,7 +94,7 @@ Krang.onload( function() {
     <td><tmpl_var escape=html title></td>
     <td><tmpl_var url><!--:markup--></td>
     <td><tmpl_if thumbnail>
-      <a title="<tmpl_lang Preview> <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html id>')"><img alt="" src="<tmpl_var escape=html thumbnail>"></a>
+      <a href="" title="<tmpl_lang Preview> <tmpl_var escape=html title>" class="media-preview-link" name="media_<tmpl_var escape=html id>"><img alt="" src="<tmpl_var escape=html thumbnail>"></a>
     </tmpl_if></td>
     <td class="l"><tmpl_var status><!--:markup--></td>
     </tr>

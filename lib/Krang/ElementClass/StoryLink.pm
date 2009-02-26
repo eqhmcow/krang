@@ -43,7 +43,7 @@ sub input_form {
           . $story->title
           . qq{"<br>}
           . localize('URL:')
-          . qq{ <a href="javascript:Krang.preview('story',$story_id)">}
+          . qq{ <a href="" class="story-preview-link" name="story_$story_id">}
           . pkg('Widget')->can('format_url')->(url => $story->url, length => 30)
           . qq{</a></div>};
     }
@@ -90,7 +90,7 @@ sub view_data {
           . $story->title
           . qq{"<br>}
           . localize('URL:')
-          . qq{ <a href="javascript:Krang.preview('story',$story_id)">}
+          . qq{ <a href="" class="story-preview-link" name="story_$story_id">}
           . $story->url
           . qq{</a>};
     }

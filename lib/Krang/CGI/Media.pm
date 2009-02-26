@@ -1536,7 +1536,7 @@ sub list_active_row_handler {
     my $thumbnail_path = $media->thumbnail_path(relative => 1);
     if ($thumbnail_path) {
         $row->{thumbnail} =
-          qq{<a href="javascript:Krang.preview('media', $media_id)"><img src="$thumbnail_path" border="0" class="thumbnail"></a>};
+          qq{<a href="" name="media_$media_id" class="media-preview-link"><img src="$thumbnail_path" border="0" class="thumbnail"></a>};
     } else {
         $row->{thumbnail} = "&nbsp;";
     }
@@ -1544,7 +1544,8 @@ sub list_active_row_handler {
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url(
         url    => $media->url(),
-        linkto => "javascript:Krang.preview('media', $media_id)"
+        class  => 'media-preview-link',
+        name   => "media_$media_id",
     );
 
     # title
@@ -1704,7 +1705,8 @@ sub make_media_tmpl_data {
         $tmpl_data{thumbnail_path} = $thumbnail_path;
         $tmpl_data{url}            = format_url(
             url    => $m->url(),
-            linkto => "javascript:Krang.preview('media', null)",
+            class  => 'media-preview-link',
+            name   => 'media_null',
             length => 50
         );
         $tmpl_data{published_version} = $m->published_version();
@@ -1841,7 +1843,8 @@ sub make_media_view_tmpl_data {
 
     $tmpl_data{url} = format_url(
         url    => $m->url(),
-        linkto => "javascript:Krang.preview('media','" . $tmpl_data{media_id} . "')",
+        class  => 'media-preview-link',
+        name   => "media_$tmpl_data{media_id}",
         length => 50
     );
 
@@ -2055,7 +2058,8 @@ sub find_media_row_handler {
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url(
         url    => $media->url(),
-        linkto => "javascript:Krang.preview('media','" . $media_id . "')"
+        class  => 'media-preview-link',
+        name   => "media_$media_id",
     );
 
     # title
@@ -2066,7 +2070,7 @@ sub find_media_row_handler {
         my $thumbnail_path = $media->thumbnail_path(relative => 1);
         if ($thumbnail_path) {
             $row->{thumbnail} = qq|
-              <a href="javascript:Krang.preview('media','$media_id')">
+              <a href="" class="media-preview-link" name="media_$media_id">
                 <img alt="" src="$thumbnail_path" class="thumbnail">
               </a>
             |;

@@ -70,7 +70,7 @@ do_return = function()
 
 <tr>
 <td class="f"><tmpl_lang URL></td>
-<td class="l"><tmpl_var escape=html url></td>
+<td class="l"><tmpl_if is_story><a href="" class="story-preview-link" name="story_<tmpl_var escape=html id>"><tmpl_var escape=html url></a></tmpl_if><tmpl_if is_media><a href="" class="media-preview-link" name="media_<tmpl_var escape=html id>"><tmpl_var escape=html url></a></tmpl_if></td>
 </tr>
 
 <tmpl_if is_story>

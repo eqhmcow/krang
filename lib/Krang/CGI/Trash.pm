@@ -138,7 +138,8 @@ sub _row_handler {
     if ($obj->{linkto}) {
         $row->{url} = format_url(
             url    => $obj->{url},
-            linkto => "javascript:Krang.preview('$obj->{type}'," . $obj->{id} . ")",
+            name   => $obj->{type} . '_' . $obj->{id},
+            class  => $obj->{type} . '-preview-link',
             length => 50
         );
     } else {

@@ -711,7 +711,8 @@ sub view {
         type     => localize($story->element->display_name),
         url      => format_url(
             url    => $story->url,
-            linkto => "javascript:Krang.preview('story','" . $story->story_id() . "')",
+            name   => 'story_' . $story->story_id,
+            class  => 'story-preview-link',
             length => 50,
         ),
         version => $story->version
@@ -2268,7 +2269,8 @@ sub find_story_row_handler {
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url(
         url    => $story->url(),
-        linkto => "javascript:Krang.preview('story','" . $row->{story_id} . "')"
+        name   => 'story_' . $row->{story_id},
+        class  => 'story-preview-link',
     );
 
     # cover_date
@@ -2392,7 +2394,8 @@ sub list_active_row_handler {
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url(
         url    => $story->url(),
-        linkto => "javascript:Krang.preview('story','" . $row->{story_id} . "')"
+        name   => 'story_' . $row->{story_id},
+        class  => 'story-preview-link',
     );
 
     # title
@@ -2609,7 +2612,7 @@ sub alert_duplicate_url {
             '',
             map {
                 sprintf(
-                    qq{<tr>  <td> %d </td>  <td> <a href="javascript:Krang.preview('story',%d)">%s</a> </td>  </tr>},
+                    qq{<tr>  <td> %d </td>  <td> <a href="" class="story-preview-link" name="story_%d">%s</a> </td>  </tr>},
                     $_->{id}, $_->{id}, $_->{url})
               } @{$error->stories}
         );

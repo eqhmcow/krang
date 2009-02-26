@@ -178,7 +178,7 @@ Krang.onload( function() {
 
 <span class="east">
   <tmpl_if thumbnail_path>
-    <tmpl_if media_id><a title="<tmpl_lang Preview> <tmpl_var escape=html title>" href="javascript:Krang.preview('media',null)"></tmpl_if>
+    <tmpl_if media_id><a href="" title="<tmpl_lang Preview> <tmpl_var escape=html title>" class="media-preview-link" name="media_null"></tmpl_if>
     <img alt="" src="<tmpl_var escape=html thumbnail_path>">
     <tmpl_if media_id></a></tmpl_if>
   </tmpl_if>
@@ -235,7 +235,7 @@ Krang.onload( function() {
     <td>
     <tmpl_if filename>
       <tmpl_lang Current File>
-      <tmpl_if media_id><a href="javascript:Krang.preview('media',null)"></tmpl_if><tmpl_var escape=html filename><tmpl_if media_id></a></tmpl_if>
+      <tmpl_if media_id><a href="" class="media-preview-link" name="media_null"></tmpl_if><tmpl_var escape=html filename><tmpl_if media_id></a></tmpl_if>
       <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
       <i>&mdash; <tmpl_lang or> &mdash;</i>
       <br>
@@ -320,7 +320,7 @@ Krang.onload( function() {
       <tmpl_if filename>
         <tmpl_lang Current File>
         <tmpl_if media_id>
-          <a href="javascript:Krang.preview('media',null)"><tmpl_var escape=html filename></a>
+          <a href="" class="media-preview-link" name="media_null"><tmpl_var escape=html filename></a>
         <tmpl_else>
           <tmpl_var escape=html filename>
         </tmpl_if>

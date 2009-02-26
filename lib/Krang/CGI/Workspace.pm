@@ -137,7 +137,8 @@ sub _row_handler {
         $row->{is_story}   = 1;
         $row->{url}        = format_url(
             url    => $obj->url,
-            linkto => "javascript:Krang.preview('story'," . $obj->story_id . ")",
+            name   => 'story_' . $obj->story_id,
+            class  => 'story-preview-link',
             length => 50
         );
 
@@ -173,7 +174,8 @@ sub _row_handler {
         $row->{is_media}  = 1;
         $row->{url}       = format_url(
             url    => $obj->url,
-            linkto => "javascript:Krang.preview('media', " . $obj->media_id . ")",
+            name   => 'media_' . $obj->media_id,
+            class  => 'media-preview-link',
             length => 50
         );
         $date = $obj->creation_date();

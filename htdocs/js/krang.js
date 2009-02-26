@@ -741,7 +741,6 @@ Krang.Nav = {
                     // see http://webbugtrack.blogspot.com/search/label/HTTP%20Referer
                     var a = new Element('a', {href : Krang.Window.pass_id(url)});
                     document.body.appendChild(a);
-                    console.log(a);
                     a.click();
                 } else {
                     window.location = Krang.Window.pass_id(url);
@@ -1088,14 +1087,14 @@ Krang.update_order = function( select, prefix ) {
     (either 'story' or 'media') with a certain id (if no id is present
     it will preview the one currently in the session)
 */
-    Krang.preview = function(type, id) {
+Krang.preview = function(type, id) {
     var url = 'publisher.pl?rm=preview_' + type + '&'
-            + ( ( id == null ) ? ( 'session=' + type ) : ( type + '_id=' + id ) )
+    + ( ( id == 'null' ) ? ( 'session=' + type ) : ( type + '_id=' + id ) )
 
     var instance = Krang.instance;
     // remove problematic characters for use as window name (IE may otherwise choke)
     instance = instance.toLowerCase().replace( new RegExp( '[^a-z]' , 'g' ), '' );
-   
+
     var pop = window.open( Krang.Window.pass_id(url), instance + 'preview' );
 
     if ( pop ) pop.focus();
@@ -1806,6 +1805,16 @@ var rules = {
             if (!name) return;
             var story_id = name.split(/_/);
             Krang.preview(story_id[0], story_id[1]);
+            Event.stop(event);
+        }.bindAsEventListener(el));
+    },
+    '.media-preview-link' : function(el) {
+        el.observe('click', function(event) {
+            var elm = event.findElement('a');
+            var name = elm.readAttribute('name');
+            if (!name) return;
+            var media_id = name.split(/_/);
+            Krang.preview(media_id[0], media_id[1]);
             Event.stop(event);
         }.bindAsEventListener(el));
     }        

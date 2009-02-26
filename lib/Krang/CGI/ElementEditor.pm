@@ -202,7 +202,7 @@ use Carp qw(croak);
 use Krang::ClassLoader Session      => qw(%session);
 use Krang::ClassLoader Log          => qw(debug assert affirm ASSERT);
 use Krang::ClassLoader Message      => qw(add_message get_messages add_alert);
-use Krang::ClassLoader Widget       => qw(category_chooser date_chooser decode_date);
+use Krang::ClassLoader Widget       => qw(category_chooser date_chooser decode_date format_url);
 use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'BulkEdit::Textarea';
 use Krang::ClassLoader 'BulkEdit::Xinha';
@@ -741,17 +741,11 @@ sub find_story_link_row_handler {
     $row->{story_id} = $story->story_id();
 
     # format url to fit on the screen and to link to preview
-    my $url       = $story->url();
-    my @parts     = split('/', $url);
-    my @url_lines = (shift(@parts), "");
-    for (@parts) {
-        if ((length($url_lines[-1]) + length($_)) > 15) {
-            push(@url_lines, "");
-        }
-        $url_lines[-1] .= "/" . $_;
-    }
-    $row->{url} = join('<wbr>',
-        map { qq{<a href="javascript:Krang.preview('story',$row->{story_id})">$_</a>} } @url_lines);
+    $row->{url} = format_url(
+        url     => $story->url,
+        class   => 'story-preview-link',
+        name    => "story_$row->{story_id}",
+    );
 
     # title
     $row->{title} = $q->escapeHTML($story->title);
@@ -937,22 +931,16 @@ sub find_media_link_row_handler {
     $row->{media_id} = $media->media_id();
 
     # format url to fit on the screen and to link to preview
-    my $url       = $media->url();
-    my @parts     = split('/', $url);
-    my @url_lines = (shift(@parts), "");
-    for (@parts) {
-        if ((length($url_lines[-1]) + length($_)) > 15) {
-            push(@url_lines, "");
-        }
-        $url_lines[-1] .= "/" . $_;
-    }
-    $row->{url} = join('<wbr>',
-        map { qq{<a href="javascript:Krang.preview('media',$row->{media_id})">$_</a>} } @url_lines);
+    $row->{url} = format_url(
+        url     => $media->url,
+        class   => 'media-preview-link',
+        name    => "media_$row->{media_id}",
+    );
 
     my $thumbnail_path = $media->thumbnail_path(relative => 1);
     if ($thumbnail_path) {
         $row->{thumbnail} = qq|
-           <a href="javascript:Krang.preview('media',$row->{media_id})">
+           <a href="" class="media-preview-link" name="media_$row->{media_id}">
               <img alt="" src="$thumbnail_path" class="thumbnail">
            </a>
         |;

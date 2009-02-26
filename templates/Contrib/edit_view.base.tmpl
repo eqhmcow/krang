@@ -130,7 +130,7 @@ cancel_contrib_change = function()
 <td>
 <tmpl_if media_id>
   <img alt="" src="<tmpl_var escape=html thumbnail_path>">
-  <a href="javascript:Krang.preview('media','<tmpl_var escape=html media_id>')"><tmpl_var escape=html filename></a>
+  <a href="" class="media-preview-link" name="media_<tmpl_var escape=html media_id>"><tmpl_var escape=html filename></a>
   <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
   <br>
 </tmpl_if>
