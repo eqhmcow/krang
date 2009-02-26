@@ -1627,9 +1627,17 @@ sub _get_preview_finder_btn {
     my $btn_label = localize('Preview Finder');
     my $loading   = localize('Loading');
 
-    my $btn_css = "background: #cee7ff; color: #690; width: 110px; border: 1px solid #bbb; border-color: #eee #bbb #bbb #eee; padding: .1em .5em; font-size: 12px; position: fixed; left: 0; bottom: 0";
+    my $btn_css = "background: #cee7ff; color: #690; width: 110px; border: 1px solid #bbb; border-color: #eee #bbb #bbb #eee; padding: .1em .5em; font-size: 12px; z-index: 32767;";
 
-    my $indicator_css = "background-color: #cee7ff; color: #666; filter: alpha(opacity=90); opacity: .9; position: fixed; z-index: 32767; left: 0; bottom: 0; border: 1px solid #369; padding: 0.5em 0.6em; width: 70px; font-size: 9px; font-weight: bold; display: none";
+    my $indicator_css = "background-color: #cee7ff; color: #666; filter: alpha(opacity=90); opacity: .9; z-index: 32766; border: 1px solid #369; padding: 0.5em 0.6em; width: 70px; font-size: 9px; font-weight: bold;";
+
+    if ($ENV{KRANG_BROWSER_ENGINE} eq 'IE' and $ENV{KRANG_BROWSER_MAJOR_VERSION} == 6) {
+        $btn_css .= "position: absolute; top: expression(document.documentElement.scrollTop + document.documentElement.clientHeight - this.clientHeight - 3); left: expression(0 - document.documentElement.clientLeft - document.body.offsetLeft + 8);";
+        $indicator_css .= "position: absolute; top: expression(document.documentElement.scrollTop + document.documentElement.clientHeight - this.clientHeight - 2 ); left: expression(0 - document.documentElement.clientLeft - document.body.offsetLeft + 12); display: none"; # display:none must *follow* the css expression!
+    } else {
+        $btn_css       .= "position:fixed; bottom:0; left:0";
+        $indicator_css .= "position:fixed; bottom:0; left:0; display:none";
+    }
 
     return <<END;
 <script type="text/javascript">
@@ -1656,6 +1664,13 @@ $loading&hellip;
 <input type="button" id="__krang_preview_finder_btn__" onclick="__Krang_Preview_Finder__()" value="$btn_label" style="$btn_css"/>
 END
 }
+
+##<style type="text/css">
+###krang_preview_finder_btn__ {
+##position: absolute; top: expression(document.body.parentElement.scrollTop + document.documentElement.clientHeight - this.clientHeight - 4); left: expression(0 - document.documentElement.clientLeft - document.body.offsetLeft);
+##}
+##</style>
+
 
 =back
 
