@@ -129,7 +129,7 @@ cancel_contrib_change = function()
 <th><tmpl_lang Photograph></th>
 <td>
 <tmpl_if media_id>
-  <img alt="" src="<tmpl_var escape=html thumbnail_path>">
+  <a href="" class="media-preview-link" name="media_<tmpl_var escape=html media_id>"><img alt="" src="<tmpl_var escape=html thumbnail_path>" class="thumbnail"></a>
   <a href="" class="media-preview-link" name="media_<tmpl_var escape=html media_id>"><tmpl_var escape=html filename></a>
   <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
   <br>
@@ -164,6 +164,11 @@ cancel_contrib_change = function()
 </div>
 
 </form>
+
+<!-- tooltips for media previews: -->
+<div id="tooltip"><img id="tooltip-img" src="<tmpl_var static_url>/images/icon-loading-small.gif" /></div>
+<img id="tooltip-pointer" src="<tmpl_var static_url>/images/tooltip_arrow.gif" />
+<!-- :tooltips for media previews -->
 
 <tmpl_include footer.tmpl>
 

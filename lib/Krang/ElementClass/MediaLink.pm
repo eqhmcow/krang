@@ -48,7 +48,7 @@ sub input_form {
           qq{<div style="padding-bottom: 2px; margin-bottom: 2px; border-bottom: solid #333333 1px">}
           . (
             $thumbnail_path
-            ? qq{<a href="" class="media-preview-link" name="media_$media_id"><img src="$thumbnail_path" align=bottom border=0></a> }
+            ? qq{<a href="" class="media-preview-link" name="media_$media_id"><img src="$thumbnail_path" align=bottom border=0 class="thumbnail"></a> }
             : ""
           )
           . qq{<a href="" class="media-preview-link" name="media_$media_id">}
@@ -107,7 +107,7 @@ sub view_data {
         my $thumbnail_path = $media->thumbnail_path(relative => 1);
         $html .= (
             $thumbnail_path
-            ? qq{<a href="" class="media-preview-link" name="media_$media_id"><img src="$thumbnail_path" align=bottom border=0></a> }
+            ? qq{<a href="" class="media-preview-link" name="media_$media_id"><img src="$thumbnail_path" align=bottom border=0 class="thumbnail"></a> }
             : ""
           )
           . qq{<a href="" class="media-preview-link" name="media_$media_id">}
