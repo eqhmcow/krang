@@ -149,7 +149,7 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 
         var popup = new Element('div', {id : id, 'class' : 'proto-popup'})
             .setStyle({width : this.config.width, zIndex : this.config.zIndex}).hide();
-            
+
         /**
            The popup div having {@link #id} as its ID, 'proto-popup'
            as its class attribute.
