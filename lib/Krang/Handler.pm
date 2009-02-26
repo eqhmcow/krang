@@ -52,7 +52,7 @@ use Krang::ClassLoader Conf => qw(
 use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader 'AddOn';
 use Krang;
-use Krang::ClassLoader 'Session' => qw(%session);
+use Krang::ClassLoader Session => qw(%session);
 use CSS::Minifier::XS;
 use JavaScript::Minifier::XS;
 use Mail::Sender;
@@ -363,22 +363,28 @@ sub authen_handler ($$) {
     # Get window_id from query
     my %args = $r->args();
     my $window_id = $args{window_id} || '';
+    debug("Got window_id $window_id from request");
 
     # User opened a new window manually, typed or copied URL or
     # accessed it via History: make sure we create a new id for this
     # new window
     if ($window_id && not $r->header_in("Referer")) {
         undef $window_id;
+        debug("No referer header; Unsetting window_id");
     }
 
     # Get session_id for window_id
     if ($window_id) {
 
         # existing window
+        debug("Retrieving session from wid_$window_id cookie");
         $session_id = $cookie{"wid_$window_id"};
 
         # if there's no $session_id for this window, logout happened in other window
-        undef $window_id unless $session_id;
+        if(!$session_id) {
+            undef $window_id;
+            debug("No session found; Unsetting window_id");
+        }
     }
 
     # No window ID means no session for this window: create a new one
@@ -388,6 +394,7 @@ sub authen_handler ($$) {
         $window_id = $cookie{next_wid}++;
 
         # new session
+        debug("Creating new session for new window_id $window_id");
         $session_id = pkg('Session')->create();
 
         # store mapping between new window ID and new session ID in cookie
