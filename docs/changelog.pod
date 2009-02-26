@@ -8,6 +8,35 @@ This document contains a list of changes for each release of Krang.
 
 =item
 
+Fixed a bug preventing to add a photo to a new contributor when coming
+from associate contrib. [Bodo Schulze]
+
+=item
+
+Added thumbnail preview to L<Krang::ElementClass::MediaLink> and
+contrib edit screen. [Bodo Schulze]
+
+=item
+
+Replaced JavaScript links in story and media preview links with DOM2
+event handlers everywhere. [Bodo Schulze]
+
+=item
+
+Added "Preview Finder" feature. After clicking the "Preview Finder"
+button on story preview screens, clicking anywhere on the page
+provides information on the template (and its parents) or the media
+text file (for SSI) responsible for generating the piece of content
+that was clicked. [Bodo Schulze]
+
+=item
+
+Added JavaScript library ProtoPopup in F<htdocs/proto_popup/>
+providing draggable info boxes as well as alert-like and confirm-like
+dialogs. [Bodo Schulze]
+
+=item
+
 L<Krang::AddOn>: When installing an addon, install the upgrade/
 subdir, too - to self-document the upgrade. [Bodo Schulze]
 
