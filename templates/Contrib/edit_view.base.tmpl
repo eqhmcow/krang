@@ -23,11 +23,11 @@ cancel_contrib_change = function()
   save_stay = function() {
     Krang.Form.submit('edit_contrib_form', { rm: 'save_stay_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' }, { to_top: false });
   }
-
-  find_media = function() {
-    Krang.Form.submit('edit_contrib_form', { rm: 'save_and_find_media_link' });
-  }
 </tmpl_unless>
+
+find_media = function() {
+    Krang.Form.submit('edit_contrib_form', { rm: 'save_and_find_media_link' });
+}
 
 </script>
 
@@ -39,7 +39,7 @@ cancel_contrib_change = function()
 </tmpl_if>
 </h2>
 
-<form name="edit_contrib_form" method="post" enctype="multipart/form-data" action="contributor.pl">
+<form id="edit_contrib_form" name="edit_contrib_form" method="post" enctype="multipart/form-data" action="contributor.pl">
 
 <input name="rm" value="save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>" type="hidden">
 <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
