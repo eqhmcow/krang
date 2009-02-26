@@ -323,7 +323,7 @@ sub preview_story {
     # if they didn't give us enough to find the story
     # take them back to the workspace
     unless ($story_id or $session_key) {
-        info "Missing required story_id or session parameter. " . "Redirecting to workspace.";
+        info("Missing required story_id or session parameter. Redirecting to workspace.");
         return $self->redirect_to_workspace;
     }
 
