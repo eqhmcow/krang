@@ -154,6 +154,7 @@ sub stop {
 sub active { $CACHE_ON ? 1 : 0 }
 
 sub size {
+    my $pkg = shift;
     return $CACHE_SIZE unless @_;
     $CACHE_SIZE = shift;
     _cull() if $CACHE_FILL > $CACHE_SIZE;
