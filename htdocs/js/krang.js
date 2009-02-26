@@ -158,8 +158,22 @@ Krang.popup = function(url, options) {
     var height = options.height || 600;
     var width  = options.width  || 800;
     url = Krang.Window.pass_id(url);
-    var win = window.open( url, 'krangpopup', 'width=' + width + ',height=' + height + ',top=25,left=50,resizable,scrollbars,status' );
-    if ( win ) win.focus();
+
+    if (Prototype.Browser.IE) {
+        // we need the referer to be sent
+        // see http://webbugtrack.blogspot.com/search/label/HTTP%20Referer
+        var a = new Element('a', {href : url });
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+    } else {
+        var win = window.open(
+            url,
+            'krangpopup',
+            'width=' + width + ',height=' + height + ',top=25,left=50,resizable,scrollbars,status'
+        );
+        if ( win ) win.focus();
+    }
 };
 
 /*
@@ -1077,15 +1091,24 @@ Krang.update_order = function( select, prefix ) {
 */
 Krang.preview = function(type, id) {
     var url = 'publisher.pl?rm=preview_' + type + '&'
-    + ( ( id == 'null' ) ? ( 'session=' + type ) : ( type + '_id=' + id ) )
+    + ( ( id == null ) ? ( 'session=' + type ) : ( type + '_id=' + id ) )
+    url = Krang.Window.pass_id(url);
 
     var instance = Krang.instance;
     // remove problematic characters for use as window name (IE may otherwise choke)
     instance = instance.toLowerCase().replace( new RegExp( '[^a-z]' , 'g' ), '' );
 
-    var pop = window.open( Krang.Window.pass_id(url), instance + 'preview' );
-
-    if ( pop ) pop.focus();
+    if (Prototype.Browser.IE) {
+        // we need the referer to be sent
+        // see http://webbugtrack.blogspot.com/search/label/HTTP%20Referer
+        var a = new Element('a', {href : url });
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+    } else {
+        var pop = window.open( url, instance + 'preview' );
+        if ( pop ) pop.focus();
+    }
 }
 
 /*

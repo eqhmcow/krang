@@ -1,20 +1,3 @@
-<tmpl_if nav_global_admin><script type="text/javascript">
-//(db2)this is broken:
-debug_catcher = function( evt )
-{
-  evt = evt ? evt : ( ( event ) ? event : null );
-
-  if ( !evt || !evt.altKey || !evt.ctrlKey ) return;
-
-  var code = evt.keyCode ? evt.keyCode : evt.charCode;
-
-  if ( code == 100 )
-    window.open( 'debug.pl', '', 'width=800,height=700,resizeable');
-}
-
-document.onkeypress = debug_catcher;
-</script></tmpl_if>
-
 <!--Krang::Navigation:-->
 <tmpl_var nav_content>
 <!--:Krang::Navigation-->
