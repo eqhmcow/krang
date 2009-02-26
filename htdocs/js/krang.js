@@ -1078,7 +1078,6 @@ Krang.update_order = function( select, prefix ) {
 Krang.preview = function(type, id) {
     var url = 'publisher.pl?rm=preview_' + type + '&'
     + ( ( id == 'null' ) ? ( 'session=' + type ) : ( type + '_id=' + id ) )
-    url = Krang.Window.pass_id(url);
 
     var instance = Krang.instance;
     // remove problematic characters for use as window name (IE may otherwise choke)
