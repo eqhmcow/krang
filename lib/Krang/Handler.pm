@@ -587,7 +587,7 @@ sub cleanup_handler ($$) {
         my $instance     = Arcos::Conf->instance();
         my $instance_url = $r->hostname;
         my $user_id      = $r->user;
-        my $timestamp    = scalar locatime;
+        my $timestamp    = scalar localtime;
         my $login        = '';
         if ($user_id) {
             eval "require pkg('User')";
