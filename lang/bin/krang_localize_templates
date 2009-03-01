@@ -96,6 +96,7 @@ option --print_missing to get a list of missing localizations.
 
 use File::Find;
 use File::Spec::Functions qw(catdir catfile splitdir canonpath);
+use File::Basename qw(basename);
 use File::Path;
 use FindBin qw($RealBin);
 use Config;
@@ -159,14 +160,6 @@ use Krang::ClassLoader 'IO';
 # record missing localizations
 $ENV{KRANG_RECORD_MISSING_LOCALIZATIONS} = $print_missing;
 
-my @single_templates = (
-    qw(
-      footer
-      header
-      nav
-      )
-);
-
 # also localize addon /templates
 for my $tmpl_root (pkg('File')->find_all('templates')) {
     show("### Localizing templates below '$tmpl_root'", 1);
@@ -175,8 +168,9 @@ for my $tmpl_root (pkg('File')->find_all('templates')) {
     my $templates = collect_templates_in_root($tmpl_root);
 
     # add templates in tmpl root to collection
-    push @$templates, map { {root => $tmpl_root, dir => $tmpl_root, file => "$_.base.tmpl"} }
-      grep { -e catfile($tmpl_root, "$_.base.tmpl") } @single_templates;
+    push @$templates, map {
+        {root => $tmpl_root, dir => $tmpl_root, file => basename($_, '.base.tmpl') . '.base.tmpl'}
+    } glob(catfile($tmpl_root, '*.base.tmpl'));
 
     # localize it
     localize_templates($templates);
