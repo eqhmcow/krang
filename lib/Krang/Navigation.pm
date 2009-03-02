@@ -85,12 +85,6 @@ sub fill_template {
     $TREE{$instance} = $pkg->initialize_tree($instance, \%perms);
 
     $template->param(nav_content => $pkg->render($TREE{$instance}, \%perms));
-
-    # set global admin if all admin perms are on
-    $template->param(nav_global_admin => 1)
-      unless grep { not $perms{admin}{$_} }
-          grep { $_ ne 'admin_users_limited' }
-          keys %{$perms{admin}};
 }
 
 # render the navigation menu held in the navigation tree
