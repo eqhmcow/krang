@@ -46,7 +46,7 @@ update_prefs = function() {
   </td>
   </tr>
 
-  <tr class="evden">
+  <tr>
   <td class="f"><tmpl_lang Autocomplete Searches?></td>
   <td class="l"><tmpl_var use_autocomplete_selector></td>
   </tr>
@@ -68,6 +68,13 @@ update_prefs = function() {
   <tr>
   <td class="f"><tmpl_lang Select Language></td>
   <td class="l"><tmpl_var language_selector></td>
+  </tr>
+  </tmpl_if>
+
+  <tmpl_if use_preview_finder_selector>
+  <tr>
+  <td class="f"><tmpl_lang Enable Preview Finder?></td>
+  <td class="l"><tmpl_var use_preview_finder_selector></td>
   </tr>
   </tmpl_if>
 </tmpl_unless>

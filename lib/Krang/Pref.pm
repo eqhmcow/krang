@@ -88,6 +88,10 @@ our %CONFIG = (
         type => 'scalar',
         row  => 'syntax_highlighting',
     },
+    use_preview_finder => {
+        type => 'scalar',
+        row  => 'use_preview_finder'
+    },
 );
 
 =pod

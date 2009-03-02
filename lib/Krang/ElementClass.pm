@@ -14,6 +14,7 @@ use Krang::ClassLoader Conf         => qw(HostName ApachePort InstanceHostName I
                                           InstanceSSLPort SSLApachePort PreviewSSL EnablePreviewFinder);
 use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader 'MyPref';
 
 use Exception::Class
   'Krang::ElementClass::TemplateNotFound' =>
@@ -724,7 +725,7 @@ sub find_template {
         push @filters, sub { ${$_[0]} = decode_utf8(encode_utf8(${$_[0]})) };
 
         # Instrument the template for "Template Finder"
-        if (EnablePreviewFinder && $publisher->is_preview) {
+        if ($publisher->is_preview && EnablePreviewFinder && pkg('MyPref')->get('use_preview_finder')) {
             $self->_insert_comments_for_preview_finder(
                 filters   => \@filters,
                 publisher => $publisher,

@@ -67,6 +67,10 @@ our %CONFIG = (
         type => 'scalar',
         row  => 'config',
     },
+    use_preview_finder => {
+        type => 'scalar',
+        row  => 'use_preview_finder'
+    },
 );
 
 =pod
