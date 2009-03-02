@@ -11,7 +11,7 @@ use Encode qw(decode_utf8 encode_utf8);
 
 use Krang::ClassLoader Log          => qw(debug info critical);
 use Krang::ClassLoader Conf         => qw(HostName ApachePort InstanceHostName InstanceApachePort
-                                          InstanceSSLPort SSLApachePort PreviewSSL);
+                                          InstanceSSLPort SSLApachePort PreviewSSL EnablePreviewFinder);
 use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'Pref';
 
@@ -724,7 +724,7 @@ sub find_template {
         push @filters, sub { ${$_[0]} = decode_utf8(encode_utf8(${$_[0]})) };
 
         # Instrument the template for "Template Finder"
-        if ($publisher->is_preview) {
+        if (EnablePreviewFinder && $publisher->is_preview) {
             $self->_insert_comments_for_preview_finder(
                 filters   => \@filters,
                 publisher => $publisher,
