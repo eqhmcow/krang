@@ -722,7 +722,7 @@ sub find_story_link {
         pager_html                       => $pager->output(),
         row_count                        => $pager->row_count,
         action                           => $self->_get_script_name,
-        editor_insert_storylink_function => $query->param('editor_insert_storylink_function'),
+        editor_insert_storylink_function => scalar $query->param('editor_insert_storylink_function'),
     );
 
     return $template->output;
