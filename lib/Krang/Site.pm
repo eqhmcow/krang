@@ -259,7 +259,7 @@ sub delete {
         dir     => '/',
         site_id => $id
     );
-    $root->delete();
+    $root->delete() if $root; # only need to do this if the category hasn't already been deleted
 
     # remove record from the site table
     my $dbh = dbh();
