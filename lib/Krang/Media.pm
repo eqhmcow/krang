@@ -2415,6 +2415,15 @@ sub STORABLE_thaw {
     eval { %$self = %{thaw($data)} };
     croak("Unable to thaw media: $@") if $@;
 
+    # do we have an element? These were added in 3.04 so older versions before
+    # that won't have one, so add it.
+    unless($self->{element} ) {
+        $self->{element} = pkg('Element')->new(
+            class  => pkg('ElementClass::Media')->element_class_name,
+            object => $self
+        );
+    }
+
     return $self;
 }
 
