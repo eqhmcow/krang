@@ -1056,6 +1056,9 @@ sub autocomplete_values {
         $phrase = $cgi->param('phrase');
     }
 
+    # we need to escape special characters that could throw off SQL regular expressions
+    $phrase = quotemeta($phrase);
+
     # query the db for these values
     my $sql =
         "SELECT "
