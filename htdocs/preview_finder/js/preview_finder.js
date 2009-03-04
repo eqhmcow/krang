@@ -1,4 +1,6 @@
-// get a popup
+/**
+   Krang Preview Finder Module
+ */
 (function() {
     // helper function to format infos extracted from our comment
     var formatInfo = function(info, separator) {
@@ -49,7 +51,8 @@
         return acc;
     }
 
-    var startRE = /Start/;
+    var startRE = /KrangPreviewFinder Start/;
+    var endRE   = /KrangPreviewFinder End/;
     var pinfo   = null;
 
     // register a click handler
@@ -76,14 +79,18 @@
                     }
                     return null;
                 }
+
                 if (startRE.test(comment)) {
                     // a start tag: extract info
                     comment = comment.replace(/KrangPreviewFinder Start/, '').strip();
                     info = comment.evalJSON();
                     return info;
-                } else {
+                } else if (endRE.test(comment)) {
                     // an end tag: we are not interested in the corresponding start tag
                     skip = true;
+                    return null;
+                } else {
+                    // another comment
                     return null;
                 }
         });
