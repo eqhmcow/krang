@@ -1829,7 +1829,7 @@ var rules = {
 /*
   IE6- rules only
 */
-if (Krang.is_ie_6) {
+if (Krang.is_ie_6()) {
     // for the big green dropdown menu buttons in the panels
     // IE needs some help here (this may not be necessary for IE7)
     Object.extend(rules,{
