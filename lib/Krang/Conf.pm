@@ -313,6 +313,26 @@ sub instances {
     return map { $_->[1] } @instances;
 }
 
+sub cms_root {
+    my $pkg = shift;
+    my $cms_root = $ENV{HTTPS} ? 'https://' : 'http://';
+    my $host_name = $pkg->get('hostname');
+    my $instance_host_name = $pkg->get('instancehostname');
+    if ($host_name && $host_name eq $ENV{SERVER_NAME}) {
+        my $port        = $ENV{HTTPS} ? $pkg->get('sslapacheport') : $pkg->get('apacheport');
+        $cms_root .= $host_name . ':' . $port . '/' . $pkg->instance();
+    } elsif ($instance_host_name && $instance_host_name eq $ENV{SERVER_NAME}) {
+        my $port = $ENV{HTTPS}
+          ? ($pkg->get('instancesslport')    || $pkg->get('sslapacheport')) 
+          : ($pkg->get('instanceapacheport') || $pkg->get('apacheport'));
+        $cms_root .= $instance_host_name . ':' . $port;
+    } else {
+        croak __PACKAGE__ . "::cms_root() - SERVER_NAME '$ENV{SERVER_NAME}' differs from from HostName '$host_name' and InstanceHostName '$instance_host_name'";
+    }
+
+    return $cms_root;
+}
+
 =item C<< Krang::Conf->check() >>
 
 Sanity-check Krang configuration.  This will die() with an error
