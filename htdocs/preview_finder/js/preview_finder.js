@@ -2,13 +2,18 @@
    Krang Preview Finder Module
  */
 (function() {
+    // positioning of top overlay
+    if (Prototype.Browser.IEVersion == 6) {
+        $('krang_preview_editor_top_overlay').setStyle({position: 'absolute'});
+    }
+
     // helper function to format infos extracted from our comment
     var formatInfo = function(info, separator) {
         var html   = '';
 
         var script = info.type == 'template'
-        ? info.documentRoot + "/template.pl?rm=search&do_advanced_search=1&search_template_id=" + info.id
-        : info.documentRoot + "/media.pl?rm=find&do_advanced_search=1&search_media_id=" + info.id;
+        ? info.cmsRoot + "/template.pl?rm=search&do_advanced_search=1&search_template_id=" + info.id
+        : info.cmsRoot + "/media.pl?rm=find&do_advanced_search=1&search_media_id=" + info.id;
 
         if (separator) {html += '<hr style="margin:3px 0px" class="__skip_pinfo"/>';}
 
@@ -55,8 +60,9 @@
     var endRE   = /KrangPreviewFinder End/;
     var pinfo   = null;
 
-    // register a click handler
-    document.observe('click', function(e) {
+    // template finder click handler, looks up the info in the special
+    // comments, formats them and display them in a popup
+    var templateFinderClickHandler = function(e) {
 
         var element = e.element();
         var html    = '';
@@ -64,7 +70,8 @@
         var info    = '';
 
         // skip our info DIV
-        if (/__pinfo/.test(element.id) || element.hasClassName('__skip_pinfo')) {
+        if (/__pinfo/.test(element.id) || element.hasClassName('__skip_pinfo')
+            || element.hasClassName('krang_preview_editor_element_label')) {
             return;
         }
 
@@ -105,37 +112,117 @@
         // finally print it to the popup
         if (pinfo === null) {
             pinfo = ProtoPopup.makeFunction('__pinfo', {
-                header: '<strong>Template / Media Info</strong>', width: '400px', cancelIconSrc : info.documentRoot + '/proto_popup/images/cancel.png'
+                header:         '<strong>Template / Media Info</strong>',
+                width:          '400px',
+                cancelIconSrc : info.cmsRoot + '/proto_popup/images/cancel.png'
             });
         }
 
-        /*
-          IE6/7 specials, still!
-
-          Under the tools/internet options menu, on the general tab,
-          when "Check for newer versions of stored pages" is set to
-          "Automatic", the following strange behavior occurs:
-
-          After a page reload via F5 (but also via Ctrl-F5) this click
-          handler, although unloaded, is somehow kept around.  A click
-          on the "Preview Finder" button (that gets redisplayed
-          because of the page reload) not only loads the JavaScript
-          file you're reading, but also executes this clickHandler!
-          Nonetheless, this stray execution fails to fill the info{}
-          object, so that the pinfo() function is created without the
-          cancelIconSrc being properly set. That's the convoluted
-          reason for the following if-else block. [Bodo Schulze]
-        */
-        if (info.documentRoot) {
+        if (info.cmsRoot) {
             pinfo(html);
-        } else {
-            $('__pinfo').remove();
-            pinfo = null;
         }
 
         // and prevent the default behavior for links, unless it's our own link
         if (!element.hasClassName("krang-find-template-link")) {
             Event.stop(e);
         }
+        return false;
+    };
+    document.observe('click', templateFinderClickHandler);
+
+/*
+
+                --- Preview Editor ---
+
+
+*/
+
+    // no overlay, no functionality
+    if (! $('krang_preview_editor_toggle')) { return }
+
+    // click handler for container element labels, posts back to the
+    // CMS to open the corresponding container element in the "Edit Story" UI
+    var labelClickHandler = function(e) {
+        var label   = e.element();
+        var info    = label.readAttribute('name');
+        var cms     = info.evalJSON();
+        var url     = cms.cmsRoot + '/story.pl';
+        var params  = {
+            window_id: cms.windowID,
+            rm:        'edit',
+            story_id:  cms.storyID,
+            path:      cms.elementXPath
+        };
+
+        if (Object.isFunction(window.postMessage)) {
+            // HTML5 feature implemented by Firefox 3
+            params['ajax'] = 1;
+            window.opener.postMessage(url + "\uE000" + Object.toJSON(params), cms.cmsRoot);
+        } else if (Prototype.Browser.IE) {
+
+            // this hack does not work for communications back to the CMS window
+
+//            var a = new Element('a', {href:   url + '?' + Object.toQueryString(params)});
+//            a.target = "krang_window_" + cms.windowID;
+//            document.body.appendChild(a);
+//            a.click();
+        } else {
+            window.open(url + '?' + Object.toQueryString(params), "krang_window_" + cms.windowID);
+        }
+
+
+    };
+
+    // position the labels
+    var positionLabels = function() {
+        $$('.krang_preview_editor_element_label').reverse().each(function(contElm) {
+                var offset = contElm.next().cumulativeOffset();
+                contElm.show().setStyle({left: offset.left - 7 + 'px', top: offset.top - 23 + 'px'})
+    })};
+    positionLabels();
+
+    // reposition them when resizing the window
+    Event.observe(window, 'resize', positionLabels);
+
+    // make them clickable
+    $$('.krang_preview_editor_element_label').reverse().each(function(contElm) {
+            var id     = contElm.identify();
+            contElm.show().observe('click', labelClickHandler);
     });
+
+    // activate/deactivate the editor and the template/media finder
+    var activateDeactivate = function(e) {
+        if ($('krang_preview_editor_activate').visible()) {
+            $('krang_preview_editor_activate').hide();
+            $('krang_preview_editor_deactivate').show();
+            document.observe('click', templateFinderClickHandler);
+        } else {
+            $('krang_preview_editor_activate').show();
+            $('krang_preview_editor_deactivate').hide();
+            document.stopObserving('click', templateFinderClickHandler);
+        }
+        $$('.krang_preview_editor_element_label').invoke('toggle');
+    };
+    $('krang_preview_editor_toggle').observe('click', activateDeactivate);
+    
+    // deactivate finder (maybe editor too) and hide the top overlay (bring it back pressing F5)
+    var deactivateHide = function(e) {
+        document.stopObserving('click', templateFinderClickHandler);
+        Event.stopObserving(window, 'resize', positionLabels);
+        $$('.krang_preview_editor_element_label').invoke('hide');
+        $('krang_preview_editor_top_overlay').hide();
+        $('krang_preview_editor_top_spacer').hide();
+        try { $('__pinfo').hide() } catch(er) {}
+        Event.stop(e);
+    }
+    $('krang_preview_editor_close').observe('click', deactivateHide);
+
+    // show help
+    var helpLink = $('krang_preview_editor_help');
+    var helpURL  = helpLink.readAttribute('name');
+    var showHelp = function() {
+        window.open(helpURL, "kranghelp", "width=400,height=500");
+    }
+    helpLink.observe('click', showHelp);
+
 })();
