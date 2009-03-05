@@ -480,7 +480,7 @@ sub edit {
 
     # set fields shown everywhere
     $template->param(
-        story_id => $story->story_id || "N/A",
+        story_id => $story->story_id || localize("N/A"),
         type => localize($story->element->display_name),
         url  => $story->url
         ? format_url(
@@ -1079,7 +1079,7 @@ sub preview_and_stay {
 
     # re-load edit window and have it launch new window for preview
     my $edit_window = $self->edit || '';
-    my $js_for_preview = qq|<script type="text/javascript">Krang.preview('story', null);</script>|;
+    my $js_for_preview = qq|<script type="text/javascript">Krang.preview('story', null, 'preview_editor');</script>|;
     return ($edit_window . $js_for_preview);
 }
 

@@ -137,7 +137,7 @@ sub _row_handler {
         $row->{is_story}   = 1;
         $row->{url}        = format_url(
             url    => $obj->url,
-            name   => 'story_' . $obj->story_id,
+            name   => 'story_' . $obj->story_id . '_withPreviewEditor',
             class  => 'story-preview-link',
             length => 50
         );
