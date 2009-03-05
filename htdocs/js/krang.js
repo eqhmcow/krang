@@ -162,8 +162,9 @@ Krang.popup = function(url, options) {
     if (Prototype.Browser.IE) {
         // we need the referer to be sent
         // see http://webbugtrack.blogspot.com/search/label/HTTP%20Referer
+        // the 'target' attribute takes arbitrary values in IE6/7 (undocumented)
         var a = new Element('a', {href : url });
-        a.target = '_blank';
+        a.target = 'krangpopup';
         document.body.appendChild(a);
         a.click();
     } else {
@@ -1089,9 +1090,12 @@ Krang.update_order = function( select, prefix ) {
     (either 'story' or 'media') with a certain id (if no id is present
     it will preview the one currently in the session)
 */
-Krang.preview = function(type, id) {
-    var url = 'publisher.pl?rm=preview_' + type + '&'
-    + ( ( id == null ) ? ( 'session=' + type ) : ( type + '_id=' + id ) )
+Krang.preview = function(type, id, withPreviewEditor) {
+    var url = 'publisher.pl?rm=preview_' + type
+    + '&' + ( ( id == null      ) ? ( 'session=' + type      ) : ( type + '_id=' + id      ) )
+    + '&' + ( (withPreviewEditor) ? ( 'with_preview_editor=1') : ( 'with_preview_editor=0' ) ); 
+
+    // attach the preview window to our session
     url = Krang.Window.pass_id(url);
 
     var instance = Krang.instance;
@@ -1101,8 +1105,9 @@ Krang.preview = function(type, id) {
     if (Prototype.Browser.IE) {
         // we need the referer to be sent
         // see http://webbugtrack.blogspot.com/search/label/HTTP%20Referer
+        // the 'target' attribute takes arbitrary values in IE6/7 (undocumented)
         var a = new Element('a', {href : url });
-        a.target = '_blank';
+        a.target = instance;
         document.body.appendChild(a);
         a.click();
     } else {
@@ -1806,11 +1811,12 @@ var rules = {
     },
     '.story-preview-link' : function(el) {
         el.observe('click', function(event) {
-            var elm = event.element();
+            var elm  = event.element();
             var name = elm.readAttribute('name');
             if (!name) return;
             var story_id = name.split(/_/);
-            Krang.preview(story_id[0], story_id[1]);
+            //               'story' ,     ID     , 'withPreviewEditor'
+            Krang.preview(story_id[0], story_id[1], story_id[2]);
             Event.stop(event);
         }.bindAsEventListener(el));
     },
@@ -1867,3 +1873,34 @@ Krang.ElementClass = {};
    creating PoorText fields, like Krang::ElementClass::PoorText
  */
 Krang.PoorTextCreationArguments = new Array;
+
+/*
+
+                Preview Editor
+
+*/
+
+/**
+   Message handler called by previewed story's postMessage() - a HTML5
+   feature implemented by Firefox 3
+*/
+if (Object.isFunction(window.postMessage)) {
+    window.addEventListener('message', function(e) {
+
+        var cmsURL = window.location.protocol + '//' + window.location.host;
+
+        // get the preview URLs of our sites from config cookie
+        var config      = Krang.config();
+        var previewURLs = config.previewURLs;
+
+        if (previewURLs.any(function(url) {return url == e.origin})) {
+            // message comes from one of our sites
+            window.focus(); // needs to be allowed in Firefox' Advanced JavaScript settings
+         
+            // goto Story Edit UI of requested container element
+            var url_params = e.data && e.data.split(/\uE000/);
+            console.log(url_params[0]+' - '+url_params[1]);
+            Krang.Ajax.update({url: url_params[0], params: url_params[1].evalJSON()});
+        }
+    }, false);
+}
