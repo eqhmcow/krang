@@ -10,8 +10,7 @@ use HTML::Template::Expr;
 use Encode qw(decode_utf8 encode_utf8);
 
 use Krang::ClassLoader Log          => qw(debug info critical);
-use Krang::ClassLoader Conf         => qw(HostName ApachePort InstanceHostName InstanceApachePort
-                                          InstanceSSLPort SSLApachePort PreviewSSL EnablePreviewFinder);
+use Krang::ClassLoader Conf         => qw(PreviewSSL);
 use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader 'MyPref';
@@ -724,12 +723,22 @@ sub find_template {
         }
         push @filters, sub { ${$_[0]} = decode_utf8(encode_utf8(${$_[0]})) };
 
-        # Instrument the template for "Template Finder"
-        if ($publisher->is_preview && EnablePreviewFinder && pkg('MyPref')->get('use_preview_finder')) {
-            $self->_insert_comments_for_preview_finder(
+        # get Preview Editor info from publish context
+        my %publish_context = $publisher->publish_context();
+
+        # use template finder if enabled
+        if ($publish_context{use_template_finder}) {
+            $self->_insert_comments_for_template_finder(
+                %args,
                 filters   => \@filters,
                 publisher => $publisher,
-                filename  => $filename
+                filename  => $filename,
+                %publish_context,
+            );
+            $self->_insert_preview_editor_top_overlay(
+                %args,
+                filters => \@filters,
+                %publish_context,
             );
         }
 
@@ -1011,12 +1020,11 @@ sub fill_template {
             my $loop_idx =
               $element_count{$name} ? ++$element_count{$name} : ($element_count{$name} = 1);
             my $loop_entry = $self->_fill_loop_iteration(
-                tmpl               => $tmpl,
+                %args,
                 child              => $child,
                 html               => \$html,
                 loopname           => 'element_loop',
                 count              => $loop_idx,
-                publisher          => $publisher,
                 fill_template_args => \%fill_template_args
             );
             push @{$child_params{element_loop}}, $loop_entry;
@@ -1028,12 +1036,11 @@ sub fill_template {
             my $loop_idx =
               exists($child_params{$child_loop}) ? (@{$child_params{$child_loop}} + 1) : 1;
             my $loop_entry = $self->_fill_loop_iteration(
-                tmpl               => $tmpl,
+                %args,
                 child              => $child,
                 html               => \$html,
                 loopname           => $child_loop,
                 count              => $loop_idx,
-                publisher          => $publisher,
                 fill_template_args => \%fill_template_args
             );
 
@@ -1084,6 +1091,12 @@ sub _fill_loop_iteration {
         "is_$name"       => 1
     );
 
+    # overlay div showing the child's display name
+    my %publish_context = $publisher->publish_context;
+    my $div = $child->is_container && $publish_context{with_preview_editor}
+      ? $self->_get_preview_editor_element_overlays(%args, %publish_context)
+      : '';
+
     # see if inner loop contains a tag for the element itself (ie without '_loop')
     if ($tmpl->query(name => [$loopname, $name])) {
 
@@ -1106,7 +1119,7 @@ sub _fill_loop_iteration {
         } else {
 
             # success
-            $loop_filled{$name} = $$html;
+            $loop_filled{$name} = $div . $$html;
         }
     }
     unless ($loop_filled{$name}) {
@@ -1194,6 +1207,7 @@ sub publish {
     }
 
     $self->fill_template(tmpl => $html_template, @_);
+
     my $html;
 
     # make sure publish returns cleanly
@@ -1541,9 +1555,9 @@ sub _build_contrib_loop {
     return \@contributors;
 }
 
-sub _insert_comments_for_preview_finder {
-    my ($self, %arg) = @_;
-    my ($filters, $publisher, $filename) = @arg{ qw(filters publisher filename) };
+sub _insert_comments_for_template_finder {
+    my ($self, %args) = @_;
+    my ($filters, $publisher, $filename) = @args{ qw(filters publisher filename) };
     my $category = $publisher->category;
     my $tmpl;
 
@@ -1556,39 +1570,25 @@ sub _insert_comments_for_preview_finder {
     }
 
     if ($tmpl) {
-        # get our document root
-        my $document_root = $ENV{HTTPS} ? 'https://' : 'http://';
-        my $host_name = HostName;
-        my $instance_host_name = InstanceHostName;
-        if ($host_name && $host_name eq $ENV{SERVER_NAME}) {
-            my $port        = $ENV{HTTPS} ? SSLApachePort : ApachePort;
-            $document_root .= $host_name . ':' . $port . '/' . pkg('Conf')->instance();
-        } elsif ($instance_host_name && $instance_host_name eq $ENV{SERVER_NAME}) {
-            my $port        = $ENV{HTTPS} ? (InstanceSSLPort || SSLApachePort) : (InstanceApachePort || ApachePort);
-            $document_root .= $instance_host_name . ':' . $port;
-        } else {
-            croak __PACKAGE__ . "::find_template() - SERVER_NAME differs from from HostName and InstanceHostName";
-        }
-
         # infos for our instrumentation comment
-        my $url  = $tmpl->url;
-        my $id   = $tmpl->template_id;
-        my $json = qq[{type: "template", id: $id, filename: "$filename", url: "$url", documentRoot: "$document_root"}];
+        my $url      = $tmpl->url;
+        my $id       = $tmpl->template_id;
+        my $json = qq[{type: "template", id: $id, filename: "$filename", url: "$url", cmsRoot: "$args{cms_root}"}];
 
         my $comment_start = "<!-- KrangPreviewFinder Start $json -->";
         my $comment_end   = "<!-- KrangPreviewFinder End $json -->";
 
         # instrument the template
         if ($filename eq 'category.tmpl') {
-            my $preview_finder_btn = $self->_get_preview_finder_btn(document_root => $document_root);
+            my $js_css_loader = $self->_get_preview_editor_js_css_loader(%args);
             push @$filters, sub { ${$_[0]} =~ s/(<body[^>]*>)/$1$comment_start/msi };
-            push @$filters, sub { ${$_[0]} =~ s/(<\/body[^>]*>)/$comment_end$preview_finder_btn$1/msi };
+            push @$filters, sub { ${$_[0]} =~ s/(<\/body[^>]*>)/$comment_end$1$js_css_loader/msi };
         } else {
             push @$filters, sub { ${$_[0]} =~ s/(.*)/$comment_start$1$comment_end/ms };
         }
 
         #
-        # additional instrumentation for SSIs
+        # additional instrumentation for SSIs (media)
         #
         my $tmpl_content = $tmpl->content;
         my %comment_for = ();
@@ -1598,11 +1598,11 @@ sub _insert_comments_for_preview_finder {
         my $regexp = qr{<!--#include\s+virtual\s*=\s*(["'])([^"']+)\1\s*-->};
         while ($tmpl_content =~ /$regexp/gims) {
             my $path = $2;
-            if (my ($ssi) = pkg('Media')->find(url_like => "%$path")) {
-                my $id    = $ssi->media_id;
-                my $url   = $ssi->url;
-                my $title = $ssi->title;
-                my $json  = qq[{type: "media", id: $id, title: "$title", url: "$url", documentRoot: "$document_root"}];
+            if (my ($ssi)    = pkg('Media')->find(url_like => "%$path")) {
+                my $id       = $ssi->media_id;
+                my $url      = $ssi->url;
+                my $title    = $ssi->title;
+                my $json     = qq[{type: "media", id: $id, title: "$title", url: "$url", cmsRoot: "$args{cms_root}"}];
                 my $comment_start = "<!-- KrangPreviewFinder Start $json -->";
                 my $comment_end   = "<!-- KrangPreviewFinder End $json -->";
                 $comment_for{$path} = [$comment_start, $comment_end];
@@ -1621,50 +1621,80 @@ sub _insert_comments_for_preview_finder {
 # returns the the "Preview Finder" button with the JavaScript it needs
 # to pull in the JavaScript needed by the preview finder feature.
 #
-sub _get_preview_finder_btn {
-    my ($self, %arg) = @_;
-    my ($document_root) = @arg{ qw(document_root) };
-
-    my $btn_label = localize('Preview Finder');
-    my $loading   = localize('Loading');
-
-    my $btn_css = "background: #cee7ff; color: #690; width: 110px; border: 1px solid #bbb; border-color: #eee #bbb #bbb #eee; padding: .1em .5em; font-size: 12px; z-index: 32767;";
-
-    my $indicator_css = "background-color: #cee7ff; color: #666; filter: alpha(opacity=90); opacity: .9; z-index: 32766; border: 1px solid #369; padding: 0.5em 0.6em; width: 70px; font-size: 9px; font-weight: bold;";
-
-    if ($ENV{KRANG_BROWSER_ENGINE} eq 'IE' and $ENV{KRANG_BROWSER_MAJOR_VERSION} == 6) {
-        $btn_css .= "position: absolute; top: expression(document.documentElement.scrollTop + document.documentElement.clientHeight - this.clientHeight - 3); left: expression(0 - document.documentElement.clientLeft - document.body.offsetLeft + 8);";
-        $indicator_css .= "position: absolute; top: expression(document.documentElement.scrollTop + document.documentElement.clientHeight - this.clientHeight - 2 ); left: expression(0 - document.documentElement.clientLeft - document.body.offsetLeft + 12); display: none"; # display:none must *follow* the css expression!
-    } else {
-        $btn_css       .= "position:fixed; bottom:0; left:0";
-        $indicator_css .= "position:fixed; bottom:0; left:0; display:none";
-    }
+sub _get_preview_editor_js_css_loader {
+    my ($self, %args) = @_;
 
     return <<END;
 <script type="text/javascript">
-var __Krang_Preview_Finder__ = function() {
-    var btn = document.getElementById('__krang_preview_finder_btn__');
-    if (btn) { btn.style.display = 'none' }
-    var ind = document.getElementById('__krang_preview_finder_indicator__');
-    if (ind) { ind.style.display = '' }
+    // ProtoPopup CSS
     var tpCSS = document.createElement('link');
     tpCSS.type="text/css";
     tpCSS.rel="stylesheet";
-    tpCSS.href='$document_root/proto_popup/css/proto_popup.css';
+    tpCSS.href='$args{cms_root}/proto_popup/css/proto_popup.css';
     document.getElementsByTagName("head")[0].appendChild(tpCSS);
+
+    // Preview Editor CSS
+    var peCSS = document.createElement('link');
+    peCSS.type="text/css";
+    peCSS.rel="stylesheet";
+    peCSS.href='$args{cms_root}/preview_finder/css/preview_editor.css';
+    document.getElementsByTagName("head")[0].appendChild(peCSS);
+
+    // Preview Editor JavaScript
     var tpScript = document.createElement('script');
     tpScript.setAttribute('language','JavaScript');
-    tpScript.setAttribute('src','$document_root/js/preview_finder.js');
+    tpScript.setAttribute('src','$args{cms_root}/js/preview_finder.js');
     document.body.appendChild(tpScript);
-}
 </script>
-<div id="__krang_preview_finder_indicator__" style="$indicator_css">
-<img alt="" src="$document_root/images/indicator_small_bluebg.gif" style="padding 0 1em 0 0; vertical-align:middle">
-$loading&hellip;
-</div>
-<input type="button" id="__krang_preview_finder_btn__" onclick="__Krang_Preview_Finder__()" value="$btn_label" style="$btn_css"/>
 END
 }
+
+#
+# Insert the Preview Editor's top overlay through a HTML::Template
+# filter in category.tmpl
+#
+sub _insert_preview_editor_top_overlay {
+    my ($self, %arg) = @_;
+
+    my $title      = localize('Krang Preview');
+    my $activate   = localize('Activate');
+    my $deactivate = localize('Deactivate');
+    my $close      = localize('Close');
+    my $help       = localize('Help');
+    my $include_editor = $arg{with_preview_editor}
+      ? '<span id="krang_preview_editor_include_editor">'. localize('Editor') . ' &</span>'
+      : '';
+    my $tmpl_finder = localize('Template Finder');
+
+    my $help_url = $arg{cms_root} . "/help.pl?topic=preview_editor&window_id=$ENV{KRANG_WINDOW_ID}";
+
+    my $overlay =<<END;
+<div id="krang_preview_editor_top_overlay" style="width: 100%; height: 16px; border-bottom: 4px solid #d4d4d4; background-color: #cee7ff; position: fixed; top: 0; left:0; right:0; color:#336699; font-family: sans-serif; font-weight: bold; padding:15px;">
+  <table cellpadding="0" cellspacing="0" border="0" width="100%"><tbody><tr>
+    <td width="33%"><span id="krang_preview_editor_logo">$title</span> <span id="krang_preview_editor_include">$include_editor $tmpl_finder</span></td>
+    <td width="33%" style="text-align: center"><span id="krang_preview_editor_toggle"><span id="krang_preview_editor_deactivate">$deactivate</span><span id="krang_preview_editor_activate" style="display: none">$activate</span></span></td>
+    <td width="33%" style="text-align: right; padding-right: 20px"><a href="" id="krang_preview_editor_help" name="$help_url">$help</a><a href="" id="krang_preview_editor_close">$close</a></td>
+  </tr></tbody></table>
+</div>
+END
+        my $top_spacer = qq{<div id="krang_preview_editor_top_spacer"></div>};
+        push @{$arg{filters}}, sub { ${$_[0]} =~ s/(<body[^>]*>)/$1$top_spacer/msi };
+        push @{$arg{filters}}, sub { ${$_[0]} =~ s/(<\/body[^>]*>)/$overlay$1/msi };
+}
+
+#
+# return a DIV showing the element's display name for the Preview Editor overlay
+#
+sub _get_preview_editor_element_overlays {
+    my ($self, %args) = @_;
+
+    my $rm       = 'edit';
+    my $path     = $args{child}->xpath || '/';
+    my $id       = $args{publisher}->story->story_id;
+
+    return qq{<div class="krang_preview_editor_element_label" name="{windowID: '$ENV{KRANG_WINDOW_ID}', rm: '$rm', storyID: '$id', elementXPath: '$path', cmsRoot: '$args{cms_root}'}" style="display: none">} . $args{child}->display_name . '</div>';
+}
+
 
 =back
 
