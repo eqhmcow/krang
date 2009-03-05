@@ -43,6 +43,7 @@ use Krang::ClassLoader Conf      => qw(
   InstanceDisplayName
   InstanceHostName
   PasswordChangeTime
+  PreviewSSL
   Secret
   SMTPServer
 );
@@ -225,7 +226,9 @@ sub _do_login {
     );
 
     # and store meta information about this installation/instance of Krang
-    my %conf_info = (charset => (Charset() || ''),);
+    my $scheme = PreviewSSL ? 'https://' : 'http://';
+    my @preview_urls = map {$scheme . $_->preview_url} pkg('Site')->find();
+    my %conf_info = (charset => (Charset() || ''), previewURLs => \@preview_urls);
     my $conf_cookie = $q->cookie(
         -name  => 'KRANG_CONFIG',
         -value => JSON::Any->new->encode(\%conf_info),
