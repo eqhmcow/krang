@@ -2080,6 +2080,7 @@ sub retire_selected {
     }
 
     add_message('selected_stories_retired');
+    $q->param(rm => 'find');
     return $self->find();
 }
 
@@ -2731,6 +2732,7 @@ sub retire {
     add_message('story_retired', id => $story_id, url => $story->url);
 
     $q->delete('story_id');
+    $q->param(rm => 'find');
 
     return $self->find();
 }
