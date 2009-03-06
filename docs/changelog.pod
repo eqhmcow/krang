@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item
 
+Added Fedora 10 as a target build platform. [Michael Peters]
+
+=item
+
 Fixed a bug preventing to add a photo to a new contributor when coming
 from associate contrib. [Bodo Schulze]
 
