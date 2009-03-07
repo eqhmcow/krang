@@ -274,7 +274,7 @@ sub access_handler ($$) {
             if ($bd->major > $major
                 or ($bd->major == $major && $bd->minor >= $minor))
             {
-                $r->subprocess_env("KRANG_BROWSER_ENGINE"  => $engine_of{$browser});
+                $r->subprocess_env("KRANG_BROWSER_ENGINE"        => $engine_of{$browser});
                 $r->subprocess_env("KRANG_BROWSER_MAJOR_VERSION" => $bd->major);
                 return OK;
             }
@@ -381,7 +381,7 @@ sub authen_handler ($$) {
         $session_id = $cookie{"wid_$window_id"};
 
         # if there's no $session_id for this window, logout happened in other window
-        if(!$session_id) {
+        if (!$session_id) {
             undef $window_id;
             debug("No session found; Unsetting window_id");
         }
@@ -401,7 +401,8 @@ sub authen_handler ($$) {
         $cookie{"wid_$window_id"} = $session_id;
 
         # put language pref in new session
-        $session{language} = pkg('MyPref')->get('language', $cookie{user_id})
+        $session{language} =
+             pkg('MyPref')->get('language', $cookie{user_id})
           || DefaultLanguage
           || 'en';
 
