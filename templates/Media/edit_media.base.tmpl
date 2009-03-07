@@ -2,9 +2,11 @@
 
 <script type="text/javascript">
 
+var use_editor = !Prototype.Browser.WebKit && Krang.my_prefs().syntax_highlighting == 1;
+
 Krang.onload( function() {
   Krang.Nav.edit_mode();
-  CodePress.run(); // Register CodePress's onload event:
+  if (use_editor) CodePress.run(); // Register CodePress's onload event:
   Krang.Help.set( 'media_<tmpl_if add_mode>new<tmpl_else>edit</tmpl_if>' );
 } );
 
@@ -24,7 +26,7 @@ Krang.onload( function() {
 <tmpl_else>
 
   save_editor_text = function() {
-    <tmpl_if is_text><tmpl_if use_codepress>mediaEditor.toggleEditor()</tmpl_if></tmpl_if>
+    <tmpl_if is_text><tmpl_if use_codepress>if (use_editor) mediaEditor.toggleEditor()</tmpl_if></tmpl_if>
   }
 
   db_save = function()
