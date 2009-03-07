@@ -246,14 +246,7 @@ sub access_handler ($$) {
     my $self = shift;
     my ($r) = @_;
 
-    my %allow_browsers = (
-        netscape  => 7.1,
-        ie        => 6,
-        mozilla   => 5,
-        firefox   => 1.5,
-        safari    => 1.3,
-        konqueror => 1,
-    );
+    my %allow_browsers = $self->supported_browsers;
 
     my %engine_of = (
         netscape  => 'Gecko',
@@ -283,10 +276,40 @@ sub access_handler ($$) {
 
     # failure
     debug("Unsupported browser detected: " . ($r->header_in('User-Agent') || ''));
-    $r->custom_response(FORBIDDEN,
-        "<h1>Unsupported browser detected.</h1><p>This application requires Firefox 1.5+, Safari 1.3+, Internet Explorer 6+, Mozilla 1.7+, Netscape 7+ or Konqueror 1+.</p>"
-    );
+    $r->custom_response(FORBIDDEN, $self->forbidden_browser_message);
     return FORBIDDEN;
+}
+
+=item supported_browsers()
+
+The list of browsers and versions to allow as supported browsers.
+
+=cut
+
+sub supported_browsers {
+    my $self = shift;
+
+    return (
+        netscape  => 7.1,
+        ie        => 6,
+        mozilla   => 5,
+        firefox   => 1.5,
+        safari    => 1.3,
+        konqueror => 1,
+    );
+}
+
+=item forbidden_browser_message()
+
+The text of the error message returned to unsupported browsers.
+
+=cut
+
+sub forbidden_browser_message {
+    my $self = shift;
+
+    return
+      "<h1>Unsupported browser detected.</h1><p>This application requires Firefox 1.5+, Safari 1.3+, Internet Explorer 6+, Mozilla 1.7+, Netscape 7+ or Konqueror 1+.</p>";
 }
 
 =item Krang::Handler->authen_handler
