@@ -155,22 +155,25 @@
         };
 
         if (Object.isFunction(window.postMessage)) {
-            // HTML5 feature implemented by Firefox 3
+            // HTML5 feature implemented by Firefox 3, maybe by IE8 and Safari 4
             params['ajax'] = 1;
             window.opener.postMessage(url + "\uE000" + Object.toJSON(params), cms.cmsRoot);
         } else if (Prototype.Browser.IE) {
-
-            // this hack does not work for communications back to the CMS window
-
-//            var a = new Element('a', {href:   url + '?' + Object.toQueryString(params)});
-//            a.target = "krang_window_" + cms.windowID;
-//            document.body.appendChild(a);
-//            a.click();
+            // pass params as form inputs and signal it to
+            // Krang::Handler using with the special query param 'posted_window_id'
+            var f = new Element(
+                'form',
+                {action: url+'?posted_window_id=1', method: 'post', target: 'krang_window_'+cms.windowID}
+            );
+            ['window_id', 'rm', 'story_id', 'path'].each(function(i) {
+                    f.appendChild(new Element('input', {type: 'hidden', name: i, value: params[i]}));
+            });
+            document.body.appendChild(f);
+            f.submit();
         } else {
+            // Safari 3.1 / 3.2
             window.open(url + '?' + Object.toQueryString(params), "krang_window_" + cms.windowID);
         }
-
-
     };
 
     // position the labels
