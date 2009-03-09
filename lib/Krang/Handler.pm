@@ -22,7 +22,7 @@ The basic order of events is:
 
 =cut
 
-use Apache::Constants qw(:response :common);
+use Apache::Constants qw(:response :common M_GET);
 use Apache::Cookie;
 use Apache::SizeLimit;
 use Apache::URI;
@@ -383,15 +383,26 @@ sub authen_handler ($$) {
     # 64 active windows max
     my $max_active_windows = 64;
 
-    # Get window_id from query
+    # Get query
     my %args = $r->args();
+
+    # Change POST into GET when window_id is passed as a form input
+    if ($args{posted_window_id}) {
+        $r->args(scalar $r->content);
+        $r->method('GET');
+        $r->method_number(M_GET);
+        $r->headers_in->unset('Content-length');
+        %args = $r->args();
+    }
+
+    # Get window_id from query
     my $window_id = $args{window_id} || '';
     debug("Got window_id $window_id from request");
 
     # User opened a new window manually, typed or copied URL or
     # accessed it via History: make sure we create a new id for this
     # new window
-    if ($window_id && not $r->header_in("Referer")) {
+    if ($window_id && not ($r->header_in("Referer") || $args{posted_window_id})) {
         undef $window_id;
         debug("No referer header; Unsetting window_id");
     }
