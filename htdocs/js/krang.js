@@ -1887,8 +1887,6 @@ Krang.PoorTextCreationArguments = new Array;
 if (Object.isFunction(window.postMessage)) {
     window.addEventListener('message', function(e) {
 
-        var cmsURL = window.location.protocol + '//' + window.location.host;
-
         // get the preview URLs of our sites from config cookie
         var config      = Krang.config();
         var previewURLs = config.previewURLs;
