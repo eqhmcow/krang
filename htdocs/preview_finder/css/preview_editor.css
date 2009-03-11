@@ -1,0 +1,43 @@
+/* div.krang_preview_editor_tab {  */
+/*   outline: 2px solid #ff0000; */
+/* } */
+
+#krang_preview_editor_logo { 
+  text-transform: uppercase;
+}
+
+div.krang_preview_editor_element_label { 
+  font-family: sans-serif;
+  font-size: 12px;
+  border: 1px solid #336699;
+  color: #336699;
+  background-color: #cee7ff;
+  cursor: pointer;
+  padding: 2px 5px;
+  position: absolute;
+}
+
+div.krang_preview_editor_element_label:active {
+  outline: 1px solid #6a5acd;
+}
+
+#krang_preview_editor_top_spacer { 
+  height: 50px;
+}
+
+#krang_preview_editor_help { 
+  margin-right: 20px;
+}
+
+#krang_preview_editor_include { 
+  font-size: 12px;
+}
+
+#krang_preview_editor_toggle { 
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+a#krang_preview_editor_help:visited, a#krang_preview_editor_close:visited { 
+  color: #336699;
+}
