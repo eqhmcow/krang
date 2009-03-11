@@ -122,7 +122,7 @@ sub show {
     # load params
     my $id      = $query->param('id')      or croak("Missing required id");
     my $class   = $query->param('class')   or croak("Missing required class param");
-    my $id_meth = $query->param('id_meth') or croak("Missing required id_meth param");
+    my $id_meth = $query->param('id_meth');
     my $history_return_script = $query->param('history_return_script')
       or croak("Missing required history_return_script");
     my @history_return_params = $query->param('history_return_params')
@@ -138,6 +138,8 @@ sub show {
         eval "require $real_class";
         croak("Unable to load class $real_class: $@") if $@;
     }
+
+    $id_meth ||= $real_class->id_meth;
 
     # load an object
     my ($object) = $real_class->find($id_meth => $id);
