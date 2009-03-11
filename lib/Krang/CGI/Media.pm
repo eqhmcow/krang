@@ -804,8 +804,8 @@ sub edit {
         loop_context_vars => 1,
         die_on_bad_params => 0
     );
-    $self->query->param(rm => 'edit')
-      ;    # so the return param for rm is 'edit' even after a 'save_stay_edit', etc.
+    # so the return param for rm is 'edit' even after a 'save_stay_edit', etc.
+    $self->query->param(rm => 'edit');    
     my $media_tmpl_data = $self->make_media_tmpl_data($m);
     $t->param($media_tmpl_data);
 
