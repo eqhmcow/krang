@@ -1814,9 +1814,11 @@ var rules = {
             var elm  = event.element();
             var name = elm.readAttribute('name');
             if (!name) return;
-            var story_id = name.split(/_/);
-            //               'story' ,     ID     , 'withPreviewEditor'
-            Krang.preview(story_id[0], story_id[1], story_id[2]);
+            var story_data = name.split(/_/);
+            var story_id = story_data[1];
+            if( story_id == 'null' ) story_id = null;
+            var with_preview_editor = story_data[2];
+            Krang.preview('story', story_id, with_preview_editor);
             Event.stop(event);
         }.bindAsEventListener(el));
     },
@@ -1825,8 +1827,9 @@ var rules = {
             var elm = event.findElement('a');
             var name = elm.readAttribute('name');
             if (!name) return;
-            var media_id = name.split(/_/);
-            Krang.preview(media_id[0], media_id[1]);
+            var media_id = name.split(/_/)[1];
+            if( media_id == 'null' ) media_id = null;
+            Krang.preview('media', media_id);
             Event.stop(event);
         }.bindAsEventListener(el));
     }
