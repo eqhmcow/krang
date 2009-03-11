@@ -132,6 +132,15 @@ sub login {
     my $password = $query->param('password');
     my $dbh      = dbh();
 
+    # if they are already logged in as this user, then don't log them in again
+    if( $ENV{REMOTE_USER} ) {
+        my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
+        if( $user->login eq $username ) {
+            # go without a window_id so that you get a new one
+            return $self->_redirect_to_window(0);
+        }
+    }
+
     # make sure they don't need to wait
     if (BadLoginCount) {
         my $rl = $self->rate_limit;
@@ -240,10 +249,15 @@ sub _do_login {
         -cookie => [$authen_cookie->as_string, $pref_cookie->as_string, $conf_cookie->as_string]);
 
     # now we're ready to redirect
+    return $self->_redirect_to_window(1);
+}
+
+sub _redirect_to_window {
+    my ($self, $window_id) = @_;
     my $target = './';
     $self->header_add(-uri => $target);
     $self->header_type('redirect');
-    return "Redirect: <a href=\"$target?window_id=1\">$target</a>";
+    return "Redirect: <a href=\"$target?window_id=$window_id\">$target</a>";
 }
 
 # handle a logout
