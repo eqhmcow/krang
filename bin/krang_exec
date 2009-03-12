@@ -56,6 +56,10 @@ Although it won't hurt anything.
 By default it will execute the same command for all instances. Specify the single instance if
 you don't want to do that.
 
+=item --skip-instance
+
+If you want to skip an instance simply use this option. It can be specified multiple times.
+
 =item -p or --print
 
 Print the results of the command. If it is a reference, L<Data::Dumper> will be used.
@@ -133,11 +137,10 @@ use Getopt::Long;
 use Data::Dumper;
 use Pod::Usage;
 
-my ($help, $man, $system, $print, $servers, $query);
-my $code = '';
-my @modules;
-my @krang_modules;
-my @instances;
+my (
+    $help, $man,     $system,        $print,     $servers, $query,
+    $code, @modules, @krang_modules, @instances, @skip_instances
+);
 Getopt::Long::Configure('bundling', 'ignorecase');
 GetOptions(
     'h|help'           => \$help,
@@ -146,6 +149,7 @@ GetOptions(
     'M|module=s'       => \@modules,
     'K|krang_module=s' => \@krang_modules,
     'i|instance=s'     => \@instances,
+    'skip-instance=s'  => \@skip_instances,
     's|system'         => \$system,
     'p|print'          => \$print,
     'q|query'          => \$query,
@@ -176,6 +180,10 @@ foreach my $mod (@krang_modules) {
 }
 
 @instances = pkg('Conf')->instances() unless @instances;
+foreach my $skip (@skip_instances) {
+    @instances = grep { $_ ne $skip } @instances;
+}
+
 foreach my $instance (@instances) {
     print "===== $instance =====\n";
     $ENV{KRANG_INSTANCE} = $instance;
