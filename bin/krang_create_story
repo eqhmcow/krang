@@ -308,18 +308,14 @@ foreach my $name (keys %story_links) {
 
 # now add/set the elements and their values
 foreach my $name (keys %elements) {
-#warn "Element: $name\n";
     for(my $i=0; $i< scalar @{$elements{$name}}; $i++) {
-#warn "  #$i\n";
         my $value = $elements{$name}->[$i];
         # Get the element in question. If it doesn't exist simply create one.
         # if it does exist and this is the first one of it's type, then just
         # use the existing one, else try and add a new one
         my $element;
         eval { $element = $story->element->child($name); };
-#warn "  $name already exists\n";
         if( !$element || $i != 0 ) {
-#warn "  adding new $name\n";
             eval { $element = $story->element->add_child(class => $name) };
             die "Error creating child element $name: $@\n" if $@;
         }
@@ -339,7 +335,6 @@ foreach my $name (keys %elements) {
                 die "Error adding child $child_key with value $value to $name element: $@\n" if $@;
             }
         } else {
-#warn "   value: $value\n";
             eval { $element->data($value) };
             die "Error adding $name with value $value to story: $@\n" if $@;
         }
