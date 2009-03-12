@@ -1,0 +1,361 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+use File::Spec::Functions qw(catdir splitdir canonpath);
+use FindBin qw($RealBin);
+use Getopt::Long;
+use Pod::Usage;
+use Config;
+use Carp;
+
+=head1 NAME
+
+krang_create_story - Create a story via the command line
+
+=head1 SYNOPSIS
+
+  $ bin/krang_create_story --type="article" --title="..." --slug="..."
+
+=head1 DESCRIPTION
+
+This script creates a story in Krang and publishes it.  
+
+When the script succeeds it will print a single line and exit
+
+  OK ID URL
+
+The ID and URL is the URL of the published form.  Errors will result in a
+non-zero exit and an error message on STDERR.
+
+For example, calling:
+
+    bin/krang_create_story --type="article" \
+                          --title="Test Article" \
+                          --slug="test_arcticle" \
+                          --element paragraph='some text' \
+                          --set-element metadata_title='some more text'
+
+Might result in:
+
+    OK 10 mysite.com/test_article FA47EA5C-0F23-11DE-9999-71D3CB6E427A
+
+=head1 OPTIONS
+
+=over
+
+=item * --type
+
+Element class of story to create
+
+=item * --title
+
+Title of the story
+
+=item * --slug
+
+Slug for the story
+
+=item * --site
+
+The url of the site the story will live in. Defaults to the first
+site found.
+
+    --site "mysite.com"
+
+=item * --category
+
+The path of the category the story will live in. Defaluts to the
+root category in the site. If the category doesn't already exist
+it will be created.
+
+    --category "/foo/bar"
+
+=item * --element
+
+Takes a name/value pair and adds the named element to the story with
+the specified value.  This option can be used mutiple times to setup
+multiple elements.
+
+If the element you are trying to setup uses an Array or a Hash as it's data store
+you can just format your data to look like a Perl Array or Hash:
+
+    --element foo="[1, 2, 3, 4]"
+
+    --element bar="['one', 'two', 'three']"
+
+    --element baz="{ asd => 1, qwe => 2 }"
+
+If this is what you want, make sure to start and end your value with
+the right opening and closing tokens (ie, either C<[]> or C<{}>).
+
+If the element's name ends with C<_date> then we will convert it into a L<Time::Piece>
+object and assume the date is in the format C<DD-MM-YYYY>.
+
+    --element start_date="12-03-2009"
+
+If the element's name ends with C<_time> then we will convert it into a L<Time::Piece>
+object and assume the date is in the format C<HH:MM>.
+
+    --element start_time="14:30"
+
+If you need to handle a nested element then you can use a special syntax wrapping
+your data in angle-brackets C<< <> >>. The data inside of the angle-brackets is
+syntactically treated as a Perl Hash which is used to create and fill any child elements.
+We only handle the case of nesting 1 level deep. Anything else is more complicated
+than this script can handle.
+
+    --element complex_element="< child_1 => 'foo', child_2 => 'bar' >"
+
+=item * --media
+
+If you want to specify Media objects to be added to the story you just give it the 
+name of the child element and then the filename of the media object:
+
+    --media audio="itchyscratchy.mp3"
+
+=item * --story-link
+
+If the element you want to add is a Story Link you can specify the story's id or
+uuid:
+
+    --story-link more_info="123"
+    --story-link more_info="FA47EA5C-0F23-11DE-9999-71D3CB6E427A"
+
+=item * --preview
+
+Flag that causes the story to be published to preview as well as to the
+normal publish path.
+
+=item * --cover-date
+
+The cover date in the format C<DD-MM-YYYY>.
+
+=cut
+
+BEGIN {
+
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
+
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+    
+    # Find a ARCOS_ROOT based on path to bin
+    $ENV{ARCOS_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $ARCOS_ROOT/lib for modules
+    $lib = catdir($ENV{ARCOS_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
+
+    # load Arcos
+    eval { require Arcos };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Arcos.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Script';
+use Time::Piece;
+
+my (
+    $type,     $title,    $slug,  $help,        $man,     $category_path,
+    $site_url, %elements, %media, %story_links, $preview, $cover_date
+);
+GetOptions(
+    'title=s'    => \$title,
+    'type=s'     => \$type,
+    'slug:s'     => \$slug,
+    'help'       => \$help,
+    'man'        => \$man,
+    'category=s' => \$category_path,
+    'site=s'     => \$site_url,
+    'element=s%' => sub {
+        my (undef, $key, $value) = @_;
+        if ($value =~ /^\[.*\]$/ || $value =~ /^\{.*\}$/) {    # looks like an array or a hash
+            $value = eval "$value";
+        }
+        push(@{$elements{$key} ||= []}, $value);
+    },
+    'media=s%' => sub {
+        my (undef, $key, $value) = @_;
+        push(@{$media{$key} ||= []}, $value);
+    },
+    'story-links=s%' => sub {
+        my (undef, $key, $value) = @_;
+        push(@{$story_links{$key} ||= []}, $value);
+    },
+    'preview'      => \$preview,
+    'cover-date=s' => \$cover_date,
+) || pod2usage(2);
+
+pod2usage(1) if $help;
+pod2usage(-verbose => 2) if $man;
+pod2usage("Missing required --title option") unless $title;
+pod2usage("Missing required --type option")  unless $type;
+
+# find the site
+my ($site, $category);
+if( $site_url ) {
+    $site = pkg('Site')->find(url => $site_url);
+    die "Could not find Site with url $site_url!\n";
+} else {
+    ($site) = pkg('Site')->find();
+    die "No sites exist. Please create a site first before you create a story!\n" unless $site;
+}
+
+my ($root_cat) = pkg('Category')->find(dir => '/', site_id => $site->site_id);
+if ($category_path && $category_path ne '/') {
+    # let's walk down the path and find or create our category
+    my @paths = split('/', $category_path);
+    my $grand_parent_cat = $root_cat;
+    for (my $i = 1 ; $i <= $#paths ; $i++) {
+
+        # see if the parent category exists
+        my $parent_path = join('/', @paths[0 .. $i]);
+        my %find_args = (
+            dir       => $paths[$i],
+            parent_id => $grand_parent_cat->category_id,
+            site_id   => $site->site_id
+        );
+        my ($parent_cat) = pkg('Category')->find(%find_args);
+        if(!$parent_cat) {
+            $parent_cat = pkg('Category')->new(%find_args);
+            $parent_cat->save();
+        }
+
+        # if it's the last one, lets use it as our category
+        if ($i == $#paths) {
+            $category = $parent_cat;
+        } else {
+            $grand_parent_cat = $parent_cat;
+        }
+    }
+} else {
+    $category = $root_cat;
+}
+
+# create the story
+my $story = pkg('Story')->new(
+    title      => $title,
+    slug       => $slug,
+    class      => $type,
+    categories => [$category]
+);
+
+# add the cover_date if we have one
+if ($cover_date) {
+    my $date_obj = Time::Piece->strptime($cover_date, '%d-%m-%Y');
+    die "That is not a valid --cover-date: $cover_date!\n" unless $date_obj;
+    $story->cover_date($date_obj);
+}
+
+# process media first so we can treat them like normal elements later
+foreach my $name (keys %media) {
+    foreach my $value (@{$media{$name}}) {
+        my ($media) = pkg('Media')->find(filename => $media{$name});
+        die "No $name Media object found with filename $media{$name}!\n" unless $media;
+        push(@{$elements{$name} ||= []}, $media)
+    }
+}
+
+# add the story links
+foreach my $name (keys %story_links) {
+    foreach my $id (@{$story_links{$name}}) {
+        my $key = ($id =~ /^\d+$/) ? 'story_id' : 'story_uuid';
+        my ($other_story) = pkg('Story')->find($key => $id);
+        if( $other_story ) {
+            push(@{$elements{$name} ||= []}, $other_story)
+        } else {
+            die "Could not find Story object with $key '$id'!\n";
+        }
+    }
+}
+
+# now add/set the elements and their values
+foreach my $name (keys %elements) {
+#warn "Element: $name\n";
+    for(my $i=0; $i< scalar @{$elements{$name}}; $i++) {
+#warn "  #$i\n";
+        my $value = $elements{$name}->[$i];
+        # Get the element in question. If it doesn't exist simply create one.
+        # if it does exist and this is the first one of it's type, then just
+        # use the existing one, else try and add a new one
+        my $element;
+        eval { $element = $story->element->child($name); };
+#warn "  $name already exists\n";
+        if( !$element || $i != 0 ) {
+#warn "  adding new $name\n";
+            eval { $element = $story->element->add_child(class => $name) };
+            die "Error creating child element $name: $@\n" if $@;
+        }
+        # convert some values for events
+        if( $name =~ /_date$/ ) {
+            $value = Time::Piece->strptime($value, '%d-%m-%Y');
+        } elsif( $name =~ /_time$/ ) {
+            $value = Time::Piece->strptime($value, '%H:%M');
+        } elsif( $value =~ /^\<.*\>$/ ) {
+            # treat it like a nested child element
+            $value =~ s/^</{/;
+            $value =~ s/>$/}/;
+            my $child_data = eval "$value";
+            my $element = $story->element->child($name);
+            foreach my $child_key (keys %$child_data) {
+                eval { $element->child($child_key)->data($child_data->{$child_key}) };
+                die "Error adding child $child_key with value $value to $name element: $@\n" if $@;
+            }
+        } else {
+#warn "   value: $value\n";
+            eval { $element->data($value) };
+            die "Error adding $name with value $value to story: $@\n" if $@;
+        }
+    }
+}
+
+$story->save();
+$story->checkin();
+
+# publish it
+my $publisher = pkg('Publisher')->new();
+$publisher->publish_story(story => $story);
+if ($preview) {
+    $publisher->preview_story(story => $story);
+}
+
+# all done
+print join(' ', 'OK', $story->story_id, $story->url, $story->story_uuid) . "\n";
+exit(0);

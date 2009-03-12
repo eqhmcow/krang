@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item 
+
+Added F<bin/krang_create_story> for making test data while
+developing. [Michael Peters]
+
 =item
 
 Added Fedora 10 as a target build platform. [Michael Peters]
