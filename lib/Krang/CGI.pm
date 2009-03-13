@@ -614,7 +614,8 @@ sub _cancel_edit_changes_owner {
 
 sub _cancel_edit_goes_to_workspace {
     my $self = shift;
-    return (($self->_cancel_edit_goes_to)[0] eq 'workspace.pl');
+    my $goto = $self->_cancel_edit_goes_to[0] || '';
+    return $goto eq 'workspace.pl';
 }
 
 # load template using Krang::HTMLTemplate.  CGI::App doesn't provide a
