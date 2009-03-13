@@ -614,7 +614,7 @@ sub _cancel_edit_changes_owner {
 
 sub _cancel_edit_goes_to_workspace {
     my $self = shift;
-    my $goto = $self->_cancel_edit_goes_to[0] || '';
+    my $goto = ($self->_cancel_edit_goes_to)[0] || '';
     return $goto eq 'workspace.pl';
 }
 
