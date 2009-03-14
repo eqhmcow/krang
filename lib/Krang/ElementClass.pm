@@ -721,7 +721,7 @@ sub find_template {
                   . ref($filter) . "'";
             }
         }
-        push @filters, sub { ${$_[0]} = decode_utf8(encode_utf8(${$_[0]})) };
+        push @filters, sub { ${$_[0]} = decode_utf8(${$_[0]}) };
 
         # get Preview Editor info from publish context
         my %publish_context = $publisher->publish_context();
