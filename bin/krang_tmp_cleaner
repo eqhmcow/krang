@@ -58,6 +58,8 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
+use Getopt::Long;
+use Pod::Usage;
 # set the instance as the first instance that exists - just so that we
 # can get Krang::Script loaded without complaints.
 use Krang::ClassLoader Conf => qw(KrangRoot);
@@ -70,6 +72,13 @@ use File::Find;
 use Time::Piece;
 use Time::Piece::MySQL;
 use Time::Seconds;
+my ($help, $man);
+GetOptions(
+    help          => \$help,
+    man           => \$man,
+);
+pod2usage(1) if $help;
+pod2usage(-verbose => 2) if $man;
 
 my $TMP_PATH = catdir(KrangRoot, 'tmp');
 my $MAX_AGE = 24; # num of hours old before we delete
