@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item
+
+Add F<bin/krang_tmp_cleaner> to clean out the F<tmp/> directory while
+developing. [Michael Peters]
+
 =item 
 
 Added F<bin/krang_create_story> for making test data while

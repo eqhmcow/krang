@@ -1,0 +1,138 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+=head1 NAME
+
+krang_tmp_cleaner - clean out old files in tmp/ directory
+
+=head1 SYNOPSIS
+
+  bin/krang_tmp_cleaner
+
+=head1 DESCRIPTION
+
+This script performs an almost identical task as the clean tmp job
+scheduled job that comes with Krang. But this is intended to be used
+from the command line. This is handy for developers.
+
+=head1 OPTIONS
+
+None at this time.
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    $ENV{KRANG_NO_ELEMENTLIBS} = 1;
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::ClassFactory qw(pkg);
+# set the instance as the first instance that exists - just so that we
+# can get Krang::Script loaded without complaints.
+use Krang::ClassLoader Conf => qw(KrangRoot);
+BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
+use Krang::ClassLoader 'Script';
+use Krang;
+use File::Spec::Functions qw(catdir catfile);
+use File::Path qw(rmtree);
+use File::Find;    
+use Time::Piece;
+use Time::Piece::MySQL;
+use Time::Seconds;
+
+my $TMP_PATH = catdir(KrangRoot, 'tmp');
+my $MAX_AGE = 24; # num of hours old before we delete
+
+my (@dirs, @files);
+my $date = localtime;
+$date = $date - ($MAX_AGE * ONE_HOUR);
+
+warn "Deleing files in tmp/ older than " . $date->mysql_datetime . "\n";
+
+# build a list of files to delete
+opendir(DIR, $TMP_PATH) || die "Can't open tmpdir: $!\n";
+for (readdir DIR) {
+    next if $_ =~ /(CVS|\.{1,2}|\.(conf|cvsignore|pid|svn))$/; # skip special files
+    next if $_ =~ /^ssl_/; # skip SSL files
+
+    # skip them if they're too young
+    my $file = catfile($TMP_PATH, $_);
+    my $mtime = Time::Piece->new((stat($file))[9]);
+    next unless ($mtime - $date) <= 0;
+
+    if (-f $file) {
+        push @files, $file;
+    } elsif (-d $file) {
+        push @dirs, $file;
+    }
+}
+closedir(DIR);
+
+# list of files deleted
+my @deletions;
+
+# delete files
+for (@files) {
+    unless (unlink $_) {
+        die "Unable to delete '$_': $!\n";
+    } else {
+        warn "Deleted file '$_'\n";
+        push @deletions, $_;
+    }
+}
+
+# delete directories
+for my $dir (@dirs) {
+    File::Find::find(sub {
+        my $file = $File::Find::name;
+        # skip if it's not a file.
+        return unless -f $file;
+        warn "unlinking '$file'\n";
+        unlink $file;
+    }, $dir);
+
+    warn "Deleting dir '$dir'\n";
+    rmtree([$dir], 0, 1);
+    if (-e $dir) {
+        die "Unable to delete '$dir'!";
+    } else {
+        warn "Deleted dir '$dir'\n";
+        push @deletions, $dir;
+    }
+}
+
+warn "Deleted " . scalar @deletions . " files and directories\n";
+
+
+
