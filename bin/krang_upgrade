@@ -167,6 +167,7 @@ use Getopt::Long;
 use Pod::Usage;
 use Config::ApacheFormat;
 use File::Find qw(find);
+use File::Copy::Recursive qw(dircopy);
 
 my @original_args = ();
 my $uniqueness    = time();
@@ -423,9 +424,11 @@ sub install_new_krang {
         }
     }
 
+    my $cwd = getcwd();
     eval {
-        my $copy = "$COPY_BIN -a  --no-dereference * $InstallPath\/";
-        system($copy) && die("Can't copy files, cp died with error code $?\n");
+        # we can't use COPY_BIN here since one of the destination directories
+        # could be a symlink and cp chokes on those
+        dircopy($cwd, $InstallPath);
     };
     my $err = $@;
     rename('./lib/Krang.new', './lib/Krang.pm');
@@ -436,7 +439,6 @@ sub install_new_krang {
 
         # redo the symlinks for SSL conf
         print "  Fixing SSL symlinks\n";
-        my $cwd = getcwd();
 
         # go into the conf/ssl.* dirs
         foreach my $ext qw(crl crt csr key prm) {
