@@ -809,7 +809,7 @@ sub get_word {
 # get $num random words, joined by $sep, defaulting to " "
 sub get_words {
     my ($num, $sep, $type) = @_;
-    $type = 'ascii' if $sep eq 'ascii' && not $type;
+    $type = 'ascii' if $sep && $sep eq 'ascii' && not $type;
     $sep = " " unless defined $sep and length $sep;
     return join($sep, map { get_word($type) } (0 .. ((int(rand($num))) + 1)));
 }
