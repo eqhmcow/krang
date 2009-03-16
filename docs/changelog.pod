@@ -6,36 +6,36 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
-=item
+=item *
 
 Add F<bin/krang_tmp_cleaner> to clean out the F<tmp/> directory while
 developing. [Michael Peters]
 
-=item 
+=item  *
 
 Added F<bin/krang_create_story> for making test data while
 developing. [Michael Peters]
 
-=item
+=item *
 
 Added Fedora 10 as a target build platform. [Michael Peters]
 
-=item
+=item *
 
 Fixed a bug preventing to add a photo to a new contributor when coming
 from associate contrib. [Bodo Schulze]
 
-=item
+=item *
 
 Added thumbnail preview to L<Krang::ElementClass::MediaLink> and
 contrib edit screen. [Bodo Schulze]
 
-=item
+=item *
 
 Replaced JavaScript links in story and media preview links with DOM2
 event handlers everywhere. [Bodo Schulze]
 
-=item
+=item *
 
 Added "Preview Finder" feature. After clicking the "Preview Finder"
 button on story preview screens, clicking anywhere on the page
@@ -43,32 +43,32 @@ provides information on the template (and its parents) or the media
 text file (for SSI) responsible for generating the piece of content
 that was clicked. [Bodo Schulze]
 
-=item
+=item *
 
 Added JavaScript library ProtoPopup in F<htdocs/proto_popup/>
 providing draggable info boxes as well as alert-like and confirm-like
 dialogs. [Bodo Schulze]
 
-=item
+=item *
 
 L<Krang::AddOn>: When installing an addon, install the upgrade/
 subdir, too - to self-document the upgrade. [Bodo Schulze]
 
-=item
+=item *
 
 Reorganized Admin menu into subsections. [Michael Peters]
 
-=item
+=item *
 
 Added IE6 behavior rules section in F<krang.js> and put the hover
 handler for the great green buttons in there. [Bodo Schulze]
 
-=item
+=item *
 
 Added C<version> option to L<Krang::Media>'s file_path() method. [Bodo
 Schulze]
 
-=item
+=item *
 
 Added a --url option to F<krang_upload_templates> to limit the upload
 to templates having the specified URL below path (may be given
