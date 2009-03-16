@@ -3,9 +3,9 @@ package Krang::ElementClass::Media;
 use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-
 use Krang::ClassLoader base => 'ElementClass::TopLevel';
 use Krang::ClassLoader 'ElementLibrary';
+use Krang::ClassLoader Conf => qw(InstanceElementSet);
 use Carp qw(croak);
 
 =head1 NAME
@@ -44,13 +44,17 @@ Returns the name of the first toplevel element that inherits from ElementClass::
 
 =cut
 
+my %MEDIA_CLASS_CACHE;
 sub element_class_name {
-    my ($name) =
-      grep { pkg('ElementLibrary')->find_class(name => $_)->isa('Krang::ElementClass::Media') }
-      (pkg('ElementLibrary')->top_levels);
-    croak('Could not find a toplevel element class that inherits from ElementClass::Media!!')
-      unless $name;
-    return $name;
+    if(!$MEDIA_CLASS_CACHE{InstanceElementSet} ) {
+        my ($name) =
+          grep { pkg('ElementLibrary')->find_class(name => $_)->isa('Krang::ElementClass::Media') }
+          (pkg('ElementLibrary')->top_levels);
+        croak('Could not find a toplevel element class that inherits from ElementClass::Media!!')
+          unless $name;
+        $MEDIA_CLASS_CACHE{InstanceElementSet} = $name;
+    }
+    return $MEDIA_CLASS_CACHE{InstanceElementSet};
 }
 
 =item publish()
