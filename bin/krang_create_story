@@ -287,8 +287,8 @@ if ($cover_date) {
 # process media first so we can treat them like normal elements later
 foreach my $name (keys %media) {
     foreach my $value (@{$media{$name}}) {
-        my ($media) = pkg('Media')->find(filename => $media{$name});
-        die "No $name Media object found with filename $media{$name}!\n" unless $media;
+        my ($media) = pkg('Media')->find(filename => $value);
+        die "No Media object found with filename $value for element $name!\n" unless $media;
         push(@{$elements{$name} ||= []}, $media)
     }
 }
