@@ -96,10 +96,9 @@ sub fill_template {
     my ($url, $width, $height, %params);
 
     # maybe resize it
-    my ($size_elm) = $element->child('size');
-    my $size = $size_elm ? $size_elm->template_data : 'original';
+    my $size = $element->child_data('size') || 'original';
 
-    if ((not $size_elm) or $size =~ /orig/i)  {
+    if ($size =~ /orig/i) {
         # keep the original size
         $width  = $media->width;
         $height = $media->height;
