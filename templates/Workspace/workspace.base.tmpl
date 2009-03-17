@@ -122,9 +122,7 @@ Krang.onload( function() {
   </div>
 
   <ul class="east">
-  <tmpl_if may_publish>
-  <li><input value="<tmpl_lang Publish>" onclick="publish_checked()" type="button" class="list-btn"></li>
-  </tmpl_if>
+  <li><input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button" class="list-btn"></li>
   <tmpl_if desk_loop>
    <li class="menu">
     <input value="<tmpl_lang Check In To> &#9660;" onclick="return false;" type="button" class="list-btn">
@@ -138,7 +136,9 @@ Krang.onload( function() {
     </ul>
    </li>
   </tmpl_if>
-  <li><input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button" class="list-btn"></li>
+  <tmpl_if may_publish>
+  <li><input value="<tmpl_lang Publish>" onclick="publish_checked()" type="button" class="list-btn"></li>
+  </tmpl_if>
   </ul>
   </div>
 
@@ -270,9 +270,7 @@ Krang.onload( function() {
   </div>
 
   <ul class="east">
-  <tmpl_if may_publish>
-    <li><input value="<tmpl_lang Publish>" onclick="publish_checked()" type="button" class="list-btn"></li>
-  </tmpl_if>
+  <li><input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button" class="list-btn"></li>
   <tmpl_if desk_loop>
    <li class="menu">
     <input value="<tmpl_lang Check In To> &#9660;" onclick="return false;" type="button" class="list-btn">
@@ -286,7 +284,9 @@ Krang.onload( function() {
     </ul>
    </li>
   </tmpl_if>
-  <li><input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button" class="list-btn"></li>
+  <tmpl_if may_publish>
+    <li><input value="<tmpl_lang Publish>" onclick="publish_checked()" type="button" class="list-btn"></li>
+  </tmpl_if>
   </ul>
   </div>
 
