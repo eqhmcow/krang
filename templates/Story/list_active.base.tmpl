@@ -12,6 +12,11 @@ Krang.onload( function() {
     Krang.Form.submit( 'find_story', { rm: 'view', story_id: id } );
   }
 
+  view_story_log = function( id )
+  {
+    Krang.Form.submit( 'view_story_log_form', { id: id } );
+  }
+
   <tmpl_if may_checkin_all>
     steal_selected = function()
     {

@@ -32,6 +32,11 @@ other_search_rm = function() {
     Krang.Form.submit('find_story', { rm: 'view', story_id: id, retired: 1 });
   }
 
+  view_story_log = function( id )
+  {
+    Krang.Form.submit( 'view_story_log_form', { id: id } );
+  }
+
   copy_story = function(id) {
     Krang.Form.submit('find_story', { rm: 'copy', story_id: id, retired: 1 });
   }
