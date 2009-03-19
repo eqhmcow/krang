@@ -74,6 +74,7 @@ insert into media_type (name) values ('Flash');
 insert into media_type (name) values ('JavaScript'); 
 insert into media_type (name) values ('Stylesheet'); 
 insert into media_type (name) values ('Include'); 
+insert into media_type (name) values ('Power Point'); 
 
 --
 -- Table structure for table 'media_contrib'
