@@ -233,8 +233,8 @@ GetOptions(
 
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
-pod2usage("Missing required --title option") unless $title;
-pod2usage("Missing required --type option")  unless $type;
+pod2usage("Missing required --title option") unless $title || $story_uuid;
+pod2usage("Missing required --type option")  unless $type  || $story_uuid;
 
 my $site;
 if( $site_url ) {
@@ -250,8 +250,9 @@ my $story;
 if( $story_uuid ) {
     ($story) = pkg('Story')->find(story_uuid => $story_uuid);
     die "No story with UUID $story_uuid exists!\n" unless $story;
-    $story->title($title);
-    $story->slug($slug);
+    $story->checkout();
+    $story->title($title) if $title;
+    $story->slug($slug) if $slug;
 } else {
     my $category;
     if ($category_path && $category_path ne '/') {
@@ -347,11 +348,18 @@ foreach my $name (keys %elements) {
         # if it does exist and this is the first one of it's type, then just
         # use the existing one, else try and add a new one
         my $element;
-        eval { $element = $story->element->child($name); };
-        if( !$element || $i != 0 ) {
+        if( $i == 0 ) {
+            eval { $element = $story->element->child($name); };
+            if( !$element ) {
+                eval { $element = $story->element->add_child(class => $name) };
+
+                die "Error creating child element $name: $@\n" if $@;
+            }
+        } else {
             eval { $element = $story->element->add_child(class => $name) };
-            die "Error creating child element $name: $@\n" if $@;
+            die "Error creating child element #$i $name: $@\n" if $@;
         }
+
         # convert some values for events
         if( $name =~ /_date$/ ) {
             $value = Time::Piece->strptime($value, '%d-%m-%Y');
@@ -362,9 +370,11 @@ foreach my $name (keys %elements) {
             $value =~ s/^</{/;
             $value =~ s/>$/}/;
             my $child_data = eval "$value";
-            my $element = $story->element->child($name);
             foreach my $child_key (keys %$child_data) {
-                eval { $element->child($child_key)->data($child_data->{$child_key}) };
+                eval {
+                    my $child = $element->child($child_key) || $element->add_child(class => $child_key);
+                    $child->data($child_data->{$child_key});
+                };
                 die "Error adding child $child_key with value $value to $name element: $@\n" if $@;
             }
         } else {
