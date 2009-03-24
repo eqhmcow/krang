@@ -608,10 +608,9 @@ sub cleanup_handler ($$) {
     my ($pkg, $r) = @_;
     return DECLINED unless $r->is_main;
     my $status = $r->last->status;
-    return DECLINED unless $status == SERVER_ERROR;
 
-    my $error = $r->notes('error-notes') || $ENV{ERROR_NOTES};
-    if ($error && ErrorNotificationEmail) {
+    if ($status == SERVER_ERROR && ErrorNotificationEmail) {
+        my $error = $r->notes('error-notes') || $ENV{ERROR_NOTES};
 
         # format an email message with all of the information that we want
         my $line = ('=' x 40);
@@ -653,7 +652,6 @@ sub cleanup_handler ($$) {
             }
         );
     }
-
     Apache::SizeLimit->handler($r);
 }
 
