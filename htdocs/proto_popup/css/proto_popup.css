@@ -42,3 +42,10 @@ img.proto-popup-cancel {
 input.proto-popup-cancel-btn { 
   margin-right: 5px;
 }
+
+.proto-popup-overlay { 
+  position: absolute;
+  top:      0px;
+  left:     0px;
+  background-color: #666;
+}
