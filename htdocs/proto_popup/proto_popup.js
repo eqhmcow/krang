@@ -2,7 +2,7 @@
     ProtoPopup.Confirm provide a light-weight solution for info, alert
     and confirm dialogs based on Prototype and Scriptaculous.
     @author <a href="mailto:bs@cms-schulze.de">Bodo Schulze</a>
-    @version 0.1
+    @version 0.2
     @license BSD-like
     @www <a href="http://dev.cms-schulze.de>ProtoPopup</a>
 
@@ -120,7 +120,16 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
            icon. Defaults to 'images/cancel.png'<br/>
 
            <b>zIndex</b> {NUMBER} - The z-index of the popup. Defaults
-           to 0.<br/>
+           to 1.<br/>
+
+           <b>modal</b> {BOOL} - If true, the popup will be of the
+           'modal' kind, the document being greyed out. The modal
+           overlay will have a z-index of 1 less than the popup's
+           z-index. Defaults to false.<br/>
+
+           <b>opacity</b> {NUMBER} - The opacity of the overlay
+           greying out the screen in the case of a 'modal' popup (see
+           above). Defaults to 0.6.<br/>
 
            </div>
 
@@ -136,7 +145,9 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
             footer           : undefined,
             width            : '300px',
             cancelIconSrc    : 'images/cancel.png',
-            zIndex           : 0
+            zIndex           : 1,
+            modal            : false,
+            opacity          : .6
         };
 
         // merge in the config
@@ -160,7 +171,7 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
         popup.insert(new Element('img', {
             src     : this.config.cancelIconSrc,
             'class' : 'proto-popup-cancel'
-        }).observe('click', function(e) { popup.hide(); Event.stop(e) }));;
+        }).observe('click', function(e) { this.hide(); Event.stop(e) }.bind(this)));;
 
         /**
            Array holding the popup's section names 'header', 'body' and 'footer'.
@@ -198,6 +209,17 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
                 this[section] = new Element('div', {id : id+'-'+section, 'class' : 'proto-popup-'+section}).hide();
                 popup.insert(this[section]);
         }.bind(this));
+
+        // maybe add a modal overlay
+        var ie_opac = this.config.opacity * 100;
+        if (this.config.modal) {
+            var overlay = this.overlay = Element('div', {id: id+'-overlay', 'class': 'proto-popup-overlay'})
+                .setStyle({opacity: this.config.opacity,
+                            filter: 'alpha(opacity='+ie_opac+')',
+                            zIndex: this.config.zIndex-1})
+                .hide();
+            document.body.appendChild(overlay);
+        }
 
         // append to document body
         document.body.appendChild(this.popup);
@@ -276,6 +298,32 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
             this.centerIt();
             this.config.centerOnCreation = false;
         }
+
+        // show section even when directly setting them via Prototype's Ajax.Updater
+        this.sections.each(function(section) {
+            var s = $(this.id + '-' + section);
+            if (s && s.innerHTML != '') { s.show(); }
+
+        }.bind(this));
+
+        // maybe show modal
+        if (this.overlay) {
+            this.overlay.show();
+            var dim    = document.viewport.getDimensions();
+            var scroll = document.viewport.getScrollOffsets(); 
+            this.overlay.setStyle({height: dim.height+'px', top:  scroll.top+'px',
+                        width:  dim.width+'px',  left: scroll.left+'px'});
+            try {
+                var html = $(document.getElementsByTagName('html')[0]);
+                html.setStyle({overflow: 'hidden'});
+            } catch(er) {
+                try {
+                    var body = $(document.getElementsByTagName('body')[0]);
+                    body.setStyle({overflow: 'hidden'});
+                } catch(er) {}
+            }
+        }
+
         this.onShow.each(function(f) {
             if (Object.isFunction(f)) f.defer();
         });
@@ -293,6 +341,18 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 
     */
     hide : function() {
+        if (this.overlay) {
+            try {
+                var html = $(document.getElementsByTagName('html')[0]);
+                html.setStyle({overflow: 'auto'});
+            } catch(er) {
+                try {
+                    var body = $(document.getElementsByTagName('body')[0]);
+                    body.setStyle({overflow: 'auto'});
+                } catch(er) {}
+            }
+            this.overlay.hide();
+        }
         this.popup.hide();
         return this;
     },
@@ -302,13 +362,16 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
        vertically on the viewport.  Internally called by {@link #show}.
     */
     centerIt : function() {
-        windowDim = document.viewport.getDimensions();
-        popupDim  = this.popup.getDimensions();
+        var windowDim  = document.viewport.getDimensions();
+        var popupDim   = this.popup.getDimensions();
+        var scroll     = document.viewport.getScrollOffsets();
+        var scrollLeft = Prototype.Browser.IEVersion < 7 ? scroll.left : 0;
+        var scrollTop  = Prototype.Browser.IEVersion < 7 ? scroll.top  : 0;
 
-        centerX = Math.round(windowDim.width / 2) 
+        centerX = Math.round(windowDim.width / 2) + scrollLeft
             - (popupDim.width  / 2) + 'px';
 
-        centerY = Math.round(windowDim.height/ 2) 
+        centerY = Math.round(windowDim.height/ 2) + scrollTop
             - (popupDim.height / 2) + 'px';
 
         this.popup.setStyle({left: centerX, top: centerY});
