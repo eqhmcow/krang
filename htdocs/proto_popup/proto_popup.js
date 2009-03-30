@@ -131,6 +131,18 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
            greying out the screen in the case of a 'modal' popup (see
            above). Defaults to 0.6.<br/>
 
+           <b>headerBackgroundImage</b> {STRING} - CSS property
+           'background-image' for the header section. Defaults to
+           undefined.<br/>
+
+           <b>bodyBackgroundImage</b> {STRING} - CSS property
+           'background-image' for the body section. Defaults to
+           undefined.<br/>
+
+           <b>footerBackgroundImage</b> {STRING} - CSS property
+           'background-image' for the footer section. Defaults to
+           undefined.<br/>
+
            </div>
 
         */
@@ -147,7 +159,10 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
             cancelIconSrc    : 'images/cancel.png',
             zIndex           : 1,
             modal            : false,
-            opacity          : .6
+            opacity          : .6,
+            headerBackgroundImage : undefined,
+            bodyBackgroundImage   : undefined,
+            footerBackgroundImage : undefined
         };
 
         // merge in the config
@@ -168,10 +183,12 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
         this.popup = popup;
 
         // insert the cancel icon and attach click handler
-        popup.insert(new Element('img', {
-            src     : this.config.cancelIconSrc,
-            'class' : 'proto-popup-cancel'
-        }).observe('click', function(e) { this.hide(); Event.stop(e) }.bind(this)));;
+        if (this.config.cancelIconSrc) {
+            popup.insert(new Element('img', {
+                src     : this.config.cancelIconSrc,
+                'class' : 'proto-popup-cancel'
+            }).observe('click', function(e) { this.hide(); Event.stop(e) }.bind(this)));;
+        }
 
         /**
            Array holding the popup's section names 'header', 'body' and 'footer'.
@@ -206,8 +223,16 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 
          */
         this.sections.each(function(section) {
-                this[section] = new Element('div', {id : id+'-'+section, 'class' : 'proto-popup-'+section}).hide();
-                popup.insert(this[section]);
+                console.log('Section: '+section);
+                var se = new Element('div', {id : id+'-'+section, 'class' : 'proto-popup-'+section});
+                if (this.config[section+'BackgroundImage']) {
+                    console.log(this.config[section+'BackgroundImage']);
+                    se.setStyle({backgroundImage: this.config[section+'BackgroundImage'],
+                                backgroundRepeat: 'no-repeat'});
+                }
+                this[section] = se;
+                popup.insert(se);
+                console.log(se);
         }.bind(this));
 
         // maybe add a modal overlay
@@ -388,11 +413,20 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 
     */
     makeButton : function(name) {
-        return new Element('input', {
+        var btn = new Element('input', {
+            id      : this.id + '-' + name + '_btn',
             type    : 'button',
             value   : this.config[name+'BtnLabel'],
             'class' : 'proto-popup-'+name+'-btn'
         });
+
+        // maybe add a background image
+        if (this.config[name + 'BtnBackgroundImage']) {
+            btn.setStyle({backgroundImage: this.config[name + 'BtnBackgroundImage'],
+                        backgroundPosition: 'no-repeat'});
+        }
+
+        return btn;
    }
 });
 
@@ -519,14 +553,18 @@ ProtoPopup.id2obj = {};
     {@link ProtoPopup#config} augmented with:
     <div style="padding-left: 20px">
        <b>closeBtnLabel:</b> The label of the "Close" button inserted
-       in the popup's footer section. Defaults to 'Close'.
+       in the popup's footer section. Defaults to 'Close'.<br/>
+       <b>closeBtnBackgroundImage</b> {STRING} - CSS property
+       'background-image' for the close button. Defaults to
+       undefined.
     </div>
 */
 ProtoPopup.Alert = Class.create(ProtoPopup, /** @lends ProtoPopup.Alert.prototype */{
     /** @ignore */
     initialize : function($super, id, config) {
         _config = {
-            closeBtnLabel : 'Close'
+        closeBtnLabel : 'Close',
+            closeBtnBackgroundImage: undefined
         };
         Object.extend(_config, (config || {}));
         $super(id, _config);
@@ -609,6 +647,14 @@ ProtoPopup.Alert.makeFunction = ProtoPopup.makeMakeFunction(function(id, config)
 
        <b>onCancel:</b> The callback executed when the 'Cancel' button
        is clicked. Defaults to the empty function.<br/>
+
+       <b>okBtnBackgroundImage</b> {STRING} - CSS property
+       'background-image' for the ok button. Defaults to
+       undefined.<br/>
+
+       <b>cancelBtnBackgroundImage</b> {STRING} - CSS property
+       'background-image' for the cancel button. Defaults to
+       undefined.<br/>
     </div>
 */
 ProtoPopup.Confirm = Class.create(ProtoPopup, /** @lends ProtoPopup.Confirm.prototype */{
@@ -618,7 +664,9 @@ ProtoPopup.Confirm = Class.create(ProtoPopup, /** @lends ProtoPopup.Confirm.prot
             okBtnLabel     : 'OK',
             cancelBtnLabel : 'Cancel',
             onOk           : Prototype.emptyFunction,
-            onCancel       : Prototype.emptyFunction
+            onCancel       : Prototype.emptyFunction,
+            okBtnBackgroundImage:     undefined,
+            cancelBtnBackgroundImage: undefined
         };
         Object.extend(_config, (config || {}));
         $super(id, _config);

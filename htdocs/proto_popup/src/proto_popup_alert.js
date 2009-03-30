@@ -14,14 +14,18 @@
     {@link ProtoPopup#config} augmented with:
     <div style="padding-left: 20px">
        <b>closeBtnLabel:</b> The label of the "Close" button inserted
-       in the popup's footer section. Defaults to 'Close'.
+       in the popup's footer section. Defaults to 'Close'.<br/>
+       <b>closeBtnBackgroundImage</b> {STRING} - CSS property
+       'background-image' for the close button. Defaults to
+       undefined.
     </div>
 */
 ProtoPopup.Alert = Class.create(ProtoPopup, /** @lends ProtoPopup.Alert.prototype */{
     /** @ignore */
     initialize : function($super, id, config) {
         _config = {
-            closeBtnLabel : 'Close'
+        closeBtnLabel : 'Close',
+            closeBtnBackgroundImage: undefined
         };
         Object.extend(_config, (config || {}));
         $super(id, _config);

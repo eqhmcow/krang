@@ -23,6 +23,14 @@
 
        <b>onCancel:</b> The callback executed when the 'Cancel' button
        is clicked. Defaults to the empty function.<br/>
+
+       <b>okBtnBackgroundImage</b> {STRING} - CSS property
+       'background-image' for the ok button. Defaults to
+       undefined.<br/>
+
+       <b>cancelBtnBackgroundImage</b> {STRING} - CSS property
+       'background-image' for the cancel button. Defaults to
+       undefined.<br/>
     </div>
 */
 ProtoPopup.Confirm = Class.create(ProtoPopup, /** @lends ProtoPopup.Confirm.prototype */{
@@ -32,7 +40,9 @@ ProtoPopup.Confirm = Class.create(ProtoPopup, /** @lends ProtoPopup.Confirm.prot
             okBtnLabel     : 'OK',
             cancelBtnLabel : 'Cancel',
             onOk           : Prototype.emptyFunction,
-            onCancel       : Prototype.emptyFunction
+            onCancel       : Prototype.emptyFunction,
+            okBtnBackgroundImage:     undefined,
+            cancelBtnBackgroundImage: undefined
         };
         Object.extend(_config, (config || {}));
         $super(id, _config);
