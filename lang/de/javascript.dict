@@ -91,4 +91,4 @@
 # In krang.js
 "Are you sure? This will discard any unsaved changes in any window."  "Sind Sie sicher, dass Sie sich in allen Fenstern/Tabs, in denen Sie Krang geöffnet haben, abmelden wollen? Dadurch gehen alle noch nicht gespeicherten Veränderungen verloren."
 "Are you sure you want to discard any unsaved changes?"  "Sind Sie sicher, dass Sie alle noch nicht gespeicherten Veränderungen verwerfen wollen?"
-"Krang couldn't find a valid Window ID for this login. Please login again, and if the problem persists, try restarting your browser."  "Krang konnte für diese Anmeldung keine gültige Fenster ID finden.  Bitte melden Sie sich erneut an.  Sollte das Problem dann immer noch auftreten, starten Sie den Borwser bitte neu."
+"Krang couldn't find a valid Window ID for this login. Please login again, and if the problem persists, try restarting your browser."  "Krang konnte für diese Anmeldung keine gültige Fenster ID finden.  Bitte melden Sie sich erneut an.  Sollte das Problem dann immer noch auftreten, starten Sie den Browser bitte neu."
