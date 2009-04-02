@@ -138,7 +138,7 @@ sub edit {
         my $html = $child->data;
 
         # no empty elements
-        next unless $html;
+        next unless $html || $pkg->is_empty_tag($tag);
 
         # our default tag
         $tag ||= 'p';
@@ -237,7 +237,7 @@ sub save {
         my $tag = $block->tag || next;
 
         # skip empty content tags
-        next unless $block->as_text() or $tag eq 'hr';
+        next unless $block->as_text() or $pkg->is_empty_tag($tag);
 
         $pkg->add_element(
             tag              => $tag,
@@ -315,7 +315,10 @@ sub add_element {
 
         $child->data($data);
 
-        debug("Making element for HTML tag '" . $tag . "' with data: $html");
+        debug(  "Making element for HTML tag '" 
+              . $tag
+              . "' with data: "
+              . (defined $html ? $html : '<none>'));
     }
 }
 
@@ -473,6 +476,18 @@ sub split_block_on_br {
 
     # filter empty pieces
     return grep { $_ } @html, $html;
+}
+
+sub is_empty_tag {
+    my ($pkg, $tag) = @_;
+
+    my $is_empty = $pkg->get_empty_tags();
+
+    return $is_empty->{$tag};
+}
+
+sub get_empty_tags {
+    return {hr => 1,};
 }
 
 =back

@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in L<Krang::BulkEdit::Xinha> where empty tags were not
+handled correctly (thanks to Mike Lampson for catching this). Added
+method returning a list of supported empty HTML tags. This list
+currently contains only HR. [Bodo Schulze]
+
+=item *
+
 Add F<bin/krang_tmp_cleaner> to clean out the F<tmp/> directory while
 developing. [Michael Peters]
 
