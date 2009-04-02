@@ -223,16 +223,13 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 
          */
         this.sections.each(function(section) {
-                console.log('Section: '+section);
                 var se = new Element('div', {id : id+'-'+section, 'class' : 'proto-popup-'+section});
                 if (this.config[section+'BackgroundImage']) {
-                    console.log(this.config[section+'BackgroundImage']);
                     se.setStyle({backgroundImage: this.config[section+'BackgroundImage'],
                                 backgroundRepeat: 'no-repeat'});
                 }
                 this[section] = se;
                 popup.insert(se);
-                console.log(se);
         }.bind(this));
 
         // maybe add a modal overlay
@@ -412,12 +409,12 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
        It's CSS class is "'proto-popup-'+name+'-btn'".
 
     */
-    makeButton : function(name) {
+    makeButton : function(name, label) {
         var btn = new Element('input', {
-            id      : this.id + '-' + name + '_btn',
+            id      : this.id + '-' + name + '-btn',
             type    : 'button',
-            value   : this.config[name+'BtnLabel'],
-            'class' : 'proto-popup-'+name+'-btn'
+            value   : label,
+            'class' : 'proto-popup-btn'
         });
 
         // maybe add a background image
@@ -439,8 +436,8 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 */
 ProtoPopup.makeGetFor = function(newProtoPopup) {
     return function(id, config) {
-        var pp;
-        if (pp = ProtoPopup.id2obj[id]) {
+        var pp = ProtoPopup.id2obj[id];
+        if (pp) {
             // we have it
             pp.setHtml(config);
             return pp;
@@ -563,14 +560,14 @@ ProtoPopup.Alert = Class.create(ProtoPopup, /** @lends ProtoPopup.Alert.prototyp
     /** @ignore */
     initialize : function($super, id, config) {
         _config = {
-        closeBtnLabel : 'Close',
+            closeBtnLabel : 'Close',
             closeBtnBackgroundImage: undefined
         };
         Object.extend(_config, (config || {}));
         $super(id, _config);
 
         // insert 'Close' button
-        var closeBtn = this.closeBtn = this.makeButton('close');
+        var closeBtn = this.closeBtn = this.makeButton('close', this.config.closeBtnLabel);
         this.footer.insert(this.closeBtn).show();
 
         // focus the Close button
@@ -628,7 +625,7 @@ ProtoPopup.Alert.makeFunction = ProtoPopup.makeMakeFunction(function(id, config)
 
 /** ProtoPopup.Confirm is based on ProtoPopup and ads 'OK' and
     'Cancel' buttons to its base object.
-    @class Creates a ProtoPopup.Alert
+    @class Creates a ProtoPopup.Confirm object
     @constructor
     @augments ProtoPopup
     @param {STRING} id A unique string identifying a popup
@@ -672,8 +669,8 @@ ProtoPopup.Confirm = Class.create(ProtoPopup, /** @lends ProtoPopup.Confirm.prot
         $super(id, _config);
 
         // make the buttons
-        var cancelBtn = this.cancelBtn = this.makeButton('cancel');
-        var okBtn     = this.okBtn     = this.makeButton('ok');
+        var cancelBtn = this.cancelBtn = this.makeButton('cancel', this.config.cancelBtnLabel);
+        var okBtn     = this.okBtn     = this.makeButton('ok',     this.config.okBtnLabel);
         this.footer.insert(cancelBtn).show().insert(okBtn).show();
 
         // focus the OK button
@@ -726,5 +723,80 @@ ProtoPopup.Confirm.get = ProtoPopup.makeGetFor(function(id, config) {
 */
 ProtoPopup.Confirm.makeFunction = ProtoPopup.makeMakeFunction(function(id, config) {
    return new ProtoPopup.Confirm(id, config);
+});
+
+/** @fileoverview ProtoPopup.Dialog is based on ProtoPopup and ads 'OK' and
+    'Cancel' buttons to its base object.
+*/
+
+/** ProtoPopup.Dialog is based on ProtoPopup and ads 'OK' and
+    'Cancel' buttons to its base object.
+    @class Creates a ProtoPopup.Dialog object
+    @constructor
+    @augments ProtoPopup
+    @param {STRING} id A unique string identifying a popup
+    @param {OBJECT} config The configuration object {@link #.config}
+    @return ProtoPopup.Dialog object
+    @property {object} config The default configuration inherited from
+    {@link ProtoPopup#config} augmented with:
+    <div style="padding-left: 20px">
+       <b>buttons:</b> An array of button specs objects. The buttons are inserted
+       into the footer in the order they are specified.<br/><br/>
+
+       <b>A button spec object takes the following keys:</b><br/><br/>
+
+       <b>name:</b> The name will be used to build the ID of the button. Give
+       a popup ID 'dialog' and a button name 'save', the button's ID will be 'dialog-save-btn'<br/>
+
+       <b>label:</b> The label of the button.<br/>
+
+       <b>onClick:</b> The callback function executed when the button is clicked.<br/>
+
+       <b>giveFocus:</b> A boolean specifying whether the button should be focused when the popup is displayed.<br/>
+
+       <b>backgroundImage</b> {STRING} - CSS property
+       'background-image' for the cancel button. Defaults to
+       undefined.<br/>
+    </div>
+*/
+ProtoPopup.Dialog = Class.create(ProtoPopup, /** @lends ProtoPopup.Dialog.prototype */{
+    /** @ignore */
+    initialize : function($super, id, config) {
+        var _config = {
+            buttons: []
+        };
+        Object.extend(_config, (config || {}));
+        $super(id, _config);
+        
+        // make the buttons
+        this.config.buttons.each(function(spec) {
+            var btn  = this.makeButton(spec.name, spec.label);
+            this.footer.insert(btn).show();
+            if (spec.giveFocus) { this.onShow.push(function() {btn.focus()}) }
+
+            // attach handler
+            var clickHandler = function(e) {
+                this.hide();
+                spec.onClick();
+            }.bind(this);
+
+            Event.observe(btn, 'click', clickHandler);
+
+        }.bind(this));
+    }
+});
+
+/**
+   Class method returning (maybe first create) a draggable popup DIV
+   for confirm dialogs.   Given the same id argument returns the same popup
+   object, following the singleton pattern. See the example of
+   the base class' {@link ProtoPopup.get}
+   @function
+   @param {STRING} id The name of the popup used to build its ID.
+   @param {OBJECT} config The config object, see {@link #.config}.
+   @return The initialized and draggable popup.
+*/
+ProtoPopup.Dialog.get = ProtoPopup.makeGetFor(function(id, config) {
+    return new ProtoPopup.Dialog(id, config)
 });
 

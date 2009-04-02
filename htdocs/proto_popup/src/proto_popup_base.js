@@ -223,16 +223,13 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 
          */
         this.sections.each(function(section) {
-                console.log('Section: '+section);
                 var se = new Element('div', {id : id+'-'+section, 'class' : 'proto-popup-'+section});
                 if (this.config[section+'BackgroundImage']) {
-                    console.log(this.config[section+'BackgroundImage']);
                     se.setStyle({backgroundImage: this.config[section+'BackgroundImage'],
                                 backgroundRepeat: 'no-repeat'});
                 }
                 this[section] = se;
                 popup.insert(se);
-                console.log(se);
         }.bind(this));
 
         // maybe add a modal overlay
@@ -412,12 +409,12 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
        It's CSS class is "'proto-popup-'+name+'-btn'".
 
     */
-    makeButton : function(name) {
+    makeButton : function(name, label) {
         var btn = new Element('input', {
-            id      : this.id + '-' + name + '_btn',
+            id      : this.id + '-' + name + '-btn',
             type    : 'button',
-            value   : this.config[name+'BtnLabel'],
-            'class' : 'proto-popup-'+name+'-btn'
+            value   : label,
+            'class' : 'proto-popup-btn'
         });
 
         // maybe add a background image
@@ -439,8 +436,8 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 */
 ProtoPopup.makeGetFor = function(newProtoPopup) {
     return function(id, config) {
-        var pp;
-        if (pp = ProtoPopup.id2obj[id]) {
+        var pp = ProtoPopup.id2obj[id];
+        if (pp) {
             // we have it
             pp.setHtml(config);
             return pp;

@@ -4,7 +4,7 @@
 
 /** ProtoPopup.Confirm is based on ProtoPopup and ads 'OK' and
     'Cancel' buttons to its base object.
-    @class Creates a ProtoPopup.Alert
+    @class Creates a ProtoPopup.Confirm object
     @constructor
     @augments ProtoPopup
     @param {STRING} id A unique string identifying a popup
@@ -48,8 +48,8 @@ ProtoPopup.Confirm = Class.create(ProtoPopup, /** @lends ProtoPopup.Confirm.prot
         $super(id, _config);
 
         // make the buttons
-        var cancelBtn = this.cancelBtn = this.makeButton('cancel');
-        var okBtn     = this.okBtn     = this.makeButton('ok');
+        var cancelBtn = this.cancelBtn = this.makeButton('cancel', this.config.cancelBtnLabel);
+        var okBtn     = this.okBtn     = this.makeButton('ok',     this.config.okBtnLabel);
         this.footer.insert(cancelBtn).show().insert(okBtn).show();
 
         // focus the OK button

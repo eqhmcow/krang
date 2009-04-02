@@ -24,14 +24,14 @@ ProtoPopup.Alert = Class.create(ProtoPopup, /** @lends ProtoPopup.Alert.prototyp
     /** @ignore */
     initialize : function($super, id, config) {
         _config = {
-        closeBtnLabel : 'Close',
+            closeBtnLabel : 'Close',
             closeBtnBackgroundImage: undefined
         };
         Object.extend(_config, (config || {}));
         $super(id, _config);
 
         // insert 'Close' button
-        var closeBtn = this.closeBtn = this.makeButton('close');
+        var closeBtn = this.closeBtn = this.makeButton('close', this.config.closeBtnLabel);
         this.footer.insert(this.closeBtn).show();
 
         // focus the Close button
