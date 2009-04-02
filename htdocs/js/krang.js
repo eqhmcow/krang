@@ -53,6 +53,10 @@ Krang.load = function(target) {
     // show messages and alerts that have been added
     Krang.Messages.show('alerts');
     Krang.Messages.show();
+
+    // apply behaviours to slide-in messages and alerts
+    Behaviour.apply($('messages'));
+    Behaviour.apply($('alerts'));
 };
 
 /*

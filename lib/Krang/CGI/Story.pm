@@ -2613,15 +2613,8 @@ sub alert_duplicate_url {
             '',
             map {
                 sprintf(
-                        qq{<tr>  <td> %d </td>  <td> %s </td>  </tr>},
-                        $_->{id},
-                        format_url(
-                            url    => $_->{url},
-                            linkto => sprintf("javascript:Krang.preview('story','%d')", $_->{id}),
-                            length => 50,
-                        )
-                    )
-
+                    qq{<tr>  <td> %d </td>  <td> <a href="" class="story-preview-link" name="story_%d">%s</a> </td>  </tr>},
+                    $_->{id}, $_->{id}, $_->{url})
               } @{$error->stories}
         );
 
