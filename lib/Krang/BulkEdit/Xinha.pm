@@ -138,7 +138,7 @@ sub edit {
         my $html = $child->data;
 
         # no empty elements
-        next unless $html || $pkg->is_empty_tag($tag);
+        next unless $html || $pkg->is_empty_tag($tag) || ref($child->before_bulk_edit) eq 'CODE';
 
         # our default tag
         $tag ||= 'p';
