@@ -489,7 +489,12 @@ sub element_bulk_edit {
     );
 
     # dispatch to bulk edit class
-    pkg("BulkEdit::" . ucfirst($bulk_edit))->edit(
+    my $type    = ucfirst($bulk_edit) || 'Textarea';
+    my $pkg     = pkg("BulkEdit::$type");
+    my $editor  = $pkg->new()
+      or croak(__PACKAGE__ . "::element_bulk_edit() - Couldn't create instance of '$pkg'");
+
+    $editor->edit(
         element_editor => $self,
         element        => $element,
         child_names    => \@names,
@@ -1120,9 +1125,12 @@ sub element_bulk_save {
     my $root    = $args{element};
     my $element = $self->_find_element($root, $path);
 
-    my $type = ucfirst($query->param('bulk_edit')) || 'Textarea';
+    my $type    = ucfirst($query->param('bulk_edit')) || 'Textarea';
+    my $pkg     = pkg("BulkEdit::$type");
+    my $editor  = $pkg->new()
+      or croak(__PACKAGE__ . "::element_bulk_save() - Couldn't create instance of '$pkg'");
 
-    pkg("BulkEdit::$type")->save(
+    $editor->save(
         element_editor => $self,
         element        => $element,
     );

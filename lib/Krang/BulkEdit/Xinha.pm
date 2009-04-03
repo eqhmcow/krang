@@ -17,6 +17,8 @@ use HTML::Element;
 
 use Carp qw(croak);
 
+use Krang::ClassLoader MethodMaker => new => 'new';
+
 =head1 NAME
 
 Krang::BulkEdit::Xinha - Class for Xinha-based bulk editing
@@ -120,7 +122,7 @@ See L<Krang::Markup> for more information.
 =cut
 
 sub edit {
-    my ($pkg, %arg) = @_;
+    my ($self, %arg) = @_;
 
     my $editor   = $arg{element_editor};
     my $template = $arg{template};
@@ -138,7 +140,7 @@ sub edit {
         my $html = $child->data;
 
         # no empty elements
-        next unless $html || $pkg->is_empty_tag($tag) || ref($child->before_bulk_edit) eq 'CODE';
+        next unless $html || $self->is_empty_tag($tag) || ref($child->before_bulk_edit) eq 'CODE';
 
         # our default tag
         $tag ||= 'p';
@@ -154,7 +156,7 @@ sub edit {
     }
 
     # make formatblock selector, using the elementclass's display_name
-    my ($display_name_for, $formatblock) = $pkg->make_formatblock(
+    my ($display_name_for, $formatblock) = $self->make_formatblock(
         element     => $element,
         child_names => \%names
     );
@@ -201,14 +203,14 @@ L<Krang::BulkEdit::Xinha::Config>.
 =cut
 
 sub save {
-    my ($pkg, %arg) = @_;
+    my ($self, %arg) = @_;
     my $editor  = $arg{element_editor};
     my $element = $arg{element};
     my $query   = $editor->query;
 
     # filter and sanitize the incoming HTML
     my $html =
-      $pkg->scrub(html =>
+      $self->scrub(html =>
           pkg("Markup::$ENV{KRANG_BROWSER_ENGINE}")->browser2db(html => $query->param('bulk_data'))
       );
 
@@ -220,15 +222,15 @@ sub save {
     # which block elements *may* be distributed across elementclasses?
     # some of these elements might have been scrubbed away!
     # See Krang::BulkEdit::Xinha::Config::html_scrubber()
-    my $block_re = $pkg->block_re();
+    my $block_re = $self->block_re();
 
     # which HTML block elements have their own elementclass
-    my $elementclass_for = $pkg->tag2class_map(element => $element);
+    my $elementclass_for = $self->tag2class_map(element => $element);
     my $tmp = join('|', keys %$elementclass_for);
     my $elementclass_re = qr($tmp);
 
     # make a HTML::Tree
-    my $tree = $pkg->make_html_tree(html => $html);
+    my $tree = $self->make_html_tree(html => $html);
 
     # make Krang elements from tree
     for my $block ($tree->look_down('_tag' => $block_re)) {
@@ -237,9 +239,9 @@ sub save {
         my $tag = $block->tag || next;
 
         # skip empty content tags
-        next unless $block->as_text() or $pkg->is_empty_tag($tag);
+        next unless $block->as_text() or $self->is_empty_tag($tag);
 
-        $pkg->add_element(
+        $self->add_element(
             tag              => $tag,
             element          => $element,
             block            => $block,
@@ -267,7 +269,7 @@ sub save {
 
 # add a Krang element
 sub add_element {
-    my ($pkg, %arg) = @_;
+    my ($self, %arg) = @_;
     my $block   = $arg{block};
     my $tag     = $arg{tag};
     my $element = $arg{element};
@@ -276,7 +278,7 @@ sub add_element {
 
     # consider BR inside P as paragraph limit?
     if ($tag eq 'p' && pkg('BulkEdit::Xinha::Config')->split_p_on_br()) {
-        @html = $pkg->split_block_on_br(block => $block);
+        @html = $self->split_block_on_br(block => $block);
     } else {
 
         # see HTML::Element for those args
@@ -286,7 +288,7 @@ sub add_element {
         # for this tag (otherwise put it in the class for the
         # paragraph tag 'p'
         if ($tag =~ /$arg{elementclass_re}/) {
-            $html = $pkg->extract_children(html => $html, tag => $tag);
+            $html = $self->extract_children(html => $html, tag => $tag);
         }
 
         @html = ($html);
@@ -324,7 +326,7 @@ sub add_element {
 
 # sanitize incoming HTML
 sub scrub {
-    my ($pkg, %arg) = @_;
+    my ($self, %arg) = @_;
 
     # scrub disallowed HTML tags and attribs
     return pkg('BulkEdit::Xinha::Config')->html_scrubber(%arg);
@@ -332,14 +334,14 @@ sub scrub {
 
 # all possible block elements
 sub block_re {
-    my ($pkg, %arg) = @_;
+    my ($self, %arg) = @_;
 
     return qr[^(?:p|ul|ol|h1|h2|h3|h4|h5|h6|hr|table|address|blockquote|pre)$];
 }
 
 # workaround HTML::Element::as_HTML()
 sub extract_children {
-    my ($pkg, %arg) = @_;
+    my ($self, %arg) = @_;
     my $html = $arg{html};
 
     # chop the block's tag
@@ -435,7 +437,7 @@ sub tag2class_map {
 }
 
 sub make_html_tree {
-    my ($pkg, %arg) = @_;
+    my ($self, %arg) = @_;
 
     my $tree = HTML::TreeBuilder->new(
         implicit_body_p_tag => 1,    # wrap inline nodes with P if outside of block-level elements
@@ -450,7 +452,7 @@ sub make_html_tree {
 }
 
 sub split_block_on_br {
-    my ($pkg, %arg) = @_;
+    my ($self, %arg) = @_;
     my $block = $arg{block};
 
     my @html  = ();                        # return acc
@@ -479,9 +481,9 @@ sub split_block_on_br {
 }
 
 sub is_empty_tag {
-    my ($pkg, $tag) = @_;
+    my ($self, $tag) = @_;
 
-    my $is_empty = $pkg->get_empty_tags();
+    my $is_empty = $self->get_empty_tags();
 
     return $is_empty->{$tag};
 }

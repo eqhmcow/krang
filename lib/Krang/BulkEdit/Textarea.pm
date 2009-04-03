@@ -7,6 +7,8 @@ use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Message      => qw(add_message);
 use Krang::ClassLoader Localization => qw(localize);
 
+use Krang::ClassLoader MethodMaker => new => 'new';
+
 =head1 NAME
 
 Krang::BulkEdit::Textarea - Class for Textarea-based bulk editing
@@ -57,7 +59,7 @@ to be bulk edited.
 =cut
 
 sub edit {
-    my ($pkg, %arg) = @_;
+    my ($self, %arg) = @_;
 
     my $editor   = $arg{element_editor};
     my $template = $arg{template};
@@ -114,7 +116,7 @@ latter in children of $element (the legacy bulk edit behavior).
 =cut
 
 sub save {
-    my ($pkg, %arg) = @_;
+    my ($self, %arg) = @_;
     my $editor  = $arg{element_editor};
     my $element = $arg{element};
     my $query   = $editor->query;
