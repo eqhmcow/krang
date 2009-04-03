@@ -9,7 +9,7 @@
 <span class='line'>  2</span>     ProtoPopup.Confirm provide a light-weight solution for info, alert
 <span class='line'>  3</span>     and confirm dialogs based on Prototype and Scriptaculous.
 <span class='line'>  4</span>     @author &lt;a href="mailto:bs@cms-schulze.de">Bodo Schulze&lt;/a>
-<span class='line'>  5</span>     @version 0.2
+<span class='line'>  5</span>     @version 0.3
 <span class='line'>  6</span>     @license BSD-like
 <span class='line'>  7</span>     @www &lt;a href="http://dev.cms-schulze.de>ProtoPopup&lt;/a>
 <span class='line'>  8</span> 
@@ -426,119 +426,118 @@
 <span class='line'>419</span> 
 <span class='line'>420</span> </span><span class="WHIT">        </span><span class="COMM">// maybe add a background image</span><span class="WHIT">
 <span class='line'>421</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.config</span><span class="PUNC">[</span><span class="NAME">name</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">'BtnBackgroundImage'</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>422</span> </span><span class="WHIT">            </span><span class="NAME">btn.setStyle</span><span class="PUNC">(</span><span class="PUNC">{</span><span class="NAME">backgroundImage</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">this.config</span><span class="PUNC">[</span><span class="NAME">name</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">'BtnBackgroundImage'</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
-<span class='line'>423</span> </span><span class="WHIT">                        </span><span class="NAME">backgroundPosition</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">'no-repeat'</span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>424</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'>425</span> 
-<span class='line'>426</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">btn</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>427</span> </span><span class="WHIT">   </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'>428</span> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>429</span> 
-<span class='line'>430</span> </span><span class="COMM">/**
-<span class='line'>431</span>    Class method returning get() methods for ProtoPopup and its
-<span class='line'>432</span>    derivations.
-<span class='line'>433</span>    @param newProtoPopup Function returning a constructor making ProtoPopup or
-<span class='line'>434</span>    one of derivative objects.
-<span class='line'>435</span>    @return get() method
-<span class='line'>436</span> */</span><span class="WHIT">
-<span class='line'>437</span> </span><span class="NAME">ProtoPopup.makeGetFor</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">newProtoPopup</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>438</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>439</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">pp</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">ProtoPopup.id2obj</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>440</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">pp</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>441</span> </span><span class="WHIT">            </span><span class="COMM">// we have it</span><span class="WHIT">
-<span class='line'>442</span> </span><span class="WHIT">            </span><span class="NAME">pp.setHtml</span><span class="PUNC">(</span><span class="NAME">config</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>443</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">pp</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>444</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'>445</span> </span><span class="WHIT">        </span><span class="COMM">// create it</span><span class="WHIT">
-<span class='line'>446</span> </span><span class="WHIT">        </span><span class="NAME">pp</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">newProtoPopup</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>447</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">pp</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>448</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'>449</span> </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'>450</span> 
-<span class='line'>451</span> </span><span class="COMM">/**
-<span class='line'>452</span>    Class method returning makeFunction() methods for ProtoPopup and its
-<span class='line'>453</span>    derivations.
-<span class='line'>454</span>    @param newProtoPopup Function returning a constructor making ProtoPopup or
-<span class='line'>455</span>    one of derivative objects.
-<span class='line'>456</span>    @return get() method
-<span class='line'>457</span> */</span><span class="WHIT">
-<span class='line'>458</span> </span><span class="NAME">ProtoPopup.makeMakeFunction</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">newProtoPopup</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>459</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>460</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">pp</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>461</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Object.isUndefined</span><span class="PUNC">(</span><span class="NAME">pp</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>462</span> </span><span class="WHIT">            </span><span class="NAME">pp</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">newProtoPopup</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>463</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">config</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">config.arg</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>464</span> </span><span class="WHIT">                </span><span class="COMM">// attach original object</span><span class="WHIT">
-<span class='line'>465</span> </span><span class="WHIT">                </span><span class="NAME">config.arg.callee.obj</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">pp</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>466</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'>467</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'>468</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">msg</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>469</span> </span><span class="WHIT">            </span><span class="NAME">pp.setHtml</span><span class="PUNC">(</span><span class="PUNC">{</span><span class="NAME">body</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">msg</span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">show</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>470</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'>471</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'>472</span> </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'>473</span> 
-<span class='line'>474</span> </span><span class="COMM">/**
-<span class='line'>475</span>    Class method returning (maybe first create) a draggable popup DIV
-<span class='line'>476</span>    for info boxes.  Given the same id argument returns the same popup
-<span class='line'>477</span>    object, following the singleton pattern.
-<span class='line'>478</span>    @function
-<span class='line'>479</span>    @param {STRING} id The ID of the popup.
-<span class='line'>480</span>    @param {OBJECT} config The {@link #config} object.
-<span class='line'>481</span>    @return The initialized and draggable popup.
-<span class='line'>482</span>    @example Make a custom info() method serving as a convenient wrapper.
-<span class='line'>483</span> 
-<span class='line'>484</span>    The popup shown by info() will always have the string
-<span class='line'>485</span>    'Newest Information' in the popup's header section, while the
-<span class='line'>486</span>    argument passed to info() will be wrapped in a DIV that
-<span class='line'>487</span>    will be inserted in the popup's body section.
-<span class='line'>488</span>    
-<span class='line'>489</span>         // make the custom info function
-<span class='line'>490</span>         var info = function(msg) {
-<span class='line'>491</span>             ProtoPopup.get('info', {
-<span class='line'>492</span>                 header     : 'Info header',
-<span class='line'>493</span>                 body       : new Element('div').update(msg),
-<span class='line'>494</span>             });
-<span class='line'>495</span>         }
-<span class='line'>496</span> 
-<span class='line'>497</span>         // first use
-<span class='line'>498</span>         info('My first info');
-<span class='line'>499</span> 
-<span class='line'>500</span>         // second use (using the same popup, showing the same header)
-<span class='line'>501</span>         info('My second info'); 
-<span class='line'>502</span> */</span><span class="WHIT">
-<span class='line'>503</span> </span><span class="NAME">ProtoPopup.get</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">ProtoPopup.makeGetFor</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>504</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">ProtoPopup</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT">
-<span class='line'>505</span> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>506</span> 
-<span class='line'>507</span> </span><span class="COMM">/**
-<span class='line'>508</span>    Class method making custom functions accepting one argument that
-<span class='line'>509</span>    will be inserted in the body section of the underlying ProtoPopup
-<span class='line'>510</span>    object created behind the scenes.
-<span class='line'>511</span>    @function
-<span class='line'>512</span>    @param {STRING} id The ID of the popup.
-<span class='line'>513</span>    @param {OBJECT} config The {@link #config} object.
-<span class='line'>514</span>    @return A function accepting one argument to be inserted into the
-<span class='line'>515</span>    popup's body section.
-<span class='line'>516</span>    @example Make a custom info() method
-<span class='line'>517</span> 
-<span class='line'>518</span>       // make the method
-<span class='line'>519</span>       var info = ProtoPopup.makeFunction('info', {
-<span class='line'>520</span>           header : 'Announcement'
-<span class='line'>521</span>       });
-<span class='line'>522</span> 
-<span class='line'>523</span>       // first use
-<span class='line'>524</span>       info('Forget this info');
-<span class='line'>525</span> 
-<span class='line'>526</span>       // second use (using the same popup, showing the same header
-<span class='line'>527</span>       info('Forget this info, too');
-<span class='line'>528</span> */</span><span class="WHIT">
-<span class='line'>529</span> </span><span class="NAME">ProtoPopup.makeFunction</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">ProtoPopup.makeMakeFunction</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>530</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">ProtoPopup</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>531</span> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>532</span> 
-<span class='line'>533</span> </span><span class="COMM">/**
-<span class='line'>534</span>    Object mapping popup IDs to popup objects.
-<span class='line'>535</span> */</span><span class="WHIT">
-<span class='line'>536</span> </span><span class="NAME">ProtoPopup.id2obj</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>537</span> </span></pre></body></html>
+<span class='line'>422</span> </span><span class="WHIT">            </span><span class="NAME">btn.setStyle</span><span class="PUNC">(</span><span class="PUNC">{</span><span class="NAME">backgroundImage</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">this.config</span><span class="PUNC">[</span><span class="NAME">name</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">'BtnBackgroundImage'</span><span class="PUNC">]</span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>423</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>424</span> 
+<span class='line'>425</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">btn</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>426</span> </span><span class="WHIT">   </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>427</span> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>428</span> 
+<span class='line'>429</span> </span><span class="COMM">/**
+<span class='line'>430</span>    Class method returning get() methods for ProtoPopup and its
+<span class='line'>431</span>    derivations.
+<span class='line'>432</span>    @param newProtoPopup Function returning a constructor making ProtoPopup or
+<span class='line'>433</span>    one of derivative objects.
+<span class='line'>434</span>    @return get() method
+<span class='line'>435</span> */</span><span class="WHIT">
+<span class='line'>436</span> </span><span class="NAME">ProtoPopup.makeGetFor</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">newProtoPopup</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>437</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>438</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">pp</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">ProtoPopup.id2obj</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>439</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">pp</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>440</span> </span><span class="WHIT">            </span><span class="COMM">// we have it</span><span class="WHIT">
+<span class='line'>441</span> </span><span class="WHIT">            </span><span class="NAME">pp.setHtml</span><span class="PUNC">(</span><span class="NAME">config</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>442</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">pp</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>443</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>444</span> </span><span class="WHIT">        </span><span class="COMM">// create it</span><span class="WHIT">
+<span class='line'>445</span> </span><span class="WHIT">        </span><span class="NAME">pp</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">newProtoPopup</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>446</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">pp</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>447</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>448</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>449</span> 
+<span class='line'>450</span> </span><span class="COMM">/**
+<span class='line'>451</span>    Class method returning makeFunction() methods for ProtoPopup and its
+<span class='line'>452</span>    derivations.
+<span class='line'>453</span>    @param newProtoPopup Function returning a constructor making ProtoPopup or
+<span class='line'>454</span>    one of derivative objects.
+<span class='line'>455</span>    @return get() method
+<span class='line'>456</span> */</span><span class="WHIT">
+<span class='line'>457</span> </span><span class="NAME">ProtoPopup.makeMakeFunction</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">newProtoPopup</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>458</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>459</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">pp</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>460</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Object.isUndefined</span><span class="PUNC">(</span><span class="NAME">pp</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>461</span> </span><span class="WHIT">            </span><span class="NAME">pp</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">newProtoPopup</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>462</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">config</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">config.arg</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>463</span> </span><span class="WHIT">                </span><span class="COMM">// attach original object</span><span class="WHIT">
+<span class='line'>464</span> </span><span class="WHIT">                </span><span class="NAME">config.arg.callee.obj</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">pp</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>465</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>466</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>467</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">msg</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>468</span> </span><span class="WHIT">            </span><span class="NAME">pp.setHtml</span><span class="PUNC">(</span><span class="PUNC">{</span><span class="NAME">body</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">msg</span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">show</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>469</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>470</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>471</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>472</span> 
+<span class='line'>473</span> </span><span class="COMM">/**
+<span class='line'>474</span>    Class method returning (maybe first create) a draggable popup DIV
+<span class='line'>475</span>    for info boxes.  Given the same id argument returns the same popup
+<span class='line'>476</span>    object, following the singleton pattern.
+<span class='line'>477</span>    @function
+<span class='line'>478</span>    @param {STRING} id The ID of the popup.
+<span class='line'>479</span>    @param {OBJECT} config The {@link #config} object.
+<span class='line'>480</span>    @return The initialized and draggable popup.
+<span class='line'>481</span>    @example Make a custom info() method serving as a convenient wrapper.
+<span class='line'>482</span> 
+<span class='line'>483</span>    The popup shown by info() will always have the string
+<span class='line'>484</span>    'Newest Information' in the popup's header section, while the
+<span class='line'>485</span>    argument passed to info() will be wrapped in a DIV that
+<span class='line'>486</span>    will be inserted in the popup's body section.
+<span class='line'>487</span>    
+<span class='line'>488</span>         // make the custom info function
+<span class='line'>489</span>         var info = function(msg) {
+<span class='line'>490</span>             ProtoPopup.get('info', {
+<span class='line'>491</span>                 header     : 'Info header',
+<span class='line'>492</span>                 body       : new Element('div').update(msg),
+<span class='line'>493</span>             });
+<span class='line'>494</span>         }
+<span class='line'>495</span> 
+<span class='line'>496</span>         // first use
+<span class='line'>497</span>         info('My first info');
+<span class='line'>498</span> 
+<span class='line'>499</span>         // second use (using the same popup, showing the same header)
+<span class='line'>500</span>         info('My second info'); 
+<span class='line'>501</span> */</span><span class="WHIT">
+<span class='line'>502</span> </span><span class="NAME">ProtoPopup.get</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">ProtoPopup.makeGetFor</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>503</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">ProtoPopup</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>504</span> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>505</span> 
+<span class='line'>506</span> </span><span class="COMM">/**
+<span class='line'>507</span>    Class method making custom functions accepting one argument that
+<span class='line'>508</span>    will be inserted in the body section of the underlying ProtoPopup
+<span class='line'>509</span>    object created behind the scenes.
+<span class='line'>510</span>    @function
+<span class='line'>511</span>    @param {STRING} id The ID of the popup.
+<span class='line'>512</span>    @param {OBJECT} config The {@link #config} object.
+<span class='line'>513</span>    @return A function accepting one argument to be inserted into the
+<span class='line'>514</span>    popup's body section.
+<span class='line'>515</span>    @example Make a custom info() method
+<span class='line'>516</span> 
+<span class='line'>517</span>       // make the method
+<span class='line'>518</span>       var info = ProtoPopup.makeFunction('info', {
+<span class='line'>519</span>           header : 'Announcement'
+<span class='line'>520</span>       });
+<span class='line'>521</span> 
+<span class='line'>522</span>       // first use
+<span class='line'>523</span>       info('Forget this info');
+<span class='line'>524</span> 
+<span class='line'>525</span>       // second use (using the same popup, showing the same header
+<span class='line'>526</span>       info('Forget this info, too');
+<span class='line'>527</span> */</span><span class="WHIT">
+<span class='line'>528</span> </span><span class="NAME">ProtoPopup.makeFunction</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">ProtoPopup.makeMakeFunction</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>529</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">ProtoPopup</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>530</span> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>531</span> 
+<span class='line'>532</span> </span><span class="COMM">/**
+<span class='line'>533</span>    Object mapping popup IDs to popup objects.
+<span class='line'>534</span> */</span><span class="WHIT">
+<span class='line'>535</span> </span><span class="NAME">ProtoPopup.id2obj</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>536</span> </span></pre></body></html>

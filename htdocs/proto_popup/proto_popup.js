@@ -2,7 +2,7 @@
     ProtoPopup.Confirm provide a light-weight solution for info, alert
     and confirm dialogs based on Prototype and Scriptaculous.
     @author <a href="mailto:bs@cms-schulze.de">Bodo Schulze</a>
-    @version 0.2
+    @version 0.3
     @license BSD-like
     @www <a href="http://dev.cms-schulze.de>ProtoPopup</a>
 
@@ -419,8 +419,7 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 
         // maybe add a background image
         if (this.config[name + 'BtnBackgroundImage']) {
-            btn.setStyle({backgroundImage: this.config[name + 'BtnBackgroundImage'],
-                        backgroundPosition: 'no-repeat'});
+            btn.setStyle({backgroundImage: this.config[name + 'BtnBackgroundImage']});
         }
 
         return btn;
@@ -755,7 +754,7 @@ ProtoPopup.Confirm.makeFunction = ProtoPopup.makeMakeFunction(function(id, confi
        <b>giveFocus:</b> A boolean specifying whether the button should be focused when the popup is displayed.<br/>
 
        <b>backgroundImage</b> {STRING} - CSS property
-       'background-image' for the cancel button. Defaults to
+       'background-image' for the button. Defaults to
        undefined.<br/>
     </div>
 */

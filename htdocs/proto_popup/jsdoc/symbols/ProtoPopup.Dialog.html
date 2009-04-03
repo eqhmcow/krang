@@ -5,7 +5,7 @@
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<meta name="generator" content="JsDoc Toolkit" />
 		
-		<title>JsDoc Reference - ProtoPopup.Alert</title>
+		<title>JsDoc Reference - ProtoPopup.Dialog</title>
 
 		<style type="text/css">
 			/* default.css */
@@ -208,7 +208,7 @@ ul.inheritsList
 <!-- ============================== class title ============================ -->
 			<h1 class="classTitle">
 				
-				Class ProtoPopup.Alert
+				Class ProtoPopup.Dialog
 			</h1>
 
 <!-- ============================== class summary ========================== -->			
@@ -217,16 +217,16 @@ ul.inheritsList
 					<a href="../symbols/ProtoPopup.html">ProtoPopup</a>.<br />
 				
 			
-				Creates a ProtoPopup.Alert object
+				Creates a ProtoPopup.Dialog object
 				
 				
-					<br /><i>Defined in: </i> <a href="../symbols/src/_home_bobesch_krang-devel_ProtoPopup_src_proto_popup_alert.js.html">proto_popup_alert.js</a>.
+					<br /><i>Defined in: </i> <a href="../symbols/src/_home_bobesch_krang-devel_ProtoPopup_src_proto_popup_dialog.js.html">proto_popup_dialog.js</a>.
 				
 			</p>
 
 <!-- ============================== constructor summary ==================== -->			
 			
-			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class ProtoPopup.Alert.">
+			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class ProtoPopup.Dialog.">
 				<caption>Class Summary</caption>
 				<thead>
 					<tr>
@@ -239,10 +239,10 @@ ul.inheritsList
 						<td class="attributes">&nbsp;</td>
 						<td class="nameDescription" >
 							<div class="fixedFont">
-								<b><a href="../symbols/ProtoPopup.Alert.html">ProtoPopup.Alert</a></b>(id, config)
+								<b><a href="../symbols/ProtoPopup.Dialog.html">ProtoPopup.Dialog</a></b>(id, config)
 							</div>
-							<div class="description">ProtoPopup.Alert is based on ProtoPopup and ads a 'Close' button to its
-    base object.</div>
+							<div class="description">ProtoPopup.Dialog is based on ProtoPopup and ads 'OK' and
+    'Cancel' buttons to its base object.</div>
 						</td>
 					</tr>
 				</tbody>
@@ -253,7 +253,7 @@ ul.inheritsList
 			
 				
 				
-				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class ProtoPopup.Alert.">
+				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class ProtoPopup.Dialog.">
 					<caption>Field Summary</caption>
 					<thead>
 						<tr>
@@ -267,13 +267,12 @@ ul.inheritsList
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
 								<div class="fixedFont">
-								ProtoPopup.Alert.<b><a href="../symbols/ProtoPopup.Alert.html#.config">config</a></b>
+								ProtoPopup.Dialog.<b><a href="../symbols/ProtoPopup.Dialog.html#.config">config</a></b>
 								</div>
 								<div class="description">The default configuration inherited from
     <a href="../symbols/ProtoPopup.html#config">ProtoPopup#config</a> augmented with:
     <div style="padding-left: 20px">
-       <b>closeBtnLabel:</b> The label of the "Close" button inserted
-       in the popup's footer section.</div>
+       <b>buttons:</b> An array of button specs objects.</div>
 							</td>
 						</tr>
 					
@@ -292,7 +291,7 @@ ul.inheritsList
 			
 				
 				
-				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class ProtoPopup.Alert.">
+				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class ProtoPopup.Dialog.">
 					<caption>Method Summary</caption>
 					<thead>
 						<tr>
@@ -305,21 +304,10 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">ProtoPopup.Alert.<b><a href="../symbols/ProtoPopup.Alert.html#.get">get</a></b>(id, config)
+								<div class="fixedFont">ProtoPopup.Dialog.<b><a href="../symbols/ProtoPopup.Dialog.html#.get">get</a></b>(id, config)
 								</div>
 								<div class="description">Class method returning (maybe first create) a draggable popup DIV
-   for alert dialogs.</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&lt;static&gt; &nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">ProtoPopup.Alert.<b><a href="../symbols/ProtoPopup.Alert.html#.makeFunction">makeFunction</a></b>(id, config)
-								</div>
-								<div class="description">Class method making custom functions accepting one argument that
-   will be inserted in the body section of the underlying
-   ProtoPopup.Alert object created behind the scenes.</div>
+   for confirm dialogs.</div>
 							</td>
 						</tr>
 					
@@ -353,12 +341,12 @@ ul.inheritsList
 				</div>
 				
 				<div class="fixedFont">
-						<b>ProtoPopup.Alert</b>(id, config)
+						<b>ProtoPopup.Dialog</b>(id, config)
 				</div>
 				
 				<div class="description">
-					ProtoPopup.Alert is based on ProtoPopup and ads a 'Close' button to its
-    base object.
+					ProtoPopup.Dialog is based on ProtoPopup and ads 'OK' and
+    'Cancel' buttons to its base object.
 					
 				</div>
 				
@@ -390,7 +378,7 @@ ul.inheritsList
 						<dl class="detailList">
 						<dt class="heading">Returns:</dt>
 						
-								<dd>ProtoPopup.Alert object</dd>
+								<dd>ProtoPopup.Dialog object</dd>
 						
 						</dl>
 					
@@ -410,18 +398,30 @@ ul.inheritsList
 					<div class="fixedFont">&lt;static&gt; 
 					
 					<span class="light">{object}</span>
-					<span class="light">ProtoPopup.Alert.</span><b>config</b>
+					<span class="light">ProtoPopup.Dialog.</span><b>config</b>
 					
 					</div>
 					<div class="description">
 						The default configuration inherited from
     <a href="../symbols/ProtoPopup.html#config">ProtoPopup#config</a> augmented with:
     <div style="padding-left: 20px">
-       <b>closeBtnLabel:</b> The label of the "Close" button inserted
-       in the popup's footer section. Defaults to 'Close'.<br/>
-       <b>closeBtnBackgroundImage</b> {STRING} - CSS property
-       'background-image' for the close button. Defaults to
-       undefined.
+       <b>buttons:</b> An array of button specs objects. The buttons are inserted
+       into the footer in the order they are specified.<br/><br/>
+
+       <b>A button spec object takes the following keys:</b><br/><br/>
+
+       <b>name:</b> The name will be used to build the ID of the button. Give
+       a popup ID 'dialog' and a button name 'save', the button's ID will be 'dialog-save-btn'<br/>
+
+       <b>label:</b> The label of the button.<br/>
+
+       <b>onClick:</b> The callback function executed when the button is clicked.<br/>
+
+       <b>giveFocus:</b> A boolean specifying whether the button should be focused when the popup is displayed.<br/>
+
+       <b>backgroundImage</b> {STRING} - CSS property
+       'background-image' for the button. Defaults to
+       undefined.<br/>
     </div>
 						
 						
@@ -448,13 +448,13 @@ ul.inheritsList
 					<div class="fixedFont">&lt;static&gt; 
 					
 					
-					<span class="light">ProtoPopup.Alert.</span><b>get</b>(id, config)
+					<span class="light">ProtoPopup.Dialog.</span><b>get</b>(id, config)
 					
 					</div>
 					<div class="description">
 						Class method returning (maybe first create) a draggable popup DIV
-   for alert dialogs.  Given the same id argument returns the same
-   popup object, following the singleton pattern. See the example of
+   for confirm dialogs.   Given the same id argument returns the same popup
+   object, following the singleton pattern. See the example of
    the base class' <a href="../symbols/ProtoPopup.html#.get">ProtoPopup.get</a>
 						
 						
@@ -488,73 +488,6 @@ ul.inheritsList
 							<dt class="heading">Returns:</dt>
 							
 								<dd>The initialized and draggable popup.</dd>
-							
-							</dl>
-						
-						
-						
-
-					<hr />
-				
-					<a name=".makeFunction"> </a>
-					<div class="fixedFont">&lt;static&gt; 
-					
-					
-					<span class="light">ProtoPopup.Alert.</span><b>makeFunction</b>(id, config)
-					
-					</div>
-					<div class="description">
-						Class method making custom functions accepting one argument that
-   will be inserted in the body section of the underlying
-   ProtoPopup.Alert object created behind the scenes.
-						
-						
-					</div>
-					
-					
-					
-					<pre class="code">Make a custom info() method
-
-      // make the method
-      var info = ProtoPopup.Alert.makeFunction('info', {
-          header : 'Critical Warning'
-      });
-
-      // first use
-      info('Something's wrong!');
-
-      // second use (using the same popup, showing the same header
-      info('Something's really wrong!');</pre>
-					
-					
-					
-						
-							<dl class="detailList">
-							<dt class="heading">Parameters:</dt>
-							
-								<dt>
-									<span class="light fixedFont">{STRING}</span> <b>id</b>
-									
-								</dt>
-								<dd>The ID of the popup.</dd>
-							
-								<dt>
-									<span class="light fixedFont">{OBJECT}</span> <b>config</b>
-									
-								</dt>
-								<dd>The <a href="#config">#config</a> object.</dd>
-							
-							</dl>
-						
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Returns:</dt>
-							
-								<dd>A function accepting one argument to be inserted into the
-   popup's body section.</dd>
 							
 							</dl>
 						
