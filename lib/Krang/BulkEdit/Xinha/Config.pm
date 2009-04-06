@@ -4,6 +4,8 @@ use strict;
 
 use Krang::Log qw(critical);
 
+use Krang::ClassLoader MethodMaker => new => 'new';
+
 use HTML::Scrubber;
 
 =head1 NAME
@@ -52,7 +54,7 @@ will be prepended.
 =cut
 
 sub xinha_toolbar {
-    my ($pkg, %arg) = @_;
+    my ($self, %arg) = @_;
 
     my @formatblock = qw(
       bold                 italic              underline separator
@@ -155,7 +157,7 @@ in...
 =cut
 
 sub html_scrubber {
-    my ($pkg, %arg) = @_;
+    my ($self, %arg) = @_;
 
     my @block_elements  = (qw(p h1 h2 h3 h4 h5 h6 ol ul hr li pre));
     my @inline_elements = (qw(a br em strong strike u sub sup));

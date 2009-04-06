@@ -17,7 +17,7 @@ use HTML::Element;
 
 use Carp qw(croak);
 
-use Krang::ClassLoader MethodMaker => new => 'new';
+use Krang::ClassLoader MethodMaker => new_with_init => 'new';
 
 =head1 NAME
 
@@ -184,8 +184,7 @@ sub edit {
         serverbase                  => $serverbase,
         crumbs                      => \@crumbs,
         bulk_done_with_this_element => localize('Done Bulk Editing ' . $curr_loc),
-        toolbar =>
-          pkg("BulkEdit::Xinha::Config")->xinha_toolbar(include_formatblock => $formatblock),
+        toolbar => $self->xinha_toolbar(include_formatblock => $formatblock),
     );
 }
 
@@ -210,7 +209,7 @@ sub save {
 
     # filter and sanitize the incoming HTML
     my $html =
-      $self->scrub(html =>
+      $self->html_scrubber(html =>
           pkg("Markup::$ENV{KRANG_BROWSER_ENGINE}")->browser2db(html => $query->param('bulk_data'))
       );
 
@@ -277,7 +276,7 @@ sub add_element {
     my @html = ();
 
     # consider BR inside P as paragraph limit?
-    if ($tag eq 'p' && pkg('BulkEdit::Xinha::Config')->split_p_on_br()) {
+    if ($tag eq 'p' && $self->split_p_on_br()) {
         @html = $self->split_block_on_br(block => $block);
     } else {
 
@@ -324,13 +323,13 @@ sub add_element {
     }
 }
 
-# sanitize incoming HTML
-sub scrub {
-    my ($self, %arg) = @_;
-
-    # scrub disallowed HTML tags and attribs
-    return pkg('BulkEdit::Xinha::Config')->html_scrubber(%arg);
-}
+### sanitize incoming HTML
+##sub scrub {
+##    my ($self, %arg) = @_;
+##
+##    # scrub disallowed HTML tags and attribs
+##    return pkg('BulkEdit::Xinha::Config')->html_scrubber(%arg);
+##}
 
 # all possible block elements
 sub block_re {
@@ -490,6 +489,24 @@ sub is_empty_tag {
 
 sub get_empty_tags {
     return {hr => 1,};
+}
+
+# store subclassable config object
+sub init {
+    my $self = shift;
+
+    $self->{config} = pkg('BulkEdit::Xinha::Config')->new();
+}
+
+# proxy config methods
+BEGIN {
+    no strict qw(refs);
+
+    for my $meth (qw(xinha_toolbar html_scrubber split_p_on_br)) {
+        *{"Krang::BulkEdit::Xinha::$meth"} = sub { (shift)->{config}->$meth(@_) };
+    }
+
+    use strict qw(refs);
 }
 
 =back
