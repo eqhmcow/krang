@@ -1465,7 +1465,7 @@ Krang.Widget.update_time_chooser = function(inputName, use_ampm_time) {
     var hour   = clock.down('select', 0).value;
     var minute = clock.down('select', 1).value;
 
-    var ampm   = use_ampm_time ? (clock.down('select', 2).value + ' ') : '';
+    var ampm   = use_ampm_time ? (clock.down('select', 2).value) : '';
     if( hour && minute && ((use_ampm_time && ampm) || true ) ) {
         $(inputName).value = hour + ':' + minute + ' ' + ampm;
     }
