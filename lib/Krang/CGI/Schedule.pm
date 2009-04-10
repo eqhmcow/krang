@@ -185,7 +185,7 @@ sub edit {
         $template->param(
             weekly_day_selector => scalar $query->popup_menu(
                 -name   => 'weekly_day',
-                -values => [keys %$weekdays],
+                -values => [sort keys %$weekdays],
                 -labels => $weekdays
             )
         );
@@ -265,7 +265,7 @@ sub edit_admin {
     $template->param(
         weekly_day_selector => scalar $query->popup_menu(
             -name   => 'weekly_day',
-            -values => [keys %$weekdays],
+            -values => [sort keys %$weekdays],
             -labels => $weekdays
         )
     );
