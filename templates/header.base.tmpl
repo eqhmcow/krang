@@ -115,23 +115,23 @@ Krang.Window.init('<tmpl_var window_id>');
   </p>
 </tmpl_unless></tmpl_unless>
 </div>
-<div class="control"><form>
+<div class="control">
 <input value="<tmpl_lang OK>" onclick="Krang.Error.close()" type="button" class="button">
-</form></div>
+</div>
 </div>
 
 <div id="messages" class="krang-slider" style="display:none;"><div class="wrapper">
 <div class="content"></div>
-<form>
+<div class="button-bar">
 <input value="<tmpl_lang Close>" onclick="Krang.Messages.hide('messages')" type="button" class="button">
-</form>
+</div>
 </div></div>
 
 <div id="alerts" class="krang-slider" style="display:none;"><div class="wrapper">
 <div class="content"></div>
-<form>
+<div class="button-bar">
 <input value="<tmpl_lang Close>" onclick="Krang.Messages.hide('alerts')" type="button" class="button">
-</form>
+</div>
 </div></div>
 
 <script type="text/javascript">
