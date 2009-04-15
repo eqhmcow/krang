@@ -2,9 +2,9 @@
     ProtoPopup.Confirm provide a light-weight solution for info, alert
     and confirm dialogs based on Prototype and Scriptaculous.
     @author <a href="mailto:bs@cms-schulze.de">Bodo Schulze</a>
-    @version 0.3
+    @version 0.4
     @license BSD-like
-    @www <a href="http://dev.cms-schulze.de>ProtoPopup</a>
+    @www <a href="http://protopopup.cms-schulze.de>ProtoPopup</a>
 
    <h4 style="margin-bottom:0em">1. Features</h4>
 
@@ -26,7 +26,7 @@
      its content from the previous call, switching the section into
      append mode.</li>
 
-   <li>Three flavors:
+   <li>Four flavors:
      <ul>
          <li>buttonless info box (hidden via ESC) implemented in the
            ProtoPopup base class</li>
@@ -36,8 +36,10 @@
 
          <li>confirm-like prompt with 'OK' and 'Cancel' buttons
            implemented in ProtoPopup.Confirm</li>
-     </ul></li>
-   </ul>
+
+         <li>dialogs with arbitrary buttons in header and/or footer section,
+           with left/right positioning and arbitrary event registration</li>
+     </ul></li> </ul>
 
 */
 
@@ -113,8 +115,23 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
            <b>footer</b> {STRING} - The initial value of the body
            section. Defaults to undefined.<br/>
 
-           <b>width</b> {STRING} - The width of the popup. Defaults to
-           300px.<br/>
+           <b>width</b> {STRING} - The width of the popup. Overwrites the
+           width set in a CSS file. Defaults to undefined.<br/>
+
+           <b>minWidth</b> {STRING} - The minimum width of the popup. Overwrites the
+           min-width set in a CSS file. Defaults to undefined.<br/>
+
+           <b>maxWidth</b> {STRING} - The maximum width of the popup. Overwrites the
+           max-width set in a CSS file. Defaults to undefined.<br/>
+
+           <b>height</b> {STRING} - The height of the popup. Overwrites the
+           height set in a CSS file. Defaults to undefined.<br/>
+
+           <b>minHeight</b> {STRING} - The minimum height of the popup. Overwrites the
+           min-height set in a CSS file. Defaults to undefined.<br/>
+
+           <b>maxHeight</b> {STRING} - The maximum height of the popup. Overwrites the
+           max-height set in a CSS file. Defaults to undefined.<br/>
 
            <b>cancelIconSrc</b> {STRING} - The src URL of the cancel
            icon. Defaults to 'images/cancel.png'<br/>
@@ -143,6 +160,11 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
            'background-image' for the footer section. Defaults to
            undefined.<br/>
 
+           <b>draggableOptions</b> {OBJECT} - Options passed down to
+           underlying Scriptaculous' Draggable object. See
+           http://wiki.github.com/madrobby/scriptaculous/draggable for
+           more information.<br/>
+
            </div>
 
         */
@@ -155,18 +177,31 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
             header           : undefined,
             body             : undefined,
             footer           : undefined,
-            width            : '300px',
+            width            : undefined,
+            minWidth         : undefined,
+            maxWidth         : undefined,
+            height           : undefined,
+            minHeight        : undefined,
+            maxHeight        : undefined,
             cancelIconSrc    : 'images/cancel.png',
             zIndex           : 1,
             modal            : false,
             opacity          : .6,
             headerBackgroundImage : undefined,
             bodyBackgroundImage   : undefined,
-            footerBackgroundImage : undefined
+            footerBackgroundImage : undefined,
+            draggableOptions      : {
+                zindex: 1
+            }
         };
 
         // merge in the config
         Object.extend(this.config, (config || {}));
+
+        // pass z-index to draggable
+        if (this.config.zIndex) {
+            this.config.draggableOptions.zindex = this.config.zIndex;
+        }
 
         // maybe attach keyUp handler to hide via ESC
         if (this.config.hideOnEscape) {
@@ -174,7 +209,13 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
         }
 
         var popup = new Element('div', {id : id, 'class' : 'proto-popup'})
-            .setStyle({width : this.config.width, zIndex : this.config.zIndex}).hide();
+            .setStyle({zIndex : this.config.zIndex}).hide();
+        if (this.config.width)     popup.setStyle({width     : this.config.width});
+        if (this.config.minWidth)  popup.setStyle({minWidth  : this.config.minWidth});
+        if (this.config.maxWidth)  popup.setStyle({maxWidth  : this.config.maxWidth});
+        if (this.config.height)    popup.setStyle({height    : this.config.height});
+        if (this.config.minHeight) popup.setStyle({minHeight : this.config.minHeight});
+        if (this.config.maxHeight) popup.setStyle({maxHeight : this.config.maxHeight});
 
         /**
            The popup div having {@link #id} as its ID, 'proto-popup'
@@ -185,6 +226,7 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
         // insert the cancel icon and attach click handler
         if (this.config.cancelIconSrc) {
             popup.insert(new Element('img', {
+                id      : popup.id+'-cancel-button',
                 src     : this.config.cancelIconSrc,
                 'class' : 'proto-popup-cancel'
             }).observe('click', function(e) { this.hide(); Event.stop(e) }.bind(this)));;
@@ -223,13 +265,13 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 
          */
         this.sections.each(function(section) {
-                var se = new Element('div', {id : id+'-'+section, 'class' : 'proto-popup-'+section});
-                if (this.config[section+'BackgroundImage']) {
-                    se.setStyle({backgroundImage: this.config[section+'BackgroundImage'],
-                                backgroundRepeat: 'no-repeat'});
-                }
-                this[section] = se;
-                popup.insert(se);
+            var se = new Element('div', {id : id+'-'+section, 'class' : 'proto-popup-'+section});
+            if (this.config[section+'BackgroundImage']) {
+                se.setStyle({backgroundImage: this.config[section+'BackgroundImage'],
+                             backgroundRepeat: 'no-repeat'});
+            }
+            this[section] = se;
+            popup.insert(se);
         }.bind(this));
 
         // maybe add a modal overlay
@@ -247,11 +289,13 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
         document.body.appendChild(this.popup);
 
         // make it draggable
-        new Draggable(id);
+        new Draggable(id, this.config.draggableOptions);
         
         // normally it's position:fixed, but IE6- does not understand it
         if (Prototype.Browser.IEVersion < 7) {
             popup.setStyle({position: 'absolute'});
+        } else {
+            popup.setStyle({position: 'fixed'});
         }
 
         // set HTML
@@ -316,6 +360,7 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
     */
     show : function() {
         this.popup.show();
+
         if (this.config.centerOnCreation) {
             this.centerIt();
             this.config.centerOnCreation = false;
@@ -325,7 +370,6 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
         this.sections.each(function(section) {
             var s = $(this.id + '-' + section);
             if (s && s.innerHTML != '') { s.show(); }
-
         }.bind(this));
 
         // maybe show modal
@@ -386,9 +430,15 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
     centerIt : function() {
         var windowDim  = document.viewport.getDimensions();
         var popupDim   = this.popup.getDimensions();
-        var scroll     = document.viewport.getScrollOffsets();
-        var scrollLeft = Prototype.Browser.IEVersion < 7 ? scroll.left : 0;
-        var scrollTop  = Prototype.Browser.IEVersion < 7 ? scroll.top  : 0;
+
+        if (Prototype.Browser.IE && Prototype.Browser.IEVersion < 7 ){
+            var scroll     = document.viewport.getScrollOffsets();
+            var scrollLeft = scroll.left;
+            var scrollTop  = scroll.top;
+        } else {
+            var scrollLeft = 0;
+            var scrollTop  = 0;
+        }
 
         centerX = Math.round(windowDim.width / 2) + scrollLeft
             - (popupDim.width  / 2) + 'px';
@@ -724,8 +774,7 @@ ProtoPopup.Confirm.makeFunction = ProtoPopup.makeMakeFunction(function(id, confi
    return new ProtoPopup.Confirm(id, config);
 });
 
-/** @fileoverview ProtoPopup.Dialog is based on ProtoPopup and ads 'OK' and
-    'Cancel' buttons to its base object.
+/** @fileoverview ProtoPopup.Dialog is based on ProtoPopup and the capability to add arbitrary buttons to the 'header' and/or the 'footer' sections.
 */
 
 /** ProtoPopup.Dialog is based on ProtoPopup and ads 'OK' and
@@ -744,18 +793,30 @@ ProtoPopup.Confirm.makeFunction = ProtoPopup.makeMakeFunction(function(id, confi
 
        <b>A button spec object takes the following keys:</b><br/><br/>
 
-       <b>name:</b> The name will be used to build the ID of the button. Give
+       <b>name:</b> The name will be used to build the ID of the button. Given
        a popup ID 'dialog' and a button name 'save', the button's ID will be 'dialog-save-btn'<br/>
 
        <b>label:</b> The label of the button.<br/>
 
-       <b>onClick:</b> The callback function executed when the button is clicked.<br/>
+       <b>vertical:</b> Buttons may be located in the 'header' or the 'footer' sections. Defaults to 'footer'.<br/>
+
+       <b>horizonal:</b> Buttons may be 'left' or 'right'-aligned. Defaults
+       to 'left'. When multiple buttons are left-aligned, the layout follows
+       the buttons array order. The same holds true for right-aligned
+       buttons.<br/>
 
        <b>giveFocus:</b> A boolean specifying whether the button should be focused when the popup is displayed.<br/>
 
        <b>backgroundImage</b> {STRING} - CSS property
        'background-image' for the button. Defaults to
-       undefined.<br/>
+       undefined.<br/><br/>
+
+       <b>Additionally</b> all button spec keys starting with <b>on</b> will be
+       interpreted as having an <b>event handler</b> as their value.  E.g. <b>onclick</b>
+       must be a callback function called when the button is
+       clicked. Similarly for all the other events supported by
+       HTMLInputElements.
+
     </div>
 */
 ProtoPopup.Dialog = Class.create(ProtoPopup, /** @lends ProtoPopup.Dialog.prototype */{
@@ -770,19 +831,40 @@ ProtoPopup.Dialog = Class.create(ProtoPopup, /** @lends ProtoPopup.Dialog.protot
         // make the buttons
         this.config.buttons.each(function(spec) {
             var btn  = this.makeButton(spec.name, spec.label);
-            this.footer.insert(btn).show();
+
+            // insert button in header or footer?
+            var where = this.getBtnParent(spec);
+            where.insert(btn).show();
+
+            // focus it?
             if (spec.giveFocus) { this.onShow.push(function() {btn.focus()}) }
 
             // attach handler
-            var clickHandler = function(e) {
-                this.hide();
-                spec.onClick();
-            }.bind(this);
+            $H(spec).each(function(option) {
+                var oName = option.key;
 
-            Event.observe(btn, 'click', clickHandler);
+                // is it an event handler?
+                if (! /^on/.test(oName)) return;
 
+                Event.observe(btn, oName.replace('on', '').toLowerCase(), option.value);
+            });
         }.bind(this));
+    },
+
+    getBtnParent: function(spec) {
+        var horizontal = spec.horizontal ? spec.horizontal : 'left';
+        var vertical   = spec.vertical   ? spec.vertical   : 'footer';
+
+        var section = this[vertical];
+        var first   = section.firstDescendant();
+        if (!(first && first.nodeName.toLowerCase() == 'table')) {
+            section.insert('<table id="'+this.id+'-btn-table" border="0" cellpadding="0" cellpadding="0" class="proto-popup-btn-table"><tbody><td id="'+this.id+'-btn-left" class="proto-popup-btn-left"></td><td id="'+this.id+'-btn-right" class="proto-popup-btn-right"></td></tbody></table>');
+        }
+
+        return $(this.id+'-btn-'+horizontal);
+
     }
+
 });
 
 /**

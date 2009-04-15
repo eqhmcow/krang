@@ -1,36 +1,38 @@
 .proto-popup {
-  font-size: 12px;
-  font-family: Arial, Verdana, sans-serif;
-  color: #000000;
-  position: fixed;
-  cursor: move;
-  background-color: #EFEFFF;
-  border: 1px solid #6A5ACD;
-  padding: 10px;
-  width: 300px;
+  font-size: 12px                         !important;
+  font-family: Arial, Verdana, sans-serif !important;
+  color: #000000                          !important;
+  position: fixed                         !important;
+  cursor: move                            !important;
+  background-color: #EFEFFF               !important;
+  border: 1px solid #6A5ACD               !important;
+  padding: 10px                           !important;
+  width: 300px                            !important;
+  text-align: left                        !important;
+  vertical-align: baseline                !important;
 }
 
-.proto-popup-header { 
+.proto-popup .proto-popup-header { 
   padding: 0px 10px 10px 0px;
 }
 
-.proto-popup-body { 
+.proto-popup .proto-popup-body { 
   background-color: #FFFFE0;
   padding: 10px;
   clear: both;
 }
 
-.proto-popup-footer { 
+.proto-popup .proto-popup-footer { 
   padding: 10px 0px 0px;
 }
 
-img.proto-popup-cancel { 
+.proto-popup img.proto-popup-cancel { 
   float: right;
   cursor: auto;
   padding-bottom: 7px;
 }
 
-input.proto-popup-cancel-btn { 
+proto-popup input.proto-popup-cancel-btn { 
   margin-right: 5px;
 }
 
@@ -38,7 +40,35 @@ input.proto-popup-cancel-btn {
   position: absolute;
   top:      0px;
   left:     0px;
-  background-color: #666;
+  background-color: #000;
+}
+
+.proto-popup-btn-table { 
+  border-spacing: 0px;
+  border-collapse: collapse;
+  margin: 0px;
+  padding: 0px;
+  width: 100%;
+}
+
+table.proto-popup-btn-table td.proto-popup-btn-left { 
+  text-align: left !important;
+  margin: 0px;
+  padding: 0px,
+}
+
+table.proto-popup-btn-table td.proto-popup-btn-right { 
+  text-align: right !important;
+  margin: 0px;
+  padding: 0px,
+}
+
+table.proto-popup-btn-table td.proto-popup-btn-right input { 
+  margin-left: 5px;
+}
+
+table.proto-popup-btn-table td.proto-popup-btn-left input { 
+  margin-right: 5px;
 }
 
 /*********************
@@ -47,13 +77,13 @@ input.proto-popup-cancel-btn {
 
 #dialog { 
   border-radius: 10px;
-  -moz-border-radius: 10px;
-  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px 10px 0px 0px;
+  -webkit-border-radius: 10px 10px 0px 0px;
 }
 
 #dialog, #dialog-body{
   padding: 0;
-  background-color: #E0F0FF;
+  background-color: #EFEFFF;
 }
 
 #dialog-body {
@@ -66,10 +96,10 @@ input.proto-popup-cancel-btn {
 
 #dialog-footer {
   border-top: 1px solid #6A5ACD;
-  padding: 10px;
+/*   padding: 10px; */
 }
 
-.proto-popup-btn {
+.proto-popup .proto-popup-btn {
   color: #690 !important;
   width: auto !important;
   overflow: visible;
@@ -81,17 +111,11 @@ input.proto-popup-cancel-btn {
   line-height: 1;
   background: transparent url(/images/bkg-button-mini.gif) 0 50% repeat-x
 }
-.proto-popup-btn:hover {
+
+.proto-popup .proto-popup-btn:hover {
   background-color: #FF9 !important;
   background-image: none !important;
 }
 
-#dialog-dont_save-btn { 
-  margin-right: 5px;
-}
-
-#dialog-save-btn { 
-  float: right;
-}
 
 

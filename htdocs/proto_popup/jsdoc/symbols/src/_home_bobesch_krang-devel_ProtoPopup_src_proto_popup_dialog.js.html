@@ -5,79 +5,111 @@
 	.STRN {color: #393;}
 	.REGX {color: #339;}
 	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
-	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/** @fileoverview ProtoPopup.Dialog is based on ProtoPopup and ads 'OK' and
-<span class='line'>  2</span>     'Cancel' buttons to its base object.
-<span class='line'>  3</span> */</span><span class="WHIT">
-<span class='line'>  4</span> 
-<span class='line'>  5</span> </span><span class="COMM">/** ProtoPopup.Dialog is based on ProtoPopup and ads 'OK' and
-<span class='line'>  6</span>     'Cancel' buttons to its base object.
-<span class='line'>  7</span>     @class Creates a ProtoPopup.Dialog object
-<span class='line'>  8</span>     @constructor
-<span class='line'>  9</span>     @augments ProtoPopup
-<span class='line'> 10</span>     @param {STRING} id A unique string identifying a popup
-<span class='line'> 11</span>     @param {OBJECT} config The configuration object {@link #.config}
-<span class='line'> 12</span>     @return ProtoPopup.Dialog object
-<span class='line'> 13</span>     @property {object} config The default configuration inherited from
-<span class='line'> 14</span>     {@link ProtoPopup#config} augmented with:
-<span class='line'> 15</span>     &lt;div style="padding-left: 20px">
-<span class='line'> 16</span>        &lt;b>buttons:&lt;/b> An array of button specs objects. The buttons are inserted
-<span class='line'> 17</span>        into the footer in the order they are specified.&lt;br/>&lt;br/>
-<span class='line'> 18</span> 
-<span class='line'> 19</span>        &lt;b>A button spec object takes the following keys:&lt;/b>&lt;br/>&lt;br/>
-<span class='line'> 20</span> 
-<span class='line'> 21</span>        &lt;b>name:&lt;/b> The name will be used to build the ID of the button. Give
-<span class='line'> 22</span>        a popup ID 'dialog' and a button name 'save', the button's ID will be 'dialog-save-btn'&lt;br/>
-<span class='line'> 23</span> 
-<span class='line'> 24</span>        &lt;b>label:&lt;/b> The label of the button.&lt;br/>
-<span class='line'> 25</span> 
-<span class='line'> 26</span>        &lt;b>onClick:&lt;/b> The callback function executed when the button is clicked.&lt;br/>
-<span class='line'> 27</span> 
-<span class='line'> 28</span>        &lt;b>giveFocus:&lt;/b> A boolean specifying whether the button should be focused when the popup is displayed.&lt;br/>
-<span class='line'> 29</span> 
-<span class='line'> 30</span>        &lt;b>backgroundImage&lt;/b> {STRING} - CSS property
-<span class='line'> 31</span>        'background-image' for the button. Defaults to
-<span class='line'> 32</span>        undefined.&lt;br/>
-<span class='line'> 33</span>     &lt;/div>
-<span class='line'> 34</span> */</span><span class="WHIT">
-<span class='line'> 35</span> </span><span class="NAME">ProtoPopup.Dialog</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Class.create</span><span class="PUNC">(</span><span class="NAME">ProtoPopup</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="COMM">/** @lends ProtoPopup.Dialog.prototype */</span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'> 36</span> </span><span class="WHIT">    </span><span class="COMM">/** @ignore */</span><span class="WHIT">
-<span class='line'> 37</span> </span><span class="WHIT">    </span><span class="NAME">initialize</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">$super</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'> 38</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">_config</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'> 39</span> </span><span class="WHIT">            </span><span class="NAME">buttons</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="WHIT">
-<span class='line'> 40</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 41</span> </span><span class="WHIT">        </span><span class="NAME">Object.extend</span><span class="PUNC">(</span><span class="NAME">_config</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">config</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 42</span> </span><span class="WHIT">        </span><span class="NAME">$super</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">_config</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 43</span> </span><span class="WHIT">        
-<span class='line'> 44</span>         </span><span class="COMM">// make the buttons</span><span class="WHIT">
-<span class='line'> 45</span> </span><span class="WHIT">        </span><span class="NAME">this.config.buttons.each</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">spec</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'> 46</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">btn</span><span class="WHIT">  </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.makeButton</span><span class="PUNC">(</span><span class="NAME">spec.name</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">spec.label</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 47</span> </span><span class="WHIT">            </span><span class="NAME">this.footer.insert</span><span class="PUNC">(</span><span class="NAME">btn</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">show</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 48</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">spec.giveFocus</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT"> </span><span class="NAME">this.onShow.push</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="NAME">btn.focus</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">}</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'> 49</span> 
-<span class='line'> 50</span> </span><span class="WHIT">            </span><span class="COMM">// attach handler</span><span class="WHIT">
-<span class='line'> 51</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">clickHandler</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">e</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'> 52</span> </span><span class="WHIT">                </span><span class="NAME">this.hide</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 53</span> </span><span class="WHIT">                </span><span class="NAME">spec.onClick</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 54</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="PUNC">.</span><span class="NAME">bind</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 55</span> 
-<span class='line'> 56</span> </span><span class="WHIT">            </span><span class="NAME">Event.observe</span><span class="PUNC">(</span><span class="NAME">btn</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'click'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">clickHandler</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 57</span> 
-<span class='line'> 58</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">.</span><span class="NAME">bind</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 59</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'> 60</span> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 61</span> 
-<span class='line'> 62</span> </span><span class="COMM">/**
-<span class='line'> 63</span>    Class method returning (maybe first create) a draggable popup DIV
-<span class='line'> 64</span>    for confirm dialogs.   Given the same id argument returns the same popup
-<span class='line'> 65</span>    object, following the singleton pattern. See the example of
-<span class='line'> 66</span>    the base class' {@link ProtoPopup.get}
-<span class='line'> 67</span>    @function
-<span class='line'> 68</span>    @param {STRING} id The name of the popup used to build its ID.
-<span class='line'> 69</span>    @param {OBJECT} config The config object, see {@link #.config}.
-<span class='line'> 70</span>    @return The initialized and draggable popup.
-<span class='line'> 71</span> */</span><span class="WHIT">
-<span class='line'> 72</span> </span><span class="NAME">ProtoPopup.Dialog.get</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">ProtoPopup.makeGetFor</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'> 73</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">ProtoPopup.Dialog</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT">
-<span class='line'> 74</span> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 75</span> 
-<span class='line'> 76</span> </span></pre></body></html>
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/** @fileoverview ProtoPopup.Dialog is based on ProtoPopup and the capability to add arbitrary buttons to the 'header' and/or the 'footer' sections.
+<span class='line'>  2</span> */</span><span class="WHIT">
+<span class='line'>  3</span> 
+<span class='line'>  4</span> </span><span class="COMM">/** ProtoPopup.Dialog is based on ProtoPopup and ads 'OK' and
+<span class='line'>  5</span>     'Cancel' buttons to its base object.
+<span class='line'>  6</span>     @class Creates a ProtoPopup.Dialog object
+<span class='line'>  7</span>     @constructor
+<span class='line'>  8</span>     @augments ProtoPopup
+<span class='line'>  9</span>     @param {STRING} id A unique string identifying a popup
+<span class='line'> 10</span>     @param {OBJECT} config The configuration object {@link #.config}
+<span class='line'> 11</span>     @return ProtoPopup.Dialog object
+<span class='line'> 12</span>     @property {object} config The default configuration inherited from
+<span class='line'> 13</span>     {@link ProtoPopup#config} augmented with:
+<span class='line'> 14</span>     &lt;div style="padding-left: 20px">
+<span class='line'> 15</span>        &lt;b>buttons:&lt;/b> An array of button specs objects. The buttons are inserted
+<span class='line'> 16</span>        into the footer in the order they are specified.&lt;br/>&lt;br/>
+<span class='line'> 17</span> 
+<span class='line'> 18</span>        &lt;b>A button spec object takes the following keys:&lt;/b>&lt;br/>&lt;br/>
+<span class='line'> 19</span> 
+<span class='line'> 20</span>        &lt;b>name:&lt;/b> The name will be used to build the ID of the button. Given
+<span class='line'> 21</span>        a popup ID 'dialog' and a button name 'save', the button's ID will be 'dialog-save-btn'&lt;br/>
+<span class='line'> 22</span> 
+<span class='line'> 23</span>        &lt;b>label:&lt;/b> The label of the button.&lt;br/>
+<span class='line'> 24</span> 
+<span class='line'> 25</span>        &lt;b>vertical:&lt;/b> Buttons may be located in the 'header' or the 'footer' sections. Defaults to 'footer'.&lt;br/>
+<span class='line'> 26</span> 
+<span class='line'> 27</span>        &lt;b>horizonal:&lt;/b> Buttons may be 'left' or 'right'-aligned. Defaults
+<span class='line'> 28</span>        to 'left'. When multiple buttons are left-aligned, the layout follows
+<span class='line'> 29</span>        the buttons array order. The same holds true for right-aligned
+<span class='line'> 30</span>        buttons.&lt;br/>
+<span class='line'> 31</span> 
+<span class='line'> 32</span>        &lt;b>giveFocus:&lt;/b> A boolean specifying whether the button should be focused when the popup is displayed.&lt;br/>
+<span class='line'> 33</span> 
+<span class='line'> 34</span>        &lt;b>backgroundImage&lt;/b> {STRING} - CSS property
+<span class='line'> 35</span>        'background-image' for the button. Defaults to
+<span class='line'> 36</span>        undefined.&lt;br/>&lt;br/>
+<span class='line'> 37</span> 
+<span class='line'> 38</span>        &lt;b>Additionally&lt;/b> all button spec keys starting with &lt;b>on&lt;/b> will be
+<span class='line'> 39</span>        interpreted as having an &lt;b>event handler&lt;/b> as their value.  E.g. &lt;b>onclick&lt;/b>
+<span class='line'> 40</span>        must be a callback function called when the button is
+<span class='line'> 41</span>        clicked. Similarly for all the other events supported by
+<span class='line'> 42</span>        HTMLInputElements.
+<span class='line'> 43</span> 
+<span class='line'> 44</span>     &lt;/div>
+<span class='line'> 45</span> */</span><span class="WHIT">
+<span class='line'> 46</span> </span><span class="NAME">ProtoPopup.Dialog</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Class.create</span><span class="PUNC">(</span><span class="NAME">ProtoPopup</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="COMM">/** @lends ProtoPopup.Dialog.prototype */</span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 47</span> </span><span class="WHIT">    </span><span class="COMM">/** @ignore */</span><span class="WHIT">
+<span class='line'> 48</span> </span><span class="WHIT">    </span><span class="NAME">initialize</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">$super</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 49</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">_config</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 50</span> </span><span class="WHIT">            </span><span class="NAME">buttons</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'> 51</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 52</span> </span><span class="WHIT">        </span><span class="NAME">Object.extend</span><span class="PUNC">(</span><span class="NAME">_config</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">config</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 53</span> </span><span class="WHIT">        </span><span class="NAME">$super</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">_config</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 54</span> </span><span class="WHIT">        
+<span class='line'> 55</span>         </span><span class="COMM">// make the buttons</span><span class="WHIT">
+<span class='line'> 56</span> </span><span class="WHIT">        </span><span class="NAME">this.config.buttons.each</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">spec</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 57</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">btn</span><span class="WHIT">  </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.makeButton</span><span class="PUNC">(</span><span class="NAME">spec.name</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">spec.label</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 58</span> 
+<span class='line'> 59</span> </span><span class="WHIT">            </span><span class="COMM">// insert button in header or footer?</span><span class="WHIT">
+<span class='line'> 60</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">where</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.getBtnParent</span><span class="PUNC">(</span><span class="NAME">spec</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 61</span> </span><span class="WHIT">            </span><span class="NAME">where.insert</span><span class="PUNC">(</span><span class="NAME">btn</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">show</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 62</span> 
+<span class='line'> 63</span> </span><span class="WHIT">            </span><span class="COMM">// focus it?</span><span class="WHIT">
+<span class='line'> 64</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">spec.giveFocus</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT"> </span><span class="NAME">this.onShow.push</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="NAME">btn.focus</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">}</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 65</span> 
+<span class='line'> 66</span> </span><span class="WHIT">            </span><span class="COMM">// attach handler</span><span class="WHIT">
+<span class='line'> 67</span> </span><span class="WHIT">            </span><span class="NAME">$H</span><span class="PUNC">(</span><span class="NAME">spec</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">each</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">option</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 68</span> </span><span class="WHIT">                </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">oName</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">option.key</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 69</span> 
+<span class='line'> 70</span> </span><span class="WHIT">                </span><span class="COMM">// is it an event handler?</span><span class="WHIT">
+<span class='line'> 71</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="WHIT"> </span><span class="REGX">/^on/</span><span class="PUNC">.</span><span class="NAME">test</span><span class="PUNC">(</span><span class="NAME">oName</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="KEYW">return</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 72</span> 
+<span class='line'> 73</span> </span><span class="WHIT">                </span><span class="NAME">Event.observe</span><span class="PUNC">(</span><span class="NAME">btn</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">oName.replace</span><span class="PUNC">(</span><span class="STRN">'on'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">''</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">toLowerCase</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">option.value</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 74</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 75</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">.</span><span class="NAME">bind</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 76</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 77</span> 
+<span class='line'> 78</span> </span><span class="WHIT">    </span><span class="NAME">getBtnParent</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">spec</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 79</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">horizontal</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">spec.horizontal</span><span class="WHIT"> </span><span class="PUNC">?</span><span class="WHIT"> </span><span class="NAME">spec.horizontal</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">'left'</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 80</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">vertical</span><span class="WHIT">   </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">spec.vertical</span><span class="WHIT">   </span><span class="PUNC">?</span><span class="WHIT"> </span><span class="NAME">spec.vertical</span><span class="WHIT">   </span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">'footer'</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 81</span> 
+<span class='line'> 82</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">section</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">vertical</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 83</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">first</span><span class="WHIT">   </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">section.firstDescendant</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 84</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="PUNC">(</span><span class="NAME">first</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">first.nodeName.toLowerCase</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="STRN">'table'</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 85</span> </span><span class="WHIT">            </span><span class="NAME">section.insert</span><span class="PUNC">(</span><span class="STRN">'&lt;table id="'</span><span class="PUNC">+</span><span class="NAME">this.id</span><span class="PUNC">+</span><span class="STRN">'-btn-table" border="0" cellpadding="0" cellpadding="0" class="proto-popup-btn-table">&lt;tbody>&lt;td id="'</span><span class="PUNC">+</span><span class="NAME">this.id</span><span class="PUNC">+</span><span class="STRN">'-btn-left" class="proto-popup-btn-left">&lt;/td>&lt;td id="'</span><span class="PUNC">+</span><span class="NAME">this.id</span><span class="PUNC">+</span><span class="STRN">'-btn-right" class="proto-popup-btn-right">&lt;/td>&lt;/tbody>&lt;/table>'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 86</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 87</span> 
+<span class='line'> 88</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">$</span><span class="PUNC">(</span><span class="NAME">this.id</span><span class="PUNC">+</span><span class="STRN">'-btn-'</span><span class="PUNC">+</span><span class="NAME">horizontal</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 89</span> 
+<span class='line'> 90</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 91</span> 
+<span class='line'> 92</span> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 93</span> 
+<span class='line'> 94</span> </span><span class="COMM">/**
+<span class='line'> 95</span>    Class method returning (maybe first create) a draggable popup DIV
+<span class='line'> 96</span>    for confirm dialogs.   Given the same id argument returns the same popup
+<span class='line'> 97</span>    object, following the singleton pattern. See the example of
+<span class='line'> 98</span>    the base class' {@link ProtoPopup.get}
+<span class='line'> 99</span>    @function
+<span class='line'>100</span>    @param {STRING} id The name of the popup used to build its ID.
+<span class='line'>101</span>    @param {OBJECT} config The config object, see {@link #.config}.
+<span class='line'>102</span>    @return The initialized and draggable popup.
+<span class='line'>103</span> */</span><span class="WHIT">
+<span class='line'>104</span> </span><span class="NAME">ProtoPopup.Dialog.get</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">ProtoPopup.makeGetFor</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>105</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">ProtoPopup.Dialog</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>106</span> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>107</span> 
+<span class='line'>108</span> </span></pre></body></html>
