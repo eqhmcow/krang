@@ -99,7 +99,7 @@ sub new {
                   . ref($filter) . "'";
             }
         }
-        push @filters, sub { ${$_[0]} = decode_utf8(encode_utf8(${$_[0]})) };
+        push @filters, sub { ${$_[0]} = encode_utf8(${$_[0]}) };
         $arg{filter} = \@filters;
     }
 

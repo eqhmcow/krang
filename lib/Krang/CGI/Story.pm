@@ -324,7 +324,7 @@ Save, Check-In story to a particular desk and redirects to that desk.
 
 sub check_in_and_save {
     my $self = shift;
-    $self->make_sure_story_is_still_ours() || return '';
+    $self->make_sure_story_is_still_ours() || return 'redirecting to workspace';
 
     my $query   = $self->query;
     my $desk_id = $query->param('checkin_to');
@@ -468,7 +468,7 @@ sub edit {
         $query->delete('story_id');
         $session{story} = $story;
     } else {
-        $self->make_sure_story_is_still_ours() || return '';
+        $self->make_sure_story_is_still_ours() || return 'redirecting to workspace';
         $story = $session{story};
     }
 
@@ -779,7 +779,7 @@ after C<< $story->revert() >>.
 
 sub revert {
     my $self = shift;
-    $self->make_sure_story_is_still_ours() || return '';
+    $self->make_sure_story_is_still_ours() || return 'redirecting to workspace';
 
     my $query            = $self->query;
     my $selected_version = $query->param('version');
@@ -993,7 +993,7 @@ sending control to workspace.pl.
 
 sub db_save {
     my $self = shift;
-    $self->make_sure_story_is_still_ours() || return '';
+    $self->make_sure_story_is_still_ours() || return 'redirecting to workspace';
 
     # call internal _save and return output from it on error
     my $output = $self->_save();
@@ -1029,7 +1029,7 @@ This mode saves the story to the database and returns to edit.
 
 sub db_save_and_stay {
     my $self = shift;
-    $self->make_sure_story_is_still_ours() || return '';
+    $self->make_sure_story_is_still_ours() || return 'redirecting to workspace';
 
     # call internal _save and return output from it on error
     my $output = $self->_save();
@@ -1117,7 +1117,7 @@ publisher.pl to publish the story.
 
 sub save_and_publish {
     my $self = shift;
-    $self->make_sure_story_is_still_ours() || return '';
+    $self->make_sure_story_is_still_ours() || return 'redirecting to workspace';
 
     # call internal _save and return output from it on error
     my $output = $self->_save();
@@ -1645,7 +1645,7 @@ Moves a story into the trash. Expects a story in the session.
 
 sub delete {
     my $self = shift;
-    $self->make_sure_story_is_still_ours || return '';
+    $self->make_sure_story_is_still_ours || return 'redirecting to workspace';
 
     my $query = $self->query();
     my $story = $session{story};
