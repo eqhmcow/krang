@@ -96,9 +96,35 @@ sub setup {
         unretire                      => 'unretire',
         pe_get_status                 => 'pe_get_status',
         pe_checkout_and_edit          => 'pe_checkout_and_edit',
+        goto_workspace                => 'goto_workspace',
     );
 
     $self->tmpl_path('Story/');
+}
+
+sub cgiapp_prerun {
+    my $self = shift;
+    my $rm   = $self->get_current_runmode();
+    if (   $rm eq 'check_in_and_save'
+        || $rm eq 'revert'
+        || $rm eq 'db_save'
+        || $rm eq 'db_save_and_stay'
+        || $rm eq 'save_and_publish'
+        || $rm eq 'delete')
+    {
+        unless ($self->make_sure_story_is_still_ours) {
+
+            # story is no longer ours! return FALSE and go to workspace
+            $self->prerun_mode('goto_workspace');
+        }
+    }
+}
+
+sub goto_workspace {
+    my $self = shift;
+    $self->header_props(-uri => "workspace.pl");
+    $self->header_type('redirect');
+    return 'Redirecting to workspace';
 }
 
 =item new_story (default)
@@ -324,7 +350,6 @@ Save, Check-In story to a particular desk and redirects to that desk.
 
 sub check_in_and_save {
     my $self = shift;
-    $self->make_sure_story_is_still_ours() || return 'redirecting to workspace';
 
     my $query   = $self->query;
     my $desk_id = $query->param('checkin_to');
@@ -468,7 +493,7 @@ sub edit {
         $query->delete('story_id');
         $session{story} = $story;
     } else {
-        $self->make_sure_story_is_still_ours() || return 'redirecting to workspace';
+        $self->make_sure_story_is_still_ours() || $self->goto_workspace;
         $story = $session{story};
     }
 
@@ -779,7 +804,6 @@ after C<< $story->revert() >>.
 
 sub revert {
     my $self = shift;
-    $self->make_sure_story_is_still_ours() || return 'redirecting to workspace';
 
     my $query            = $self->query;
     my $selected_version = $query->param('version');
@@ -993,7 +1017,6 @@ sending control to workspace.pl.
 
 sub db_save {
     my $self = shift;
-    $self->make_sure_story_is_still_ours() || return 'redirecting to workspace';
 
     # call internal _save and return output from it on error
     my $output = $self->_save();
@@ -1029,7 +1052,6 @@ This mode saves the story to the database and returns to edit.
 
 sub db_save_and_stay {
     my $self = shift;
-    $self->make_sure_story_is_still_ours() || return 'redirecting to workspace';
 
     # call internal _save and return output from it on error
     my $output = $self->_save();
@@ -1117,7 +1139,6 @@ publisher.pl to publish the story.
 
 sub save_and_publish {
     my $self = shift;
-    $self->make_sure_story_is_still_ours() || return 'redirecting to workspace';
 
     # call internal _save and return output from it on error
     my $output = $self->_save();
@@ -1645,7 +1666,6 @@ Moves a story into the trash. Expects a story in the session.
 
 sub delete {
     my $self = shift;
-    $self->make_sure_story_is_still_ours || return 'redirecting to workspace';
 
     my $query = $self->query();
     my $story = $session{story};
@@ -2664,8 +2684,7 @@ sub alert_duplicate_url {
 }
 
 sub make_sure_story_is_still_ours {
-
-    my ($self) = @_;
+    my $self = shift;
 
     # grab story from session hash
     if (!$session{story}) {
@@ -2700,10 +2719,6 @@ sub make_sure_story_is_still_ours {
             return 1;
         }
     }
-
-    # story is no longer ours! return FALSE and go to workspace
-    $self->header_props(-uri => "workspace.pl");
-    $self->header_type('redirect');
     return 0;
 }
 
