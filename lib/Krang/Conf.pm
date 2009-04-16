@@ -31,7 +31,6 @@ our @VALID_DIRECTIVES;
   EnableTemplateCache
   EnableBugzilla
   EnableFTP
-  EnablePreviewFinder
   EnableSiteServer
   EnableSSL
   ErrorNotificationEmail
