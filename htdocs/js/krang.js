@@ -2033,10 +2033,10 @@ Krang.XOriginProxy = (function() {
         } else if (options.question == 'getDictionary') {
             if (Krang.L10N.lexicon) {
                 e.source.postMessage('response\uE000' + Object.toJSON(Krang.L10N.lexicon), e.origin);
-                e.source.postMessage('finish', e.origin);
             } else {
                 e.source.postMessage('response\uE000', e.origin);
             }
+            e.source.postMessage('finish', e.origin);
         }
         Krang.hide_indicator();
     };

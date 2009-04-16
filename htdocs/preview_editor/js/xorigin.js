@@ -77,7 +77,7 @@ Krang.XOrigin.factory = (function() {
     };
 
     var responseHandler = function(e) {
-        if (e.origin == Options.cmsURL.replace(/^(https?:\/\/[^/]+).*$/, "$1")) {
+        if (e.origin.toLowerCase() == Options.cmsURL.replace(/^(https?:\/\/[^\/]+).*$/, "$1").toLowerCase()) {
             // message coming from xwindow
 
             // hide indicator

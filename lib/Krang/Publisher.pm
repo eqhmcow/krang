@@ -107,7 +107,7 @@ use File::Temp qw(tempdir);
 use Time::Piece;
 use Set::IntRange;
 
-use Krang::ClassLoader Conf => qw(KrangRoot instance PreviewSSL);
+use Krang::ClassLoader Conf => qw(KrangRoot instance PreviewSSL EnablePreviewEditor);
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Template';

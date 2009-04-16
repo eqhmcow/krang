@@ -1,3 +1,6 @@
+/******************************
+ * Preview Editor Top Overlay *
+ ******************************/
 #krang_preview_editor_top_overlay { 
   height: 27px; 
   position: fixed;
@@ -56,7 +59,6 @@ div.krang_preview_editor_element_label:active {
 a#krang_preview_editor_help:visited, a#krang_preview_editor_close:visited { 
   color: #669900;
 }
-
 
 
 /******************
@@ -126,18 +128,18 @@ a#krang_preview_editor_help:visited, a#krang_preview_editor_close:visited {
 /****************
  * Dialog popup *
  ****************/
-#proto-popup { 
-  border-radius: 10px;
-  -moz-border-radius: 10px;
-  -webkit-border-radius: 10px;
+#proto-popup-dialog {
+  border-radius: 10px 10px 0px 0px;
+  -moz-border-radius: 10px 10px 0px 0px;
+  -webkit-border-radius: 10px 10px 0px 0px;
 }
 
-#proto-popup, #proto-popup-body{
+#proto-popup-dialog, #proto-popup-dialog-body{
   padding: 0;
-  background-color: #E0F0FF;
+  background-color: #E0F0FF !important;
 }
 
-#proto-popup-body {
+#proto-popup-dialog-body {
   font: bold 105% arial,sans-serif;
   margin: 10px;
   line-height: 1.5;
@@ -145,9 +147,8 @@ a#krang_preview_editor_help:visited, a#krang_preview_editor_close:visited {
   
 }
 
-#proto-popup-footer {
+#proto-popup-dialog-footer {
   border-top: 1px solid #6A5ACD;
-  padding: 10px;
 }
 
 .proto-popup-btn {
@@ -165,14 +166,6 @@ a#krang_preview_editor_help:visited, a#krang_preview_editor_close:visited {
 .proto-popup-btn:hover {
   background-color: #FF9 !important;
   background-image: none !important;
-}
-
-#proto-popup-dont_save-btn { 
-  margin-right: 5px;
-}
-
-#proto-popup-save-btn { 
-  float: right;
 }
 
 

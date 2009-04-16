@@ -394,19 +394,24 @@ Krang.debug.on();
         };
 
         var askSaveDialog = function(storyInSession) {
-            new ProtoPopup.Dialog('proto-popup', {
+            var p = new ProtoPopup.Dialog('proto-popup-dialog', {
                 body: Krang.localize('Are you sure you want to discard your unsaved changes?'),
                 buttons: [
-                    {name:    'save',
-                     label:   Krang.localize("Save"), giveFocus: true,
-                     onClick: function(storyInSession) {
+                    {name:       'save',
+                     label:      Krang.localize("Save"),
+                     giveFocus:  true,
+                     horizontal: 'right',
+                     onClick:    function(storyInSession) {
                          Update({
                              form:   'edit',
                              params: {rm: 'db_save'},
                              onComplete: initEditBtn
                          });
+                         p.hide();
                      }},
-                    {name:    'discard', label: Krang.localize("Discard"), onClick: initEditBtn}
+                    {name:    'discard',
+                     label:   Krang.localize("Discard"),
+                     onClick: function() { p.hide(); initEditBtn() }}
                     ]
             }).show();
         };
@@ -470,7 +475,7 @@ Krang.debug.on();
             cmsURL:   cmsURL,
             question: 'getDictionary',
             response: function(thesaurus) {
-                    console.log(thesaurus);
+                console.log(pref);
                 if (thesaurus || pref.language == 'en') {
                    Krang.localize.withDictionary(thesaurus);
                 } else {
