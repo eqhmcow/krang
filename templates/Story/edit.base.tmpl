@@ -29,6 +29,24 @@ preview_and_stay = function() {
   Krang.Form.submit('edit', { rm: 'preview_and_stay' }, { to_top: false });
 }
 
+check_in = function(desk_id) {
+  Krang.ElementEditor.run_save_hooks();
+  Krang.Form.submit('edit', { rm: 'check_in_and_save', checkin_to: desk_id });
+}
+
+remove_story = function() {
+  if ( confirm( Krang.L10N.loc('Are you SURE you want to delete this Story?') ) ) {
+      Krang.Form.submit('edit', { rm: 'delete' });
+  }
+}
+
+<tmpl_if may_publish>
+save_and_publish = function() {
+    Krang.ElementEditor.run_save_hooks();
+    Krang.Form.submit('edit', { rm: 'save_and_publish' });
+}
+</tmpl_if>
+
 <tmpl_if is_root>
 
   save_and_view_log = function() {
@@ -68,11 +86,6 @@ preview_and_stay = function() {
     }
   }
 
-  check_in = function(desk_id) {
-    Krang.ElementEditor.run_save_hooks();
-    Krang.Form.submit('edit', { rm: 'check_in_and_save', checkin_to: desk_id });
-  }
-
   revert = function() {
     var f = document.forms['edit'];
     var v = f.version.options[f.version.selectedIndex].value;
@@ -98,23 +111,10 @@ preview_and_stay = function() {
     Krang.Form.submit('edit', { rm: 'save_and_view' });
   }
 
-  remove_story = function() {
-    if ( confirm( Krang.L10N.loc('Are you SURE you want to delete this Story?') ) ) {
-        Krang.Form.submit('edit', { rm: 'delete' });
-    }
-  }
-
   db_save = function() {
     Krang.ElementEditor.run_save_hooks();
     Krang.Form.submit('edit', { rm: 'db_save' });
   }
-
-  <tmpl_if may_publish>
-    save_and_publish = function() {
-        Krang.ElementEditor.run_save_hooks();
-        Krang.Form.submit('edit', { rm: 'save_and_publish' });
-    }
-  </tmpl_if>
 
 <tmpl_else>
 

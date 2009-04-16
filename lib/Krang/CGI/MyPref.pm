@@ -10,7 +10,7 @@ use Krang::ClassLoader 'User';
 use Krang::ClassLoader 'PasswordHandler';
 use Krang::ClassLoader Message      => qw(add_message add_alert);
 use Krang::ClassLoader Session      => qw(%session);
-use Krang::ClassLoader Conf         => qw(PasswordChangeTime DefaultLanguage EnablePreviewFinder);
+use Krang::ClassLoader Conf         => qw(PasswordChangeTime DefaultLanguage EnablePreviewEditor);
 use Krang::ClassLoader Localization => qw(%LANG localize);
 use JSON::Any;
 
@@ -129,15 +129,18 @@ sub edit {
         )
     );
 
+    # preview editor
+    my $use_editor = pkg('MyPref')->get('use_preview_editor');
+
     $template->param(
-        use_preview_finder_selector => scalar $q->radio_group(
-            -name    => 'use_preview_finder',
+        use_preview_editor_selector => scalar $q->radio_group(
+            -name    => 'use_preview_editor',
             -values  => [1, 0],
             -labels  => {1 => localize('Yes'), 0 => localize('No')},
-            -default => pkg('MyPref')->get('use_preview_finder'),
+            -default => defined($use_editor) ? $use_editor : 0,
             -class   => 'radio',
         )
-    ) if EnablePreviewFinder;
+    ) if EnablePreviewEditor;
 
     $template->param(password_spec => pkg('PasswordHandler')->_password_spec);
 
@@ -156,7 +159,7 @@ sub update_prefs {
     my $prefs_changed = 0;
 
     # look at each pref
-    my @prefs = qw(search_page_size use_autocomplete message_timeout syntax_highlighting use_preview_finder);
+    my @prefs = qw(search_page_size use_autocomplete message_timeout syntax_highlighting use_preview_editor);
     for my $name (@prefs) {
         my $old = pkg('MyPref')->get($name);
         my $new = $q->param($name);

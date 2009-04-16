@@ -1,0 +1,178 @@
+#krang_preview_editor_top_overlay { 
+  height: 27px; 
+  position: fixed;
+  top: 0;
+  left:0;
+  right:0;
+  font: bold 12px Helvetia, Arial, sans-serif;
+  padding: 0px 15px;
+  color: #669900
+}
+
+#krang_preview_editor_logo { 
+  font-style: italic;
+  text-transform: uppercase;
+  margin-right: 100px;
+}
+
+div.krang_preview_editor_element_label { 
+  font-family: sans-serif;
+  font-size: 12px;
+  border: 1px solid #336699;
+  color: #336699;
+  background-color: #cee7ff;
+  cursor: pointer;
+  padding: 2px 5px;
+  position: absolute;
+}
+
+div.krang_preview_editor_element_label:active {
+  outline: 1px solid #6a5acd;
+}
+
+#krang_preview_editor_top_spacer {
+  height: 27px;
+}
+
+.krang_preview_editor_btn {
+  border:  1px outset silver; 
+  cursor:  pointer;
+  padding: 2px 4px;
+}
+
+.krang_preview_editor_btn_pressed { 
+  border: 1px inset silver;
+}
+
+#krang_preview_editor_buttons_right { 
+  float: right;
+}
+
+#krang_preview_editor_help { 
+  margin-right: 20px;
+  color: #669900;
+}
+
+a#krang_preview_editor_help:visited, a#krang_preview_editor_close:visited { 
+  color: #669900;
+}
+
+
+
+/******************
+ * Krang.Messages *
+ ******************/
+.krang_preview_editor_slider          { z-index: 200; width: 974px; position: fixed;}
+.krang_preview_editor_slider .wrapper { background-color: #E0F0FF; filter: alpha(opacity=90); opacity: .9; width: 440px; margin: 0 auto; border: 1px solid #BBB;}
+.krang_preview_editor_slider .content { color: #333; min-height: 60px; max-height: 28.5em; overflow: auto; }
+.krang_preview_editor_slider form     { background-color: #CEE7FF; border-top: 1px solid #E0F0FF; padding: 10px; text-align: right; }
+.krang_preview_editor_slider p        {
+  font: 11px/1 "Helvetica Neue",arial,helvetica,sans-serif;
+  margin: 1.5em 80px;
+  line-height: 1.5;
+  font-weight: bold;
+}
+.krang_preview_editor_button {
+  color: #690 !important; width: auto !important;
+  overflow: visible;
+  margin: 0;
+  border: 1px solid #BBB;
+  border-color: #EEE #BBB #BBB #EEE;
+  padding: .1em .5em;
+  font-size: 11px;
+  line-height: 1;
+}
+.krang_preview_editor_button:hover {
+  background-color: #FF9 !important;
+  background-image: none !important;
+}
+
+/***************
+ * Error popup *
+ ***************/
+#krang_preview_editor_error { 
+  background-color: #E0F0FF;
+  border: 1px solid #BBB;
+  padding: 0;
+  width: 500px;
+}
+
+#krang_preview_editor_error-body {
+  background-color: #E0F0FF;
+  color: #000;
+  min-height: 60px;
+  margin: 10px 15px;
+  padding: 0 0 0 60px;
+  font-size: 1.27em;
+}
+
+#krang_preview_editor_error-footer { 
+  background-color: #CEE7FF;
+  padding: 5px 10px 5px 0;
+  text-align: right;
+}
+
+#krang_preview_editor_error-close_btn { 
+  color: #690 !important; width: auto !important;
+  overflow: visible;
+  margin: 0;
+  border: 1px solid #BBB;
+  border-color: #EEE #BBB #BBB #EEE;
+  padding: .1em .5em;
+  font-size: 11px;
+  line-height: 1;
+}
+
+/****************
+ * Dialog popup *
+ ****************/
+#proto-popup { 
+  border-radius: 10px;
+  -moz-border-radius: 10px;
+  -webkit-border-radius: 10px;
+}
+
+#proto-popup, #proto-popup-body{
+  padding: 0;
+  background-color: #E0F0FF;
+}
+
+#proto-popup-body {
+  font: bold 105% arial,sans-serif;
+  margin: 10px;
+  line-height: 1.5;
+  color: #222;
+  
+}
+
+#proto-popup-footer {
+  border-top: 1px solid #6A5ACD;
+  padding: 10px;
+}
+
+.proto-popup-btn {
+  color: #690 !important;
+  width: auto !important;
+  overflow: visible;
+  margin: 0;
+  border: 1px solid #BBB;
+  border-color: #EEE #BBB #BBB #EEE;
+  padding: .1em .5em;
+  font-size: 11px;
+  line-height: 1;
+  background: transparent url(/images/bkg-button-mini.gif) 0 50% repeat-x
+}
+.proto-popup-btn:hover {
+  background-color: #FF9 !important;
+  background-image: none !important;
+}
+
+#proto-popup-dont_save-btn { 
+  margin-right: 5px;
+}
+
+#proto-popup-save-btn { 
+  float: right;
+}
+
+

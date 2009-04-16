@@ -82,13 +82,11 @@ ProtoPopup.Dialog = Class.create(ProtoPopup, /** @lends ProtoPopup.Dialog.protot
         var section = this[vertical];
         var first   = section.firstDescendant();
         if (!(first && first.nodeName.toLowerCase() == 'table')) {
-            section.insert('<table id="'+this.id+'-btn-table" border="0" cellpadding="0" cellpadding="0" class="proto-popup-btn-table"><tbody><td id="'+this.id+'-btn-left" class="proto-popup-btn-left"></td><td id="'+this.id+'-btn-right" class="proto-popup-btn-right"></td></tbody></table>');
+            section.insert('<table id="'+this.id+'-btn-table" border="0" cellpadding="0" cellpadding="0" class="proto-popup-btn-table"><tbody><td id="'+this.id+'-buttons-'+vertical+'-left" class="proto-popup-buttons-left"></td><td id="'+this.id+'-buttons-'+vertical+'-right" class="proto-popup-buttons-right"></td></tbody></table>');
         }
 
-        return $(this.id+'-btn-'+horizontal);
-
+        return $(this.id+'-buttons-'+vertical+'-'+horizontal);
     }
-
 });
 
 /**

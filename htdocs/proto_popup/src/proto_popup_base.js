@@ -265,7 +265,7 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 
          */
         this.sections.each(function(section) {
-            var se = new Element('div', {id : id+'-'+section, 'class' : 'proto-popup-'+section});
+            var se = new Element('div', {id : id+'-'+section, 'class' : 'proto-popup-'+section}).hide();
             if (this.config[section+'BackgroundImage']) {
                 se.setStyle({backgroundImage: this.config[section+'BackgroundImage'],
                              backgroundRepeat: 'no-repeat'});

@@ -1854,8 +1854,13 @@ sub _build_story_single_category {
     # get story output
     my $article_output = $story_element->publish(publisher => $self);
 
+    # maybe add preview editor overlay
+    my $div = EnablePreviewEditor && $self->is_preview
+      ? pkg('ElementClass')->_get_preview_editor_element_overlays(child => $story_element, publisher => $self)
+      : '';
+
     # break the story into pages
-    my @article_pages = split(/${\PAGE_BREAK}/, $article_output);
+    my @article_pages = map { $div . $_ } split(/${\PAGE_BREAK}/, $article_output);
 
     # if nothing returned, we have a problem.  Throw an error.
     if ($#article_pages < 0) {

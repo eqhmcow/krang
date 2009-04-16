@@ -187,8 +187,8 @@ Secret 'ad0243-1j!@LdaAWEOIGFa-39021-:skj'
 # oldest items get deleted.
 TrashMaxItems 20
 
-# Set to 1 to enable the Preview Finder feature on previewed stories.
-EnablePreviewFinder 0
+# Set to 1 to enable the Preview Editor feature on previewed stories.
+EnablePreviewEditor 0
 
 ###########################################################################
 #

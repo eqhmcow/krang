@@ -136,7 +136,8 @@ sub write_js_file {
 
     $tmpl->param(
         lexicon_loop => $lexicon,
-        is_en        => ($lang eq 'en' ? 1 : 0)
+        is_en        => ($lang eq 'en' ? 1 : 0),
+        lang         => $lang,
     );
 
     my $of = catfile($js_dir, "lexicon.$lang.js");

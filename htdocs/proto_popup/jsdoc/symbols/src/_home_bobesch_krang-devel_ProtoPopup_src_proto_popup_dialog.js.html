@@ -89,27 +89,25 @@
 <span class='line'> 82</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">section</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">vertical</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
 <span class='line'> 83</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">first</span><span class="WHIT">   </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">section.firstDescendant</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
 <span class='line'> 84</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="PUNC">(</span><span class="NAME">first</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">first.nodeName.toLowerCase</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="STRN">'table'</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'> 85</span> </span><span class="WHIT">            </span><span class="NAME">section.insert</span><span class="PUNC">(</span><span class="STRN">'&lt;table id="'</span><span class="PUNC">+</span><span class="NAME">this.id</span><span class="PUNC">+</span><span class="STRN">'-btn-table" border="0" cellpadding="0" cellpadding="0" class="proto-popup-btn-table">&lt;tbody>&lt;td id="'</span><span class="PUNC">+</span><span class="NAME">this.id</span><span class="PUNC">+</span><span class="STRN">'-btn-left" class="proto-popup-btn-left">&lt;/td>&lt;td id="'</span><span class="PUNC">+</span><span class="NAME">this.id</span><span class="PUNC">+</span><span class="STRN">'-btn-right" class="proto-popup-btn-right">&lt;/td>&lt;/tbody>&lt;/table>'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 85</span> </span><span class="WHIT">            </span><span class="NAME">section.insert</span><span class="PUNC">(</span><span class="STRN">'&lt;table id="'</span><span class="PUNC">+</span><span class="NAME">this.id</span><span class="PUNC">+</span><span class="STRN">'-btn-table" border="0" cellpadding="0" cellpadding="0" class="proto-popup-btn-table">&lt;tbody>&lt;td id="'</span><span class="PUNC">+</span><span class="NAME">this.id</span><span class="PUNC">+</span><span class="STRN">'-buttons-'</span><span class="PUNC">+</span><span class="NAME">vertical</span><span class="PUNC">+</span><span class="STRN">'-left" class="proto-popup-buttons-left">&lt;/td>&lt;td id="'</span><span class="PUNC">+</span><span class="NAME">this.id</span><span class="PUNC">+</span><span class="STRN">'-buttons-'</span><span class="PUNC">+</span><span class="NAME">vertical</span><span class="PUNC">+</span><span class="STRN">'-right" class="proto-popup-buttons-right">&lt;/td>&lt;/tbody>&lt;/table>'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
 <span class='line'> 86</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
 <span class='line'> 87</span> 
-<span class='line'> 88</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">$</span><span class="PUNC">(</span><span class="NAME">this.id</span><span class="PUNC">+</span><span class="STRN">'-btn-'</span><span class="PUNC">+</span><span class="NAME">horizontal</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 89</span> 
-<span class='line'> 90</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 88</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">$</span><span class="PUNC">(</span><span class="NAME">this.id</span><span class="PUNC">+</span><span class="STRN">'-buttons-'</span><span class="PUNC">+</span><span class="NAME">vertical</span><span class="PUNC">+</span><span class="STRN">'-'</span><span class="PUNC">+</span><span class="NAME">horizontal</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 89</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 90</span> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
 <span class='line'> 91</span> 
-<span class='line'> 92</span> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 93</span> 
-<span class='line'> 94</span> </span><span class="COMM">/**
-<span class='line'> 95</span>    Class method returning (maybe first create) a draggable popup DIV
-<span class='line'> 96</span>    for confirm dialogs.   Given the same id argument returns the same popup
-<span class='line'> 97</span>    object, following the singleton pattern. See the example of
-<span class='line'> 98</span>    the base class' {@link ProtoPopup.get}
-<span class='line'> 99</span>    @function
-<span class='line'>100</span>    @param {STRING} id The name of the popup used to build its ID.
-<span class='line'>101</span>    @param {OBJECT} config The config object, see {@link #.config}.
-<span class='line'>102</span>    @return The initialized and draggable popup.
-<span class='line'>103</span> */</span><span class="WHIT">
-<span class='line'>104</span> </span><span class="NAME">ProtoPopup.Dialog.get</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">ProtoPopup.makeGetFor</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>105</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">ProtoPopup.Dialog</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT">
-<span class='line'>106</span> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>107</span> 
-<span class='line'>108</span> </span></pre></body></html>
+<span class='line'> 92</span> </span><span class="COMM">/**
+<span class='line'> 93</span>    Class method returning (maybe first create) a draggable popup DIV
+<span class='line'> 94</span>    for confirm dialogs.   Given the same id argument returns the same popup
+<span class='line'> 95</span>    object, following the singleton pattern. See the example of
+<span class='line'> 96</span>    the base class' {@link ProtoPopup.get}
+<span class='line'> 97</span>    @function
+<span class='line'> 98</span>    @param {STRING} id The name of the popup used to build its ID.
+<span class='line'> 99</span>    @param {OBJECT} config The config object, see {@link #.config}.
+<span class='line'>100</span>    @return The initialized and draggable popup.
+<span class='line'>101</span> */</span><span class="WHIT">
+<span class='line'>102</span> </span><span class="NAME">ProtoPopup.Dialog.get</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">ProtoPopup.makeGetFor</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>103</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">ProtoPopup.Dialog</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">config</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>104</span> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>105</span> 
+<span class='line'>106</span> </span></pre></body></html>

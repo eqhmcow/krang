@@ -94,6 +94,8 @@ sub setup {
         retire                        => 'retire',
         retire_selected               => 'retire_selected',
         unretire                      => 'unretire',
+        pe_get_status                 => 'pe_get_status',
+        pe_checkout_and_edit          => 'pe_checkout_and_edit',
     );
 
     $self->tmpl_path('Story/');
@@ -1077,7 +1079,7 @@ sub preview_and_stay {
 
     # re-load edit window and have it launch new window for preview
     my $edit_window = $self->edit || '';
-    my $js_for_preview = qq|<script type="text/javascript">Krang.preview('story', null, 'preview_editor');</script>|;
+    my $js_for_preview = qq|<script type="text/javascript">Krang.preview('story', null);</script>|;
     return ($edit_window . $js_for_preview);
 }
 
@@ -2855,6 +2857,73 @@ sub unretire {
     add_message('story_unretired', id => $story_id, url => $story->url);
 
     return $self->list_retired;
+}
+
+#
+#     Preview Editor Runmodes
+#
+
+########### FIXME documentation
+
+sub pe_get_status {
+    my ($self) = @_;
+    my $query  = $self->query;
+
+    my $story_id = $query->param('story_id');
+    return '' unless $story_id;
+
+    # get story
+    my ($story) = pkg('Story')->find(story_id => $story_id);
+
+    # checked out status
+    my $checked_out = $story->checked_out;
+
+    # get user
+    my $cob = '';
+    if ($checked_out) {
+        $cob = 'me' if $story->checked_out_by eq $ENV{REMOTE_USER};
+        unless ($cob) {
+            my ($owner) = pkg('User')->find(user_id => $story->checked_out_by);
+            $cob = CGI->escapeHTML($owner->first_name . ' ' . $owner->last_name);
+        }
+    }
+
+    # may I steal it?
+    my $may_steal = pkg('Group')->user_admin_permissions('may_checkin_all');
+
+    # is there are different story in the session
+    my $story_in_session = $session{story} ? $session{story}->story_id : '';
+
+    # do we have at least read permission for templates?
+    my $tmpl_perm = pkg('Group')->user_asset_permissions('template');
+
+    # return status
+    $self->add_json_header(
+        checkedOut       => $checked_out,
+        checkedOutBy     => $cob,
+        maySteal         => $may_steal,
+        mayEdit          => $story->may_edit,
+        storyInSession   => $story_in_session,
+        mayReadTemplates => ($tmpl_perm eq 'hide' ? 0 : 1),
+    );
+
+    return '';
+}
+
+sub pe_checkout_and_edit {
+    my ($self)   = @_;
+    my $query    = $self->query;
+    my $story_id = $query->param('story_id');
+
+    if ($story_id) {
+        $self->add_json_header(
+            status => 'ok',
+            msg    => localize("Checked out Story %s", $story_id),
+        );
+        return $self->checkout_and_edit;
+    } else {
+        croak(__PACKAGE__ . "::pe_checkout_and_edit(): Missing story ID in checkout");
+    }
 }
 
 1;

@@ -67,9 +67,9 @@ our %CONFIG = (
         type => 'scalar',
         row  => 'config',
     },
-    use_preview_finder => {
+    use_preview_editor => {
         type => 'scalar',
-        row  => 'use_preview_finder'
+        row  => 'use_preview_editor'
     },
 );
 

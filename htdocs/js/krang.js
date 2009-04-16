@@ -6,6 +6,32 @@ if (typeof Krang == 'undefined') {
     Krang = {};
 }
 
+/**
+   Krang.debug("Some debug message");
+
+   A simple wrapper around console.debug with a switch to switch it on
+   and off.
+
+   Krang.debug.on();
+   Krang.debug("bla");
+   Krang.debug.off();
+*/
+(function() {
+
+    var debugOn = false;
+
+    // wrapper around console.debug
+    Krang.debug = function(msg) {
+        if (debugOn) {
+            console.debug(msg);
+        }
+    }
+
+    // switch
+    Krang.debug.on  = function() { debugOn = true  };
+    Krang.debug.off = function() { debugOn = false };
+})();
+
 /*
   Know IE version (stolen from http://prototype-ui.com)
 */
@@ -216,7 +242,7 @@ Krang.Cookie = {
     },
     json_get : function(name) {
         var json = Krang.Cookie.get(name);
-        return eval('(' + json + ')');
+        return json.evalJSON()
     }
 }
 
@@ -304,8 +330,9 @@ Krang.Ajax.request = function(args) {
     var url       = args['url'];
     var params    = args['params'] || {};
     var indicator = args['indicator'];
-    var complete  = args['onComplete'] || Prototype.emptyFunction;
-    var failure   = args['onFailure'] || Prototype.emptyFunction;
+    var complete  = args['onComplete']  || Prototype.emptyFunction;
+    var failure   = args['onFailure']   || Prototype.emptyFunction;
+    var exception = args['onException'] || Prototype.emptyFunction;
     var method    = args['method'] || 'get';
 
     // tell the user that we're doing something
@@ -345,7 +372,7 @@ Krang.Ajax.request = function(args) {
                 Krang.Error.show();
             },
             onException : function(transport, e) {
-                failure(transport, e);
+                exception(transport, e);
                 Krang.Error.show();
             }
         }
@@ -400,9 +427,10 @@ Krang.Ajax.update = function(args) {
     var params    = args.params || {};
     var target    = args.target;
     var indicator = args.indicator;
-    var complete  = args.onComplete || Prototype.emptyFunction;
-    var success   = args.onSuccess  || Prototype.emptyFunction;
-    var failure   = args.onFailure  || Prototype.emptyFunction;
+    var complete  = args.onComplete     || Prototype.emptyFunction;
+    var success   = args.onSuccess      || Prototype.emptyFunction;
+    var failure   = args.onFailure      || Prototype.emptyFunction;
+    var exception = args['onException'] || Prototype.emptyFunction;
     var to_top    = args.to_top == false ? false : true; // defaults to true
 
     // tell the user that we're doing something
@@ -468,7 +496,7 @@ Krang.Ajax.update = function(args) {
             },
             onException : function(transport, e) {
                 // user callback
-                failure(transport, e);
+                exception(transport, e);
                 Krang.Error.show();
             }
         }
@@ -798,6 +826,14 @@ Krang.Messages = {
         if( level === undefined ) level = 'messages';
         Krang.Messages._stack[level].push(msg);
     },
+    get         : function(level) {
+        if( level === undefined ) { level = 'messages'; }
+        return Krang.Messages._stack[level];
+    },
+    clear       : function(level) {
+        if( level === undefined ) { level = 'messages'; }
+        Krang.Messages._stack[level] = [];
+    },
     show        : function(level) {
         // default to 'messages'
         if( level === undefined ) level = 'messages';
@@ -810,13 +846,11 @@ Krang.Messages = {
 
         var my_stack = Krang.Messages._stack[level];
         if( my_stack.length ) {
-            var content = '';
-            var size = my_stack.length;
-
-            for(var i=0; i< size; i++) {
-                var msg = my_stack.pop();
-                if ( msg ) content += '<p>' + msg + '</p>';
-            }
+            // build HTML from stack
+            var content = my_stack.inject('', function(content, msg) {
+                if ( msg ) { content += '<p>' + msg + '</p>'; }
+                return content;
+            });
 
             var el = $(level);
 
@@ -1095,10 +1129,9 @@ Krang.update_order = function( select, prefix ) {
     (either 'story' or 'media') with a certain id (if no id is present
     it will preview the one currently in the session)
 */
-Krang.preview = function(type, id, withPreviewEditor) {
+Krang.preview = function(type, id) {
     var url = 'publisher.pl?rm=preview_' + type
-    + '&' + ( ( id == null      ) ? ( 'session=' + type      ) : ( type + '_id=' + id      ) )
-    + '&' + ( (withPreviewEditor) ? ( 'with_preview_editor=1') : ( 'with_preview_editor=0' ) ); 
+    + '&' + ( ( id == null ) ? ( 'session=' + type ) : ( type + '_id=' + id ) );
 
     // attach the preview window to our session
     url = Krang.Window.pass_id(url);
@@ -1822,8 +1855,7 @@ var rules = {
             var story_data = name.split(/_/);
             var story_id = story_data[1];
             if( story_id == 'null' ) story_id = null;
-            var with_preview_editor = story_data[2];
-            Krang.preview('story', story_id, with_preview_editor);
+            Krang.preview('story', story_id);
             Event.stop(event);
         }.bindAsEventListener(el));
     },
@@ -1890,23 +1922,163 @@ Krang.PoorTextCreationArguments = new Array;
 
 /**
    Message handler called by previewed story's postMessage() - a HTML5
-   feature implemented by Firefox 3
+   feature implemented by Firefox 3+, IE8+, Safari4+
 */
-if (Object.isFunction(window.postMessage)) {
-    window.addEventListener('message', function(e) {
+Krang.XOriginProxy = (function() {
+    var ifSuccessHandler = function(e, name, addToJSON, args, response, json) {
+        Krang.debug("4. X-JSON header in XHR response for cb '" + name +"' on next line");
+        Krang.debug(json);
 
-        // get the preview URLs of our sites from config cookie
-        var config      = Krang.config();
-        var previewURLs = config.previewURLs;
+        Krang.hide_indicator();
+                
+        // pack response message 
+        var msg = name;
+        
+        // curry argument
+        if (Object.isFunction(addToJSON)) { json = addToJSON(json) }
 
-        if (previewURLs.any(function(url) {return url == e.origin})) {
-            // message comes from one of our sites
-            window.focus(); // needs to be allowed in Firefox' Advanced JavaScript settings
-         
-            // goto Story Edit UI of requested container element
-            var url_params = e.data && e.data.split(/\uE000/);
-            console.log(url_params[0]+' - '+url_params[1]);
-            Krang.Ajax.update({url: url_params[0], params: url_params[1].evalJSON()});
+        // default json
+        if (!json) { json = {} }
+
+        // the XHR response object contains stuff we may
+        // not access cross origin wise
+        msg += "\uE000" + Object.toJSON(json)
+             + "\uE000" + Krang.Cookie.get('KRANG_PREFS')
+             + "\uE000" + Krang.Cookie.get('KRANG_CONFIG');
+        
+        // post back to sender
+        e.source.postMessage(msg, e.origin);
+    };
+    
+    var exceptionHandler = function(e, request, error) {
+        Krang.debug("4. Error object in XHR exception on next line");
+        Krang.debug(error);
+        
+        Krang.hide_indicator();
+        
+        var msg = "onException\uE000" + Object.toJSON(error);
+        
+        // post back to sender
+        e.source.postMessage(msg, e.origin);
+    };
+
+    var request = function(e, options) {
+        Krang.debug("3. Sending Krang.Ajax.request(url, options) for URL: "+options.cmsURL
+                      +" ('options' on next line");
+        Krang.debug(options);
+
+        // post XHR
+        Krang.Ajax.request({
+            url:         options.cmsURL + '/' + options.cmsApp,
+            params:      options.params,
+            onComplete:  ifSuccessHandler.curry(e, 'onComplete', undefined),
+            onFailure:   ifSuccessHandler.curry(e, 'onFailure',  undefined),
+            onException: exceptionHandler.curry(e)
+        });
+        
+    };
+
+    var xupdater = function(e, options) {
+        // send XHR request for Prototype.XOrigin.XUpdater
+        Krang.debug("3. Sending Krang.Ajax.update(target, url, options) for URL: "+options.cmsURL
+                      +" ('options' on next line");
+        Krang.debug(options);
+                    
+        var target = options.target || 'C';
+
+        // onComplete handler
+        var onComplete  = ifSuccessHandler.curry(e, 'onComplete', function(json) {
+            if (json === null) { json = {}; }
+            var alerts   = Krang.Messages.get('alerts');
+            var messages = Krang.Messages.get('messages');
+            if (alerts.length)   json['alerts']   = alerts;
+            if (messages.length) json['messages'] = messages;
+            return json;
+        });
+
+        // update form with our arguments
+        Krang.ElementEditor.run_save_hooks();
+        
+        var form = $(options.form);
+        if (form) {
+            Krang.Form.set(form, options.params);
+            var params = Form.serialize(form, true);
+            var method = form.method;
+        } else {
+            var params = options.params;
+            var method = options.method;
         }
-    }, false);
-}
+
+        // post XHR
+        Krang.Ajax.update({
+            url        : options.cmsURL + '/' + options.cmsApp,
+            params     : params,
+            method     : method,
+            target     : target,
+            onComplete : onComplete,
+            onFailure  : ifSuccessHandler.curry(e, 'onFailure',  undefined),
+            onException: exceptionHandler.curry(e)
+        });
+    };
+
+    var wininfo = function(e, options) {
+        if (options.question == 'isStoryOnEditScreen') {
+            if (document.forms && document.forms['edit']
+                               && /story/.test(document.forms['edit'].action)) {
+                e.source.postMessage('response\uE000"yes"', e.origin);
+            } else {
+                e.source.postMessage('response\uE000"no"', e.origin);                
+            }
+            e.source.postMessage('finish', e.origin);
+        } else if (options.question == 'getDictionary') {
+            if (Krang.L10N.lexicon) {
+                e.source.postMessage('response\uE000' + Object.toJSON(Krang.L10N.lexicon), e.origin);
+                e.source.postMessage('finish', e.origin);
+            } else {
+                e.source.postMessage('response\uE000', e.origin);
+            }
+        }
+        Krang.hide_indicator();
+    };
+
+    // the proxy function
+    return function(e, authorizedOrigins) {
+        if (authorizedOrigins.any(function(url) { return url == e.origin })) {
+            // message from authorized origin
+            var data;
+            if (data = e.data) {
+                // unpack the posted data
+                var options     = data.evalJSON();
+                
+                Krang.debug("2. Received message from '" + e.origin + "' - " + data);
+                
+                Krang.show_indicator();
+
+                // do it
+                if (options.type == 'request') {
+                    request(e, options);
+                } else if (options.type == 'xupdater') {
+                    xupdater(e, options);
+                } else if (options.type == 'wininfo') {
+                    wininfo(e, options);
+                }
+            }
+        }
+    };
+})();
+
+Krang.debug.on();
+
+Event.observe(window, 'message', function(e) {
+    // get allowed preview site URLs from 'config' cookie
+    var config      = Krang.config() || {};
+    var previewURLs = config.previewURLs;
+
+    if (!previewURLs) {
+        throw(new Error("Message event handler (krang.js): Missing preview site URLs"));
+    }
+
+    // call our cross origin XHR proxy
+    Krang.XOriginProxy(e, previewURLs);
+});
+

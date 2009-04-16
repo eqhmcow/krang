@@ -225,7 +225,7 @@ sub _do_login {
 
     # otherwise, store preferences via JSON so the client-side JS can access them
     my %prefs;
-    for my $name qw(search_page_size use_autocomplete message_timeout syntax_highlighting) {
+    for my $name qw(search_page_size use_autocomplete message_timeout syntax_highlighting language) {
         $prefs{$name} = pkg('MyPref')->get($name);
     }
     my $pref_cookie = $q->cookie(

@@ -1,34 +1,33 @@
 .proto-popup {
-  font-size: 12px                         !important;
-  font-family: Arial, Verdana, sans-serif !important;
-  color: #000000                          !important;
-  position: fixed                         !important;
-  cursor: move                            !important;
-  background-color: #EFEFFF               !important;
-  border: 1px solid #6A5ACD               !important;
-  padding: 10px                           !important;
-  width: 300px                            !important;
-  text-align: left                        !important;
-  vertical-align: baseline                !important;
+  background-color: #EFEFFF             !important;
+  border: 1px solid #6A5ACD             !important;
+  color: #000000                        !important;
+  cursor: move                          !important;
+  font: 12px Arial, Verdana, sans-serif !important;
+  overflow: auto                        !important;;
+  padding: 10px                         !important;
+  position: fixed                       !important;
+  text-align: left                      !important;
+  vertical-align: baseline              !important;
 }
 
 .proto-popup .proto-popup-header { 
-  padding: 0px 10px 10px 0px;
+  padding: 0px 0px 10px 0px;
 }
 
 .proto-popup .proto-popup-body { 
   background-color: #FFFFE0;
-  padding: 10px;
   clear: both;
+  padding: 10px;
 }
 
 .proto-popup .proto-popup-footer { 
-  padding: 10px 0px 0px;
+  padding: 10px 0px 0px 0px;
 }
 
 .proto-popup img.proto-popup-cancel { 
-  float: right;
   cursor: auto;
+  float: right;
   padding-bottom: 7px;
 }
 
@@ -37,10 +36,10 @@ proto-popup input.proto-popup-cancel-btn {
 }
 
 .proto-popup-overlay { 
+  background-color: #000;
+  left:     0px;
   position: absolute;
   top:      0px;
-  left:     0px;
-  background-color: #000;
 }
 
 .proto-popup-btn-table { 
@@ -51,24 +50,28 @@ proto-popup input.proto-popup-cancel-btn {
   width: 100%;
 }
 
-table.proto-popup-btn-table td.proto-popup-btn-left { 
+table.proto-popup-btn-table td.proto-popup-buttons-left { 
+  margin: 0px;
+  padding: 0px,
   text-align: left !important;
-  margin: 0px;
-  padding: 0px,
 }
 
-table.proto-popup-btn-table td.proto-popup-btn-right { 
+table.proto-popup-btn-table td.proto-popup-buttons-right { 
+  margin: 0px;
+  padding: 0px,
   text-align: right !important;
-  margin: 0px;
-  padding: 0px,
 }
 
-table.proto-popup-btn-table td.proto-popup-btn-right input { 
-  margin-left: 5px;
-}
-
-table.proto-popup-btn-table td.proto-popup-btn-left input { 
+td.proto-popup-buttons-left input.proto-popup-btn { 
   margin-right: 5px;
+}
+
+td.proto-popup-buttons-right { 
+  text-align: right;
+}
+
+td.proto-popup-buttons-right input.proto-popup-btn { 
+  margin-left: 5px;
 }
 
 /*********************
@@ -96,7 +99,6 @@ table.proto-popup-btn-table td.proto-popup-btn-left input {
 
 #dialog-footer {
   border-top: 1px solid #6A5ACD;
-/*   padding: 10px; */
 }
 
 .proto-popup .proto-popup-btn {
@@ -116,6 +118,4 @@ table.proto-popup-btn-table td.proto-popup-btn-left input {
   background-color: #FF9 !important;
   background-image: none !important;
 }
-
-
 
