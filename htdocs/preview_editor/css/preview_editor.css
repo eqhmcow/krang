@@ -93,14 +93,14 @@ a#krang_preview_editor_help:visited, a#krang_preview_editor_close:visited {
  * Error popup *
  ***************/
 #krang_preview_editor_error { 
-  background-color: #E0F0FF;
+  background-color: #E0F0FF !important;
   border: 1px solid #BBB;
-  padding: 0;
+  padding: 0 !important;
   width: 500px;
 }
 
 #krang_preview_editor_error-body {
-  background-color: #E0F0FF;
+  background-color: #E0F0FF !important;
   color: #000;
   min-height: 60px;
   margin: 10px 15px;
