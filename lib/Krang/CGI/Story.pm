@@ -462,9 +462,15 @@ sub checkout_and_edit {
           unless $story;
     }
 
-    $story->checkout;
-
-    return $self->edit();
+    eval { $story->checkout };
+    if( $@ && ref $@ && $@->isa('Krang::Story::CheckedOut')) {
+        add_alert('story_stolen_before_checkout', id => $story->story_id, thief => $@->user_id);
+        return $self->goto_workspace();
+    } elsif( $@ ) {
+        die $@;
+    } else {
+        return $self->edit();
+    }
 }
 
 =item edit
@@ -2123,7 +2129,17 @@ sub checkout_selected {
     my $was_checked_out;
     foreach my $story_id (@story_checkout_list) {
         my ($s) = pkg('Story')->find(story_id => $story_id);
-        unless ($was_checked_out = $s->checked_out) {
+        if ($s->checked_out) {
+            $was_checked_out = 1;
+            if ($s->checked_out_by != $ENV{REMOTE_USER}) {
+                add_alert(
+                    'story_stolen_before_checkout',
+                    thief => $s->checked_out_by,
+                    id    => $s->story_id
+                );
+            }
+        } else {
+            $was_checked_out = 0;
             $s->checkout();
         }
     }

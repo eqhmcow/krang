@@ -26,7 +26,7 @@ use Exception::Class
   'Krang::Story::MissingCategory'      => {fields => []},
   'Krang::Story::NoCategoryEditAccess' => {fields => ['category_id']},
   'Krang::Story::NoEditAccess'         => {fields => ['story_id']},
-  'Krang::Story::CheckedOut'           => {fields => ['desk_id']},
+  'Krang::Story::CheckedOut'           => {fields => ['desk_id', 'user_id']},
   'Krang::Story::NoDesk'               => {fields => ['desk_id']},
   'Krang::Story::NoDeleteAccess'       => {fields => ['story_id']},
   'Krang::Story::NoRestoreAccess'      => {fields => ['story_id']},
@@ -2010,8 +2010,10 @@ sub checkout {
               WHERE story_id = ?', undef, $self->{story_id}
         );
 
-        croak("Story '$self->{story_id}' is already checked out by user '$uid'")
-          if ($co and $uid != $user_id);
+        Krang::Story::CheckedOut->throw(
+            message => "Story $self->{story_id} is already checked out by user '$uid'",
+            user_id => $uid,
+        ) if ($co and $uid != $user_id);
 
         # checkout the story
         $dbh->do(
