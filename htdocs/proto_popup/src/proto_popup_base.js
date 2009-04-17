@@ -134,7 +134,8 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
            max-height set in a CSS file. Defaults to undefined.<br/>
 
            <b>cancelIconSrc</b> {STRING} - The src URL of the cancel
-           icon. Defaults to 'images/cancel.png'<br/>
+           icon. Defaults to 'images/cancel.png'. To remove the icon, set
+           this option to false.<br/>
 
            <b>zIndex</b> {NUMBER} - The z-index of the popup. Defaults
            to 1.<br/>
@@ -217,6 +218,9 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
         if (this.config.minHeight) popup.setStyle({minHeight : this.config.minHeight});
         if (this.config.maxHeight) popup.setStyle({maxHeight : this.config.maxHeight});
 
+        var wrapper = new Element('div', {id: id+'-wrapper', 'class': 'proto-popup-wrapper'});
+        popup.insert(wrapper);
+
         /**
            The popup div having {@link #id} as its ID, 'proto-popup'
            as its class attribute.
@@ -225,7 +229,7 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 
         // insert the cancel icon and attach click handler
         if (this.config.cancelIconSrc) {
-            popup.insert(new Element('img', {
+            wrapper.insert(new Element('img', {
                 id      : popup.id+'-cancel-button',
                 src     : this.config.cancelIconSrc,
                 'class' : 'proto-popup-cancel'
@@ -238,7 +242,7 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
         this.sections = ['header', 'body', 'footer'];
 
         /**
-           The popup's 'header' section is the popup's first DOM
+           The popup's 'header' section is the popup's second DOM
            child. It's ID is "id+'-header'", it's class attribute
            'proto-popup-header'.   It's content is set via
            {@link #setHtml}.
@@ -247,7 +251,7 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 
          */
         /**
-           The popup's 'body' section is the popup's first DOM
+           The popup's 'body' section is the popup's third DOM
            child. It's ID is "id+'-body'", it's class attribute
            'proto-popup-body'.  It's content is set via
            {@link #setHtml}.
@@ -256,7 +260,7 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 
          */
         /**
-           The popup's 'footer' section is the popup's first DOM
+           The popup's 'footer' section is the popup's forth DOM
            child. It's ID is "id+'-footer'", it's class attribute
            'proto-popup-footer'.  It's content is set via
            {@link #setHtml}.
@@ -265,13 +269,19 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 
          */
         this.sections.each(function(section) {
-            var se = new Element('div', {id : id+'-'+section, 'class' : 'proto-popup-'+section}).hide();
+            var se = new Element('div', {id : id+'-'+section, 'class' : 'proto-popup-'+section});
+            if (section == 'header' && this.config.cancelIconSrc) {
+                // layout hack: push body down do its place below the cancel icon even without a header
+                se.update('&nbsp;');
+            } else {
+                se.hide();
+            }
             if (this.config[section+'BackgroundImage']) {
                 se.setStyle({backgroundImage: this.config[section+'BackgroundImage'],
                              backgroundRepeat: 'no-repeat'});
             }
             this[section] = se;
-            popup.insert(se);
+            wrapper.insert(se);
         }.bind(this));
 
         // maybe add a modal overlay

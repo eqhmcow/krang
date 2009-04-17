@@ -80,9 +80,12 @@ ProtoPopup.Dialog = Class.create(ProtoPopup, /** @lends ProtoPopup.Dialog.protot
         var vertical   = spec.vertical   ? spec.vertical   : 'footer';
 
         var section = this[vertical];
-        var first   = section.firstDescendant();
-        if (!(first && first.nodeName.toLowerCase() == 'table')) {
-            section.insert('<table id="'+this.id+'-btn-table" border="0" cellpadding="0" cellpadding="0" class="proto-popup-btn-table"><tbody><td id="'+this.id+'-buttons-'+vertical+'-left" class="proto-popup-buttons-left"></td><td id="'+this.id+'-buttons-'+vertical+'-right" class="proto-popup-buttons-right"></td></tbody></table>');
+
+        // if we have a header, give the button table some top margin
+        var tableStyle = this.header.innerHTML == '' ? '' : 'style="margin-top: 7px"';
+        var table   = section.down('table.proto-popup-btn-table');
+        if (!table) {
+            section.insert('<table id="'+this.id+'-btn-table" border="0" cellpadding="0" cellpadding="0" class="proto-popup-btn-table"'+tableStyle+'><tbody><td id="'+this.id+'-buttons-'+vertical+'-left" class="proto-popup-buttons-left"></td><td id="'+this.id+'-buttons-'+vertical+'-right" class="proto-popup-buttons-right"></td></tbody></table>');
         }
 
         return $(this.id+'-buttons-'+vertical+'-'+horizontal);
