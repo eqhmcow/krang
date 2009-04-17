@@ -396,6 +396,7 @@ Krang.debug.on();
         var askSaveDialog = function(storyInSession) {
             var p = new ProtoPopup.Dialog('proto-popup-dialog', {
                 body: Krang.localize('Are you sure you want to discard your unsaved changes?'),
+                cancelIconSrc: false,
                 buttons: [
                     {name:       'save',
                      label:      Krang.localize("Save"),
