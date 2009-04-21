@@ -37,6 +37,33 @@ END
     return $pkg->SUPER::verify_dependencies(%arg);
 }
 
+# Overridden to correctly detect mysql-devel package on RH ES5 / x86_64
+sub check_libmysqlclient {
+    my ($pkg, %args) = @_;
+    my @files = @{$args{lib_files}};
+
+    # add /usr/lib/mysql and /usr/lib64/mysql since RedHat installs it in one of theose
+    my @extra_dirs = ('/usr/lib/mysql', '/usr/lib64/mysql');
+    for my $extra_dir (@extra_dirs) {
+      if (-d $extra_dir) {
+        opendir(DIR, $extra_dir) or die "Could not open $extra_dir for reading: $!";
+        push(@files, grep { not -d $_ } readdir(DIR));
+        closedir(DIR);
+      }
+    }
+
+    unless (grep { /^libmysqlclient\./ } @files) {
+        die <<END;
+
+MySQL client development libraries not found.  These are required for the proper operation of Krang.
+
+Install the MySQL client development libraries and try again.
+
+END
+    }
+}
+
+
 # setup init script so Krang starts on boot
 sub finish_installation {
     my ($pkg, %arg) = @_;

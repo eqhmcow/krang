@@ -21,8 +21,9 @@ You can install them via up2date or yum:
    binutils
    glibc-kernheaders
    zlib-devel
+   mysql-devel
    expat-devel
    libjpeg-devel
-   libungif-devel
+   giflib-devel
    libpng-devel
 
