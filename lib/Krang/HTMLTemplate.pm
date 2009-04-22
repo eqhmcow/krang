@@ -24,7 +24,7 @@ See L<HTML::Template>.
 
 =cut
 
-use base 'HTML::Template::Expr';
+use base 'HTML::Template';
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Conf    => qw(
   InstanceDisplayName
@@ -99,7 +99,7 @@ sub new {
                   . ref($filter) . "'";
             }
         }
-        push @filters, sub { ${$_[0]} = encode_utf8(${$_[0]}) };
+        push @filters, sub { ${$_[0]} = decode_utf8(${$_[0]}) };
         $arg{filter} = \@filters;
     }
 

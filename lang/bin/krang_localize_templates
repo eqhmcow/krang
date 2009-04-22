@@ -245,7 +245,8 @@ sub localize_templates {
 
             {
                 local $/ = undef;
-                open my $if, $tmpltmpl or die "Couldn't open($tmpltmpl) for reading: $!";
+                my $if;
+                pkg('IO')->open($if, '<', $tmpltmpl) or die "Couldn't open($tmpltmpl) for reading: $!";
                 $content = <$if>;
                 close $if or warn "Couldn't close($tmpltmpl): $!";
             }
@@ -262,7 +263,8 @@ sub localize_templates {
             $loc_tmpl = catfile($loc_dir, $loc_tmpl);
 
             # and print the localized template
-            open(my $of, ">", $loc_tmpl) or die "Couldn't open($loc_tmpl) for writing: $!";
+            my $of;
+            pkg('IO')->open($of, ">", $loc_tmpl) or die "Couldn't open($loc_tmpl) for writing: $!";
             print $of $content;
             close $of or warn "Couldn't close($loc_tmpl): $!";
 
