@@ -129,7 +129,7 @@ Object.extend(PoorText.prototype, {
         // Hook in default events
         var events = PoorText.events;
         for (type in events) {
-            this.observe(type, 'builtin', this[events[type]], true);
+            this.observe(type, 'builtin', this[events[type]]);
         }
     },
 
@@ -279,23 +279,27 @@ Object.extend(PoorText.prototype, {
             document.execCommand('selectAll', false, null);
             
             // register handlers
-            this.observe('click', 
-                         'toggleSelectAll', 
-                         function(event) {
-                this.toggleSelectAll();
-                Event.stop(event);
-            }, true);
+            this.observe(
+                'click', 
+                'toggleSelectAll', 
+                function(event) {
+                    this.toggleSelectAll();
+                    Event.stop(event);
+                }
+            );
             
-            this.observe('keydown', 
-                         'toggleSelectAll', 
-                         function(e) {
-                if (e.ctrlKey == true) return;
-                // gimmi the focus for edit commands
-                this.focusEditNode();
-                this.selectedAll = false;
-                this.stopObserving('click', 'toggleSelectAll');
-                this.stopObserving('keydown', 'toggleSelectAll');
-            }, true);
+            this.observe(
+                'keydown', 
+                'toggleSelectAll', 
+                function(e) {
+                    if (e.ctrlKey == true) return;
+                    // gimmi the focus for edit commands
+                    this.focusEditNode();
+                    this.selectedAll = false;
+                    this.stopObserving('click', 'toggleSelectAll');
+                    this.stopObserving('keydown', 'toggleSelectAll');
+                }
+            );
         }
         return true;
     },

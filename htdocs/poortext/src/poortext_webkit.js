@@ -257,7 +257,7 @@ Object.extend(PoorText.prototype, {
         // Hook in default events
         var events = PoorText.events;
         for (type in events) {
-            this.observe(type, 'builtin', this[events[type]], true);
+            this.observe(type, 'builtin', this[events[type]]);
         }
     },
          
@@ -488,19 +488,23 @@ Object.extend(PoorText.prototype, {
             // selectall
             document.execCommand('selectall', false, null);
             
-            this.observe('click', 
-                         'toggleSelectAll', 
-                         function() {
-                this.toggleSelectAll();
-            }, true);
+            this.observe(
+                'click', 
+                'toggleSelectAll', 
+                function() {
+                    this.toggleSelectAll();
+                }
+            );
             
-            this.observe('keypress', 
-                         'toggleSelectAll', 
-                         function(event) {
-                if (event.ctrlKey == true) return true;
-                // Let the default action be taken
-                setTimeout(function() {this.toggleSelectAll()}.bind(this), 1);
-            }, true);
+            this.observe(
+                'keypress', 
+                'toggleSelectAll', 
+                function(event) {
+                    if (event.ctrlKey == true) return true;
+                    // Let the default action be taken
+                    setTimeout(function() {this.toggleSelectAll()}.bind(this), 1);
+                }
+            );
         }
         return true;
     },
@@ -569,7 +573,6 @@ Object.extend(PoorText.prototype, {
             this.restoreSelection();
         }.bind(this), 10);
     }
-
 });
 
 /**
