@@ -87,7 +87,7 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Conf => qw(KrangRoot InstanceHostName Skin KrangUser KrangGroup EnableSSL
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceHostName Skin KrangUser KrangGroup EnableSSL EnablePreviewEditor
   InstanceApacheAddr InstanceApachePort InstanceSSLCertificateFile
   InstanceSSLCertificateKeyFile InstanceSSLCertificateChainFile
   InstanceSSLCACertificateFile InstanceSSLCARevocationFile InstanceSSLPort
@@ -188,7 +188,7 @@ sub start {
     make_js_localizer();
     prepare_for_browser_speed_boost();
     make_js_for_poortext();
-    combine_preview_editor_js();
+    combine_preview_editor_js() if EnablePreviewEditor;
 
     print "krang_apachectl $command: starting httpd\n";
     unless (system($httpd)) {
@@ -464,7 +464,7 @@ sub offline {
 }
 
 sub combine_preview_editor_js {
-    pkg('IO')->say("Making Combined JavaScript file for Preview Finder.");
+    pkg('IO')->say("Making Combined JavaScript file for Preview Editor.");
     system(catfile(KrangRoot, 'htdocs', 'preview_editor', 'bin', 'krang_combine_preview_editor_js') . ' --minify')
       and die "Couldn't make JavaScript combined file: $?";
 }
