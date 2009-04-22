@@ -57,10 +57,10 @@ set the appropriate encoding based on the Charset.
 =cut
 
 sub open {
-    my ($pkg, $fh, $mode, $path) = @_;
+    my ($pkg, undef, $mode, $path) = @_;
     my $charset = Charset();
     $mode .= ":encoding($charset)" if $charset;
-    return open($fh, $mode, $path);
+    return open($_[1], $mode, $path);
 }
 
 =head2 io_file
