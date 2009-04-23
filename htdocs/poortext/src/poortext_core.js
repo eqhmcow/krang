@@ -1263,13 +1263,19 @@ PoorText.onBlur = function(event) {
     if ($('pt-specialCharBar')) $('pt-specialCharBar').hide();
     if ($('pt-popup-addHTML')) $('pt-popup-addHTML').hide();
     // onBlur stuff for previously focused PT field
-    if (PoorText.focusedObj) {
-        PoorText.focusedObj.selectionCollapseToEnd();
-        PoorText.focusedObj.storeForPostBack();
-        PoorText.focusedObj.config.onBlur.call(PoorText.focusedObj);
-        PoorText.focusedObj.focused = false;
-        $(PoorText.focusedObj.id).fire('pt:blur');
-        PoorText.focusedObj = null;
+    var pt = PoorText.focusedObj;
+    if (pt) {
+        if (pt.usingIFrame) {
+            pt.selectionCollapseToEnd();
+        } else {
+            try {
+                $(pt.eventNode).fire('pt:blur');
+            } catch(er) {}
+        }
+        pt.storeForPostBack();
+        pt.config.onBlur.call(pt);
+        pt.focused = false;
+        pt = null;
     }
 }.bindAsEventListener({});
 
