@@ -431,7 +431,6 @@ Object.extend(PoorText.prototype, {
     deactivate : function() {
         // remove blinking caret
         // see http://stackoverflow.com/questions/214722/firefox-3-03-and-contenteditable
-        console.log('deactivate');
         setTimeout(function() {
             var sel = window.getSelection();
             if (sel) sel.removeAllRanges();
