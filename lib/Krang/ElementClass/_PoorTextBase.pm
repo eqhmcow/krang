@@ -304,9 +304,7 @@ poortext_init = function() {
 Krang.onload(function() {
     poortext_init();
 });
-END
 
-        $html .= <<'END';
 // save away the last focused PoorText field to avoid race conditions
 // and hide our popups
 Krang.ElementEditor.add_save_hook(function() {
@@ -315,10 +313,18 @@ Krang.ElementEditor.add_save_hook(function() {
     var pt = PoorText.focusedObj;
     if (pt) {
         pt.storeForPostBack();
-        if ($('pt-btnBar')) setTimeout(function() {$('pt-btnBar').hide()}, 500);
-        if ($('pt-specialCharBar')) $('pt-specialCharBar').hide();
-        if ($('pt-popup-addHTML')) $('pt-popup-addHTML').hide();
-        $(pt.id).fire('pt:blur');
+        var btnBar = \$('pt-btnBar');
+        var browser_version = "$browser_version";
+        if (btnBar) {
+            if (browser_version) {
+                setTimeout(function() {btnBar.hide()}, 300);
+            } else {
+                btnBar.hide();
+            }
+        }
+        if (\$('pt-specialCharBar')) \$('pt-specialCharBar').hide();
+        if (\$('pt-popup-addHTML'))  \$('pt-popup-addHTML').hide();
+        \$(pt.id).fire('pt:blur');
     }
     PoorText.objects.invoke('removeAllEventHandlers');
     PoorText.stopObserving(document, 'click', 'blur');
