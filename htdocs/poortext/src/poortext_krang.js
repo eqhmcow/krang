@@ -130,6 +130,7 @@ PoorText.Krang = {
 
         // select the link
         pt.focusEditNode();
+        pt.onFocus();
 
         if (Prototype.Browser.Gecko) {
             pt.restoreSelection(PoorText.Krang.selection);
