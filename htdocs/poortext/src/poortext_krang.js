@@ -114,8 +114,12 @@ PoorText.Krang = {
 
         // IFrame only: activate
         if (pt.usingIFrame && pt.config.deferIframeCreation) {
+            pt.onEditNodeReady(function() {
+                PoorText.Krang.doRestoreSelection(pt, link , deleteLink)
+            });
             pt._makeEditable();
             pt._activateIframe();
+            return;
         }
 
         // tail call: workaround timing issue with IFrames
@@ -123,14 +127,6 @@ PoorText.Krang = {
     },
 
     doRestoreSelection : function(pt, link, deleteLink) {
-
-        // waiting for IFrame
-        if (!pt.editNode) {
-            setTimeout(function() {
-                    PoorText.Krang.doRestoreSelection(pt, link, deleteLink);
-            }, 50);
-            return;
-        }
 
         // select the link
         pt.focusEditNode();
@@ -140,7 +136,7 @@ PoorText.Krang = {
             if (deleteLink) {
                 /**
                    For Dev: Without this apparently superfluous call
-                   to pt.getLink(), FF2/3 (both using IFrame) replaces
+                   to pt.getLink(), FF2/3 (with IFrame or contenteditable) replaces
                    the HTMLAnchorElement with this SPAN:
 
                        <span class="pt-a" _moz_dirty="">SomeString</span>
@@ -162,6 +158,8 @@ PoorText.Krang = {
                 pt.updateButtonBar();
             }
         }
+
+        pt.storeForPostBack();
     }
 }
 

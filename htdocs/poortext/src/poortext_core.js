@@ -159,12 +159,12 @@ PoorText = function (element, config) {
        @type Array
        @private
     */
-    this.eventHandlers = new Object();
+    this.eventHandlers = {};
 
     /**
        Array of functions to be executed when the edit node is ready.
     */
-    this.onEditNodeReadyFunctions = new Array();
+    this.onEditNodeReadyFunctions = [];
 
     /**
        Flag to remember whether the specialCharBar (scb) is/was/should again be visible or not
@@ -525,7 +525,7 @@ PoorText.prototype = {
 	}
     
 	// Call the element's onSubmit method when submitting the form
-	Event.observe(this.form, 'submit', this.onSubmit.bindAsEventListener(this), true);
+	Event.observe(this.form, 'submit', this.onSubmit.bindAsEventListener(this));
 
 	// Some bookkeeping
 	PoorText.objects.push(this);
@@ -539,7 +539,7 @@ PoorText.prototype = {
     */
     onEditNodeReady : function(func) {
         if ( Object.isFunction(func) ) {
-            if (this.editNode) {
+            if (this.editNode !== null) {
                 func();
             } else {
                 this.onEditNodeReadyFunctions.push(func);
@@ -803,13 +803,12 @@ PoorText.prototype = {
        @param {STRING} - the name of the event (keydown, click etc.)
        @param {STRING} - an arbitrary string identifying this event handler
        @param {FUNCTION} - the event handler function
-       @param {BOOL} - the useCapture flag
     */
-    observe : function(type, name, handler, useCapture) {
+    observe : function(type, name, handler) {
 	var func = handler.bindAsEventListener(this);
-	Event.observe(this.eventNode, type, func, useCapture);
+	Event.observe(this.eventNode, type, func);
 	if (!this.eventHandlers[type]) this.eventHandlers[type] = new Object();
-	this.eventHandlers[type][name] = [func, useCapture];
+	this.eventHandlers[type][name] = func;
     },
 
     /**
@@ -823,10 +822,8 @@ PoorText.prototype = {
     */
     stopObserving : function(type, name) {
         try {
-            var handlerSpec = this.eventHandlers[type][name];
-            var func       = handlerSpec[0];
-            var useCapture = handlerSpec[1];
-            Event.stopObserving(this.eventNode, type, func, useCapture);
+            var func = this.eventHandlers[type][name];
+            Event.stopObserving(this.eventNode, type, func);
             delete this.eventHandlers[type][name];
         } catch (e) {}
     },
@@ -839,8 +836,9 @@ PoorText.prototype = {
        @private
     */
     removeAllEventHandlers : function () {
-	if (!this.eventHandlers) return;
+	if (!this.eventHandlers && !PoorText.eventHandlers) return;
 	for (type in this.eventHandlers) {
+            var name;
 	    for (name in this.eventHandlers[type]) {
 		this.stopObserving(type, name);
 	    }
@@ -871,9 +869,11 @@ PoorText.prototype = {
 
     /**@ignore*/
     applyFiltersTo : function(node, filters) {
-	filters.each(function(filter) {
-	    node = filter(node);
-	});
+        if (Object.isArray(filters)) {
+	    filters.each(function(filter) {
+	        node = filter(node);
+	    });
+        }
 	return node;
     },
 
@@ -1135,11 +1135,66 @@ PoorText.generateAll = function() {
 
 PoorText.finish_init = function() {
     // Pseudo onBlur event for PT objects
-    Event.observe(document, 'click', PoorText.onBlur);
+    PoorText.observe(document, 'click', 'blur', PoorText.onBlur);
 
     // Make sure no PT field has focus
     try { window.blur(); window.focus(); } catch(er) {}
 }
+
+PoorText.observe, PoorText.stopObserving, PoorText.removeAllEventHandlers;
+(function() {
+    var getID = function(object) {
+        if (Object.isUndefined(object)) {
+            return '__window';
+        } else if (object.nodeName == '#document') {
+            return '__document';
+        } else if (object !== null) {
+            return $(object).identify();
+        }
+    };
+
+    var getElm = function(object) {
+        if (object == '__window') return window;
+        if (object == '__document') return document;
+        return object;
+    }
+
+    // global handlers store
+    handlers = {};
+
+    PoorText.observe = function(element, type, name, handler) {
+        Event.observe(element, type, handler);
+        var id = getID(element);
+        if (!handlers[id]) handlers[id] = {};
+        if (!handlers[id][type]) handlers[id][type] = {};
+        handlers[id][type][name] = handler;
+    };
+
+    PoorText.stopObserving = function(element, type, name) {
+        var id = getID(element);
+        try {
+            var handler = handlers[id][type][name];
+            Event.stopObserving(element, type, handler);
+            handlers[id][type][name] = null;
+        } catch(er) {}
+    };
+
+    PoorText.removeAllEventHandlers = function () {
+        PoorText.objects.invoke('removeAllEventHandlers');
+	if (!handlers) return;
+        var id, type, name;
+        for (id in handlers) {
+            for (type in handlers[id]) {
+                for (name in handlers[id][type]) {
+                    var elm = getElm(id);
+                    PoorText.stopObserving(elm, type, name);
+                }
+            }
+        }
+        handlers = {};
+    };
+
+})();
 
 /**
    Class method to generate PoorText elements for all DIVs having the
@@ -1213,6 +1268,7 @@ PoorText.onBlur = function(event) {
         PoorText.focusedObj.storeForPostBack();
         PoorText.focusedObj.config.onBlur.call(PoorText.focusedObj);
         PoorText.focusedObj.focused = false;
+        $(PoorText.focusedObj.id).fire('pt:blur');
         PoorText.focusedObj = null;
     }
 }.bindAsEventListener({});
@@ -1394,9 +1450,9 @@ PoorText.Popup = {
             });
 
             // All popup handlers
-            Event.observe(popup, 'click',   PoorText.Popup.clickHandler);
-            Event.observe(popup, 'keydown', PoorText.Popup.keyDownHandler);
-            Event.observe(popup, 'keyup',   PoorText.Popup.keyUpHandler);
+            PoorText.observe(popup, 'click',   'popup', PoorText.Popup.clickHandler);
+            PoorText.observe(popup, 'keydown', 'popup', PoorText.Popup.keyDownHandler);
+            PoorText.observe(popup, 'keyup',   'popup', PoorText.Popup.keyUpHandler);
 
             // Remember us
             PoorText.Popup[which] = popup;
@@ -1626,7 +1682,7 @@ PoorText.buttonBar.load = function() {
 
     // Install an onClick handler on the btnBar to capture button
     // click events
-    Event.observe($('pt-btnBar'), 'click', function (e) {
+    PoorText.observe($('pt-btnBar'), 'click', 'buttonbar', function (e) {
         var target = e.target.parentNode;
         PoorText.focusedObj.functionFor[target.id.replace('pt-btn-', '')].call(PoorText.focusedObj);
 
@@ -1639,7 +1695,7 @@ PoorText.buttonBar.load = function() {
         // Make sure the window onClick handler does not see the btn
         // click event
         Event.stop(e);
-    }.bindAsEventListener(PoorText.focusedObj), true);
+    }.bindAsEventListener(PoorText.focusedObj));
 };
 
 /*
@@ -1715,20 +1771,20 @@ PoorText.specialCharBar.load = function() {
 
     // Install an onClick handler on the btnBar to capture button
     // click events
-    Event.observe($('pt-specialCharBar'), 'click', function (e) {
+    PoorText.observe($('pt-specialCharBar'), 'click', 'specialcharbar', function (e) {
         // insert the special char
         var target = e.target.parentNode;
         PoorText.focusedObj.insertHTML(PoorText.focusedObj.config.specialChars.get(target.id.replace('pt-char-', '')),
                                         true);
 
         // focus the edit area again
-        PoorText.focusedObj.window.focus();
+        PoorText.focusedObj.focusEditNode();
 
         // Make sure the main window onClick handler does not see the
         // special char click event
         Event.stop(e);
         return false;
-    }.bindAsEventListener(PoorText.focusedObj), true);
+    }.bindAsEventListener(PoorText.focusedObj));
 };
 
 /**

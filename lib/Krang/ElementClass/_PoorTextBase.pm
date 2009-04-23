@@ -201,6 +201,13 @@ sub poortext_init {
     my $lang       = localize('en');
     $lang          = substr($lang, 0, 2) unless $lang eq 'en';
 
+    # Gecko 1.9+ uses contenteditable instead of IFrame
+    my $browser_version = '';
+    if ($ENV{KRANG_BROWSER_ENGINE} eq 'Gecko') {
+        (my $gecko_version = $ENV{KRANG_GECKO_VERSION}) =~ s/\.//g;
+        $browser_version = '-1.8' if substr($gecko_version, 0, 2) < 19;
+    }
+
     my $html = <<END;
 <script type="text/javascript">
     // pull in the JavaScript
@@ -209,7 +216,7 @@ if (!Krang.PoorTextLoaded) {
     var pt_script = new Element(
        'script',
        { type: "text/javascript",
-         src: "$static_url/poortext/poortext_$ENV{KRANG_BROWSER_ENGINE}.js"}
+         src: "$static_url/poortext/poortext_$ENV{KRANG_BROWSER_ENGINE}$browser_version.js"}
     );
     document.body.appendChild(pt_script);
 
@@ -278,12 +285,19 @@ poortext_init = function() {
                             }
                         }
                     }
-            }, false);
+            });
         }.bind(pt));
     });
 
     // finish with some global stuff
     PoorText.finish_init();
+
+    // remove all event handlers on full page unload
+    var existingUnload = window.unonload;
+    window.unonload = function() {
+        existingOnunload();
+        PoorText.removeAllEventHandlers();
+    }
 }
 
 // call init function
@@ -301,10 +315,13 @@ Krang.ElementEditor.add_save_hook(function() {
     var pt = PoorText.focusedObj;
     if (pt) {
         pt.storeForPostBack();
-        if ($('pt-btnBar')) $('pt-btnBar').hide();
+        if ($('pt-btnBar')) setTimeout(function() {$('pt-btnBar').hide()}, 500);
         if ($('pt-specialCharBar')) $('pt-specialCharBar').hide();
         if ($('pt-popup-addHTML')) $('pt-popup-addHTML').hide();
+        $(pt.id).fire('pt:blur');
     }
+    PoorText.objects.invoke('removeAllEventHandlers');
+    PoorText.stopObserving(document, 'click', 'blur');
 });
 </script>
 END

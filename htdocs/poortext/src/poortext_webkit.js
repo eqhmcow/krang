@@ -656,7 +656,6 @@ PoorText.spanFilter = function(editNode) {
     ]);
 
     $$('span').each(function(span) {
-            console.log(span);
         var newStyles = 0;
         var styles = {};
 

@@ -11,6 +11,7 @@ html, body {
   font-family: sans-serif;
   overflow: auto;
   color: #000000;
+  padding: 2px;
 }
 
 .poortext a { 

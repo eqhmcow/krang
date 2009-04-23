@@ -125,6 +125,14 @@ my @browser_engines = (
               ],
     },
     {
+     name  => 'Gecko-1.8',
+     files => [
+               'poortext_gecko_iframe.js',
+               'poortext_w3c_range.js',
+               'poortext_w3c_functions.js',
+              ],
+    },
+    {
      name  => 'IE',
      files => [ 'poortext_ie.js' ],
     },
