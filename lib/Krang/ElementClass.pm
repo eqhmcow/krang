@@ -987,7 +987,7 @@ sub fill_template {
     foreach my $child (@element_children) {
         my $name       = $child->name;
         my $child_loop = $name . '_loop';
-        my $html = '';
+        my $html;
         my %fill_template_args;
 
         # skip this child unless something in the template references
@@ -1069,7 +1069,7 @@ sub fill_template {
                 publisher          => $publisher,
                 fill_template_args => \%fill_template_args
             );
-            $child_params{$name} = $div . $html;
+            $child_params{$name} = $div . ($html || '');
         }
     }
 
