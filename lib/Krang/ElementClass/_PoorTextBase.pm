@@ -210,65 +210,74 @@ sub poortext_init {
 
     my $html = <<END;
 <script type="text/javascript">
-    // pull in the JavaScript
-if (!Krang.PoorTextLoaded) {
-    // pull in a browser-engine-specific version of PoorText's JavaScript
-    var pt_script = new Element(
-       'script',
-       { type: "text/javascript",
-         src: "$static_url/poortext/poortext_$ENV{KRANG_BROWSER_ENGINE}$browser_version.js"}
-    );
-    document.body.appendChild(pt_script);
-
-    // I tried the same appending procedure for the CSS file poortext/css/poortext.css,
-    // but for WebKit that comes to late, so I included it in templates/header.base.tmpl
-
-    // make sure we do this only once
-    Krang.PoorTextLoaded = true;
-}
-
-// init function
-poortext_init = function() {
+//' keep emacs javascript-mode happy
+(function() {
+    // call us only once
     if (Krang.PoorTextInitialized) { return }
-
-    // is poortext_<BROWSER_ENGINE>.js loaded ?
-    if (typeof PoorText == 'undefined') {
-        setTimeout(poortext_init, 10);
-        return;
-    }
-
     Krang.PoorTextInitialized = true;
 
-    // deactivate the autoload handler
-    PoorText.autoload = false;
+    if (!Krang.PoorTextLoaded) {
+        // pull in a browser-engine-specific version of PoorText's JavaScript
+        var pt_script = new Element(
+            'script',
+            { type: "text/javascript",
+              src: "$static_url/poortext/poortext_$ENV{KRANG_BROWSER_ENGINE}$browser_version.js"}
+        );
+        document.body.appendChild(pt_script);
+        
+        // I tried the same appending procedure for the CSS file poortext/css/poortext.css,
+        // but for WebKit that comes to late, so I included it in templates/header.base.tmpl
+        
+        // make sure we do this only once
+        Krang.PoorTextLoaded = true;
+        
+        // remove all event handlers on full page unload
+        var existingUnload = window.unonload;
+        window.unonload = function() {
+            existingOnunload();
+            PoorText.removeAllEventHandlers();
+        }
+    }
 
-    // language is a global config
-    PoorText.config = {
-        lang              : "$lang",
-        useMarkupFilters  : false
-    };
-
-    // make them all fields
-    Krang.PoorTextCreationArguments.each(function(pts) {
-        var pt_id  = pts[0];
-        var param  = pts[1];
-        var config = pts[2];
-
-        // map PoorText field id to Krang element param
-        PoorText.Krang.paramFor[pt_id] = param;
-
-        // make PoorText fields
-        pt = new PoorText(pt_id, config);
-
-        // add a preview handler for links and StoryLinks
-        // IE does dispatch no 'click' event on contenteditable elements
-        // so we use mousedown
-        pt.onEditNodeReady(function() {
-            this.observe('mousedown', 'krang_preview', function(e) {
-                if (e.target.nodeName.toLowerCase() != 'a') { return }
-                if (e.ctrlKey
-                    || (Prototype.Browser.IE && e.button == 4)
-                    || (!Prototype.Browser.IE && e.button == 1))
+    // inititialize PoorText fields
+    Krang.onload(function() {
+        
+        // is poortext_<BROWSER_ENGINE>.js loaded ?
+        if (typeof PoorText == 'undefined') {
+            setTimeout(arguments.callee, 10);
+            return;
+        }
+        
+        // deactivate the autoload handler
+        PoorText.autoload = false;
+        
+        // language is a global config
+        PoorText.config = {
+            lang              : "$lang",
+            useMarkupFilters  : false
+        };
+        
+        // make them all fields
+        Krang.PoorTextCreationArguments.each(function(pts) {
+            var pt_id  = pts[0];
+            var param  = pts[1];
+            var config = pts[2];
+            
+            // map PoorText field id to Krang element param
+            PoorText.Krang.paramFor[pt_id] = param;
+            
+            // make PoorText fields
+            pt = new PoorText(pt_id, config);
+            
+            // add a preview handler for links and StoryLinks
+            // IE does dispatch no 'click' event on contenteditable elements
+            // so we use mousedown
+            pt.onEditNodeReady(function() {
+                this.observe('mousedown', 'krang_preview', function(e) {
+                    if (e.target.nodeName.toLowerCase() != 'a') { return }
+                    if (e.ctrlKey
+                        || (Prototype.Browser.IE && e.button == 4)
+                        || (!Prototype.Browser.IE && e.button == 1))
                     {
                         var elm = e.target;
                         if (elm.getAttribute('_poortext_tag') == 'a') {
@@ -285,50 +294,45 @@ poortext_init = function() {
                             }
                         }
                     }
-            });
-        }.bind(pt));
+                });
+            }.bind(pt));
+        });
+
+        // finish with some global stuff
+        PoorText.finish_init();
+    });
+    
+    // save away the last focused PoorText field to avoid race conditions
+    // and hide our popups
+    Krang.ElementEditor.add_save_hook(function() {
+        Krang.PoorTextInitialized = false;
+        Krang.PoorTextCreationArguments = [];
+        var pt = PoorText.focusedObj;
+        if (pt) {
+            pt.storeForPostBack();
+            var btnBar = \$('pt-btnBar');
+            var browser_version = "$browser_version";
+            if (btnBar) {
+                if (browser_version) {
+                    setTimeout(function() {btnBar.hide()}, 300);
+                } else {
+                    btnBar.hide();
+                }
+            }
+            if (\$('pt-specialCharBar')) \$('pt-specialCharBar').hide();
+            if (\$('pt-popup-addHTML'))  \$('pt-popup-addHTML').hide();
+            \$(pt.id).fire('pt:blur');
+        }
+        PoorText.objects.invoke('removeAllEventHandlers');
+        PoorText.stopObserving(document, 'click', 'blur');
     });
 
-    // finish with some global stuff
-    PoorText.finish_init();
+    Krang.onunload(function() {
+        PoorText.objects = [];
+        PoorText.id2obj  = {};
+    });
 
-    // remove all event handlers on full page unload
-    var existingUnload = window.unonload;
-    window.unonload = function() {
-        existingOnunload();
-        PoorText.removeAllEventHandlers();
-    }
-}
-
-// call init function
-Krang.onload(function() {
-    poortext_init();
-});
-
-// save away the last focused PoorText field to avoid race conditions
-// and hide our popups
-Krang.ElementEditor.add_save_hook(function() {
-    Krang.PoorTextInitialized = false;
-    Krang.PoorTextCreationArguments = [];
-    var pt = PoorText.focusedObj;
-    if (pt) {
-        pt.storeForPostBack();
-        var btnBar = \$('pt-btnBar');
-        var browser_version = "$browser_version";
-        if (btnBar) {
-            if (browser_version) {
-                setTimeout(function() {btnBar.hide()}, 300);
-            } else {
-                btnBar.hide();
-            }
-        }
-        if (\$('pt-specialCharBar')) \$('pt-specialCharBar').hide();
-        if (\$('pt-popup-addHTML'))  \$('pt-popup-addHTML').hide();
-        \$(pt.id).fire('pt:blur');
-    }
-    PoorText.objects.invoke('removeAllEventHandlers');
-    PoorText.stopObserving(document, 'click', 'blur');
-});
+})();
 </script>
 END
 
