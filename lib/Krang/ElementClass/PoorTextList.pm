@@ -370,7 +370,7 @@ sub get_one_time_javascript {
 
     $html .= <<END;
 <script type="text/javascript">
-
+//' keep emacs javascript-mode happy
 Krang.ElementClass.PoorTextList = {
     clickHandler : function(event) {
         var target = Event.element(event);
@@ -422,7 +422,10 @@ Krang.ElementClass.PoorTextList = {
         var ptConfig = itemConfig.ptConfig;
         ptConfig["deferIframeCreation"] = false;
         var pt = new PoorText(newPT, ptConfig);
-        pt.onEditNodeReady(setTimeout(function(){pt.focusEditNode()},10));
+        pt.onFocus();
+        setTimeout(function() {
+            pt.focusEditNode();
+        },10);
 
         // record this field
         PoorText.Krang.paramFor[id] = param;
