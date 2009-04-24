@@ -121,7 +121,8 @@ Object.extend(PoorText.prototype, {
             this.observe(type, 'builtin', this[events[type]]);
         }
 
-        this.observe('pt:blur', 'builtin', this.deactivate);
+        // Custom events
+        this.observe('pt:before-find-story-link', 'builtin', this.removeCaret);
     },
          
     /**@ignore*/
@@ -428,7 +429,7 @@ Object.extend(PoorText.prototype, {
         }.bind(this), 10);
     },
 
-    deactivate : function() {
+    removeCaret : function() {
         // remove blinking caret
         // see http://stackoverflow.com/questions/214722/firefox-3-03-and-contenteditable
         setTimeout(function() {

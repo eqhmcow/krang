@@ -289,6 +289,7 @@ Object.extend(PoorText.prototype, {
             for (type in events) {
                 this.observe(type, 'builtin', this[events[type]], true);
             }
+            this.observe('pt:blur', 'builtin', this.selectionCollapseToEnd);
                 
             // Don't use SPAN tags for markup
             try {

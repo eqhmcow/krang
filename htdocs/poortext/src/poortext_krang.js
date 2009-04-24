@@ -51,6 +51,11 @@ PoorText.prototype.addStoryLink = function() {
         PoorText.Krang.selection = this.getSelection();
     }
 
+    // Custom event
+    if (!this.usingIFrame) {
+        $(this.eventNode).fire('pt:before-find-story-link');
+    }
+
     // Submit form: goto "Select Story" screen
     Krang.ElementEditor.run_save_hooks();
     Krang.Form.submit(

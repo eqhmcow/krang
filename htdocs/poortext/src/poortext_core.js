@@ -1267,10 +1267,6 @@ PoorText.onBlur = function(event) {
     if (pt) {
         if (pt.usingIFrame) {
             pt.selectionCollapseToEnd();
-        } else {
-            try {
-                $(pt.eventNode).fire('pt:blur');
-            } catch(er) {}
         }
         pt.storeForPostBack();
         pt.config.onBlur.call(pt);
