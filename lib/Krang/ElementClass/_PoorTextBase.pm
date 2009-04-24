@@ -321,7 +321,6 @@ sub poortext_init {
             }
             if (\$('pt-specialCharBar')) \$('pt-specialCharBar').hide();
             if (\$('pt-popup-addHTML'))  \$('pt-popup-addHTML').hide();
-            \$(pt.id).fire('pt:blur');
         }
         PoorText.objects.invoke('removeAllEventHandlers');
         PoorText.stopObserving(document, 'click', 'blur');
