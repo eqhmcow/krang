@@ -471,7 +471,7 @@ PoorText.__enterKeyHandler = function(pt) {
 }
 
 PoorText.setClass = function(elm, className) {
-    elm.setAttribute('className', className);
+    elm.writeAttribute('class', className);
 }
 
 document.onreadystatechange = function() {
