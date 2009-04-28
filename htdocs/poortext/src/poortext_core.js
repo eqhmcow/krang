@@ -1167,11 +1167,13 @@ PoorText.observe, PoorText.stopObserving, PoorText.removeAllEventHandlers;
     handlers = {};
 
     PoorText.observe = function(element, type, name, handler) {
-        Event.observe(element, type, handler);
         var id = getID(element);
         if (!handlers[id]) handlers[id] = {};
         if (!handlers[id][type]) handlers[id][type] = {};
+        // make sure each named handler is only registered once
+        if (handlers[id][type][name]) return;
         handlers[id][type][name] = handler;
+        Event.observe(element, type, handler);
     };
 
     PoorText.stopObserving = function(element, type, name) {
@@ -1179,7 +1181,7 @@ PoorText.observe, PoorText.stopObserving, PoorText.removeAllEventHandlers;
         try {
             var handler = handlers[id][type][name];
             Event.stopObserving(element, type, handler);
-            handlers[id][type][name] = null;
+            handlers[id][type][name] = false;
         } catch(er) {}
     };
 
@@ -1456,9 +1458,9 @@ PoorText.Popup = {
             });
 
             // All popup handlers
-            PoorText.observe(popup, 'click',   'popup', PoorText.Popup.clickHandler);
-            PoorText.observe(popup, 'keydown', 'popup', PoorText.Popup.keyDownHandler);
-            PoorText.observe(popup, 'keyup',   'popup', PoorText.Popup.keyUpHandler);
+            PoorText.observe(popup, 'click',   popupID, PoorText.Popup.clickHandler);
+            PoorText.observe(popup, 'keydown', popupID, PoorText.Popup.keyDownHandler);
+            PoorText.observe(popup, 'keyup',   popupID, PoorText.Popup.keyUpHandler);
 
             // Remember us
             PoorText.Popup[which] = popup;
