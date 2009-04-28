@@ -346,19 +346,17 @@ foreach my $name (keys %story_links) {
             $category_url .= '/' unless ($category_url =~ /\/$/);
 
             my ($category) = pkg('Category')->find(url => $category_url);
-            if ($category) {
-                warn 'found category ' . $category->category_id;
-                $find_params{'category_id'} = $category->category_id;
-                $find_params{'slug'}        = $story_slug;
-            } else {
-                die "Could not find Category object with url '$category_url'!\n";
-            }
+            die "Could not find Category object with url '$category_url'!\n" unless $category;
+
+            $find_params{'category_id'} = $category->category_id;
+            $find_params{'slug'}        = $story_slug;
         } elsif ($id =~ /^\d+$/) {
             $key = 'story_id';
+            $find_params{$key} = $id;
         } else {
             $key = 'story_uuid';
+            $find_params{$key} = $id;
         }
-        $find_params{$key} = $id;
         my ($other_story) = pkg('Story')->find(%find_params);
         if ($other_story) {
             push(@{$elements{$name} ||= []}, $other_story);
