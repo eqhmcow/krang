@@ -197,6 +197,7 @@ use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Script';
 use Time::Piece;
+use URI;
 
 my (
     $type,          $title,      $slug,     $help,  $man,
@@ -330,10 +331,37 @@ foreach my $name (keys %media) {
 # add the story links
 foreach my $name (keys %story_links) {
     foreach my $id (@{$story_links{$name}}) {
-        my $key = ($id =~ /^\d+$/) ? 'story_id' : 'story_uuid';
-        my ($other_story) = pkg('Story')->find($key => $id);
-        if( $other_story ) {
-            push(@{$elements{$name} ||= []}, $other_story)
+        my $key;
+        my %find_params;
+        if ($id =~ /^http:/) {
+            $key = 'url';
+            my $uri = URI->new($id);
+            die "Could not parse url '$id'!\n" unless $uri;
+
+            my @dirs = split(/\//, $uri->path);
+            pop @dirs if ($dirs[$#dirs] =~ m/^index\./);
+            my $story_slug    = pop @dirs;
+            my $category_path = join('/', @dirs);
+            my $category_url  = $uri->host . $category_path;
+            $category_url .= '/' unless ($category_url =~ /\/$/);
+
+            my ($category) = pkg('Category')->find(url => $category_url);
+            if ($category) {
+                warn 'found category ' . $category->category_id;
+                $find_params{'category_id'} = $category->category_id;
+                $find_params{'slug'}        = $story_slug;
+            } else {
+                die "Could not find Category object with url '$category_url'!\n";
+            }
+        } elsif ($id =~ /^\d+$/) {
+            $key = 'story_id';
+        } else {
+            $key = 'story_uuid';
+        }
+        $find_params{$key} = $id;
+        my ($other_story) = pkg('Story')->find(%find_params);
+        if ($other_story) {
+            push(@{$elements{$name} ||= []}, $other_story);
         } else {
             die "Could not find Story object with $key '$id'!\n";
         }
