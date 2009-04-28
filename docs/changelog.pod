@@ -8,6 +8,21 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Various fixes to PoorText to make it play nicely with IE8. [Bodo
+Schulze]
+
+=item *
+
+Upgraded Prototype.js to version 1.6.1_rc2 to fix issues with
+IE8. [Bodo Schulze]
+
+=item *
+
+Fixed utf8 bug in Krang template generation and filtering. [Bodo
+Schulze]
+
+=item *
+
 Added "Preview Editor" instrumenting previewed stories with links
 pointing back into the CMS. Also integrates the previously added
 "Template Finder". [Bodo Schulze]
