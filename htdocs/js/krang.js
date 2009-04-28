@@ -634,19 +634,20 @@ Krang.Form = {
         form = $(form);
         if (!form) { return false }
         if (!ckbx) { ckbx = 'krang_pager_rows_checked' }
-        $A([ [$('C'), 'list-btn'], [form, 'mini-list-btn'] ]).each(function(spec) {
-            spec[0].select('.' + spec[1]).each(function(btn) {
+        $A([ [$('C'), 'list-btn'], [$(form), 'mini-list-btn'] ]).each(function(spec) {
+            if (!spec[0]) return;
+            $$('#' + spec[0].identify() + ' input.' + spec[1]).each(function(btn) {
                 var submenu = btn.next('ul');
                 if (Krang.row_checked(form, ckbx)) {
                     btn.addClassName(spec[1]+'-enabled');
                     btn.enable();
-                    if(submenu) submenu.removeClassName('disabled');
+                    if (submenu) submenu.removeClassName('disabled');
                 } else {
                     btn.removeClassName(spec[1]+'-enabled');
                     btn.disable();
-                    if(submenu) submenu.addClassName('disabled');
-                    var ca = spec[0].select('input#checkallbox');
-                    if (ca) ca.first().checked = false;
+                    if (submenu) submenu.addClassName('disabled');
+                    var ca = spec[0].down('input#checkallbox');
+                    if (ca) ca.checked = false;
                 }
             })});
     }
