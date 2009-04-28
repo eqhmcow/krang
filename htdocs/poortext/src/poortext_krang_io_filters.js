@@ -58,11 +58,8 @@ PoorText.addUrlProtection = function(node) {
 	if (link.hasAttribute('href')) {
 	    link.setAttribute('_poortext_url', PoorText.getHref(link));
 	    link.setAttribute('_poortext_tag', 'a');
-            if (Prototype.Browser.IE) {
-                var ec = link.getAttribute('className');
-            } else {
-                var ec = link.getAttribute('class');
-            }
+            var ec = link.getAttribute('class');
+            if (!ec) ec = link.getAttribute('className'); // IE6/7
             /*
               Don't touch the class attrib if we have it in Krang
               context, it will be filtered out at publish time only,
