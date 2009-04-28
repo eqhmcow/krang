@@ -411,25 +411,21 @@ Object.extend(PoorText.Popup, {
         var oldPopupW  = PoorText.Popup.pos[which].oldPopupW;
         var oldPopupH  = PoorText.Popup.pos[which].oldPopupH;
         
-        //    // Center it if the popup dimensions did change (popup content changed)
-        //    if (currPopupW != oldPopupW || currPopupH != oldPopupH) {
-        //	PoorText.popupPos[which].deltaX = 0;
-        //	PoorText.popupPos[which].deltaY = 0;
-        //    }
-        
         var windowDimensions  = document.viewport.getDimensions();
-        var scrollOffsets     = document.viewport.getScrollOffsets();
         
         centerX = Math.round(windowDimensions.width  / 2) 
-            - (currPopupW  / 2)
-            + scrollOffsets.left;
-        
-        var realX = centerX - PoorText.Popup.pos[which].deltaX + 'px';
+            - (currPopupW  / 2);
         
         centerY = Math.round(windowDimensions.height / 2) 
-            - (currPopupH / 2)
-            + scrollOffsets.top;
+            - (currPopupH / 2);
+
+        if (Prototype.Browser.IEVersion == 6) {
+            var scrollOffsets = document.viewport.getScrollOffsets();
+            centerX += scrollOffsets.left;
+            centerY += scrollOffsets.top;
+        }
         
+        var realX = centerX - PoorText.Popup.pos[which].deltaX + 'px';
         var realY = centerY - PoorText.Popup.pos[which].deltaY + 'px';
         
         popup.setStyle({left: realX, top: realY});

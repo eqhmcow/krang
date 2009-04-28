@@ -4,6 +4,10 @@ var PoorText;
     Core functionality for PoorText elements
 */
 
+if (Prototype.Browser.IE) {
+    Prototype.Browser.IEVersion = parseFloat(navigator.appVersion.split(';')[1].strip().split(' ')[1]);
+}
+
 /** PoorText provides basic markup and link insertion capabilities to HTMLDivElements.
     @class 
     PoorText turns DIV elements in text input fields or textarea
@@ -1439,7 +1443,7 @@ PoorText.Popup = {
             document.body.appendChild(popup);
             
             // IE, even IE7
-            if (Prototype.Browser.IE) popup.setStyle({position: 'absolute'});
+            if (Prototype.Browser.IEVersion == 6) popup.setStyle({position: 'absolute'});
 
             // make it draggable
             new Draggable(popupID, {
