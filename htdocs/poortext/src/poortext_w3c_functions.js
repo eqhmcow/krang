@@ -11,6 +11,6 @@ PoorText.getHref = function(element) {
 }
 
 PoorText.setClass = function(elm, className) {
-    elm.writeAttribute('class', className);
+    elm.setAttribute('class', className);
 }
 
