@@ -1,0 +1,61 @@
+<tmpl_include help_header.tmpl>
+<h2>Preview Editor</h2>
+
+<p>
+Krang's Preview Editor provides links from the previewed story back
+into the Krang CMS interface. For one, it allows to easily find the
+templates participating in the generation of the previewed story, for
+two it provides links to jump back into the Story Edit interface.
+</p>
+
+<h3>Interface</h3>
+
+<ul>
+
+<li><b>Browse:</b> The default browse mode allows you to browse around
+as usual, keeping links activated.</li>
+
+<li><b>Find Template:</b> You will see this button if you have at
+least READ permission for templates. Click anywhere on the screen to
+display an info window showing information about the templates
+participating in the creation of the story. The first template in the
+list is the template responsible for creating the portion of the page
+you clicked upon. The second template (if present in the list) is the
+one that includes the first one, the third includes the second
+etc.<br/>
+
+Clicking on a template link in the info window will open
+Krang's <i>Find Template</i> screen in another window or tab, with the
+search results list showing only the corresponding template.</li>
+
+<li><b>Edit Story:</b> Clicking this button will show link overlays
+for each container element of the previewed story. These overlays
+roughly appear where the content of the corresponding element begins
+on the page.  A click on those label will open the element on the
+"Edit Story" screen in the browser window/tab that initiated the
+preview. This allows you the quickly jump to a deeply nested element
+saving you from the trouble to "drill down" on the element tree.</li>
+
+<li><b>Steal from someUserName:</b> The story is currently
+checked out by another user, but you may steal it for editing.
+Clicking on this button will show the same link overlays providing the
+functionality previously described.</li>
+
+<li><b>Checked out by someUserName:</b> The story is checked out by
+another user and you may not steal it. The button is replaced by a
+simple message.</li>
+
+<li><b>No Edit Permission:</b> You do not have the edit permissions
+for this story.</li>
+
+<li><b>Close:</b> Leave the Preview Editor. The top overlay will
+disappear, returning to a classical story preview with no additional
+functionality. The only way to bring Preview Editor back is through
+one of Krang's story preview links.</li>
+
+</ul>
+
+<p><b>Note</b> that in "Find Template" and in "Edit/Steal Story" mode the
+normal link behavior is deactivated.</p>
+
+<tmpl_include help_footer.tmpl>
