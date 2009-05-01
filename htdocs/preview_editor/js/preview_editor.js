@@ -1,9 +1,12 @@
 /**
-   Krang Preview Finder Module
+   Krang Preview Editor Module
  */
 (function() {
 
-Krang.debug.on();
+    // Change following line to Krang.debug.on() to debug to the
+    // console (requires Firebug or something providing a
+    // console.debug() function).
+    Krang.debug.off();
 
 /*
                    --- CMS access data ---
@@ -17,8 +20,8 @@ Krang.debug.on();
 
     // CMS window
     var cmsWin   = top.opener;
-    var cmsURL     = cmsData.cmsURL;
-    var cmsWinID   = cmsData.winID;
+    var cmsURL   = cmsData.cmsURL;
+    var cmsWinID = cmsData.winID;
 
     // get story ID
     var fLabel  = $$('.krang_preview_editor_element_label').first();
@@ -61,8 +64,9 @@ Krang.debug.on();
         return html;
     };
 
-    // find comments up from the element the user clicked on
-    // checking previous siblings and then the parent, the tree upwards
+    // find comments up from the Krang element the user clicked on
+    // checking previous siblings and then the parent, the tree
+    // upwards
     var findCommentsUp = function(element, callback) {
         element = $(element);
         var node = element;
@@ -169,7 +173,9 @@ Krang.debug.on();
                          --- Preview Editor ---
 
 */
-    // wrapper around Krang.XOrigin.XUpdater()
+    // Wrapper around Krang.XOrigin.XUpdater() - see xorigin.js
+    // Usage (showing the defaults):
+    // Update({method: 'post', form: undefined, params: {}, onComplete: Prototype.emptyFunction})
     var Update = function(args) {
         Krang.XOrigin.XUpdater(cmsWin, {
             cmsURL:     cmsURL,
@@ -181,7 +187,9 @@ Krang.debug.on();
         });
     };
 
-    // wrapper around Krang.XOrigin.Request()
+    // Wrapper around Krang.XOrigin.Request() - see xorigin.js
+    // Usage (showing the defaults):
+    // Request({method: 'get', form: undefined, params: {}, onComplete: Prototype.emptyFunction})
     var Request = function(args) {
         Krang.XOrigin.Request(cmsWin, {
             cmsURL:     cmsURL,
@@ -193,12 +201,12 @@ Krang.debug.on();
         });
     };
 
-    // click handler for container element labels, posts back to the
+    // Click handler for container element labels. Posts back to the
     // CMS to open the corresponding container element in the "Edit Story" UI
     var labelClickHandler = function(e) {
         var element = e.element();
 
-        // and prevent the default behavior for links, unless it's our own link
+        // prevent the default behavior for links, unless it's our own link
         if (!element.hasClassName("krang_preview_editor_element_label")) {
             Event.stop(e);
             return false;
@@ -275,9 +283,12 @@ Krang.debug.on();
     // Stop click events from bubbling up above the UI container
     $('krang_preview_editor_top_overlay').observe('click', function(e) { Event.stop(e) });
 
-    // Update overlay buttons callback
-    var initOverlay = function(status, pref, config) { // status provided by Krang::CGI::Story::get_status()
+    // Init overlay buttons callback
+    var initOverlay = function(status, pref, config) { // status provided by Krang::CGI::Story::pe_get_status()
+
+        //
         // Helper functions
+        //
 
         var uiReset = function() {
             try { $('__pinfo').hide() } catch(er) {}
@@ -320,7 +331,7 @@ Krang.debug.on();
                                 Update({
                                     form:   'edit',
                                     params: {rm: 'edit', story_id: storyID},
-                                })}}})});
+                })}}})});
                 $('krang_preview_editor_btn_edit').show().observe('click', editBtnHandler);
             } else {
                 // our story is not yet in the session, so open it on "Edit Story"
@@ -418,7 +429,7 @@ Krang.debug.on();
         };
 
         //
-        // Set button status
+        // Set button status and click handlers
         //
 
         // reset button status
@@ -426,10 +437,10 @@ Krang.debug.on();
 
         // Init "Browse" button
         $('krang_preview_editor_btn_browse').addClassName('krang_preview_editor_btn_pressed')
-        .show().observe('click', function(e) {
-            uiReset();
-            $('krang_preview_editor_btn_browse').addClassName('krang_preview_editor_btn_pressed');
-        });
+            .show().observe('click', function(e) {
+                uiReset();
+                $('krang_preview_editor_btn_browse').addClassName('krang_preview_editor_btn_pressed');
+            });
 
         // Init "Find Template" button
         if (status.mayReadTemplates) {
@@ -471,7 +482,6 @@ Krang.debug.on();
         Krang.debug(status); Krang.debug(pref); Krang.debug(config);
 
         // localize the UI
-        Krang.debug.off();
         Krang.XOrigin.WinInfo(cmsWin, {
             cmsURL:   cmsURL,
             question: 'getDictionary',
@@ -493,7 +503,6 @@ Krang.debug.on();
                 ).invoke('localize');
                 // localize the container element labels
                 $$('.krang_preview_editor_element_label').invoke('localize');
-                Krang.debug.on();
                 //init UI overlay
                 initOverlay(status, pref, config);
             }

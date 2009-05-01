@@ -2894,7 +2894,14 @@ sub unretire {
 #     Preview Editor Runmodes
 #
 
-########### FIXME documentation
+=item pe_get_status
+
+Expects a story_id CGI param.
+
+Returns a JSON header with checkout information about the story and
+the user asset permission for templates.
+
+=cut
 
 sub pe_get_status {
     my ($self) = @_;
@@ -2940,6 +2947,13 @@ sub pe_get_status {
 
     return '';
 }
+
+=item pe_checkout_and_edit
+
+Wrapper around runmode C<checkout_and_edit>, adding a JSON
+header. Expects a story_id CGI param.
+
+=cut
 
 sub pe_checkout_and_edit {
     my ($self)   = @_;

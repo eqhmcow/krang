@@ -2,7 +2,10 @@ var Krang;
 if (Object.isUndefined(Krang)) { Krang = {} }
 
 /**
-   Krang.error(baseURL, errorString);
+   Krang.error(cmsBaseURL, errorString);
+
+   Modal error message for preview editor.
+
 */
 Krang.error = function(baseURL, error) {
     // default error

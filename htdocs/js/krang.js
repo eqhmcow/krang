@@ -1922,10 +1922,13 @@ Krang.PoorTextCreationArguments = new Array;
 */
 
 /**
-   Message handler called by previewed story's postMessage() - a HTML5
-   feature implemented by Firefox 3+, IE8+, Safari4+
+   Message event listener called by previewed story's postMessage() - a HTML5
+   feature implemented by Firefox 3+, Safari4+
 */
 Krang.XOriginProxy = (function() {
+
+    // helper functions
+
     var ifSuccessHandler = function(e, name, addToJSON, args, response, json) {
         Krang.debug("4. X-JSON header in XHR response for cb '" + name +"' on next line");
         Krang.debug(json);
@@ -1963,6 +1966,7 @@ Krang.XOriginProxy = (function() {
         e.source.postMessage(msg, e.origin);
     };
 
+    // Handle Krang.XOrigin.Request() message
     var request = function(e, options) {
         Krang.debug("3. Sending Krang.Ajax.request(url, options) for URL: "+options.cmsURL
                       +" ('options' on next line");
@@ -1979,6 +1983,7 @@ Krang.XOriginProxy = (function() {
         
     };
 
+    // Handle Krang.XOrigin.XUpdater() message
     var xupdater = function(e, options) {
         // send XHR request for Prototype.XOrigin.XUpdater
         Krang.debug("3. Sending Krang.Ajax.update(target, url, options) for URL: "+options.cmsURL
@@ -2022,6 +2027,7 @@ Krang.XOriginProxy = (function() {
         });
     };
 
+    // Handle Krang.XOrigin.WinInfo() message
     var wininfo = function(e, options) {
         if (options.question == 'isStoryOnEditScreen') {
             if (document.forms && document.forms['edit']
@@ -2042,7 +2048,7 @@ Krang.XOriginProxy = (function() {
         Krang.hide_indicator();
     };
 
-    // the proxy function
+    // dispatch to message handlers
     return function(e, authorizedOrigins) {
         if (authorizedOrigins.any(function(url) { return url == e.origin })) {
             // message from authorized origin
@@ -2055,7 +2061,7 @@ Krang.XOriginProxy = (function() {
                 
                 Krang.show_indicator();
 
-                // do it
+                // dispatch
                 if (options.type == 'request') {
                     request(e, options);
                 } else if (options.type == 'xupdater') {

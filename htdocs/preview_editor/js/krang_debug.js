@@ -2,7 +2,10 @@ var Krang;
 if (Object.isUndefined(Krang)) { Krang = {} }
 
 /**
-   Krang.debug('debug message');
+   Krang.debug.on();
+   Krang.debug('This debug message will be printed to the console');
+   Krang.debug.off();
+   Krang.debug('This debug message will not be printed to the console');
 */
 (function() {
 

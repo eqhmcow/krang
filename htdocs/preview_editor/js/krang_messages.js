@@ -1,5 +1,5 @@
 /*
-    Krang.Messages
+    Krang.Messages for the preview editor
 */
 var Krang;
 if (Object.isUndefined(Krang)) { Krang = {} }

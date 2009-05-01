@@ -101,8 +101,6 @@ Krang.XOrigin.factory = (function() {
 //            var me = arguments.callee;
 //            setTimeout(function() { Event.stopObserving(window, 'message', me) }, 10);
 
-            Krang.debug("Number of Event handlers: "+$H(Event.cache).inject(0,function(m,p){m+=$H(p.value).values().flatten().size();return m}));
-
         } else {
             throw new Error("Cross document message from unauthorized origin '" + e.origin +"'");
         }
@@ -112,6 +110,8 @@ Krang.XOrigin.factory = (function() {
 
         // set pseudo globals
         Options = options;
+
+        // add onComplete etc. handlers
         addHandler(options);
 
         // add our type
@@ -124,7 +124,6 @@ Krang.XOrigin.factory = (function() {
         loadIndicator.show();
         
         // install 'message' event listener to receive the response
-        // listen for response
         Event.observe(window, 'message', responseHandler);
         
         // send message
