@@ -96,16 +96,14 @@ Krang.XOrigin.factory = (function() {
 
                 Handler[cb](json, pref, conf);
             }
-
-            // this is a one time event listener
-//            var me = arguments.callee;
-//            setTimeout(function() { Event.stopObserving(window, 'message', me) }, 10);
-
         } else {
             throw new Error("Cross document message from unauthorized origin '" + e.origin +"'");
         }
     };
 
+    // install 'message' event listener to receive the response
+    Event.observe(window, 'message', responseHandler);
+        
     return function(type, xwindow, options) {
 
         // set pseudo globals
@@ -122,9 +120,6 @@ Krang.XOrigin.factory = (function() {
         
         // show load indicator
         loadIndicator.show();
-        
-        // install 'message' event listener to receive the response
-        Event.observe(window, 'message', responseHandler);
         
         // send message
         Krang.debug("1. Post message: "+msg);
