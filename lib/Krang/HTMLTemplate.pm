@@ -24,7 +24,7 @@ See L<HTML::Template>.
 
 =cut
 
-use base 'HTML::Template';
+use base 'HTML::Template::Expr';
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Conf    => qw(
   InstanceDisplayName
