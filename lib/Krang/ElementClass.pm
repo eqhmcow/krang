@@ -1687,7 +1687,7 @@ sub _insert_preview_editor_top_overlay {
     my $loading     = 'Loading';
     my $forbidden   = 'No Edit Permission';
 
-    my $help_url = $arg{cms_root} . "/help.pl?topic=preview_editor&window_id=$ENV{KRANG_WINDOW_ID}";
+    my $help_url = $arg{cms_root} . "/help.pl?topic=preview_editor";
 
     my $indicator_css = "background-color: #cee7ff; color: #666; filter: alpha(opacity=90); opacity: .9; position: fixed; z-index: 32767; left: 0; bottom: 0; border: 1px solid #369; padding: 0.5em 0.6em; width: 70px; font-size: 9px; font-weight: bold; display: none";
 
