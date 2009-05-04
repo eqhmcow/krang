@@ -172,6 +172,12 @@ published/previewed will be skipped.
 
 Publish files to preview rather than the publish location.
 
+=item --flavor
+
+When publishing to preview with the preview editor enabled, the
+Apache flavor must be specified. It may be 'root' or 'instance'. Croaks
+with different values.
+
 =item --no-cache
 
 Run the publish without using L<Krang::Cache> to speed things
@@ -218,7 +224,7 @@ END
 
 # Krang Libs
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Conf => qw(KrangRoot ElementLibrary SSLEngine);
+use Krang::ClassLoader Conf => qw(KrangRoot ElementLibrary SSLEngine HostName InstanceHostName EnablePreviewEditor);
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Media';
@@ -233,7 +239,7 @@ use Time::HiRes qw(gettimeofday tv_interval);
 
 my %id = map { ($_, []) } qw(story media category below-category site);
 
-my ($help, $man, $everything, $verbose, $all_instances) = (0, 0, 0, 0, 0);
+my ($help, $man, $everything, $verbose, $all_instances, $flavor) = (0, 0, 0, 0, 0, 0);
 my $limited_to_site     = 0;
 my $limited_to_category = 0;
 my $republish_only      = 0;
@@ -270,6 +276,7 @@ GetOptions(
     'increment=i'         => \$increment,
     'story-class=s'       => \@story_class,
     'no-cache'            => \$no_cache,
+    'flavor=s'            => \$flavor,
 
     # handle --story-id, --site-id, etc.
     (map { ("$_-id=s", $id{$_}) } keys %id)
@@ -564,6 +571,9 @@ sub publish_media {
 sub publish_stories {
     my ($find_options, $publish_args) = @_;
 
+    # 'root' or 'instance' flavor?
+    set_apache_flavor();
+
     # make sure offset is reset
     $find_options->{offset} = 0;
 
@@ -735,4 +745,20 @@ sub _progress_callback {
         print "$string\n";
     }
     @assettime = gettimeofday();
+}
+
+sub set_apache_flavor {
+    if (EnablePreviewEditor && $to_preview && not $flavor) {
+        die "You are publishing to preview with the Preview Editor enabled.\nThe Preview Editor needs to know whether the CMS Apache will be accessed in 'root' flavor or in 'instance' flavor.\nPlease specify the 'flavor' option as 'root' or 'instance'.\n";
+    }
+
+    return unless $flavor;
+
+    if ($flavor eq 'root') {
+        $ENV{SERVER_NAME} = HostName;
+    } elsif ($flavor eq 'instance') {
+        $ENV{SERVER_NAME} = InstanceHostName;
+    } else {
+        croak "Option 'flavor' may be 'host' or 'instance', but it is '$flavor'";
+    }
 }
