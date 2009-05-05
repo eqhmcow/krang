@@ -268,12 +268,19 @@
     var positionLabels = function() {
         var prev = {top: 0, left: 0};
         $$('.krang_preview_editor_element_label').reverse().each(function(label) {
-            var label = label.next();
-            if (!label) return;
-            var offset = label.cumulativeOffset();
-            if (offset.top == prev.top && offset.left == prev.left) offset.top -= 30;
+            var elm = label.next();
+            if (!elm) return;
+            var offset = elm.cumulativeOffset();
+            // avoid overlapping labels
+            if (offset.top == prev.top && offset.left == prev.left) offset.top = offset.top - 30;
             prev = offset;
-            label.show().setStyle({left: offset.left - 7 + 'px', top: offset.top - 23 + 'px'})
+            // show labels a bit off the beginning of the element
+            var left = offset.left - 17;
+            var top  = offset.top  - 23;
+            // constrain it to appear on the screen
+            if (left < 0) left = 0;
+            if (top  < 30) top  = 30;
+            label.show().setStyle({left: left + 'px', top: top + 'px'})
     })};
     positionLabels();
 
