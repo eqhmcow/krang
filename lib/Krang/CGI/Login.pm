@@ -235,18 +235,25 @@ sub _do_login {
     );
 
     # and store meta information about this installation/instance of Krang
-    my $scheme = PreviewSSL ? 'https://' : 'http://';
-    my @preview_urls = map {$scheme . $_->preview_url} pkg('Site')->find();
-    my %conf_info = (charset => (Charset() || ''), previewURLs => \@preview_urls);
+    my %conf_info = (charset => (Charset() || ''));
     my $conf_cookie = $q->cookie(
         -name  => 'KRANG_CONFIG',
         -value => JSON::Any->new->encode(\%conf_info),
         -path  => '/'
     );
 
+    # instance-specific cookie holding the preview URLs of all sites of this instance
+    my $scheme = PreviewSSL ? 'https://' : 'http://';
+    my @preview_urls = map {$scheme . $_->preview_url} pkg('Site')->find();
+    my $preview_cookie = $q->cookie(
+        -name  => 'previewURLs_' . $instance,
+        -value => JSON::Any->new->encode(\@preview_urls),
+        -path  => '/',
+    );
+
     # and set all four cookies
     $self->header_add(
-        -cookie => [$authen_cookie->as_string, $pref_cookie->as_string, $conf_cookie->as_string]);
+        -cookie => [$authen_cookie->as_string, $pref_cookie->as_string, $conf_cookie->as_string, $preview_cookie->as_string]);
 
     # now we're ready to redirect
     return $self->_redirect_to_window(1);

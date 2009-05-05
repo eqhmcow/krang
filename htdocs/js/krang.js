@@ -2100,11 +2100,10 @@ Krang.debug.on();
 
 Event.observe(window, 'message', function(e) {
     // get allowed preview site URLs from 'config' cookie
-    var config      = Krang.config() || {};
-    var previewURLs = config.previewURLs;
+    var previewURLs = Krang.Cookie.json_get('previewURLs_' + Krang.Instance.get());
 
-    if (!previewURLs) {
-        throw(new Error("Message event handler (krang.js): Missing preview site URLs"));
+    if (!Object.isArray(previewURLs)) {
+        throw new Error("Message event handler (krang.js): No previewURL cookie found for instance '" + Krang.Instance.get() + '"');
     }
 
     // call our cross origin XHR proxy
