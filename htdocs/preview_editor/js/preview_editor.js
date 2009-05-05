@@ -458,9 +458,23 @@
 
         // Init "Edit/Steal" button and checked out msg
         if (status.storyInSession && status.storyInSession != storyID) {
-            // we were previously editing the story that exists in the
-            // session, ask user if he wants to save it
-            askSaveDialog(status.storyInSession);
+            console.log('Story in Session: '+status.storyInSession);
+            console.log('Current Story   : '+storyID); 
+            // We were previously editing the story that exists in the
+            // session. If this story is still on the "Edit Story", it
+            // might not yet have been saved: Ask user if he wants to
+            // save it.
+            Krang.XOrigin.WinInfo(cmsWin, {
+                cmsURL:   cmsURL,
+                question: 'isStoryOnEditScreen',
+                response: function(response) {
+                    if (response == 'yes') {
+                        askSaveDialog(status.storyInSession);
+                    } else {
+                        initEditBtn();
+                    }
+                }
+            });
         } else {
             initEditBtn();
         }
