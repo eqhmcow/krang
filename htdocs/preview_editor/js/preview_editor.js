@@ -6,7 +6,7 @@
     // Change following line to Krang.debug.on() to debug to the
     // console (requires Firebug or something providing a
     // console.debug() function).
-    Krang.debug.off();
+    Krang.debug.on();
 
 /*
                    --- CMS access data ---
@@ -266,8 +266,11 @@
 
     // position the labels
     var positionLabels = function() {
+        var prev = {top: 0, left: 0};
         $$('.krang_preview_editor_element_label').reverse().each(function(contElm) {
             var offset = contElm.next().cumulativeOffset();
+            if (offset.top == prev.top && offset.left == prev.left) offset.top -= 30;
+            prev = offset;
             contElm.show().setStyle({left: offset.left - 7 + 'px', top: offset.top - 23 + 'px'})
     })};
     positionLabels();
