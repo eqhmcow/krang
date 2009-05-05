@@ -1568,10 +1568,14 @@ sub _insert_comments_for_template_finder {
 
     # find the template that will actually be used
     for my $cat ($category, $category->ancestors) {
-        my $cat_id = $cat->dir eq '/' ? undef : $cat->category_id;
-        ($tmpl) = pkg('Template')->find(category_id => $cat_id,
+        ($tmpl) = pkg('Template')->find(category_id => $cat->category_id,
                                         filename    => $filename);
         last if $tmpl;
+    }
+
+    # no template? maybe we've got a root template
+    unless ($tmpl) {
+        ($tmpl) = pkg('Template')->find(filename => $filename);
     }
 
     if ($tmpl) {
@@ -1582,14 +1586,15 @@ sub _insert_comments_for_template_finder {
 
         my $comment_start = "<!-- KrangPreviewFinder Start $json -->";
         my $comment_end   = "<!-- KrangPreviewFinder End $json -->";
+        my $js_css_loader = $self->_get_preview_editor_js_css_loader(%args);
 
         # instrument the template
         if ($filename eq 'category.tmpl') {
-            my $js_css_loader = $self->_get_preview_editor_js_css_loader(%args);
             push @$filters, sub { ${$_[0]} =~ s/(<body[^>]*>)/$1$comment_start/msi };
             push @$filters, sub { ${$_[0]} =~ s/(<\/body[^>]*>)/$comment_end$1$js_css_loader/msi };
         } else {
             push @$filters, sub { ${$_[0]} =~ s/(.*)/$comment_start$1$comment_end/ms };
+            push @$filters, sub { ${$_[0]} =~ s/(<\/body[^>]*>)/$1$js_css_loader/msi };
         }
 
         #
