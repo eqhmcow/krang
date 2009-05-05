@@ -175,7 +175,29 @@ Krang.Window = {
             return matches[1];
         }
     }
-}
+};
+
+/*
+    // Set Krang instance (returns the argument)
+    Krang.Instance.set('Default');
+
+    // Get Krang instance. Returns instance set with Krang.Instance.set()
+    var instance = Krang.Instance.get();
+
+*/
+(function() {
+    var _instance;
+
+    Krang.Instance = {};
+
+    Krang.Instance.set = function(instance) {
+        return _instance = instance;
+    }
+
+    Krang.Instance.get = function() {
+        return _instance;
+    }
+})();
 
 
 /*

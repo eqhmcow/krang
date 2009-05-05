@@ -151,6 +151,9 @@ sub output {
     $template->param(instance_display_name => InstanceDisplayName)
       if $template->query(name => 'instance_display_name');
 
+    $template->param(instance => pkg('Conf')->instance())
+      if $template->query(name => 'instance');
+
     $template->param(enable_bugzilla => EnableBugzilla)
       if $template->query(name => 'enable_bugzilla');
 
