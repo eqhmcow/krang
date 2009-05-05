@@ -1589,13 +1589,19 @@ sub _insert_comments_for_template_finder {
         my $js_css_loader = $self->_get_preview_editor_js_css_loader(%args);
 
         # instrument the template
-        if ($filename eq 'category.tmpl') {
-            push @$filters, sub { ${$_[0]} =~ s/(<body[^>]*>)/$1$comment_start/msi };
-            push @$filters, sub { ${$_[0]} =~ s/(<\/body[^>]*>)/$comment_end$1$js_css_loader/msi };
-        } else {
-            push @$filters, sub { ${$_[0]} =~ s/(.*)/$comment_start$1$comment_end/ms };
-            push @$filters, sub { ${$_[0]} =~ s/(<\/body[^>]*>)/$1$js_css_loader/msi };
-        }
+        push @$filters, sub {
+            if (${$_[0]} =~ /<body[^>]*>/) {
+                ${$_[0]} =~ s/(<body[^>]*>)/$1$comment_start/msi;
+            } else {
+                ${$_[0]} =~ s/(.*)/$comment_start$1/msi;
+            }
+
+            if (${$_[0]} =~ /<\/body[^>]*>/) {
+                ${$_[0]} =~ s/(<\/body[^>]*>)/$comment_end$1$js_css_loader/msi;
+            } else {
+                ${$_[0]} =~ s/(.*)/$1$comment_end/msi
+            };
+        };
 
         #
         # additional instrumentation for SSIs (media)
