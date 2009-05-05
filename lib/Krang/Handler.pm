@@ -269,7 +269,7 @@ sub access_handler ($$) {
             {
                 if ($engine_of{$browser} eq 'Gecko') {
                     my $gecko_version = $bd->gecko_version();
-                    critical("Gecko Version: ".$gecko_version);
+                    debug("Gecko Version: ".$gecko_version);
                     $r->subprocess_env("KRANG_GECKO_VERSION" => $gecko_version);
                 }
 
