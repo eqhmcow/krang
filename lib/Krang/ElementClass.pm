@@ -727,7 +727,7 @@ sub find_template {
         my %publish_context = $publisher->publish_context();
 
         # use template finder if enabled
-        if (EnablePreviewEditor) {
+        if (EnablePreviewEditor && $publisher->is_preview) {
             $args{cms_root} = pkg('Conf')->cms_root;
             $self->_insert_comments_for_template_finder(
                 %args,
