@@ -2100,7 +2100,7 @@ Krang.XOriginProxy = (function() {
     };
 })();
 
-Krang.debug.on();
+Krang.debug.off();
 
 Event.observe(window, 'message', function(e) {
     // get allowed preview site URLs from 'config' cookie

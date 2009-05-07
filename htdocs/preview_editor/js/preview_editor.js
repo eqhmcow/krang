@@ -6,7 +6,7 @@
     // Change following line to Krang.debug.on() to debug to the
     // console (requires Firebug or something providing a
     // console.debug() function).
-    Krang.debug.on();
+    Krang.debug.off();
 
 /*
                    --- CMS access data ---
@@ -465,8 +465,6 @@
 
         // Init "Edit/Steal" button and checked out msg
         if (status.storyInSession && status.storyInSession != storyID) {
-            console.log('Story in Session: '+status.storyInSession);
-            console.log('Current Story   : '+storyID); 
             // We were previously editing the story that exists in the
             // session. If this story is still on the "Edit Story", it
             // might not yet have been saved: Ask user if he wants to
@@ -512,7 +510,6 @@
             cmsURL:   cmsURL,
             question: 'getDictionary',
             response: function(thesaurus) {
-                console.log(pref);
                 if (thesaurus || pref.language == 'en' || Object.isUndefined(pref.language)) {
                    Krang.localize.withDictionary(thesaurus);
                 } else {
