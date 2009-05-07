@@ -2091,7 +2091,11 @@ Krang.XOriginProxy = (function() {
                 } else if (options.type == 'wininfo') {
                     wininfo(e, options);
                 }
+            } else {
+                Krang.debug("No data in message from " + e.origin);
             }
+        } else {
+            throw new Error("Unauthorized cross-document message from " + e.origin);
         }
     };
 })();
