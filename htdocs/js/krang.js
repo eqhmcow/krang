@@ -957,6 +957,7 @@ Krang.Messages = {
         var finish_callback = function() {
             Krang.Messages._locked[level] = false;
             if( level == 'alerts' ) Krang.Messages.show('messages');
+            Krang.Messages.clear(level);
         };
 
         if( el.visible() ) {
