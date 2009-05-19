@@ -223,6 +223,7 @@ sub create_media {
             my $fh = new IO::File $file->{full_path};
             $media->upload_file(filename => $file->{name}, filehandle => $fh);
             $media->save();
+            $media->preview();
             $update_count++;
         } else {                    #else create new media object
             my $category_id = $category_list{$file->{category}};
@@ -239,6 +240,7 @@ sub create_media {
                 media_type_id => $media_type_ids[0]
             );
             $media->save();
+            $media->preview();
             $new_count++;
         }
     }
