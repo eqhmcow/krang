@@ -252,10 +252,12 @@ my $not_on_desk         = 0;
 my @story_class         = ();
 my $no_cache            = 0;
 
-# for backwards compatibility, convert all underscores in options to hyphens
+# for backwards compatibility, convert all underscores in options (but not in their values) to hyphens
 for (0 .. $#ARGV) {
     if ($ARGV[$_] =~ /^--\S+/ && $ARGV[$_] =~ /_/) {
-        $ARGV[$_] =~ s/_/-/g;
+        my @pieces = split(/=/, $ARGV[$_],2);
+        $pieces[0] =~ s/_/-/g;
+        $ARGV[$_] = join('=', @pieces);
     }
 }
 
