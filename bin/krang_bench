@@ -17,7 +17,7 @@ To see a comparison of the two most recent 'make bench' runs:
 
   krang_bench
 
-To see a comparison of two specific benchamark runs, named 'mysql3'
+To see a comparison of two specific benchmark runs, named 'mysql3'
 and 'mysql4':
 
   krang_bench mysql3 mysql4
