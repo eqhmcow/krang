@@ -784,8 +784,8 @@ Krang.Nav = {
 
         Krang.Nav.edit_mode_flag = flag;
     },
-    goto_url       : function(url, ajax) {
-        if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
+    goto_url       : function(url, ajax, ignore_edit_flag, hide_indicator) {
+        if (!Krang.Nav.edit_mode_flag || ignore_edit_flag || confirm(Krang.Nav.edit_message)) {
             if( ajax ) {
                 var matches = url.match(/(.*)\?(.*)/);
                 var query   = matches[2] || '';
@@ -794,7 +794,7 @@ Krang.Nav = {
                     params : Krang.Ajax.toQueryParams(matches[2])
                 });
             } else {
-                Krang.show_indicator();
+                if(! hide_indicator ) Krang.show_indicator();
                 if (Prototype.Browser.IE) {
                     // we need the referer to be sent
                     // see http://webbugtrack.blogspot.com/search/label/HTTP%20Referer
@@ -805,7 +805,7 @@ Krang.Nav = {
                     window.location = Krang.Window.pass_id(url);
                 }
             }
-            Krang.Nav.edit_mode_flag = false;
+            if(! ignore_edit_flag ) Krang.Nav.edit_mode_flag = false;
         }
     }
 };
