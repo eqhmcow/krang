@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in BrowserSpeedBoost that did not clear out old compressed HTML
+files or regenerate new minified/compressed assets if the underlying file
+changed. [Michael Peters]
+
+=item *
+
 Various fixes to PoorText to make it play nicely with IE8. [Bodo
 Schulze]
 

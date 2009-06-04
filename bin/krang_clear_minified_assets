@@ -119,7 +119,7 @@ sub traverse_and_clear {
 sub clear_file {
     my $file = $File::Find::name;
     next if $file =~ /^\./;
-    if ($file =~ /\.minified\.(js|css)(\.gz)?$/) {
+    if ($file =~ /\.minified\.(js|css)(\.gz)?$/ || $file =~ /\.html\.gz$/) {
         print "  Removing file $file\n" if $v;
         unlink($file) or warn "Could not remove file $file!\n";
     }

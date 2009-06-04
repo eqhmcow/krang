@@ -370,7 +370,7 @@ sub prepare_for_browser_speed_boost {
     system(catfile(KrangRoot, 'bin', 'krang_combine_js'))
       and die "Couldn't make JavaScript combined files: $?";
 
-    print "Clearing out old minified and compressed JS and CSS files.\n";
+    print "Clearing out old minified and compressed asset files.\n";
     system(catfile(KrangRoot, 'bin', 'krang_clear_minified_assets'))
       and die "Couldn't clear out minified assets: $?";
 }

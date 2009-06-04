@@ -858,7 +858,8 @@ sub _minify_and_gzip {
     if ($type eq 'css' || $type eq 'js') {
         $new_file =~ s/\.$type$/.minified.$type/;
 
-        unless (-e $new_file) {
+        # create the new file only if it doesn't exist and is newer than the original
+        unless (-e $new_file && (stat $new_file)[9] > (stat $file)[9]) {
 
             # minify the file and save it
             local $/;
@@ -886,7 +887,7 @@ sub _minify_and_gzip {
     # can we compress it?
     if ($self->_can_handle_gzip($r)) {
         my $compressed_file = $new_file . '.gz';
-        unless (-e $compressed_file) {
+        unless (-e $compressed_file && (stat $compressed_file)[9] > (stat $new_file)[9]) {
 
             # we could replace this with some Perl module to do the gzip compression
             # to avoid the overhead of a system call, but it's just a 1 time hit for
