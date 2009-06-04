@@ -599,7 +599,7 @@ sub publish_stories {
                 foreach my $story (@stories) {
                     eval { $publisher->preview_story(story => $story, %$publish_args) };
                     # we need to call _skip_callback ourselves since preview_story doesn't handle it
-                    _skip_callback(object => $story, error => ref $@ ? $@->isa : $@) if $@;
+                    _skip_callback(object => $story, error => $@) if $@;
                 }
 
             } else {
