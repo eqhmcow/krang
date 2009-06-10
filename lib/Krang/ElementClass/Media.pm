@@ -46,15 +46,25 @@ Returns the name of the first toplevel element that inherits from ElementClass::
 
 my %MEDIA_CLASS_CACHE;
 sub element_class_name {
-    if(!$MEDIA_CLASS_CACHE{InstanceElementSet} ) {
-        my ($name) =
-          grep { pkg('ElementLibrary')->find_class(name => $_)->isa('Krang::ElementClass::Media') }
-          (pkg('ElementLibrary')->top_levels);
+    if(!$MEDIA_CLASS_CACHE{InstanceElementSet()} ) {
+        my $name;
+        # as an optimization check for a class named 'media' since this is the most common name
+        my $media_class = pkg('ElementLibrary')->find_class(name => 'media');
+        if( $media_class && $media_class->isa('Krang::ElementClass::Media') ) {
+            $name = 'media';
+        } else {
+            foreach my $lib (pkg('ElementLibrary')->top_levels) {
+                my $class = pkg('ElementLibrary')->find_class(name => $lib);
+                $name = $lib if $class->isa('Krang::ElementClass::Media');
+            }
+        }
+
         croak('Could not find a toplevel element class that inherits from ElementClass::Media!!')
           unless $name;
-        $MEDIA_CLASS_CACHE{InstanceElementSet} = $name;
+        $MEDIA_CLASS_CACHE{InstanceElementSet()} = $name;
     }
-    return $MEDIA_CLASS_CACHE{InstanceElementSet};
+
+    return $MEDIA_CLASS_CACHE{InstanceElementSet()};
 }
 
 =item publish()
