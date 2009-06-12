@@ -738,6 +738,9 @@ The optional C<length> parameter, if provided, will be used
 as number of characters after which a new line should be 
 created.  If not specified, the default length of 15 will be used.
 
+The optional C<new_window> parameter, when combined with the C<linkto>
+parameter will open the link in a new window/tab.
+
 
 =cut
 
@@ -745,7 +748,8 @@ sub format_url {
     my %args = @_;
 
     # Validate calling input
-    my ($url, $linkto, $length, $name, $class) = @args{qw/url linkto length name class/};
+    my ($url, $linkto, $length, $name, $class, $new_window) =
+      @args{qw/url linkto length name class new_window/};
     croak("Missing required argument 'url'") unless ($url);
 
     $length = 15 unless ($length);
@@ -763,9 +767,10 @@ sub format_url {
     my $format_url_html;
     my @url_lines = split("\n", $url);
     if ($linkto) {
+        my $target = $new_window ? 'target="_blank"' : '';
 
         # URL with links
-        $format_url_html = qq{<a href="$linkto">} . join('<wbr>', @url_lines) . qq{</a>};
+        $format_url_html = qq{<a href="$linkto" $target>} . join('<wbr>', @url_lines) . qq{</a>};
     } elsif ($name) {
         # DOM2 event handling
         $format_url_html = qq{<a href="" name="$name" class="$class">} . join('<wbr>', @url_lines) . qq{</a>};
