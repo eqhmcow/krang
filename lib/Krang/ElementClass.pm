@@ -1366,6 +1366,15 @@ sub init {
     return $self;
 }
 
+=item C<< $class->clone_hook(element => $element) >>
+
+Called after the story/category containing the element tree is cloned and just
+before it is saved.  The default implementation does nothing.
+
+=cut
+
+sub clone_hook { }
+
 #
 # $url = _build_page_url(publisher => $pub, page => $page_num, protocol => 'https://');
 #

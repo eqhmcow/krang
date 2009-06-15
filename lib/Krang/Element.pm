@@ -1033,6 +1033,11 @@ sub clone {
     for (@{$clone->{children}}) {
         $_->parent($clone);
     }
+
+    # allow element class to modify this element's data if needed during clone
+    my $class = $clone->class;
+    $class->clone_hook(data => $clone->data());
+
     return $clone;
 }
 
