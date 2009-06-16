@@ -283,10 +283,12 @@ if( ! class_changer ) alert('no class_changer');
 </tmpl_if>
 
 <tmpl_if crumbs>
-<tmpl_if allow_delete><p class="cram east">
+<p class="cram east">
   <input value="<tmpl_var done_with_this_element>" onclick="save_and_go_up()" type="button" class="button">
-  <input value="<tmpl_var delete_this_element>" onclick="remove_element()" type="button" class="button">
-</p></tmpl_if>
+  <tmpl_if allow_delete>
+    <input value="<tmpl_var delete_this_element>" onclick="remove_element()" type="button" class="button">
+  </tmpl_if>
+</p>
 
 <div class="crumbs"><strong><tmpl_lang Go To:></strong> <tmpl_loop crumbs>
   <tmpl_unless __last__><a href="javascript:jump_to('<tmpl_var escape=html path>')"></tmpl_unless><tmpl_var escape=html name><tmpl_unless __last__></a> &raquo;</tmpl_unless>
@@ -438,10 +440,12 @@ if( ! class_changer ) alert('no class_changer');
 </tmpl_unless></tmpl_if>
 
 <tmpl_if crumbs>
-<tmpl_if allow_delete><p class="cram east">
+<p class="cram east">
   <input value="<tmpl_var done_with_this_element>" onclick="save_and_go_up()" type="button" class="button">
-  <input value="<tmpl_var delete_this_element>" onclick="remove_element()" type="button" class="button">
-</p></tmpl_if>
+  <tmpl_if allow_delete>
+    <input value="<tmpl_var delete_this_element>" onclick="remove_element()" type="button" class="button">
+  </tmpl_if>
+</p>
 
 <div class="crumbs"><strong><tmpl_lang Go To:></strong> <tmpl_loop crumbs>
   <tmpl_unless __last__><a href="javascript:jump_to('<tmpl_var escape=html path>')"></tmpl_unless><tmpl_var escape=html name><tmpl_unless __last__></a> &raquo;</tmpl_unless>

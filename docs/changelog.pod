@@ -6,6 +6,10 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+Fixed bug in ElementEditor/edit.base.tmpl which caused Done button
+to be missing from any container element not set to allow_delete => 1.
+[Noam Weinstein]
+
 =item *
 
 Fixed bug in BrowserSpeedBoost that did not clear out old compressed HTML
