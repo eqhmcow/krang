@@ -481,10 +481,11 @@ sub publish_frontend_app_template {
     # Publish the template
     debug("Publishing template '$filename'");
     $publisher->additional_content_block(
-        filename     => $output_filename,
-        content      => $tmpl->output(),
-        use_category => $use_category,
-        post_process => sub { $self->_post_process_html(shift) },
+        filename           => $output_filename,
+        content            => $tmpl->output(),
+        use_category       => $use_category,
+        post_process       => sub { $self->_post_process_html(shift) },
+        category_tmpl_args => $tmpl_data,
     );
 }
 
