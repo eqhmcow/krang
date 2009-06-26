@@ -6,6 +6,14 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Fixed bug in ElementEditor CGI where any container that included both
+a hidden element and reorderable elements threw an ISE.
+[Noam Weinstein]
+
+=item *
+
 Fixed bug in ElementEditor/edit.base.tmpl which caused Done button
 to be missing from any container element not set to allow_delete => 1.
 [Noam Weinstein]

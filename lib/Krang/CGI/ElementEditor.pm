@@ -272,11 +272,11 @@ sub element_edit {
     my @child_loop;
     my $index = 0;
     my $order;
-    my @children = $element->children;
+    my @visible_children = grep { !$_->hidden } $element->children;
 
     # figure out list of slots that are reorderable
-    my @avail_ord = grep { $children[$_ - 1]->reorderable } (1 .. @children);
-    my $avail_del = grep { $_->allow_delete } @children;
+    my @avail_ord = grep { $visible_children[$_ - 1]->reorderable } (1 .. @visible_children);
+    my $avail_del = grep { $_->allow_delete } @visible_children;
 
     # let the template know if none are reorderable/deleteable so no
     # button displayed
@@ -285,7 +285,7 @@ sub element_edit {
 
     # find out how many children are reorderable
     my $multiple_reorders = 0;
-    foreach my $child (@children) {
+    foreach my $child (@visible_children) {
         $multiple_reorders++ if $child->reorderable;
         last                 if $multiple_reorders > 1;
     }
@@ -296,8 +296,7 @@ sub element_edit {
     my %parents_potential_children =
       map { $_->name => localize($_->display_name) } $element->class->children();
 
-    foreach my $child (@children) {
-        next if $child->hidden;
+    foreach my $child (@visible_children) {
 
         # setup form, making it invalid if needed
         # Krang::ElementClass::CategoryLink objects
@@ -1043,7 +1042,7 @@ sub element_view {
     my @child_loop;
     my @children = $element->children;
 
-    # figure out list of slots that are reorderable
+    # figure out list of slots to display
     foreach my $child (@children) {
         next if $child->hidden;
         push(
