@@ -284,9 +284,13 @@ if( ! class_changer ) alert('no class_changer');
 
 <tmpl_if crumbs>
 <p class="cram east">
-  <input value="<tmpl_var done_with_this_element>" onclick="save_and_go_up()" type="button" class="button">
-  <tmpl_if allow_delete>
-    <input value="<tmpl_var delete_this_element>" onclick="remove_element()" type="button" class="button">
+  <tmpl_if bulk_edit>
+    <input value="<tmpl_lang Done With Bulk Edit>" onclick="save_and_go_up()" type="button" class="button">
+  <tmpl_else>
+    <input value="<tmpl_var done_with_this_element>" onclick="save_and_go_up()" type="button" class="button">
+    <tmpl_if allow_delete>
+      <input value="<tmpl_var delete_this_element>" onclick="remove_element()" type="button" class="button">
+    </tmpl_if>
   </tmpl_if>
 </p>
 
@@ -441,9 +445,13 @@ if( ! class_changer ) alert('no class_changer');
 
 <tmpl_if crumbs>
 <p class="cram east">
-  <input value="<tmpl_var done_with_this_element>" onclick="save_and_go_up()" type="button" class="button">
-  <tmpl_if allow_delete>
-    <input value="<tmpl_var delete_this_element>" onclick="remove_element()" type="button" class="button">
+  <tmpl_if bulk_edit>
+    <input value="Done With Bulk Edit" onclick="save_and_go_up()" type="button" class="button">
+  <tmpl_else>
+    <input value="<tmpl_var done_with_this_element>" onclick="save_and_go_up()" type="button" class="button">
+    <tmpl_if allow_delete>
+      <input value="<tmpl_var delete_this_element>" onclick="remove_element()" type="button" class="button">
+    </tmpl_if>
   </tmpl_if>
 </p>
 

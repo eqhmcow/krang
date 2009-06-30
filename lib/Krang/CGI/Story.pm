@@ -1329,11 +1329,17 @@ sub save_and_go_up {
 
     # compute target
     my $query = $self->query;
-    my $path  = $query->param('path');
-    $path =~ s!/[^/]+$!!;
+    if ($query->param('bulk_edit')) {
+        # if we're leaving bulk edit, path stays the same!
+        $query->param(bulk_edit => 0);
+    } else {
+        # otherwise, go up one level in path
+        my $path = $query->param('path');
+        $path =~ s!/[^/]+$!!;
+        $query->param(path => $path);
+    }
 
-    # set target and show edit screen
-    $query->param(path => $path);
+    # show edit screen
     return $self->edit();
 }
 
