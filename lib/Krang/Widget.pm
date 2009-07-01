@@ -767,10 +767,10 @@ sub format_url {
     my $format_url_html;
     my @url_lines = split("\n", $url);
     if ($linkto) {
-        my $target = $new_window ? 'target="_blank"' : '';
+        my $target = $new_window ? ' target="_blank"' : '';
 
         # URL with links
-        $format_url_html = qq{<a href="$linkto" $target>} . join('<wbr>', @url_lines) . qq{</a>};
+        $format_url_html = qq{<a href="$linkto"$target>} . join('<wbr>', @url_lines) . qq{</a>};
     } elsif ($name) {
         # DOM2 event handling
         $format_url_html = qq{<a href="" name="$name" class="$class">} . join('<wbr>', @url_lines) . qq{</a>};
