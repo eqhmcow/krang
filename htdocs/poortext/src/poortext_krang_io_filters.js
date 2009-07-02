@@ -148,3 +148,9 @@ PoorText.inFilters = [ PoorText.addUrlProtection ];
 PoorText.outFilters = [ PoorText.correctMarkup,
                         PoorText.removeUrlProtection ];
 
+/**
+   Array of filter function for outgoing/incoming HTML when pasting.  
+   @type Class Array
+   @private
+*/
+PoorText.pasteFilters = [];

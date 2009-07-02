@@ -81,7 +81,7 @@ PoorText.replaceSpan = function(node, createSpan) {
 
 // Webkit specific output filtering
 /**@ignore*/
-PoorText.outFilterWebKit = function(editNode) {
+PoorText.outFilterBrowser = function(editNode) {
     return editNode.innerHTML;
     var spanReplaceMap = $A([
         // CSS rule         value           replacement element
@@ -127,12 +127,7 @@ PoorText.outFilterWebKit = function(editNode) {
 };
 
 /**@ignore*/
-if (PoorText.config.useMarkupFilters) {
-    PoorText.outFilters.push(PoorText.outFilterWebKit);
-}
-
-/**@ignore*/
-PoorText.inFilterWebKit = function(node) {
+PoorText.inFilterBrowser = function(node) {
     if (node.innerHTML == '') return node;
 
     // setup
@@ -204,11 +199,6 @@ PoorText.inFilterWebKit = function(node) {
     }
 
     return node;
-}
-
-/**@ignore*/
-if (PoorText.config.useMarkupFilters) {
-    PoorText.inFilters.push(PoorText.inFilterWebKit);
 }
 
 /**
@@ -692,8 +682,8 @@ PoorText.replace_with_children = function(node, nodes) {
     return parent;
 }
 
-PoorText.pasteFilters = [
-    PoorText.inFilterWebKit,
+PoorText.pasteFilterBrowser = [
+    PoorText.inFilterBrowser,
     PoorText.spanFilter, // does not work as intended :(
     PoorText.addUrlProtection,
     PoorText.blockLevelPasteFilter,

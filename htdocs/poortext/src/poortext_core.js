@@ -376,7 +376,7 @@ PoorText.toString = function() { return 'PoorText' }
       incoming/outgoing markup will be passed through
       browser-engine-specific filters to adjust the markup to what
       browsers' execCommand() understands. This option cannot be set
-      via instance configuration. It defaults to true.<br/>
+      via instance configuration. It defaults to false.<br/>
 
    @type Class Object
 */
@@ -489,7 +489,6 @@ PoorText.prototype = {
             attachSpecialCharBar : false,
             lang : 'de',
             indentSize : 20,
-            useMarkupFilters : true
 	};
 
 	// Merge in global config shortcuts
@@ -875,7 +874,9 @@ PoorText.prototype = {
     applyFiltersTo : function(node, filters) {
         if (Object.isArray(filters)) {
 	    filters.each(function(filter) {
-	        node = filter(node);
+                if (Object.isFunction(filter)) {
+	            node = filter(node);
+                }
 	    });
         }
 	return node;
@@ -1233,6 +1234,22 @@ PoorText.onload = function () {
     if (_timer) {
         clearInterval(_timer);
         _timer = null;
+    }
+
+    // add browser-specific inFilters
+    if (PoorText.config.useMarkupFilters) {
+        PoorText.inFilters.push(PoorText.inFilterBrowser || Prototype.emptyFunction);
+    }
+    
+    // add browser-specific outFilters
+    if (PoorText.config.useMarkupFilters) {
+        PoorText.outFilters.push(PoorText.outFilterBrowser || Prototype.emptyFunction);
+    }
+
+    // add browser-specific pasteFilters
+    if (PoorText.config.useMarkupFilters) {
+        PoorText.pasteFilters.push(PoorText.pasteFilterBrowser || Prototype.emptyFunction);
+        PoorText.pasteFilters = PoorText.pasteFilters.flatten();
     }
 
     // initialize all PoorText elements

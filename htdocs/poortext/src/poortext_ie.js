@@ -38,7 +38,7 @@ PoorText.styleRE = '';
 
 // IE specific output filtering
 /**@ignore*/
-PoorText.outFilterIE = function(node, isTest) {
+PoorText.outFilterBrowser = function(node, isTest) {
 
     var html;
 
@@ -54,12 +54,7 @@ PoorText.outFilterIE = function(node, isTest) {
 };
 
 /**@ignore*/
-if (PoorText.config.useMarkupFilters) {
-    PoorText.outFilters.push(PoorText.outFilterIE);
-}
-
-/**@ignore*/
-PoorText.inFilterIE = function(node) {
+PoorText.inFilterBrowser = function(node) {
     if (node.innerHTML == '') return node;
 
     var html = node.innerHTML;
@@ -82,11 +77,6 @@ PoorText.inFilterIE = function(node) {
 PoorText.events['cut']   = 'onCut';
 PoorText.events['copy']  = 'onCopy';
 PoorText.events['paste'] = 'onPaste';
-
-/**@ignore*/
-if (PoorText.config.useMarkupFilters) {
-    PoorText.inFilters.push(PoorText.inFilterIE);
-}
 
 Object.extend(PoorText.prototype, {
     /**
@@ -476,3 +466,5 @@ document.onreadystatechange = function() {
         PoorText.onload();
     }
 }
+
+PoorText.pasteFilterBrowser = [];

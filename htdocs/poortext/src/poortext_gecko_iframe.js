@@ -68,7 +68,7 @@ PoorText.styleRE = '';
 
 // Gecko specific output filtering
 /**@ignore*/
-PoorText.outFilterGecko = function(node, isTest) {
+PoorText.outFilterBrowser = function(node, isTest) {
 
     var html;
 
@@ -84,18 +84,17 @@ PoorText.outFilterGecko = function(node, isTest) {
                // replace <i> with <em>
                .replace(/<(\/?)i(\s|>|\/)/ig, "<$1em$2")
 
+    if (isTest) {
+        return html;
+    }
+
     node.innerHTML = html;
 
     return node;
 };
 
 /**@ignore*/
-if (PoorText.config.useMarkupFilters) {
-    PoorText.outFilters.push(PoorText.outFilterGecko);
-}
-
-/**@ignore*/
-PoorText.inFilterGecko = function(node) {
+PoorText.inFilterBrowser = function(node) {
     var html = node.innerHTML;
 
     // replace <strong> with <b>
@@ -107,11 +106,6 @@ PoorText.inFilterGecko = function(node) {
     node.innerHTML = html;
 
     return node;
-}
-
-/**@ignore*/
-if (PoorText.config.useMarkupFilters) {
-    PoorText.inFilters.push(PoorText.inFilterGecko);
 }
 
 Object.extend(PoorText.prototype, {
@@ -642,7 +636,7 @@ Object.extend(PoorText.prototype, {
 
     onPaste : function() {
 	setTimeout(function() {
-            this.applyFiltersTo(this.editNode, PoorText.pasteFilters);
+            this.editNode = this.applyFiltersTo(this.editNode, PoorText.pasteFilters);
 	}.bind(this), 1);
     }
 });
@@ -732,9 +726,9 @@ PoorText.replace_with_children = function(node, nodes) {
     parent.removeChild(node);
 }
 
-PoorText.pasteFilters = [
+PoorText.pasteFilterBrowser = [
     PoorText.blockLevelPasteFilter,
-    PoorText.inFilterGecko,
+    PoorText.inFilterBrowser,
     PoorText.inlineLevelPasteFilter,
     PoorText.addUrlProtection
 ];

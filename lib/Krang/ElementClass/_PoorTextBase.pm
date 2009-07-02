@@ -248,13 +248,9 @@ sub poortext_init {
             return;
         }
         
-        // deactivate the autoload handler
-        PoorText.autoload = false;
-        
         // language is a global config
         PoorText.config = {
-            lang              : "$lang",
-            useMarkupFilters  : false
+            lang : "$lang",
         };
         
         // make them all fields
