@@ -304,9 +304,6 @@ Object.extend(PoorText.prototype, {
        @private
     */
     toggleSelectAll : function() {
-        var selection = this.window.getSelection();
-        var range;
-        
         if (this.selectedAll) {
             if (this.selectedAllSelection) {
                 // restore the cursor position
@@ -327,7 +324,7 @@ Object.extend(PoorText.prototype, {
         else {
             // store the cursor position
             this.selectedAllSelection = this.getSelection();
-            this.document.execCommand('selectall', false, null);
+            this._doSelectAll(); // workaround function
             this.selectedAll = true;
 
             this.observe(
@@ -349,6 +346,33 @@ Object.extend(PoorText.prototype, {
             );
         }
         return true;
+    },
+
+    /**@ignore*/
+    _doSelectAll : function() {
+        // This is a workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=436703
+        // (See the PoorText Trac ticket:122)
+        // It works for selectall via Ctrl-a.
+        // It does NOT work for selectall via triple-click,
+        // When this bug will be fixed the follwing line will replace
+        // this workaround:
+        //    this.document.execCommand('selectall', false, null);
+
+        var sel = this.window.getSelection();
+        if (!sel) return;
+        
+        // this is the decisive hack to make setting the start/en
+        // containers/offsets work properly!
+        this.editNode.appendChild(this.document.createTextNode(''));
+        
+        var range = sel.getRangeAt(0);
+        range.setStart(this.editNode.firstChild, 0);
+        range.setEnd(this.editNode.lastChild, this.editNode.lastChild.length);
+        
+        sel.removeAllRanges();
+        sel.addRange(range);
+        
+        this.focusEditNode();
     },
 
     /**@ignore*/
