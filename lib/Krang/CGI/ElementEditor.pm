@@ -440,7 +440,7 @@ sub element_edit {
         my @global = grep { $_->bulk_edit ne '1' and $_->bulk_edit ne 'textarea' } @bulk_edit;
         if (scalar(@global) > 1) {
             my $global = join($self->concat_string, map { $_->name } @global);
-            push @values, $global;
+            unshift @values, $global;
             $labels{$global} = localize('All WYSIWYG Elements');
         }
         $template->param(
