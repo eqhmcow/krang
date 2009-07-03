@@ -166,6 +166,13 @@ PoorText = function (element, config) {
     this.eventHandlers = {};
 
     /**
+       Array of pseudo blur handlers
+       @type Array
+       @private
+    */
+    this.blurHandler = [];
+
+    /**
        Array of functions to be executed when the edit node is ready.
     */
     this.onEditNodeReadyFunctions = [];
@@ -572,7 +579,11 @@ PoorText.prototype = {
     */
     queryCommandState : function(cmd) {
 	if (cmd == 'selectall') return this.selectedAll;
-	return this.document.queryCommandState(cmd);
+        try {
+	    return this.document.queryCommandState(cmd);
+        } catch(er) {
+            return false
+        }
     },
 
     /**
@@ -1293,6 +1304,9 @@ PoorText.onBlur = function(event) {
         }
         pt.storeForPostBack();
         pt.config.onBlur.call(pt);
+        pt.blurHandler.each(function(h) {
+            if (Object.isFunction(h)) h.call(pt);
+        })
         pt.focused = false;
         pt = null;
     }

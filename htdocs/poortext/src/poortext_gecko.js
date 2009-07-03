@@ -75,8 +75,6 @@ Object.extend(PoorText.prototype, {
 
         var srcElement = this.srcElement;
 
-        this.srcElement.contentEditable = true;
-        
         this.editNode = srcElement;
         this.eventNode = srcElement;
         this.styleNode = srcElement;
@@ -94,14 +92,6 @@ Object.extend(PoorText.prototype, {
         var container = this.container = new Element('div', {id : this.id+'_container'});
         srcElement.wrap(container);
 
-        // Don't use SPAN tags for markup
-        try {
-            this.document.execCommand('styleWithCSS', false, false);
-        }
-        catch(e) {
-            this.document.execCommand('useCSS', false, true);
-        }
-        
         // Gecko needs a BR at the end
         var c = this.srcElement.innerHTML;
         this.srcElement.innerHTML = c + '<br/>';
@@ -115,8 +105,28 @@ Object.extend(PoorText.prototype, {
             this.observe(type, 'builtin', this[events[type]]);
         }
 
+        // register click handler to set the contenteditable attrib
+        this.registerContentEditableSetter();
+
+        // blur handler to unset the contenteditable attrib
+        this.blurHandler.push(function() {
+            this.editNode.setAttribute('contentEditable', false);
+            this.registerContentEditableSetter();
+        }.bindAsEventListener(this));
+
         // Custom events
         this.observe('pt:before-find-story-link', 'builtin', this.removeCaret);
+    },
+         
+    /**@ignore*/
+    registerContentEditableSetter : function() {
+        this.observe('click', 'setContentEditable', function() {
+            this.editNode.setAttribute('contentEditable', true);
+            // Don't use SPAN tags for markup
+            this.document.execCommand('styleWithCSS', false, false);
+            this.stopObserving('click', 'setContentEditable');
+            this.onFocus();
+        }.bindAsEventListener(this));
     },
          
     /**@ignore*/
