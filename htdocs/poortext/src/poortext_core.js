@@ -495,7 +495,7 @@ PoorText.prototype = {
             attachButtonBar     : false,
             attachSpecialCharBar : false,
             lang : 'de',
-            indentSize : 20,
+            indentSize : 20
 	};
 
 	// Merge in global config shortcuts
