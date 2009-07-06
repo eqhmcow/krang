@@ -422,7 +422,9 @@ PoorText.prototype = {
         /**@ignore*/ indent           : function() {this.setTextIndent()        },
         /**@ignore*/ outdent          : function() {this.setTextOutdent()       },
 // Krang CMS StoryLink
-        /**@ignore*/ add_story_link   : function() {this.addStoryLink()         }
+        /**@ignore*/ add_story_link   : function() {this.addStoryLink()         },
+        /**@ignore*/ pageup           : function() {this._pageup()              },
+        /**@ignore*/ pagedown         : function() {this._pagedown()            }
     },
 
     /**
@@ -468,7 +470,9 @@ PoorText.prototype = {
             rsquo            : 'ctrl_5',
             ldquo            : 'ctrl_2',
             rdquo            : 'ctrl_3',
-            ndash            : 'ctrl_0'
+            ndash            : 'ctrl_0',
+            pageup           : 'pageup',
+            pagedown         : 'pagedown'
         };
 
 	this.config = {
@@ -663,7 +667,7 @@ PoorText.prototype = {
 	// a handler function for the key and modifier combination
 	var func = this.keyHandlerFor[modifiers+keyname];
 
-	if (func) {  // If there is a handler for this key, handle it
+	if (Object.isFunction(func)) {  // If there is a handler for this key, handle it
 	    func.call(this, e);	    
             Event.stop(e);
 	}

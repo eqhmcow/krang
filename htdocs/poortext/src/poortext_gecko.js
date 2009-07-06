@@ -92,10 +92,6 @@ Object.extend(PoorText.prototype, {
         var container = this.container = new Element('div', {id : this.id+'_container'});
         srcElement.wrap(container);
 
-        // Gecko needs a BR at the end
-        var c = this.srcElement.innerHTML;
-        this.srcElement.innerHTML = c + '<br/>';
-        
         // Filter the input
         this.setHtml(this.srcElement, PoorText.inFilters);
         
@@ -116,6 +112,9 @@ Object.extend(PoorText.prototype, {
 
         // Custom events
         this.observe('pt:before-find-story-link', 'builtin', this.removeCaret);
+
+        // register workaround functions this._pageup and this._pagedown
+        this.config.availableCommands.push('pageup', 'pagedown');
     },
          
     /**@ignore*/
@@ -464,7 +463,28 @@ Object.extend(PoorText.prototype, {
             var sel = window.getSelection();
             if (sel) sel.removeAllRanges();
         },10);
+    },
+
+    // workaround for FF3, FF3.5 (pressing PAGEUP would otherwise
+    // position the caret outside the editor DIV
+    _pageup : function() {
+        var sel = this.window.getSelection();
+        if (!sel) return;
+        sel.removeAllRanges();
+        sel.selectAllChildren(this.editNode);
+        sel.collapseToStart();
+    },
+
+    // workaround for FF3, FF3.5 (pressing PAGEDOWN would otherwise
+    // position the caret outside the editor DIV
+    _pagedown : function() {
+        var sel = this.window.getSelection();
+        if (!sel) return;
+        sel.removeAllRanges();
+        sel.selectAllChildren(this.editNode);
+        sel.collapseToEnd();
     }
+
 });
 
 /**

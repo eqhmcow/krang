@@ -12,6 +12,7 @@ html, body {
   overflow: auto;
   color: #000000;
   padding: 2px;
+  min-height: 20px;
 }
 
 .poortext a { 
