@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added to PoorText JavaScript workaround for Gecko bugs
+https://bugzilla.mozilla.org/show_bug.cgi?id=438840 and
+https://bugzilla.mozilla.org/show_bug.cgi?id=436703. [Bodo Schulze]
+
+=item *
+
 Fixed bug in ElementEditor CGI where any container that included both
 a hidden element and reorderable elements threw an ISE.
 [Noam Weinstein]
