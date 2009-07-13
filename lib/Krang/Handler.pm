@@ -617,6 +617,9 @@ sub cleanup_handler ($$) {
 
     if ($status == SERVER_ERROR && ErrorNotificationEmail) {
         my $error = $r->notes('error-notes') || $ENV{ERROR_NOTES};
+        
+        # dont worry about clients hitting the "Stop" button
+        return DECLINED if $error =~ /client aborted\?/;
 
         # format an email message with all of the information that we want
         my $line = ('=' x 40);
