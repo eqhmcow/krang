@@ -8,6 +8,17 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed three warnings thrown by krang_install when installing from a
+binary tarball distribution: two errors reported to the user when the 
+regex used to find & fix the path to perl in shebang lines of perl 
+scripts failed to match the two perl xinha plugin scripts (because 
+they include seldem-used but valid whitespace between the #! and the 
+interpreter command line), and 2) a "can't stat krang/bench: No such 
+file or directory" warning caused by the krang/bench directory not 
+being present in plaform-specific binary distributions. [David Kaufman]
+
+=item *
+
 Added to PoorText JavaScript workaround for Gecko bugs
 https://bugzilla.mozilla.org/show_bug.cgi?id=438840 and
 https://bugzilla.mozilla.org/show_bug.cgi?id=436703. [Bodo Schulze]

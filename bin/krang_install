@@ -654,7 +654,7 @@ sub install_krang {
             open(SOURCE, $script) or die "Unable to $script: $!";
             my $source = do { local $/; <SOURCE> };
 
-            $source =~ s/^#![\w\/\.]+(\s*.*)$/#!$PERL_BIN$1/m
+            $source =~ s/^#!\s*[\w\/\.]+(\s*.*)$/#!$PERL_BIN$1/m
               or warn "    can't find shebang line in $script\n";
 
             open(SOURCE, '>', $script) or die "Unable to write $script: $!";
@@ -663,7 +663,7 @@ sub install_krang {
         }
     };
 
-    find($wanted, @dirs);
+    find($wanted, grep -e, @dirs);
 
     print "  Setting execute bits on scripts\n";
 
