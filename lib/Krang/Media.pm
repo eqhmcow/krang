@@ -1581,7 +1581,7 @@ sub _load_version {
 
 =item $thumbnail_path = $media->thumbnail_path(relative => 1);
 
-=item $thunbnail_path = $media->thumbnail_path(medium => 1);
+=item $thumbnail_path = $media->thumbnail_path(medium => 1);
 
 Returns the path to the thumbnail (if media is an image).  Valid image
 types are stored in IMAGE_TYPES constant. Will create thumbnail if
