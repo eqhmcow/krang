@@ -605,7 +605,7 @@ Krang::ElementClass::PoorTextList - a multi field WYSIWYG element
 
 =head1 SYNOPSIS
 
-   $class = pkg('ElementClass::PoorTextList')->new(
+   $class = pkg('ElementClass::PoorTextList')->new( 
         name     => "poortext",
         type     => 'textarea',
         commands => 'all',
