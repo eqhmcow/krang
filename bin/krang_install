@@ -133,7 +133,7 @@ Following is a list of the tasks the installer script will perform.
   --WithAddon               - Installs Krang with an addon.  May be repeated.
   --EnableSSL               - Turn on SSL support (default: off)
   --SSLApachePort           - SSL port used HTTPS on main Apache server (default 443)
-  --Charset                 - The character set to use. Defaults to none (8-bit clean)
+  --Charset                 - The character set to use. Defaults to UTF-8.
   --run-tests               - run Krang "make test", defaults off
   --help                    - Show usage
   --man                     - Show full man page

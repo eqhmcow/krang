@@ -6,6 +6,9 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+Made UTF-8 the default character set and updated POD accordingly. 
+[Noam Weinstein]
+
 =item *
 
 Fixed three warnings thrown by krang_install when installing from a
