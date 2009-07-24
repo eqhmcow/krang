@@ -185,7 +185,7 @@ sub _expire_sessions {
     my %args    = @_;
     my $max_age = exists $args{max_age} ? $args{max_age} : 24;
     my $dbh     = dbh();
-    my ($i, @ids, $query);
+    my (@ids, $query);
 
     # get deletion candidates
     $query = <<SQL;
@@ -194,8 +194,8 @@ FROM sessions
 WHERE last_modified < now() - INTERVAL ? HOUR
 SQL
     my $row_refs = $dbh->selectall_arrayref($query, undef, $max_age);
-    for $i (0 .. $#{@$row_refs}) {
-        push @ids, $row_refs->[$i][0];
+    for my $row (@{$row_refs}) {
+        push @ids, $row->[0];
     }
 
     # destroy them

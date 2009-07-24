@@ -4,963 +4,970 @@ This document contains a list of changes for each release of Krang.
 
 =head2 3.06 - In Development
 
+
 =over
 
-Made UTF-8 the default character set and updated POD accordingly. 
-[Noam Weinstein]
+Fixed Bug #42 "Scheduler errors from _expire_sessions()" in which 
+the logs were polluted with eceptions every five minutes while there 
+are no sessons to expire [David Kaufman]
+
+=over
+
+made utf-8 the default character set and updated pod accordingly. 
+[noam weinstein]
 
 =item *
 
-Fixed three warnings thrown by krang_install when installing from a
+fixed three warnings thrown by krang_install when installing from a
 binary tarball distribution: two errors reported to the user when the 
 regex used to find & fix the path to perl in shebang lines of perl 
 scripts failed to match the two perl xinha plugin scripts (because 
 they include seldem-used but valid whitespace between the #! and the 
-interpreter command line), and 2) a "can't stat krang/bench: No such 
+interpreter command line), and 2) a "can't stat krang/bench: no such 
 file or directory" warning caused by the krang/bench directory not 
-being present in plaform-specific binary distributions. [David Kaufman]
+being present in plaform-specific binary distributions. [david kaufman]
 
 =item *
 
-Added to PoorText JavaScript workaround for Gecko bugs
+added to poortext javascript workaround for gecko bugs
 https://bugzilla.mozilla.org/show_bug.cgi?id=438840 and
-https://bugzilla.mozilla.org/show_bug.cgi?id=436703. [Bodo Schulze]
+https://bugzilla.mozilla.org/show_bug.cgi?id=436703. [bodo schulze]
 
 =item *
 
-Fixed bug in ElementEditor CGI where any container that included both
-a hidden element and reorderable elements threw an ISE.
-[Noam Weinstein]
+fixed bug in elementeditor cgi where any container that included both
+a hidden element and reorderable elements threw an ise.
+[noam weinstein]
 
 =item *
 
-Fixed bug in ElementEditor/edit.base.tmpl which caused Done button
+fixed bug in elementeditor/edit.base.tmpl which caused done button
 to be missing from any container element not set to allow_delete => 1.
-[Noam Weinstein]
+[noam weinstein]
 
 =item *
 
-Fixed bug in BrowserSpeedBoost that did not clear out old compressed HTML
+fixed bug in browserspeedboost that did not clear out old compressed html
 files or regenerate new minified/compressed assets if the underlying file
-changed. [Michael Peters]
+changed. [michael peters]
 
 =item *
 
-Various fixes to PoorText to make it play nicely with IE8. [Bodo
-Schulze]
+various fixes to poortext to make it play nicely with ie8. [bodo
+schulze]
 
 =item *
 
-Upgraded Prototype.js to version 1.6.1_rc2 to fix issues with
-IE8. [Bodo Schulze]
+upgraded prototype.js to version 1.6.1_rc2 to fix issues with
+ie8. [bodo schulze]
 
 =item *
 
-Fixed utf8 bug in Krang template generation and filtering. [Bodo
-Schulze]
+fixed utf8 bug in krang template generation and filtering. [bodo
+schulze]
 
 =item *
 
-Added "Preview Editor" instrumenting previewed stories with links
-pointing back into the CMS. Also integrates the previously added
-"Template Finder". [Bodo Schulze]
+added "preview editor" instrumenting previewed stories with links
+pointing back into the cms. also integrates the previously added
+"template finder". [bodo schulze]
 
 =item *
 
-Fixed ISE that occurs if you try to check out a story that was checked out by someone
-else while you were looking at (normally prevented by the UI). Now you get a helpful
-alert message instead. [Michael Peters]
+fixed ise that occurs if you try to check out a story that was checked out by someone
+else while you were looking at (normally prevented by the ui). now you get a helpful
+alert message instead. [michael peters]
 
 =back
 
-=head2 3.05 - March 15, 2009
+=head2 3.05 - march 15, 2009
 
 =over
 
 =item *
 
-Fixed bug in L<Krang::BulkEdit::Xinha> where empty tags were not
-handled correctly (thanks to Mike Lampson for catching this). Added
-method returning a list of supported empty HTML tags. This list
-currently contains only HR. [Bodo Schulze]
+fixed bug in l<krang::bulkedit::xinha> where empty tags were not
+handled correctly (thanks to mike lampson for catching this). added
+method returning a list of supported empty html tags. this list
+currently contains only hr. [bodo schulze]
 
 =item *
 
-Add F<bin/krang_tmp_cleaner> to clean out the F<tmp/> directory while
-developing. [Michael Peters]
+add f<bin/krang_tmp_cleaner> to clean out the f<tmp/> directory while
+developing. [michael peters]
 
 =item  *
 
-Added F<bin/krang_create_story> for making test data while
-developing. [Michael Peters]
+added f<bin/krang_create_story> for making test data while
+developing. [michael peters]
 
 =item *
 
-Added Fedora 10 as a target build platform. [Michael Peters]
+added fedora 10 as a target build platform. [michael peters]
 
 =item *
 
-Fixed a bug preventing to add a photo to a new contributor when coming
-from associate contrib. [Bodo Schulze]
+fixed a bug preventing to add a photo to a new contributor when coming
+from associate contrib. [bodo schulze]
 
 =item *
 
-Added thumbnail preview to L<Krang::ElementClass::MediaLink> and
-contrib edit screen. [Bodo Schulze]
+added thumbnail preview to l<krang::elementclass::medialink> and
+contrib edit screen. [bodo schulze]
 
 =item *
 
-Replaced JavaScript links in story and media preview links with DOM2
-event handlers everywhere. [Bodo Schulze]
+replaced javascript links in story and media preview links with dom2
+event handlers everywhere. [bodo schulze]
 
 =item *
 
-Added "Preview Finder" feature. After clicking the "Preview Finder"
+added "preview finder" feature. after clicking the "preview finder"
 button on story preview screens, clicking anywhere on the page
 provides information on the template (and its parents) or the media
-text file (for SSI) responsible for generating the piece of content
-that was clicked. [Bodo Schulze]
+text file (for ssi) responsible for generating the piece of content
+that was clicked. [bodo schulze]
 
 =item *
 
-Added JavaScript library ProtoPopup in F<htdocs/proto_popup/>
+added javascript library protopopup in f<htdocs/proto_popup/>
 providing draggable info boxes as well as alert-like and confirm-like
-dialogs. [Bodo Schulze]
+dialogs. [bodo schulze]
 
 =item *
 
-L<Krang::AddOn>: When installing an addon, install the upgrade/
-subdir, too - to self-document the upgrade. [Bodo Schulze]
+l<krang::addon>: when installing an addon, install the upgrade/
+subdir, too - to self-document the upgrade. [bodo schulze]
 
 =item *
 
-Reorganized Admin menu into subsections. [Michael Peters]
+reorganized admin menu into subsections. [michael peters]
 
 =item *
 
-Added IE6 behavior rules section in F<krang.js> and put the hover
-handler for the great green buttons in there. [Bodo Schulze]
+added ie6 behavior rules section in f<krang.js> and put the hover
+handler for the great green buttons in there. [bodo schulze]
 
 =item *
 
-Added C<version> option to L<Krang::Media>'s file_path() method. [Bodo
-Schulze]
+added c<version> option to l<krang::media>'s file_path() method. [bodo
+schulze]
 
 =item *
 
-Added a --url option to F<krang_upload_templates> to limit the upload
-to templates having the specified URL below path (may be given
-multiple times). [Bodo Schulze]
+added a --url option to f<krang_upload_templates> to limit the upload
+to templates having the specified url below path (may be given
+multiple times). [bodo schulze]
 
 =item *
 
-Added C<--no-cache> option to F<krang_publish> to bypass using
-L<Krang::Cache>. [Michael Peters]
+added c<--no-cache> option to f<krang_publish> to bypass using
+l<krang::cache>. [michael peters]
 
 =item * 
 
-Added the ability to use the "Find Media" interface for selecting the
+added the ability to use the "find media" interface for selecting the
 image for a contributor instead of having to upload a new image each
-time. [Michael Peters]
+time. [michael peters]
 
 =item *
 
-When publishing from the command line using F<krang_publish> and
-C<--to-preview> a single error in publishing 1 story won't cause the
-whole process to stop. It will continue on and then list failures at the
-end just like publishing without C<--to-preview> does. [Michael Peters]
+when publishing from the command line using f<krang_publish> and
+c<--to-preview> a single error in publishing 1 story won't cause the
+whole process to stop. it will continue on and then list failures at the
+end just like publishing without c<--to-preview> does. [michael peters]
 
 =item *
 
-Added optional C<level>, C<dir_only> and C<depth_only> arguments to
-method signature of L<Krang::Story>::category(). [Bodo Schulze]
+added optional c<level>, c<dir_only> and c<depth_only> arguments to
+method signature of l<krang::story>::category(). [bodo schulze]
 
 =item *
 
-Added new element class L<Krang::ElementClass::PoorTextList> which
-joins the WYSIWYG capabilities of L<Krang::ElementClass::PoorText>
+added new element class l<krang::elementclass::poortextlist> which
+joins the wysiwyg capabilities of l<krang::elementclass::poortext>
 with the list management controls of
-L<Krang::ElementClass::TextInputList>. [Bodo Schulze]
+l<krang::elementclass::textinputlist>. [bodo schulze]
 
 =item *
 
-Added 'binary' argument to $publisher->additional_content_block(),
-hence to Krang::IO->io_file(), to make it possible to write images
-(and other binary data). [Bodo Schulze]
+added 'binary' argument to $publisher->additional_content_block(),
+hence to krang::io->io_file(), to make it possible to write images
+(and other binary data). [bodo schulze]
 
 =item *
 
-Fixed minor but disconcerting bug where reverting a template to an
-earlier version also reverted its "Deployed Version". [Noam Weinstein]
+fixed minor but disconcerting bug where reverting a template to an
+earlier version also reverted its "deployed version". [noam weinstein]
 
 =item *
 
-At the request of Jesse Erlbaum, added a Size selector to
-Default::image. [Bodo Schulze]
+at the request of jesse erlbaum, added a size selector to
+default::image. [bodo schulze]
 
 =item *
 
-Fixed bug in F<krang.js> C<Krang.Form.submit()> where if the C<new_window>
+fixed bug in f<krang.js> c<krang.form.submit()> where if the c<new_window>
 option was true we'd pass the existing window_id to it, in essence having
 2 windows with the same window_id which could cause some strange things
-to happen (multiple windows with the same session). [Michael Peters]
+to happen (multiple windows with the same session). [michael peters]
 
 =item *
 
-Allowed L<Krang::Story>::delete() to be called with the named
+allowed l<krang::story>::delete() to be called with the named
 parameters 'story_id' (a number) or 'class' (a string or an arrayref
-of class names). [Bodo Schulze]
+of class names). [bodo schulze]
 
 =item *
 
-Added directive B<PreInstallScript> to F<krang_addon.conf> to run a
-script before the installation process starts. [Bodo Schulze]
+added directive b<preinstallscript> to f<krang_addon.conf> to run a
+script before the installation process starts. [bodo schulze]
 
 =item *
 
-Added new element class L<Krang::ElementClass::TextInputList>. Added
-it to L<Krang::ElementLibrary>'s autoload list, added three examples
-to L<TestSet1::page> and its template, and added some CSS to
-F<krang.css.tmpl>. [Bodo Schulze]
+added new element class l<krang::elementclass::textinputlist>. added
+it to l<krang::elementlibrary>'s autoload list, added three examples
+to l<testset1::page> and its template, and added some css to
+f<krang.css.tmpl>. [bodo schulze]
 
 =item *
 
-Like Stories, find Media and Templates in Live, Retired and Trash when
-finding by ID or UUID. [Bodo Schulze]
+like stories, find media and templates in live, retired and trash when
+finding by id or uuid. [bodo schulze]
 
 =item *
 
-Enhanced L<Krang::Publisher>'s additional_content_block() to accept an
-optional hashref of category_tmpl_args to pass to L<Krang::Category>'s
-fill_template method. [Noam Weinstein]
+enhanced l<krang::publisher>'s additional_content_block() to accept an
+optional hashref of category_tmpl_args to pass to l<krang::category>'s
+fill_template method. [noam weinstein]
 
 =item *
 
-Made L<Krang::Element>'s children() method accept one argument to
+made l<krang::element>'s children() method accept one argument to
 return a list of children having the given name only, and added
-convenience method children_data(). [Bodo Schulze]
+convenience method children_data(). [bodo schulze]
 
 =item *
 
-Fixed bug to let the a template's Log be viewed from its "View Detail"
-screen. [Bodo Schulze]
+fixed bug to let the a template's log be viewed from its "view detail"
+screen. [bodo schulze]
 
 =item *
 
-Fixed a bug in L<Krang::Handler> reported by Alice Lincoln: Make sure
+fixed a bug in l<krang::handler> reported by alice lincoln: make sure
 a manually created window gets its own id when the user types/copies a
-Krang URL into it or accesses another windows URL via the History.
-Thanx to Jesse Erlbaum for the referer-based solution to this problem.
-Also implemented a workaround in krang.js to force IE6/7 to send the
-referer when a link is passed through JavaScript. [Bodo Schulze]
+krang url into it or accesses another windows url via the history.
+thanx to jesse erlbaum for the referer-based solution to this problem.
+also implemented a workaround in krang.js to force ie6/7 to send the
+referer when a link is passed through javascript. [bodo schulze]
 
 =item *
 
-Added a server-side paste filter to L<Krang::ElementClass::PoorText>,
-triggered by the onPaste event. [Bodo Schulze]
+added a server-side paste filter to l<krang::elementclass::poortext>,
+triggered by the onpaste event. [bodo schulze]
 
 
 =item *
 
-Added linked_stories() to L<Krang::ElementClass> to make this interface
-available to all element classes, especially WYSIWYG editors and the
-like. [Bodo Schulze]
+added linked_stories() to l<krang::elementclass> to make this interface
+available to all element classes, especially wysiwyg editors and the
+like. [bodo schulze]
 
 =item *
 
-Made sure a media is reported as unpublished after changing its
-category. [Bodo Schulze]
+made sure a media is reported as unpublished after changing its
+category. [bodo schulze]
 
 =item *
 
-Added convenience method C<root_category()> to
-L<Krang::Category>. [Bodo Schulze]
+added convenience method c<root_category()> to
+l<krang::category>. [bodo schulze]
 
 =item *
 
-Integrated PoorText with StoryLink interface. [Bodo Schulze]
+integrated poortext with storylink interface. [bodo schulze]
 
 =item *
 
-Added the C<ErrorNotificationEmail> configuration directive that can contain an optional
+added the c<errornotificationemail> configuration directive that can contain an optional
 comma-separated list of email address that will be sent an email with details about
-any Internal Server Errors that occur. [Michael Peters]
+any internal server errors that occur. [michael peters]
 
 =item *
 
-Added C<retire_hook> and C<unretire_hook> hooks for element classes when things are moved
-in and out of the retired objects section. [Michael Peters]
+added c<retire_hook> and c<unretire_hook> hooks for element classes when things are moved
+in and out of the retired objects section. [michael peters]
 
 =item *
 
-Added C<untrash_hook> hook for element classes when things are taken
-out of the trash. [Michael Peters]
+added c<untrash_hook> hook for element classes when things are taken
+out of the trash. [michael peters]
 
 =item *
 
-Added the ability to change an element's class in the Element Editor
-UI if the element library is configured to allow it (using the
-C<ChangeableElementClasses> directive in F<set.conf>). [Michael Peters]
+added the ability to change an element's class in the element editor
+ui if the element library is configured to allow it (using the
+c<changeableelementclasses> directive in f<set.conf>). [michael peters]
 
 =item *
 
-Added a new WYSIWYG element class L<Krang::ElementClass::PoorText> and all
-it takes. [Bodo Schulze]
+added a new wysiwyg element class l<krang::elementclass::poortext> and all
+it takes. [bodo schulze]
 
 =item *
 
-Fixed bug where user could Edit a story, then View an old version of it,
-then click Edit from the View screen, in effect wiping out anything
-that had been left unsaved in their session. [Noam Weinstein]
+fixed bug where user could edit a story, then view an old version of it,
+then click edit from the view screen, in effect wiping out anything
+that had been left unsaved in their session. [noam weinstein]
 
 =item *
 
-Fixed bug where it was possible from the View Schedule screen to 'View' the
-version of a Story or Media currently open for edit, causing confusion and
-the possible loss of changes if the user clicked 'Edit' again. [Noam Weinstein]
+fixed bug where it was possible from the view schedule screen to 'view' the
+version of a story or media currently open for edit, causing confusion and
+the possible loss of changes if the user clicked 'edit' again. [noam weinstein]
 
 =item *
 
-Bug fix for templates that had wide UTF-8 characters. [Michael Peters]
+bug fix for templates that had wide utf-8 characters. [michael peters]
 
 =item *
 
-Added rollover-preview to the find_media_link screen. [Michael Peters]
+added rollover-preview to the find_media_link screen. [michael peters]
 
 =item *
 
-Collapsed many similar buttons into "dropdown" style buttons to make
-the UI cleaner. [Michael Peters]
+collapsed many similar buttons into "dropdown" style buttons to make
+the ui cleaner. [michael peters]
 
 =item *
 
-Fixed bug where spaces in filenames could be hidden in the "Find Media"
-screen. [Michael Peters]
+fixed bug where spaces in filenames could be hidden in the "find media"
+screen. [michael peters]
 
 =item *
 
-Change L<Krang::Cache> subs to be object methods instead so they can be
-overridden by addon's via subclasses. [Michael Peters]
+change l<krang::cache> subs to be object methods instead so they can be
+overridden by addon's via subclasses. [michael peters]
 
 =item *
 
-Fixed bug in L<Krang::Story> that caused errors if an element library tried to
-use the cover_date and it was before Unix epoch time. [Brad Oaks]
+fixed bug in l<krang::story> that caused errors if an element library tried to
+use the cover_date and it was before unix epoch time. [brad oaks]
 
 =back
 
-=head2 3.04 - December 12, 2008
+=head2 3.04 - december 12, 2008
 
 =over
 
 =item *
 
-Fixed Bug in RadioGroup labels (was calling localize() on the 
+fixed bug in radiogroup labels (was calling localize() on the 
 labels-hashref key instead of its value to populate the label) 
-[David Kaufman]
+[david kaufman]
 
 =item *
 
-Fixed broken JS for ListGroup management in Edit Story UI. 
-[Noam Weinstein]
+fixed broken js for listgroup management in edit story ui. 
+[noam weinstein]
 
 =item *
 
-Fixed Safari errors in Xinha-based bulk-editing
+fixed safari errors in xinha-based bulk-editing
 
 =item *
 
-Fixed bug in FTP code where timezone used by FTP server (for 
-file creation dates, logging, etc.) was always UTC regardless of 
-the local machine's timezone (causing inconsistency in Krang dates 
-and log entries). [Noam Weinstein]
+fixed bug in ftp code where timezone used by ftp server (for 
+file creation dates, logging, etc.) was always utc regardless of 
+the local machine's timezone (causing inconsistency in krang dates 
+and log entries). [noam weinstein]
 
 =item *
 
-Fix to unpreview a media object when it is deleted (instead of just 
-unpublishing it). [David Kaufman]
+fix to unpreview a media object when it is deleted (instead of just 
+unpublishing it). [david kaufman]
 
 =item *
 
-Refactored bulk edit in its own classes.  The legacy textarea-based
-bulk editing is in L<Krang::BulkEdit::Textarea>.  Xinha-based bulk
-editing is provided by L<Krang::BulkEdit::Xinha>. This module largely
-uses parsing instead of regexes to sanitize/scrub the HTML coming from
-Xinha. Xinha's toolbar and the set of allowed block-level tags are
-configurable via subclassing L<Krang::BulkEdit::Xinha::Config>.  This
+refactored bulk edit in its own classes.  the legacy textarea-based
+bulk editing is in l<krang::bulkedit::textarea>.  xinha-based bulk
+editing is provided by l<krang::bulkedit::xinha>. this module largely
+uses parsing instead of regexes to sanitize/scrub the html coming from
+xinha. xinha's toolbar and the set of allowed block-level tags are
+configurable via subclassing l<krang::bulkedit::xinha::config>.  this
 module also permits configuration of whether paragraphs should be split 
-on BR tags. [Bodo Schulze]
+on br tags. [bodo schulze]
 
 =item *
 
-Pass the browser engine name to the environment via
-KRANG_BROWSER_ENGINE. This enables clients to dispatch to
-Krang::Markup::SomeBrowserEngine methods. [Bodo Schulze]
+pass the browser engine name to the environment via
+krang_browser_engine. this enables clients to dispatch to
+krang::markup::somebrowserengine methods. [bodo schulze]
 
 =item *
 
-Added modules to filter incoming/outgoing HTML markup according to
-what different browser engines' markup commands can handle in WYSIWYG
-areas.  The base class L<Krang::Markup> is subclassed by
-L<Krang::Markup::Gecko>, L<Krang::Markup::IE> and
-L<Krang::Markup::WebKit>. [Bodo Schulze]
+added modules to filter incoming/outgoing html markup according to
+what different browser engines' markup commands can handle in wysiwyg
+areas.  the base class l<krang::markup> is subclassed by
+l<krang::markup::gecko>, l<krang::markup::ie> and
+l<krang::markup::webkit>. [bodo schulze]
 
 =item *
 
-Upgraded L<HTML::Parser> to version 3.56. [Bodo Schulze]
+upgraded l<html::parser> to version 3.56. [bodo schulze]
 
 =item * 
 
-Removed Image-Info-1.15.tar.gz from src/ and replaced it with
-Image-Size-3.1.1.tar.gz to fix bugs in L<Krang::Media>'s width() and
-height() methods in which, for certain valid JPEG images, these
+removed image-info-1.15.tar.gz from src/ and replaced it with
+image-size-3.1.1.tar.gz to fix bugs in l<krang::media>'s width() and
+height() methods in which, for certain valid jpeg images, these
 methods returned undef (and for others, returned an arrayref!)
-According to its own POD docs, L<Image::Info> is "deprecated, and
+according to its own pod docs, l<image::info> is "deprecated, and
 should not be used", "has numerous bugs", is only minimally
-maintained, and recommends the use of L<Image::Size> to replace these
-functions.  Krang now appears to return correct width and height
-values for all JPEG's tested. [David Kaufman]
+maintained, and recommends the use of l<image::size> to replace these
+functions.  krang now appears to return correct width and height
+values for all jpeg's tested. [david kaufman]
 
 =item * 
 
-Separated the two perl classes in lib/Krang/FTP/FileHandle.pm into
+separated the two perl classes in lib/krang/ftp/filehandle.pm into
 their own files so that either can be more easily subclassed in an
 addon, without having to override all the code in both unnecessarily
-[David Kaufman]
+[david kaufman]
 
 =item *
 
-Corresponding to the behavior of L<Krang::Story>'s delete(), made Made
-L<Krang::Media>'s delete() and L<Krang::Template>'s delete() throw a
-Krang::*::NoDeleteAccess exception if the user has no admin_delete
-permission. [Bodo Schulze]
+corresponding to the behavior of l<krang::story>'s delete(), made made
+l<krang::media>'s delete() and l<krang::template>'s delete() throw a
+krang::*::nodeleteaccess exception if the user has no admin_delete
+permission. [bodo schulze]
 
 =item *
 
-Fixed bug in krang_upload_templates and krang_rename_categories that
-sets NO_ELEMENTLIBS to 1 even though it's necessary to instantiate the
-Category element when creating new categories. [Noam Weinstein]
+fixed bug in krang_upload_templates and krang_rename_categories that
+sets no_elementlibs to 1 even though it's necessary to instantiate the
+category element when creating new categories. [noam weinstein]
 
 =item *
 
-Added DateTime and Time elements similar to those used for cover_date
-input. [David Kaufman]
+added datetime and time elements similar to those used for cover_date
+input. [david kaufman]
 
 =item *
 
-Replaced package constants, global and lexical variables in
-L<Krang::User> with methods that can be subclassed. [David Kaufman]
+replaced package constants, global and lexical variables in
+l<krang::user> with methods that can be subclassed. [david kaufman]
 
 =item *
 
-Gave the scheduler the ability to email users after succeeding with or
-giving up on a job. [Noam Weinstein]
+gave the scheduler the ability to email users after succeeding with or
+giving up on a job. [noam weinstein]
 
 =item *
 
-Made schedule failure more configurable on the API level, adding the
+made schedule failure more configurable on the api level, adding the
 ability to specify how many times a particular job is attempted and
-how long the daemon waits between attempts. [Noam Weinstein]
+how long the daemon waits between attempts. [noam weinstein]
 
 =item *
 
-Added ability to create object-specific alerts that are triggered only
-for particular story or media objects. Enhanced MyAlerts UI to allow
-users to control these. [Noam Weinstein]
+added ability to create object-specific alerts that are triggered only
+for particular story or media objects. enhanced myalerts ui to allow
+users to control these. [noam weinstein]
 
 =item *
 
-In various templates, replaced CSS class 'c-mini' by 'c-label-tiny'
-according to Michael Peters' renaming in r5180. [Bodo Schulze]
+in various templates, replaced css class 'c-mini' by 'c-label-tiny'
+according to michael peters' renaming in r5180. [bodo schulze]
 
 =item *
 
-Added initial support for Xinha-based bulk edit, based on code by
-Noam Weinstein. [Bodo Schulze]
+added initial support for xinha-based bulk edit, based on code by
+noam weinstein. [bodo schulze]
 
 =item * 
 
-Fix to transfer media to trashbin when deleting it from within the
-Edit screen (thanx Noam). [Bodo Schulze]
+fix to transfer media to trashbin when deleting it from within the
+edit screen (thanx noam). [bodo schulze]
 
 =item *
 
-Added elements to Media objects, enhanced Media Edit UI to take 
+added elements to media objects, enhanced media edit ui to take 
 advantage of the ability to create, edit, and publish element data 
-along with media objects. Wrote upgrade code to instantiate skeletal 
-media element class. [Noam Weinstein]
+along with media objects. wrote upgrade code to instantiate skeletal 
+media element class. [noam weinstein]
 
 =item *
 
-Refactored element_bulk_edit() and element_bulk_save() to ease the
-implementation of WYSIWYG-based bulk edit areas. [Bodo Schulze]
+refactored element_bulk_edit() and element_bulk_save() to ease the
+implementation of wysiwyg-based bulk edit areas. [bodo schulze]
 
 =item *
 
-Standardized locations of bottom-panel buttons on Edit screens. 
-[Noam Weinstein]
+standardized locations of bottom-panel buttons on edit screens. 
+[noam weinstein]
 
 =item *
 
-Made it possible to associate contributors with a story or media
+made it possible to associate contributors with a story or media
 object even if the user doesn't have the manage_contribs permission,
 which should presumably be required only for the ability to add or 
-delete contributors from the system. [Noam Weinstein]
+delete contributors from the system. [noam weinstein]
 
 =item *
 
-Fixed bug where cloning a read-only story doesn't reset may_edit flag.  
-[Noam Weinstein]
+fixed bug where cloning a read-only story doesn't reset may_edit flag.  
+[noam weinstein]
 
 =item *
 
-Added ability to rename media files (through code, not GUI) without 
-re-uploading object. [Noam Weinstein]
+added ability to rename media files (through code, not gui) without 
+re-uploading object. [noam weinstein]
 
 =item *
 
-On all Find screens, enable/disable the (green) list buttons according
-to the checked status of the list's row checkboxes.  Also
-enable/disable the element editor's Delete button according to the
-elements' delete checkbox status. [Bodo Schulze]
+on all find screens, enable/disable the (green) list buttons according
+to the checked status of the list's row checkboxes.  also
+enable/disable the element editor's delete button according to the
+elements' delete checkbox status. [bodo schulze]
 
 =item *
 
-Made 'Revert' button for the edit screens of Stories, Media, and
-Templates write to disk (after error-checking), added text clarifying
+made 'revert' button for the edit screens of stories, media, and
+templates write to disk (after error-checking), added text clarifying
 what the new version number means, updated related tests and
-docs. [Noam Weinstein]
+docs. [noam weinstein]
 
 =item *
 
-Added krang_deploy_templates script to deploy some or all templates
-from the command-line. [Noam Weinstein]
+added krang_deploy_templates script to deploy some or all templates
+from the command-line. [noam weinstein]
 
 =item *
 
-Added option to krang_backup to backup a single instance. 
-[Noam Weinstein]
+added option to krang_backup to backup a single instance. 
+[noam weinstein]
 
 =item *
 
-Caring for singular/plural in string "Result(s)" on find
-screens. [Bodo Schulze]
+caring for singular/plural in string "result(s)" on find
+screens. [bodo schulze]
 
 =item *
 
-Make and remove symlinks (for now only calendar and help files) when
-(un-)installing language distributions. Remove localized templates
-when uninstalling a language dist. Also passed L<Krang::Localization>
-through perltidy. [Bodo Schulze]
+make and remove symlinks (for now only calendar and help files) when
+(un-)installing language distributions. remove localized templates
+when uninstalling a language dist. also passed l<krang::localization>
+through perltidy. [bodo schulze]
 
 =item * 
 
-Added 'force-checkin' option to krang_upload_templates and
-krang_upload_media.  (In the past objects checked out to other users
-were skipped). [Noam Weinstein]
+added 'force-checkin' option to krang_upload_templates and
+krang_upload_media.  (in the past objects checked out to other users
+were skipped). [noam weinstein]
 
 =item *
 
-Added 'View Log' to Media View (r4815) and Template View (r4820)
-screens. [Bodo Schulze]
+added 'view log' to media view (r4815) and template view (r4820)
+screens. [bodo schulze]
 
 =item *
 
-For Media Edit screen, ripped out 'Publish to Preview' button
-including its JavaScript function and Perl runmode, since each Save
-and Save & Stay now does publish to preview anyway (behavior
-introduced by Noam in r4513). [Bodo Schulze]
+for media edit screen, ripped out 'publish to preview' button
+including its javascript function and perl runmode, since each save
+and save & stay now does publish to preview anyway (behavior
+introduced by noam in r4513). [bodo schulze]
 
 =item *
 
-Replaced C<src/Digest-MD5-2.23.tar.gz> with
-C<src/Digest-MD5-2.36_patched_for_UTF8.tar.gz> which handles UTF-8
-data transparently. [Bodo Schulze]
+replaced c<src/digest-md5-2.23.tar.gz> with
+c<src/digest-md5-2.36_patched_for_utf8.tar.gz> which handles utf-8
+data transparently. [bodo schulze]
 
 =item *
 
-Made sure each Krang template points to its own help files.  Also
+made sure each krang template points to its own help files.  also
 streamlined help file names to ease the making of more sophisticated
-help systems. [Bodo Schulze]
+help systems. [bodo schulze]
 
 =item *
 
-Added C<t/dict/words.ascii> (to generate filenames and the like) and
-C<t/dict/words.latin1>, a mixture of English, French, German, Italian,
-Portuguese and Spanish words for content generation.  Also made all
-tests use L<Krang::Test::Content>'s get_word() method to generate UTF-8
-content if the Charset directive says so.
+added c<t/dict/words.ascii> (to generate filenames and the like) and
+c<t/dict/words.latin1>, a mixture of english, french, german, italian,
+portuguese and spanish words for content generation.  also made all
+tests use l<krang::test::content>'s get_word() method to generate utf-8
+content if the charset directive says so.
 
 =item *
 
-Added localization admin scripts C<lang/bin/krang_lang_installer>,
-C<lang/bin/krang_lang_uninstaller> and
-C<lang/bin/krang_missing_localizations>. Also updated install and
-upgrade documentation and added a note to Krang developers about how
-to use the localization API (L<localization_api.html>). [Bodo Schulze]
+added localization admin scripts c<lang/bin/krang_lang_installer>,
+c<lang/bin/krang_lang_uninstaller> and
+c<lang/bin/krang_missing_localizations>. also updated install and
+upgrade documentation and added a note to krang developers about how
+to use the localization api (l<localization_api.html>). [bodo schulze]
 
 =item *
 
-Added F<bin/krang_smoke_test> to make it as easy as possible to create 
-a smoke server to send the results to L<http://smolder.plusthree.com>. 
-[Michael Peters]
+added f<bin/krang_smoke_test> to make it as easy as possible to create 
+a smoke server to send the results to l<http://smolder.plusthree.com>. 
+[michael peters]
 
 =item *
 
-Added new option C<--with_language> to C<bin/krang_makedist>. Per
-default Krang distributions will be made without the lexicons
+added new option c<--with_language> to c<bin/krang_makedist>. per
+default krang distributions will be made without the lexicons
 under lang/, but with the localization admin scripts in
-lang/bin/. [Bodo Schulze]
+lang/bin/. [bodo schulze]
 
 =item *
 
-Added DefaultLanguage check to F<bin/krang_test> (must be set to 'en'
-to pass all tests). [Bodo Schulze]
+added defaultlanguage check to f<bin/krang_test> (must be set to 'en'
+to pass all tests). [bodo schulze]
 
 =item *
 
-Added localization API and German lexicon. [Bodo Schulze]
+added localization api and german lexicon. [bodo schulze]
 
 =item *
 
-Added support for Ubuntu [Peter Leonard and Michael Peters]
+added support for ubuntu [peter leonard and michael peters]
 
 =item *
 
-Added support for Story Type-based category behavior, including 
+added support for story type-based category behavior, including 
 auto-selection of category based on type, cover-date, slug, and/or 
 title, and validation of manually selected categories. 
-[Noam Weinstein]
+[noam weinstein]
 
 =item *
 
-Added 'Cancel' button to Story, Template, and Media Edit screens - 
+added 'cancel' button to story, template, and media edit screens - 
 clicking it returns the given object to its previous location (i.e. 
 owner, desk, etc.) and sends user to the page from where he/she 
-opened it. [Noam Weinstein]
+opened it. [noam weinstein]
 
 =item *
 
-Removed requirement to upload a file when creating new media; can now 
-use inline editor without specifying a file. [Noam Weinstein]
+removed requirement to upload a file when creating new media; can now 
+use inline editor without specifying a file. [noam weinstein]
 
 =item *
 
-Added ability to search full text of stories and templates from CMS. 
-[Noam Weinstein]
+added ability to search full text of stories and templates from cms. 
+[noam weinstein]
 
 =item *
 
-Implemented beta version of flat-template support, allowing
-a single template per top-level story type. [Noam Weinstein]
+implemented beta version of flat-template support, allowing
+a single template per top-level story type. [noam weinstein]
 
 =back
 
 
 
-=head2 3.03 - August 25th, 2008
+=head2 3.03 - august 25th, 2008
 
 =over
 
 =item *
 
-Added C<forget_all_dbhs()> method to L<Krang::DB> to help in the situation
+added c<forget_all_dbhs()> method to l<krang::db> to help in the situation
 where you fork a process and don't want the child to use the parent's handles.
-[Michael Peters] 
+[michael peters] 
 
 =item *
 
-Added C<no_cache> argument to C<Krang::DB::dbh()> to by-pass the cache.
-[Michael Peters]
+added c<no_cache> argument to c<krang::db::dbh()> to by-pass the cache.
+[michael peters]
 
 =item *
 
-Fixing bug in L<Krang::Schedule> and L<Krang::Schedule::Daemon> which resulted
-in MySQL Lost Connection errors on really busy systems. [Michael Peters]
+fixing bug in l<krang::schedule> and l<krang::schedule::daemon> which resulted
+in mysql lost connection errors on really busy systems. [michael peters]
 
 =item *
 
-Fixed bug in Bulk Upload of media objects where Unix shell meta-characters
-in file names caused problems when unpacking. [Michael Peters]
+fixed bug in bulk upload of media objects where unix shell meta-characters
+in file names caused problems when unpacking. [michael peters]
 
 =item *
 
-Added C<--story-class> argument to F<bin/krang_publish>. [Michael Peters]
+added c<--story-class> argument to f<bin/krang_publish>. [michael peters]
 
 =item *
 
-Enable the use of optgroups in the 'Add Element' dropdown. [Eric Folley]
+enable the use of optgroups in the 'add element' dropdown. [eric folley]
 
 =item *
 
-Adding new user preference for turning CodePress on/off. [Michael Peters]
+adding new user preference for turning codepress on/off. [michael peters]
 
 =item *
 
-Adding Fedora 9 as a build target. [Michael Peters]
+adding fedora 9 as a build target. [michael peters]
 
 =item *
 
-Fixing bug in the scheduler daemon that resulted in lost MySQL connection
-errors. [Michael Peters]
+fixing bug in the scheduler daemon that resulted in lost mysql connection
+errors. [michael peters]
 
 =item *
 
-Fixed some minor bugs with the new Image Transformation. [Michael Peters]
+fixed some minor bugs with the new image transformation. [michael peters]
 
 =item *
 
-Upgraded our JSON modules to use the latest L<JSON::XS>. This gives us speed and
-better handling of UTF8. [Michael Peters]
+upgraded our json modules to use the latest l<json::xs>. this gives us speed and
+better handling of utf8. [michael peters]
 
 =back
 
 
 
-=head2 3.02 - July 8th, 2008
+=head2 3.02 - july 8th, 2008
 
 =over
 
 =item * 
 
-Added new Image Transformation UI to allow basic image editing 
-(scaling, rotating and flipping). [Michael Peters]
+added new image transformation ui to allow basic image editing 
+(scaling, rotating and flipping). [michael peters]
 
 =item *
 
-Added API to L<Krang::HTMLPager> to make it possible to control the
+added api to l<krang::htmlpager> to make it possible to control the
 display of columns and/or list controls from within row
-handlers. [Bodo Schulze]
+handlers. [bodo schulze]
 
 =item
 
-Made user search check for matches with login instead of just first and last name. [Noam Weinstein]
+made user search check for matches with login instead of just first and last name. [noam weinstein]
 
 =item *
 
-Fixed broken templates.kds in Default element library. [Noam Weinstein]
+fixed broken templates.kds in default element library. [noam weinstein]
 
 =item *
 
-Stealing a story now logs a discrete action for the theft. [Noam Weinstein]
+stealing a story now logs a discrete action for the theft. [noam weinstein]
 
 =item *
 
-Element classes can now override sort order of available children. [Noam Weinstein]
+element classes can now override sort order of available children. [noam weinstein]
 
 =item *
 
-Open application in a new window/tab if clicking on a navigation link
-with the CTRL key pressed or when middle-clicking. [Bodo Schulze]
+open application in a new window/tab if clicking on a navigation link
+with the ctrl key pressed or when middle-clicking. [bodo schulze]
 
 =item *
 
-Fixed known issues with multiple windows/tabs.  Login/Logout is now
-browser-global not window/tab-specific. Use one authentication cookie
+fixed known issues with multiple windows/tabs.  login/logout is now
+browser-global not window/tab-specific. use one authentication cookie
 to store window_id/session_id mapping for all windows and use
-QUERY/tmpl_var communication channel to pass the window_id around.
-Also removed config directive MaxConcurrentKrangSessions. [Bodo Schulze]
+query/tmpl_var communication channel to pass the window_id around.
+also removed config directive maxconcurrentkrangsessions. [bodo schulze]
 
 =item *
 
-Add Fedora 8 as a platform for building. [Michael Peters]
+add fedora 8 as a platform for building. [michael peters]
 
 =item *
 
-Added L<Krang::Schedule::Action::archive> to allow scheduled archiving
-of stories and media. [Bodo Schulze]
+added l<krang::schedule::action::archive> to allow scheduled archiving
+of stories and media. [bodo schulze]
 
 =item *
 
-Script F<bin/krang_upload_templates> uploads templates as UTF-8 if
-Charset is UTF-8. [Bodo Schulze]
+script f<bin/krang_upload_templates> uploads templates as utf-8 if
+charset is utf-8. [bodo schulze]
 
 =item * 
 
-History mechanism is not tied to specific types of objects and can be extended
-by addons to include any other objects. [Michael Peters]
+history mechanism is not tied to specific types of objects and can be extended
+by addons to include any other objects. [michael peters]
 
 =item * 
 
-Added display of IDs to Site & Category's Find screens, and 
-to Site's Edit & View screens. [Noam Weinstein]
+added display of ids to site & category's find screens, and 
+to site's edit & view screens. [noam weinstein]
 
 =item *
 
-Fixed bug #32 along with a related bug in
-L<Krang::Publisher>->unpublish_story()> where after deleting a story
-its preview path would not be deleted even if it is empty. [Bodo
-Schulze]
+fixed bug #32 along with a related bug in
+l<krang::publisher>->unpublish_story()> where after deleting a story
+its preview path would not be deleted even if it is empty. [bodo
+schulze]
 
 =item *
 
-Fixed long standing bug where Edit button is present when viewing an
-old Story version. [Bodo Schulze]
+fixed long standing bug where edit button is present when viewing an
+old story version. [bodo schulze]
 
 =item *
 
-Added copy functionality to Category admin screen. [Bodo Schulze]
+added copy functionality to category admin screen. [bodo schulze]
 
 =item *
 
-Added Trash and Retired functionality to Story, Media and
-Template. [Bodo Schulze]
+added trash and retired functionality to story, media and
+template. [bodo schulze]
 
 
 =back
 
 
 
-=head2 3.011 - March 20, 2008
+=head2 3.011 - march 20, 2008
 
 =over
 
 =item *
 
-Added --maintain-versions mode (and associated tests) to publisher
-to rewrite existing versions of live stories to site. [Noam Weinstein]
+added --maintain-versions mode (and associated tests) to publisher
+to rewrite existing versions of live stories to site. [noam weinstein]
 
 =back
 
 
-=head2 3.01 - February 1, 2008
+=head2 3.01 - february 1, 2008
 
 =over
 
 =item *
 
-Fixed a bug in both JavaScript and PERL where some cookies were being written
-to root path and others to active path. [Noam Weinstein]
+fixed a bug in both javascript and perl where some cookies were being written
+to root path and others to active path. [noam weinstein]
 
 =item *
 
-Added an optimization for Krang admin scripts that know they won't use any
-elements. This dramatically speeds up those admin scripts on systems with multiple
-element libraries. [Michael Peters]
+added an optimization for krang admin scripts that know they won't use any
+elements. this dramatically speeds up those admin scripts on systems with multiple
+element libraries. [michael peters]
 
 =item *
 
-Added interactive C<krang_to_utf8> script to ease conversions. [Noam Weinstein]
+added interactive c<krang_to_utf8> script to ease conversions. [noam weinstein]
 
 =item * 
 
-Added C<PreloadHandler> available to addons to run code during Apache's
-preload stage. [Michael Peters]
+added c<preloadhandler> available to addons to run code during apache's
+preload stage. [michael peters]
 
 =item *
 
-Added C<EnableTemplateCache> configuration parameter to be able to turn Krang
-UI template caching on. [Michael Peters]
+added c<enabletemplatecache> configuration parameter to be able to turn krang
+ui template caching on. [michael peters]
 
 =item *
 
-Added the ability to limit the number of versions saved in the database
-for each Story, Media, and/or Template object, automatically pruning
-the oldest ones. [Noam Weinstein]
+added the ability to limit the number of versions saved in the database
+for each story, media, and/or template object, automatically pruning
+the oldest ones. [noam weinstein]
 
 =item *
 
-In L<Krang::ElementClass::XinhaEditor> fixed caching of
-htmlarea.js. [Bodo Schulze]
+in l<krang::elementclass::xinhaeditor> fixed caching of
+htmlarea.js. [bodo schulze]
 
 =item *
 
-When a user has read-only access to stories, media, and/or templates, made
-buttons like Publish, Add, Checkin, etc. hidden from view. [Noam Weinstein]
+when a user has read-only access to stories, media, and/or templates, made
+buttons like publish, add, checkin, etc. hidden from view. [noam weinstein]
 
 =item *
 
-When editing media, made Save and Save_and_Stay buttons automatically
-publish to preview. [Noam Weinstein]
+when editing media, made save and save_and_stay buttons automatically
+publish to preview. [noam weinstein]
 
 =item *
 
-Added a new script F<bin/krang_exec> to make it really simple to run
-commands against multiple Krang instances using Krang libraries, addons,
-etc. [Michael Peters]
+added a new script f<bin/krang_exec> to make it really simple to run
+commands against multiple krang instances using krang libraries, addons,
+etc. [michael peters]
 
 =item *
 
-In Schedule's C<list_all> runmode show the Delete button if there
-are any table rows. [Bodo Schulze]
+in schedule's c<list_all> runmode show the delete button if there
+are any table rows. [bodo schulze]
 
 =item *
 
-Fixed JS function name in L<Krang::ElementClass::MediaLink>. [Bodo
-Schulze]
+fixed js function name in l<krang::elementclass::medialink>. [bodo
+schulze]
 
 =item *
 
-Fixed a bug when trying to import/export UTF-8 data. [Michael Peters]
+fixed a bug when trying to import/export utf-8 data. [michael peters]
 
 =item *
 
-Added inheritable/overridable methods to L<Krang::Handler>, login_uri()
-and unprotected_uri().  [Jesse Erlbaum]
+added inheritable/overridable methods to l<krang::handler>, login_uri()
+and unprotected_uri().  [jesse erlbaum]
 
 =item *
 
-Made previewing from story-edit screen validate and then display the user's
-latest changes (i.e. changes they haven't yet saved). [Noam Weinstein]
+made previewing from story-edit screen validate and then display the user's
+latest changes (i.e. changes they haven't yet saved). [noam weinstein]
 
 =item *
 
-Made missing-template errors show the actual name of a missing file
-even if it was included by another template. [Noam Weinstein]
+made missing-template errors show the actual name of a missing file
+even if it was included by another template. [noam weinstein]
 
 =item *
 
-Added alerts notifying user if the template or media file being edited was
-modified by another user or window. (This used to crash.) [Noam Weinstein]
+added alerts notifying user if the template or media file being edited was
+modified by another user or window. (this used to crash.) [noam weinstein]
 
 =item *
 
-Implemented admin perm 'admin_users_limited'.  Redirect to login
-screen if user tampers with GID params. [Bodo Schulze]
+implemented admin perm 'admin_users_limited'.  redirect to login
+screen if user tampers with gid params. [bodo schulze]
 
 =item *
 
-Added new option --no_default to F<bin/krang_useradd> to prevent the user
-being associated with group 'default'. [Bodo Schulze]
+added new option --no_default to f<bin/krang_useradd> to prevent the user
+being associated with group 'default'. [bodo schulze]
 
 =item *
 
-Added real-time client-side syntax-highlighting (the CodePress library) to 
-the textareas used for viewing and editing Templates.  Thanks to Jesse for 
-suggesting this feature, and finding the most excellent CodePress.org project!
-[David Kaufman]
+added real-time client-side syntax-highlighting (the codepress library) to 
+the textareas used for viewing and editing templates.  thanks to jesse for 
+suggesting this feature, and finding the most excellent codepress.org project!
+[david kaufman]
 
 =item *
 
-Completed v1 of multiple-window, multiple-session support, allowing a user 
+completed v1 of multiple-window, multiple-session support, allowing a user 
 to open multiple stories, templates, publishing windows, etc. at the same time,
-and log off each window individually or all together. [Noam Weinstein]
+and log off each window individually or all together. [noam weinstein]
 
 =item *
 
-Implemented requested "Replace Story" feature where instead of a simple duplicate-URL
-error, creating a story that conflicts with existing URLs now yields a dialogue box 
-giving users the option of overwriting the duplicate URLs. [Noam Weinstein]
+implemented requested "replace story" feature where instead of a simple duplicate-url
+error, creating a story that conflicts with existing urls now yields a dialogue box 
+giving users the option of overwriting the duplicate urls. [noam weinstein]
 
 =item *
 
-Removed deprecated Story "Priority". [Noam Weinstein]
+removed deprecated story "priority". [noam weinstein]
 
 =back
 
 
 
-=head2 3.00 - November 20th, 2007
+=head2 3.00 - november 20th, 2007
 
 =over
 
 =item *
 
-Added platform file for RedHat Enterprise Server 5 (ES5) [Jesse Erlbaum]
+added platform file for redhat enterprise server 5 (es5) [jesse erlbaum]
 
 =item *
 
-Added F<bin/krang_dump_session> CLI util to help track down session
+added f<bin/krang_dump_session> cli util to help track down session
 problems. [Michael Peters]
 
 =item *
