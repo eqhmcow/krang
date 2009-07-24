@@ -4,6 +4,35 @@ This document contains a list of changes for each release of Krang.
 
 =head2 3.06 - In Development
 
+=item * 
+
+Upgraded DBI from 1.58 to 1.609 and DBD::mysql from 4.005 to 4.012,
+(both had gotten about 2 years old) [David Kaufman]
+
+=item * 
+
+Updated Debian Platform README file to document how to install the 
+O/S prerequisites needed to build krang on Debian 5 (Lenny).
+[David Kaufman]
+
+=item * 
+
+Upgraded Pod::Simple from 2.0.5 to 3.08, and added podlators 2.2.2
+which provides an update for Pod::Man to resolve build problems in
+Module::Build on perl 5.10; Krang now builds on Debian 5 (Lenny)
+[David Kaufman]
+
+=item *
+
+Upgraded Storable from 2.1.3 to 2.2.0 to resolve build problems on 
+perl 5.10 on Debian 5 (Lenny) [David Kaufman]
+
+=item *
+
+Upgraded Image::Size from 3.1.1 to 3.2 and its prerequisite 
+Compress::Zlib from 1.31 to 2.20 (Compress::* packages are now 
+split into IO-Compress-2.020, Compress-Raw-Zlib and 
+Compress-Raw-Bzip2) [David Kaufman]
 
 =over
 
