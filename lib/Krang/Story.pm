@@ -1328,7 +1328,6 @@ or bin/ scripts make calls to C<find()>!
 
             # handle search by category_id
             if ($key eq 'category_id') {
-                $from{"story_category as sc"} = 1;
                 push(@where, 's.story_id = sc.story_id');
                 push(@where, 'sc.category_id = ?');
                 push(@param, $value);
@@ -1337,7 +1336,6 @@ or bin/ scripts make calls to C<find()>!
 
             # handle search by primary_category_id
             if ($key eq 'primary_category_id') {
-                $from{"story_category as sc"} = 1;
                 push(@where, 's.story_id = sc.story_id');
                 push(@where, 'sc.category_id = ?', 'sc.ord = 0');
                 push(@param, $value);
@@ -1346,7 +1344,6 @@ or bin/ scripts make calls to C<find()>!
 
             # handle below_category_id
             if ($key eq 'below_category_id') {
-                $from{"story_category as sc"} = 1;
                 push(@where, 's.story_id = sc.story_id');
                 my ($cat) = pkg('Category')->find(category_id => $value);
                 if ($cat) {
@@ -1360,7 +1357,6 @@ or bin/ scripts make calls to C<find()>!
 
             # handle below_primary_category_id
             if ($key eq 'below_primary_category_id') {
-                $from{"story_category as sc"} = 1;
                 push(@where, 's.story_id = sc.story_id');
                 my ($cat) = pkg('Category')->find(category_id => $value);
                 if ($cat) {
@@ -1376,7 +1372,6 @@ or bin/ scripts make calls to C<find()>!
             if ($key eq 'site_id') {
 
                 # need to bring in category
-                $from{"story_category as sc"} = 1;
                 $from{"category as c"}        = 1;
                 push(@where, 's.story_id = sc.story_id');
                 push(@where, 'sc.category_id = c.category_id');
@@ -1394,7 +1389,6 @@ or bin/ scripts make calls to C<find()>!
             if ($key eq 'primary_site_id') {
 
                 # need to bring in category
-                $from{"story_category as sc"} = 1;
                 $from{"category as c"}        = 1;
                 push(@where, 's.story_id = sc.story_id');
                 push(@where, 'sc.category_id = c.category_id');
@@ -1410,7 +1404,6 @@ or bin/ scripts make calls to C<find()>!
 
             # handle search by url
             if ($key eq 'url') {
-                $from{"story_category as sc"} = 1;
                 push(@where, 's.story_id = sc.story_id');
                 push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'));
                 push(@param, $value);
@@ -1419,7 +1412,6 @@ or bin/ scripts make calls to C<find()>!
 
             # handle search by primary_url
             if ($key eq 'primary_url') {
-                $from{"story_category as sc"} = 1;
                 push(@where, 's.story_id = sc.story_id');
                 push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'), 'sc.ord = 0');
                 push(@param, $value);
@@ -1428,7 +1420,6 @@ or bin/ scripts make calls to C<find()>!
 
             # handle search by non-primary_url
             if ($key eq 'non_primary_url') {
-                $from{"story_category as sc"} = 1;
                 push(@where, 's.story_id = sc.story_id');
                 push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'), 'sc.ord != 0');
                 push(@param, $value);
@@ -1477,7 +1468,6 @@ or bin/ scripts make calls to C<find()>!
 
             # handle simple search
             if ($key eq 'simple_search') {
-                $from{"story_category as sc"} = 1;
                 push(@where, 's.story_id = sc.story_id');
                 if ($simple_full_text) {
                     $from{"element as el"} = 1;
@@ -1611,7 +1601,6 @@ or bin/ scripts make calls to C<find()>!
 
         # handle ordering by primary URL, which is in story_category
         if ($order_by eq 'url') {
-            $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id');
             push(@where, 'sc.ord = 0');
             $order_by = 'sc.url';
@@ -1628,9 +1617,6 @@ or bin/ scripts make calls to C<find()>!
         unless ($show_hidden) {
             push(@where, 's.hidden = 0');
         }
-
-        # always restrict perm checking to primary category
-        push(@where, 'sc_p.ord = 0');
 
         # include live/retired/trashed
         unless ($args{story_id} or $args{story_uuid}) {
@@ -1653,10 +1639,10 @@ or bin/ scripts make calls to C<find()>!
         # construct base query
         my $query;
         my $from = " FROM story AS s 
-                 LEFT JOIN story_category AS sc_p 
-                   ON s.story_id = sc_p.story_id
+                 LEFT JOIN story_category AS sc
+                   ON s.story_id = sc.story_id
                  LEFT JOIN user_category_permission_cache as ucpc
-                   ON sc_p.category_id = ucpc.category_id ";
+                   ON sc.category_id = ucpc.category_id ";
         my $group_by = 0;
 
         if ($count) {

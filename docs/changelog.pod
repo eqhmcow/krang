@@ -4,6 +4,15 @@ This document contains a list of changes for each release of Krang.
 
 =head2 3.06 - In Development
 
+=item *
+
+Fixed bug in Story::find() that caused very slow double-join on story-category 
+table. NOTE: Fix entails slight permissioning change: in the past, a user 
+with may_see permissions in Category A but without them in Category B would 
+only be shown stories whose PRIMARY category was A, not those whose primary 
+category was B and whose SECONDARY category was A. This will no longer be
+the case (which is hopefully an improvement). [Noam Weinstein]
+
 =item * 
 
 Upgraded DBI from 1.58 to 1.609 and DBD::mysql from 4.005 to 4.012,
