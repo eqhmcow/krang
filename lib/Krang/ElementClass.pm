@@ -1124,7 +1124,7 @@ sub _fill_loop_iteration {
         } else {
 
             # success
-            $loop_filled{$name} = $div . $$html;
+            $loop_filled{$name} = $div . ($$html || '');
         }
     }
     unless ($loop_filled{$name}) {
