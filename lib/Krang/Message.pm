@@ -104,11 +104,24 @@ Adds a message to the current list of messages.  The first parameter
 is always the message identifier, which must appear in
 F<lang/messages.LANGUAGE>.  It must either be in the block for the current
 module or outside of any block.  Any parameters after the message name
-are parameters to the message, except for C<_from_module> which sets
-an alternate module name to use to lookup the message definition.
+are parameters to the alert, except for the following:
+
+=over 
+
+=item * C<from_module> 
+
+This sets an alternate module name to use to lookup the message definition.
+
+=item * C<ignore_bad_vars>
+
+This will skip checking of the other parameters passed to make sure they
+were in the message. Use this only if need to pass extra variables to the
+message without knowing just what the message takes.
+
+=back
 
 If the module inherits from one or more modules those blocks will be
-searched if the module's block does not define the requested message
+searched if the module's block does not define the requested alert
 name.
 
 =cut
@@ -141,8 +154,21 @@ Adds an alert to the current list of messages.  The first parameter
 is always the message identifier, which must appear in
 F<lang/messages.LANGUAGE>. It must either be in the block for the current
 module or outside of any block.  Any parameters after the alert name
-are parameters to the alert, except for C<from_module> which sets
-an alternate module name to use to lookup the message definition.
+are parameters to the alert, except for the following:
+
+=over 
+
+=item * C<from_module> 
+
+This sets an alternate module name to use to lookup the message definition.
+
+=item * C<ignore_bad_vars>
+
+This will skip checking of the other parameters passed to make sure they
+were in the message. Use this only if need to pass extra variables to the
+message without knowing just what the message takes.
+
+=back
 
 If the module inherits from one or more modules those blocks will be
 searched if the module's block does not define the requested alert
@@ -238,12 +264,11 @@ they can be provided by using passing in extra C<%args>.
 
 sub get_message_text {
     my ($key, $class, %args) = @_;
-
-    my $language = $session{language} || DefaultLanguage || 'en';
-
-    my $CONF = $CONF{$language};
-
+    my $language        = $session{language} || DefaultLanguage || 'en';
+    my $ignore_bad_vars = delete $args{ignore_bad_vars};
+    my $CONF            = $CONF{$language};
     my $msg;
+
     foreach my $module (Class::ISA::self_and_super_path($class)) {
 
         # get handle for the module block, if there is one
@@ -262,9 +287,9 @@ sub get_message_text {
 
     # perform substitutions
     while (my ($name, $value) = each %args) {
-        unless ($msg =~ s/\$\Q$name\E/$value/g) {
+        unless($msg =~ s/\$\Q$name\E/$value/g) {
             croak(  "Unable to find substitution variable '$name' for message "
-                  . "'$key' in lang/$language/messages.conf");
+                  . "'$key' in lang/$language/messages.conf") unless $ignore_bad_vars;
         }
     }
 
