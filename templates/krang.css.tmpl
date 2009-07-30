@@ -272,9 +272,11 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
 #C .tabs a, #C .tabs b { padding: 0 0 0 10px; }
 #C .tabs a { background-color: <tmpl_var BrightColor>; background-position: 0 -600px; cursor: pointer; }
 #C .tabs b { background-color: #FFF; color: <tmpl_var HeaderColor>; background-position: 0 0; cursor: default; }
+#C .tabs b.disabled { background-color: <tmpl_var BrightColor>; background-position: 0 -600px; cursor: pointer; }
 #C .tabs span { padding: 0 10px 0 0; line-height: 2.27em; }
 #C .tabs a span { background-position: 100% -900px; }
 #C .tabs b span { background-position: 100% -300px; }
+#C .tabs b.disabled span { background-position: 100% -900px; }
 #C .tab-option { background-color: <tmpl_var XLightColor>; color: #666; float: right; margin: 0; line-height: 2.27; }
 #C .tabbed { margin: 0 20px 20px; }
 #C .tabbed p, #C .tabbed .faux-p { margin-right: 0; margin-left: 0; }/*:testing(db2)*/
