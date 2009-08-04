@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Upgraded source modules that were throwing ISEs when trying to use
+the Changeable Elements feature introduced in Krang v3.05. [Michael Peters]
+
+=item *
+
 Fixed bug in Story::find() that caused very slow double-join on story-category 
 table. NOTE: Fix entails slight permissioning change: in the past, a user 
 with may_see permissions in Category A but without them in Category B would 
