@@ -2146,7 +2146,19 @@ sub checkout_selected {
             }
         } else {
             $was_checked_out = 0;
-            $s->checkout();
+            eval { $s->checkout };
+            if( my $e = $@ ) {
+                if( ref $e && $e->isa('Krang::Story::CheckedOut') ) {
+                    $was_checked_out = 1;
+                    add_alert(
+                        'story_stolen_before_checkout',
+                        thief => $e->user_id,
+                        id    => $s->story_id,
+                    );
+                } else {
+                    die $@;
+                }
+            }
         }
     }
 

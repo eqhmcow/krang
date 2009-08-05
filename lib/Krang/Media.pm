@@ -40,6 +40,7 @@ use Exception::Class (
     'Krang::Media::NoEditAccess'         => {fields => ['media_id']},
     'Krang::Media::NoDeleteAccess'       => {fields => ['media_id']},
     'Krang::Media::NoRestoreAccess'      => {fields => ['media_id']},
+    'Krang::Media::CheckedOut'           => {fields => ['desk_id', 'user_id']},
 );
 
 =head1 NAME
@@ -1703,13 +1704,15 @@ sub checkout {
         $sth->execute($media_id);
 
         my $checkout_id = $sth->fetchrow_array();
-        croak("Media asset $media_id already checked out by id $checkout_id!")
-          if ($checkout_id && ($checkout_id ne $user_id));
+        if( $checkout_id && ($checkout_id != $user_id)) {
+            Krang::Media::CheckedOut->throw(
+                message => "Media $self->{media_id} is already checked out by user '$user_id'",
+                user_id => $user_id,
+            );
+        }
 
         $sth->finish();
-
-        $dbh->do('update media set checked_out_by = ? where media_id = ?',
-            undef, $user_id, $media_id);
+        $dbh->do('update media set checked_out_by = ? where media_id = ?', undef, $user_id, $media_id);
     };
 
     if ($@) {

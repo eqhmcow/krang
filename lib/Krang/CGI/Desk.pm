@@ -198,15 +198,34 @@ Checks out a list of checked objects.
 =cut
 
 sub checkout_checked {
-    my $self  = shift;
-    my $query = $self->query;
+    my $self                  = shift;
+    my $query                 = $self->query;
+    my $something_checked_out = 0;
     foreach my $obj (map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked')) {
-        $obj->checkout;
+        eval { $obj->checkout };
+        if (my $e = $@) {
+            if (ref $e && $e->isa('Krang::Story::CheckedOut')) {
+                add_alert(
+                    'story_stolen_before_checkout',
+                    id    => $obj->story_id,
+                    thief => $e->user_id,
+                );
+            } else {
+                die $e;    # just rethrow
+            }
+        } else {
+            $something_checked_out = 1;
+        }
     }
-    add_message('checkout_checked');
-    $self->header_props(-uri => 'workspace.pl');
-    $self->header_type('redirect');
-    return "";
+
+    if ($something_checked_out) {
+        add_message('checkout_checked');
+        $self->header_props(-uri => 'workspace.pl');
+        $self->header_type('redirect');
+        return "Redirecting to workspace.pl";
+    } else {
+        return $self->show;
+    }
 }
 
 =item move
@@ -270,10 +289,19 @@ sub goto_edit {
     my $obj   = $self->_id2obj($query->param('id'));
     Krang::CGI::Story->_cancel_edit_goes_to('desk.pl?desk_id=' . $obj->desk_id);
 
-    $obj->checkout;
-    $self->header_props(-uri => 'story.pl?rm=edit&story_id=' . $obj->story_id);
-    $self->header_type('redirect');
-    return "";
+    eval { $obj->checkout };
+    if (my $e = $@) {
+        if (ref $e && $e->isa('Krang::Story::CheckedOut')) {
+            add_alert('story_stolen_before_checkout', id => $obj->story_id, thief => $e->user_id);
+        } else {
+            die $e;    # just rethrow
+        }
+        return $self->show;
+    } else {
+        $self->header_props(-uri => 'story.pl?rm=edit&story_id=' . $obj->story_id);
+        $self->header_type('redirect');
+        return "Redirecting to edit story";
+    }
 }
 
 =item goto_log
