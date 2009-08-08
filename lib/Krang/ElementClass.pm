@@ -1142,7 +1142,7 @@ sub _fill_loop_iteration {
                 tmpl               => $sub_tmpl,
                 element            => $child
             );
-            foreach (grep { $sub_tmpl->param($_) } $sub_tmpl->param) {
+            foreach (grep { defined $sub_tmpl->param($_) } $sub_tmpl->param) {
                 $loop_filled{$_} =
                   $sub_tmpl->param($_);    # store the values in this iteration of loop
             }
