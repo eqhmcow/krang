@@ -8,10 +8,9 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-Fixed bug in Krang::ElementClass (probably introduced during implementation of 
-flattened-template features for v3.04) that was causing publishing code to
-fail to distinguish the empty-string from an undefined value when recursively
-populating a template's inner loops. [Noam Weinstein]
+Fixed bug in Krang::ElementClass's flattened-template code (introduced in v3.04) 
+that was failing to distinguish the empty-string from an undefined value when 
+recursively populating a template's inner loops. [Noam Weinstein]
 
 =item *
 
