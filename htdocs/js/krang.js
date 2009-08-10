@@ -627,6 +627,8 @@ Krang.Form = {
         form = $(form);
         if( inputs ) Krang.Form.set(form, inputs);
 
+        if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) return;
+
         // take care of our default options
         if(options == null ) options = {};
 
