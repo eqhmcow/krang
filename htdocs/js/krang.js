@@ -627,12 +627,12 @@ Krang.Form = {
         form = $(form);
         if( inputs ) Krang.Form.set(form, inputs);
 
-        if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) return;
-
         // take care of our default options
         if(options == null ) options = {};
 
         if( options.new_window ) {
+            if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) return;
+
             // save the old target of the form so we can restore it after
             // submission
             var old_target = form.target;
@@ -676,6 +676,7 @@ Krang.Form = {
                     onComplete : options['onComplete']
                 });
             } else {
+                if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) return;
                 form.action = Krang.Window.pass_id(form.action);
                 form.submit();
             }
