@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Prevent double clicks (which cause duplicate requests to the server, hidden
+ISEs and session locking) by making sure that the same Ajax request doesn't
+happen within 2 seconds of the last time it was requested. [Michael Peters]
+
+=item *
+
 Fixed bug in Krang::ElementClass's flattened-template code (introduced in v3.04) 
 that was failing to distinguish the empty-string from an undefined value when 
 recursively populating a template's inner loops. [Noam Weinstein]

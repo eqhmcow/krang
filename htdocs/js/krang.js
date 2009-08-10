@@ -314,7 +314,29 @@ Krang.Ajax = {
             params = str.toQueryParams();
         }
         return params;
-    }
+    },
+    is_double_click : function(url, params) {
+        var hash_key = url;
+        $H(params).keys().each(function(k) {
+            hash_key = hash_key + k + '=>' + params[k] + ';';
+        });
+
+        var last_time = Krang.Ajax._last_submitted[hash_key] || 0;
+        var now = new Date();
+        now = now.valueOf(); // now is now in milliseconds
+
+        // if it's older than 2 seconds, then it's ok
+        if( last_time + 2000 < now ) {
+            Krang.Ajax._last_submitted[hash_key] = now;
+            return false;
+        } else {
+            //console.log("It's a double click!");
+            return true;
+        }
+    },
+    // hash of last time a request was submitted so that we can prevent people
+    // who don't know how web applications work from double clicking
+    _last_submitted : { }
 };
 /*
     Krang.Ajax.request({ url: 'story.pl' })
@@ -356,6 +378,9 @@ Krang.Ajax.request = function(args) {
     var failure   = args['onFailure']   || Prototype.emptyFunction;
     var exception = args['onException'] || Prototype.emptyFunction;
     var method    = args['method'] || 'get';
+
+    // stop double clicks
+    if(Krang.Ajax.is_double_click(url, params)) return;
 
     // tell the user that we're doing something
     Krang.show_indicator(indicator);
@@ -454,6 +479,9 @@ Krang.Ajax.update = function(args) {
     var failure   = args.onFailure      || Prototype.emptyFunction;
     var exception = args['onException'] || Prototype.emptyFunction;
     var to_top    = args.to_top == false ? false : true; // defaults to true
+
+    // stop double clicks
+    if(Krang.Ajax.is_double_click(url, params)) return;
 
     // tell the user that we're doing something
     Krang.show_indicator(indicator);
