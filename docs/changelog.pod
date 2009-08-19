@@ -8,6 +8,15 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed the deprecated (but retained for backward compatibility) Krang::URL 
+module's real_url() method which duplicated the code in, rather than 
+simply dispatching to, its recommended successor, the 
+Krang::Publisher->url_for() method.  Now url_for() can be overridden or 
+extended in an addon subclass and any exisitng code still using the old 
+pkg('URL')->real_url() calls will be enhanced too. [David Kaufman]
+
+=item *
+
 Prevent double clicks (which cause duplicate requests to the server, hidden
 ISEs and session locking) by making sure that the same Ajax request doesn't
 happen within 2 seconds of the last time it was requested. [Michael Peters]

@@ -2,17 +2,21 @@ package Krang::URL;
 use strict;
 use warnings;
 
-use Krang::ClassLoader Conf => qw(PreviewSSL);
-
 use Carp qw(croak);
 
 =head1 NAME
 
 Krang::URL - adjusting Krang object URLs to their publishing context
 
-=head1 SYNOPSIS
+=head1 NOTICE: This module is DEPRECATED
 
-B<This module is DEPRECATED: Use $publisher-E<gt>url_for(object =E<gt> $object) instead, see L<Krang::Publisher>>
+Use $publisher-E<gt>url_for(object =E<gt> $object) instead, 
+see L<Krang::Publisher>>.
+
+For Backward-comptibility, pkg('URL')->real_url() is now just a wrapper
+method that dispatches to it's successor: $publisher->url_for().
+
+=head1 SYNOPSIS
 
   use Krang::ClassLoader 'URL';
 
@@ -60,31 +64,8 @@ sub real_url {
 
     my ($object, $publisher) = @args{qw(object publisher)};
 
-    return '' unless ref($object);
+    return $publisher->url_for(object => $object);
 
-    $self->_check_object($object);
-
-    if ($publisher->is_publish) {
-        return 'http://' . $object->url;
-    } elsif ($publisher->is_preview) {
-        my $scheme = PreviewSSL ? 'https' : 'http';
-        return "$scheme://" . $object->preview_url();
-    } else {
-        croak(__PACKAGE__ . ': Not in publish or preview mode. Cannot return proper URL.');
-    }
-}
-
-sub _check_object {
-
-    my ($self, $object) = @_;
-
-    for my $method (qw(url preview_url)) {
-        unless ($object->can($method)) {
-            croak(__PACKAGE__ . ': ' . ref($object) . " misses required method '$method'.");
-        }
-    }
-
-    return 1;
 }
 
 1;
