@@ -1663,7 +1663,8 @@ sub thumbnail_path {
 
 Marks media object as checked out by user_id.
 
-Will throw "Krang::Media::NoEditAccess" exception if user is not allowed to edit this media.
+Will throw a C<Krang::Media::NoEditAccess> exception if user is not allowed to edit this media.
+Will throw a C<Krang::Media::CheckedOut> exception if the media is already checked out.
 
 =cut
 
