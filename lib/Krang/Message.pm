@@ -286,10 +286,12 @@ sub get_message_text {
     }
 
     # perform substitutions
-    while (my ($name, $value) = each %args) {
-        unless($msg =~ s/\$\Q$name\E/$value/g) {
-            croak(  "Unable to find substitution variable '$name' for message "
-                  . "'$key' in lang/$language/messages.conf") unless $ignore_bad_vars;
+    if( $msg ) {
+        while (my ($name, $value) = each %args) {
+            unless($msg =~ s/\$\Q$name\E/$value/g) {
+                croak(  "Unable to find substitution variable '$name' for message "
+                      . "'$key' in lang/$language/messages.conf") unless $ignore_bad_vars;
+            }
         }
     }
 
