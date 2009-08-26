@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed an ISE if C<BadLoginCount> is set but no username was provided
+on the login attempt. [Michael Peters]
+
+=item *
+
 Fixed the deprecated (but retained for backward compatibility) Krang::URL 
 module's real_url() method which duplicated the code in, rather than 
 simply dispatching to, its recommended successor, the 
