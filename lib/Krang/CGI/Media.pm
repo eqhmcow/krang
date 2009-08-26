@@ -707,7 +707,18 @@ sub save_stay_add {
     $m->preview();
 
     # Checkout to Workspace
-    $m->checkout();
+    eval { $m->checkout() };
+    if( my $e = $@ ) {
+        if( ref $e && $e->isa('Krang::Media::CheckedOut') ) {
+            add_alert('media_modified_elsewhere', id => $m->media_id);
+            return $self->redirect_to_workspace;
+        } elsif( ref $e && $e->isa('Krang::Media::NoEditAccess') ) {
+            add_alert('media_permissions_changed_edit', id => $m->media_id);
+            return $self->redirect_to_workspace;
+        } else {
+            die $e; # rethrow
+        }
+    }
 
     # Notify user
     add_message("new_media_saved");
@@ -743,7 +754,19 @@ sub checkout_and_edit {
 
     $self->_cancel_edit_goes_to('media.pl?rm=find', $m->checked_out_by);
 
-    $m->checkout;
+    eval { $m->checkout };
+    if( my $e = $@ ) {
+        if( ref $e && $e->isa('Krang::Media::CheckedOut') ) {
+            add_alert('checked_out', id => $m->media_id, file => $m->filename);
+            return $self->redirect_to_workspace;
+        } elsif( ref $e && $e->isa('Krang::Media::NoEditAccess') ) {
+            add_alert('media_permissions_changed', id => $m->media_id);
+            return $self->redirect_to_workspace;
+        } else {
+            die $e; # rethrow
+        }
+    }
+
     return $self->edit;
 }
 
@@ -856,7 +879,18 @@ sub save_edit {
     $m->preview();
 
     # Checkout to Workspace
-    $m->checkout();
+    eval { $m->checkout() };
+    if( my $e = $@ ) {
+        if( ref $e && $e->isa('Krang::Media::CheckedOut') ) {
+            add_alert('media_modified_elsewhere', id => $m->media_id);
+            return $self->redirect_to_workspace;
+        } elsif( ref $e && $e->isa('Krang::Media::NoEditAccess') ) {
+            add_alert('media_permissions_changed_edit', id => $m->media_id);
+            return $self->redirect_to_workspace;
+        } else {
+            die $e; # rethrow
+        }
+    }
 
     # Notify user
     add_message("media_saved");
@@ -925,7 +959,18 @@ sub save_stay_edit {
     $m->preview();
 
     # Checkout to Workspace
-    $m->checkout();
+    eval { $m->checkout };
+    if( my $e = $@ ) {
+        if( ref $e && $e->isa('Krang::Media::CheckedOut') ) {
+            add_alert('media_modified_elsewhere', id => $m->media_id);
+            return $self->redirect_to_workspace;
+        } elsif( ref $e && $e->isa('Krang::Media::NoEditAccess') ) {
+            add_alert('media_permissions_changed_edit', id => $m->media_id);
+            return $self->redirect_to_workspace;
+        } else {
+            die $e; # rethrow
+        }
+    }
 
     # Notify user
     add_message("media_saved");
@@ -1334,7 +1379,17 @@ sub checkout_selected {
 
     foreach my $media_id (@media_checkout_list) {
         my ($m) = pkg('Media')->find(media_id => $media_id);
-        $m->checkout();
+        eval { $m->checkout() };
+        if( my $e = $@ ) {
+            if( ref $e && $e->isa('Krang::Media::CheckedOut') ) {
+                add_alert('checked_out', id => $m->media_id, file => $m->filename);
+            } elsif( ref $e && $e->isa('Krang::Media::NoEditAccess') ) {
+                add_alert('media_permissions_changed', id => $m->media_id);
+            } else {
+                die $e; # rethrow
+            }
+        }
+
     }
 
     if (scalar(@media_checkout_list)) {
