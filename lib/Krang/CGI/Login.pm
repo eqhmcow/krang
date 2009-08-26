@@ -142,7 +142,7 @@ sub login {
     }
 
     # make sure they don't need to wait
-    if (BadLoginCount) {
+    if (BadLoginCount && length $username) {
         my $rl = $self->rate_limit;
         $rl->identity_callback(sub { $username });
         if ($rl->check_violation(action => 'failed_login')) {
