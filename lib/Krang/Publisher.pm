@@ -2279,7 +2279,7 @@ sub _write_media {
     eval { mkpath($dir_path, 0, 0755); };
     if ($@) {
         Krang::Publisher::FileWriteError->throw(
-            message      => 'Could not create output directory',
+            message      => "Could not create output directory: $@",
             destination  => $dir_path,
             system_error => $@
         );
@@ -2288,7 +2288,7 @@ sub _write_media {
     # copy file out to the production path
     unless (copy($internal_path, $output_path)) {
         Krang::Publisher::FileWriteError->throw(
-            message      => 'Could not copy media file',
+            message      => "Could not copy media file: $@",
             media_id     => $media->media_id(),
             source       => $internal_path,
             destination  => $output_path,
@@ -2391,7 +2391,7 @@ sub _write_page {
     eval { mkpath($args{path}, 0, 0755); };
     if ($@) {
         Krang::Publisher::FileWriteError->throw(
-            message      => "Could not create directory '$args{path}'",
+            message      => "Could not create directory '$args{path}': $@",
             destination  => $args{path},
             system_error => $@
         );
@@ -2439,7 +2439,7 @@ sub _write_template {
     eval { mkpath($path, 0, 0755); };
     if ($@) {
         Krang::Publisher::FileWriteError->throw(
-            message      => 'Could not create publish directory',
+            message      => "Could not create publish directory: $@",
             destination  => $path,
             system_error => $@
         );
@@ -2450,7 +2450,7 @@ sub _write_template {
     # write out file
     my $fh = pkg('IO')->io_file(">$file")
       or Krang::Publisher::FileWriteError->throw(
-        message      => 'Cannot deploy template',
+        message      => "Cannot deploy template: $!",
         template_id  => $id,
         destination  => $file,
         system_error => $!
