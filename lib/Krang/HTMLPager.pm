@@ -1057,14 +1057,17 @@ sub _fill_template {
     my $cache_key          = $self->_get_cache_key;
 
     while (my ($k, $v) = each(%{$self->persist_vars()})) {
-        push(
-            @pager_persist_data,
-            $q->hidden(
-                -name     => $k,
-                -value    => $v,
-                -override => 1
-            )
-        );
+        my @vals = ref $v ? @$v : ($v);
+        foreach my $val (@vals) {
+            push(
+                @pager_persist_data,
+                $q->hidden(
+                    -name     => $k,
+                    -value    => $val,
+                    -override => 1
+                )
+            );
+        }
 
         $session{KRANG_PERSIST}{$cache_key}{$k} = $v;
     }
