@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Media bulk uploads now try to guess the media_type based on the file 
+extension. [Michael Peters]
+
+=item *
+
 Now save and display text media object (HTML, CSS, etc) with the same
 encoding that we use for other text in the system. [Michael Peters]
 

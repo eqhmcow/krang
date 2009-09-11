@@ -203,7 +203,6 @@ sub upload {
         add_alert('no_file');
         return $self->choose();
     }
-
 }
 
 =item create_media
@@ -213,31 +212,86 @@ Returns number of uploaded media.
 
 =cut
 
+my %EXTENSION_TYPES = (
+    jpg   => 'Image',
+    jpeg  => 'Image',
+    png   => 'Image',
+    gif   => 'Image',
+    tiff  => 'Image',
+    tif   => 'Image',
+    bmp   => 'Image',
+    text  => 'Text',
+    txt   => 'Text',
+    html  => 'HTML',
+    htm   => 'HTML',
+    pdf   => 'PDF',
+    xls   => 'Excel',
+    csv   => 'Excel',
+    tsv   => 'Excel',
+    ods   => 'Excel',
+    sxc   => 'Excel',
+    doc   => 'Word',
+    sxw   => 'Word',
+    odt   => 'Word',
+    docx  => 'Word',
+    mpe   => 'Video',
+    mpg   => 'Video',
+    mpeg  => 'Video',
+    avi   => 'Video',
+    divx  => 'Video',
+    f4v   => 'Video',
+    flv   => 'Video',
+    ogm   => 'Video',
+    wmv   => 'Video',
+    mp3   => 'Audio',
+    ogg   => 'Audio',
+    flacc => 'Audio',
+    wav   => 'Audio',
+    fla   => 'Flash',
+    swf   => 'Flash',
+    js    => 'JavaScript',
+    css   => 'Stylesheet',
+    ssi   => 'Include',
+    ppt   => 'Power Point',
+    sxi   => 'Power Point',
+    odp   => 'Power Point',
+);
 sub create_media {
     my $new_count    = 0;
     my $update_count = 0;
 
     foreach my $file (@$media_list) {
-        if ($file->{media_id}) {    # if media_id exists, update object
-            my $media = (pkg('Media')->find(media_id => $file->{media_id}))[0];
-            my $fh = new IO::File $file->{full_path};
+        if ($file->{media_id}) {    
+            # if media_id exists, update object
+            my ($media) = pkg('Media')->find(media_id => $file->{media_id});
+            my $fh = IO::File->new($file->{full_path});
             $media->upload_file(filename => $file->{name}, filehandle => $fh);
             $media->save();
             $media->preview();
             $update_count++;
-        } else {                    #else create new media object
+        } else {                    
+            #else create new media object
             my $category_id = $category_list{$file->{category}};
-            my $fh          = new IO::File $file->{full_path};
+            my $fh          = IO::File->new($file->{full_path});
+            my %media_types = pkg('Pref')->get('media_type');
+            my $name = $file->{name};
 
-            my %media_types    = pkg('Pref')->get('media_type');
-            my @media_type_ids = keys(%media_types);
+            # guess the media type based on the file's extension
+            $name =~ /\.(\w+)$/;
+            my $type_id = $EXTENSION_TYPES{lc $1} || 'Text';
+            foreach my $k (keys %media_types) {
+                if( $type_id eq $media_types{$k} ) {
+                    $type_id = $k;
+                    last;
+                }
+            }
 
             my $media = pkg('Media')->new(
-                title         => $file->{name},
+                title         => $name,
                 category_id   => $category_id,
-                filename      => $file->{name},
+                filename      => $name,
                 filehandle    => $fh,
-                media_type_id => $media_type_ids[0]
+                media_type_id => $type_id,
             );
             $media->save();
             $media->preview();
