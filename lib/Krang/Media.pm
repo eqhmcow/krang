@@ -12,6 +12,7 @@ use Krang::ClassLoader 'Group';
 use Krang::ClassLoader History => qw( add_history );
 use Krang::ClassLoader 'Publisher';
 use Krang::ClassLoader 'UUID';
+use Krang::ClassLoader 'IO';
 use Carp qw(croak);
 use Storable qw(nfreeze thaw);
 use File::Spec::Functions qw(catdir catfile splitpath canonpath);
@@ -592,9 +593,17 @@ sub store_temp_file {
 
     my $path = tempdir(DIR => catdir(KrangRoot, 'tmp'));
     my $filepath = catfile($path, $filename);
-    open(FILE, ">$filepath") || croak("Unable to open $path for writing media!");
-    print FILE $content;
-    close FILE;
+
+    # text needs to be written out in an encoding aware way
+    my $FILE;
+    if( $self->is_text ) {
+        pkg('IO')->open($FILE, '>', $filepath);
+    } else {
+        open($FILE, '>', $filepath);
+    }
+    croak("Unable to open $path for writing media!: $!") unless $FILE;
+    print $FILE $content;
+    close $FILE;
 
     $self->{tempfile} = $filepath;
     $self->{tempdir}  = $path;

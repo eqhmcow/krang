@@ -49,7 +49,7 @@ use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Widget =>
   qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
-
+use Krang::ClassLoader 'IO';
 use Carp qw(croak);
 use File::Temp qw(tempdir);
 use File::Copy qw(copy);
@@ -1788,10 +1788,10 @@ sub make_media_tmpl_data {
         $tmpl_data{is_text} = 1;
 
         # populate template with the file's contents
-        open(FILE, $m->file_path)
+        pkg('IO')->open(my $FILE, '<', $m->file_path)
           or croak "unable to open media file " . $m->file_path . " - $!";
-        my $text_content = join '', <FILE>;
-        close FILE;
+        my $text_content = join '', <$FILE>;
+        close $FILE;
         $tmpl_data{text_content} = $text_content;
 
         # populate template with the syntax-highlighting "language"

@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Now save and display text media object (HTML, CSS, etc) with the same
+encoding that we use for other text in the system. [Michael Peters]
+
+=item *
+
 Fixed an ISE if C<BadLoginCount> is set but no username was provided
 on the login attempt. [Michael Peters]
 
