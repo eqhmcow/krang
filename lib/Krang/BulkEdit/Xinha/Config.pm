@@ -128,6 +128,13 @@ include B, EM or SPAN in the list of inline elements.  See
 L<Krang::Markup>, L<Krang::Markup::IE>, L<Krang::Markup::Gecko> and
 L<Krang::Markup::WebKit>.
 
+Also note that in order to override the default behavior re: <script>
+tags (which is to strip them), you must do the following:
+    1. call HTML::Scrubber's special script() method, i.e.
+           $scrubber->script(1);
+    2. specify acceptable <script> attributes in the B<rules> arrayref, e.g.
+           [..., script => { '*' => 1 }, ...]
+
 =head2 WARNING
 
 Be careful with your legacy data.  It may contain, say,
