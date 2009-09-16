@@ -107,7 +107,7 @@ sub publish_story {
         publish_date_chooser => datetime_chooser(
             name     => 'publish_date',
             query    => $query,
-            onchange => "this.form['publish_now'][1].checked = true",
+            onchange => "this.form['publish_now'][1].checked = true", # when a date is selected, auto-select "Schedule For..." radio button
         )
     );
 
