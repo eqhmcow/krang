@@ -13,6 +13,10 @@ search). [Noam Weinstein]
 
 =item *
 
+Added Fedora 11 as a build platform. [Michael Peters]
+
+=item *
+
 Fixed bug in Widget module where improperly formatted date strings 
 in Date Chooser threw an ISE instead of failing gracefully like 
 DateTime Chooser. [Noam Weinstein]
