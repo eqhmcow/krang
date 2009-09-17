@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+Made ElementEditor's "Find Story" GUI remember (within a session) 
+previous selections for search string (simple search), and category, class, 
+contrib, cover_date, publish_date, story_id, title and url (advanced
+search). [Noam Weinstein]
+
 =item *
 
 Fixed bug in Widget module where improperly formatted date strings 

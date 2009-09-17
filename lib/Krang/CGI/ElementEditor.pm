@@ -542,7 +542,18 @@ sub save_and_find_media_link {
 
 sub find_story_link {
     my ($self, %args) = @_;
-    my $query    = $self->query();
+    my $query = $self->query();
+     
+    # keep both simple and advanced find-story parameters stored in session so user doesn't
+    # need to repeatedly select them (for example when choosing multiple lead-ins in the same category)
+    foreach (qw(advanced cover_from cover_to publish_from publish_to),
+             map { "search_$_" } qw(below_category_id class contrib_simple filter story_id title url)) {
+        my ($query_val, $session_val) = ($query->param($_), $session{KRANG_PERSIST}{FIND_STORY_LINK}{$_});
+        my $latest_val = (defined $query_val ? $query_val : $session_val);
+        $query->param($_ => $latest_val);
+        $session{KRANG_PERSIST}{FIND_STORY_LINK}{$_} = $latest_val;
+    }
+
     my $template = $self->load_tmpl(
         'find_story_link.tmpl',
         path      => [catdir('ElementEditor', $session{language}), 'ElementEditor'],
@@ -562,7 +573,6 @@ sub find_story_link {
 
     # determine appropriate find params for search
     my %find_params;
-    my %persist_vars = ();
     if ($query->param('advanced')) {
         my %tmpl_data;
 
@@ -583,9 +593,6 @@ sub find_story_link {
             # If no data, skip parameter
             next unless (defined($val) && length($val));
 
-            # Persist parameter
-            $persist_vars{"search_" . $_} = $val;
-
             # Like search
             if (grep { $_ eq $key } (qw/title url/)) {
                 $key .= '_like';
@@ -597,59 +604,45 @@ sub find_story_link {
             $find_params{$key} = $val;
         }
 
-        # Set up cover and publish date search
-        for my $datetype (qw/cover publish/) {
-            my $from = decode_date(query => $query, name => $datetype . '_from');
-            my $to   = decode_date(query => $query, name => $datetype . '_to');
-            if ($from || $to) {
-                my $key = $datetype . '_date';
-                my $val = [$from, $to];
-
-                # Set up search in pager
-                $find_params{$key} = $val;
-            }
-
-            # Persist parameter
-            for my $interval (qw/month day year/) {
-                my $from_pname = $datetype . '_from_' . $interval;
-                my $to_pname   = $datetype . '_to_' . $interval;
-
-                # Only persist date vars if they are complete and valid
-                if ($from) {
-                    my $from_pname = $datetype . '_from_' . $interval;
-                    $persist_vars{$from_pname} = $query->param($from_pname);
-                } else {
-
-                    # Blow away var
-                    $query->delete($from_pname);
-                }
-
-                if ($to) {
-                    $persist_vars{$to_pname} = $query->param($to_pname);
-                } else {
-
-                    # Blow away var
-                    $query->delete($to_pname);
-                }
-            }
-
-        }
-
-        # If we're showing an advanced search, set up the form
+        # Category chooser
         $tmpl_data{category_chooser} = category_chooser(
             name  => 'search_below_category_id',
             query => $query,
         );
 
         # Date choosers
-        $tmpl_data{date_chooser_cover_from} =
-          date_chooser(query => $query, name => 'cover_from', nochoice => 1);
-        $tmpl_data{date_chooser_cover_to} =
-          date_chooser(query => $query, name => 'cover_to', nochoice => 1);
-        $tmpl_data{date_chooser_publish_from} =
-          date_chooser(query => $query, name => 'publish_from', nochoice => 1);
-        $tmpl_data{date_chooser_publish_to} =
-          date_chooser(query => $query, name => 'publish_to', nochoice => 1);
+        for my $datetype (qw/cover publish/) {
+            my $from_param = $datetype . '_from';
+            my $to_param   = $datetype . '_to';
+
+            # get dates from query
+            my $from_tp = decode_date(query => $query, name => $from_param);
+            my $to_tp   = decode_date(query => $query, name => $to_param);
+
+            # delete them if they're invalid 
+            if (!$from_tp) {
+                $query->delete($from_param);
+                delete $session{KRANG_PERSIST}{FIND_STORY_LINK}{$from_param};
+            }
+            if (!$to_tp) {
+                $query->delete($to_param);
+                delete $session{KRANG_PERSIST}{FIND_STORY_LINK}{$to_param};
+            }
+
+            # build choosers
+            $tmpl_data{"date_chooser_$from_param"} = 
+              date_chooser(query => $query, name => $from_param, nochoice => 1, date => $from_tp);
+            $tmpl_data{"date_chooser_$to_param"} = 
+              date_chooser(query => $query, name => $to_param, nochoice => 1, date => $to_tp);
+
+            # set up date search in pager
+            my $find_key = $datetype . '_date';
+            if ($from_tp || $to_tp) {
+                $find_params{$find_key} = [$from_tp, $to_tp];
+            } else {
+                delete $find_params{$find_key};
+            }
+        }
 
         # Story class
         my $media_class = pkg('ElementClass::Media')->element_class_name;
@@ -661,7 +654,7 @@ sub find_story_link {
         $tmpl_data{search_class_chooser} = scalar(
             $query->popup_menu(
                 -name    => 'search_class',
-                -default => '',
+                -default => $query->param('search_class') || '',
                 -values  => [('', @classes)],
                 -labels  => \%class_labels
             )
@@ -670,8 +663,7 @@ sub find_story_link {
 
     } else {
         my $search_filter = $query->param('search_filter');
-        %find_params  = (simple_search => $search_filter);
-        %persist_vars = (search_filter => $search_filter);
+        %find_params = (simple_search => $search_filter);
     }
 
     # always show only what should be seen
@@ -693,8 +685,7 @@ sub find_story_link {
             rm                => 'find_story_link',
             path              => $query->param('path'),
             advanced          => ($query->param('advanced') || 0),
-            "hard_find_$path" => $hard_find_froz,
-            %persist_vars,
+            "hard_find_$path" => $hard_find_froz
         },
         use_module  => pkg('Story'),
         find_params => \%find_params,
