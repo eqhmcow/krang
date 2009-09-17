@@ -13,8 +13,6 @@ my $SALT = $Krang::User::SALT;
 
 sub check_pw {
     my ($class, $pw, @info) = @_;
-    use Krang::Log qw(critical);
-    critical($pw);
     my $valid = 0;
     if (length $pw < 6) {
         add_alert('password_too_short');
