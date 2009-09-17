@@ -1683,7 +1683,7 @@ or bin/ scripts make calls to C<find()>!
         }
 
         debug(__PACKAGE__ . "::find() SQL: " . $query);
-        debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', @param));
+        debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', map { defined $_ ? $_ : 'undef' } @param));
 
         # return count results
         if ($count) {
