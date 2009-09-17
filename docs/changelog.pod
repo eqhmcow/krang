@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in Widget module where improperly formatted date strings 
+in Date Chooser threw an ISE instead of failing gracefully like 
+DateTime Chooser. [Noam Weinstein]
+
+=item *
+
 Media bulk uploads now try to guess the media_type based on the file 
 extension. [Michael Peters]
 

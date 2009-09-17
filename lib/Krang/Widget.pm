@@ -716,12 +716,12 @@ sub decode_date {
     croak("Missing required args: name and query")
       unless $name and $query;
 
-    my $value = $query->param($name);
-    if ($value) {
-        return Time::Piece->strptime($value, localize('%m/%d/%Y'));
-    } else {
-        return;
+    if (my $date = $query->param($name)) {
+        my $piece;
+        eval { $piece = Time::Piece->strptime($date, localize('%m/%d/%Y')) };
+        return $piece unless $@;
     }
+    return;
 }
 
 =item $url_html = format_url(url => 'http://my.host/url.html', linkto => 'url.html', length => 15);
