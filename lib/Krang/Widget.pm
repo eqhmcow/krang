@@ -633,12 +633,12 @@ sub date_chooser {
 
     my $date_format = localize('%m/%d/%Y');
 
-    # use the date from the query first, if not there use
+    # look for the date in query first
     if ($query->param($name)) {
         $date = $query->param($name);
     } else {
 
-        # Set date to today if it is NOT already set, AND if we do not allow "no choice"
+       # Set date to today if it is NOT already set, AND if we do not allow "no choice"
         $date ||= localtime() unless ($nochoice);
         $date = $date ? $date->strftime($date_format) : '';
     }
