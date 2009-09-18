@@ -427,21 +427,8 @@ Krang.onload( function() {
     <tmpl_if add_mode>
       <li><input value="<tmpl_lang Cancel>" onclick="do_cancel_add()" type="button"></li>
     <tmpl_else>
-      <tmpl_if bulk_edit>
-        <li>
-          <input value="<tmpl_lang Done Bulk Editing> <tmpl_var name_of_this_element>" onclick="save_and_leave_bulk_edit()" type="button">
-        </li>
-      <tmpl_else>
-        <tmpl_if is_root>
-          <li><input value="<tmpl_lang Cancel>" onclick="do_cancel_edit()" type="button"></li>
-          <li><input value="<tmpl_lang Delete>" onclick="do_delete()" type="button"></li>
-        <tmpl_else>
-          <li><input value="<tmpl_var escape=html done_with_this_element>" onclick="save_and_go_up()" type="button"></li>
-          <tmpl_if allow_delete>
-            <li><input value="<tmpl_var escape=html delete_this_element>" onclick="remove_element()" type="button"></li>
-          </tmpl_if>
-        </tmpl_if>
-      </tmpl_if>
+      <li><input value="<tmpl_lang Cancel>" onclick="do_cancel_edit()" type="button"></li>
+      <li><input value="<tmpl_lang Delete Media>" onclick="do_delete()" type="button"></li>
     </tmpl_if>
   </ul>
 
@@ -449,25 +436,16 @@ Krang.onload( function() {
     <tmpl_if add_mode>
       <li><input value="<tmpl_lang Create>" onclick="do_create()" type="button"></li>
     <tmpl_else>
-      <tmpl_unless bulk_edit>
         <li class="menu">
           <input value="<tmpl_lang Save> &#9660;" onclick="db_save()" type="button">
           <ul><li><a href="javascript:db_save_stay()"><tmpl_lang Save &amp; Stay></a></li></ul>
         </li>
-        <tmpl_if is_root>
-          <tmpl_if may_publish>
-            <li><input value="<tmpl_lang Publish>" onclick="publish_media()" type="button"></li>
-          </tmpl_if>
-          <tmpl_if can_transform_image>
-            <li><input value="<tmpl_lang Transform>" onclick="transform_image()" type="button"></li>
-          </tmpl_if>
-        <tmpl_else>
-          <li><input value="<tmpl_var escape=html done_with_this_element>" onclick="save_and_go_up()" type="button"></li>
-          <tmpl_if allow_delete>
-            <li><input value="<tmpl_var escape=html delete_this_element>" onclick="remove_element()" type="button"></li>
-          </tmpl_if>
+        <tmpl_if may_publish>
+          <li><input value="<tmpl_lang Publish>" onclick="publish_media()" type="button"></li>
         </tmpl_if>
-      </tmpl_unless>
+        <tmpl_if can_transform_image>
+          <li><input value="<tmpl_lang Transform>" onclick="transform_image()" type="button"></li>
+        </tmpl_if>
     </tmpl_if>
   </ul>
 

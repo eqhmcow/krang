@@ -13,7 +13,7 @@ cancel_category_change = function() {
     }
 }
 
-save_and_leave = function() {
+save_and_go_up = function() {
     Krang.ElementEditor.run_save_hooks();
     Krang.Form.submit('edit', { rm: 'save_and_<tmpl_if bulk_edit>leave_bulk_edit<tmpl_else>go_up</tmpl_if>' });
 }
@@ -28,14 +28,12 @@ db_save_and_stay = function() {
     Krang.Form.submit('edit', { rm: 'db_save_and_stay' }, { to_top: false });
 }
 
-<tmpl_if is_root>
+remove_category = function() {
+  if ( confirm(Krang.L10N.loc('Are you SURE you want to delete this Category?') )) 
+    Krang.Form.submit('edit', { rm: 'delete' });
+}
 
-  remove_category = function() {
-    if ( confirm(Krang.L10N.loc('Are you SURE you want to delete this Category?') )) 
-      Krang.Form.submit('edit', { rm: 'delete' });
-  }
-
-<tmpl_else><tmpl_unless bulk_edit><tmpl_if allow_delete>
+<tmpl_if allow_delete>
 
   remove_element = function() {
     if (confirm( Krang.L10N.loc('Are you SURE you want to delete this Element?') )) {
@@ -44,7 +42,7 @@ db_save_and_stay = function() {
     }
   }
 
-</tmpl_if></tmpl_unless></tmpl_if>
+</tmpl_if>
 </script>
 
 <h2>
@@ -93,20 +91,9 @@ db_save_and_stay = function() {
 
 <div class="panel capped clearfix buttonbar">
 
-<tmpl_if bulk_edit> 
-  <input value="<tmpl_var bulk_done_with_this_element>" onclick="save_and_leave()" type="button" class="west">
-<tmpl_else>
-
   <ul class="west">
-  <tmpl_if is_root>
     <li><input value="<tmpl_lang Cancel>" onclick="cancel_category_change()" type="button"></li>
-    <li><input value="<tmpl_lang Delete>" onclick="remove_category()" type="button"></li>
-  <tmpl_else>
-    <li><input value="<tmpl_var done_with_this_element>" onclick="save_and_leave()" type="button"></li>
-    <tmpl_unless bulk_edit><tmpl_if allow_delete>
-      <li><input value="<tmpl_var delete_this_element>" onclick="remove_element()" type="button"></li>
-    </tmpl_if></tmpl_unless>
-  </tmpl_if>
+    <li><input value="<tmpl_lang Delete Category>" onclick="remove_category()" type="button"></li>
   </ul>
 
   <ul class="east">
@@ -115,8 +102,6 @@ db_save_and_stay = function() {
       <ul><li><a href="javascript:db_save_and_stay()"><tmpl_lang Save &amp; Stay></a></li></ul>
     </li>
   </ul>
-
-</tmpl_if>
 
 </div>
 

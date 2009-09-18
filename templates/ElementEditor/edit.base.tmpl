@@ -416,7 +416,7 @@ if( ! class_changer ) alert('no class_changer');
   </tmpl_loop>
 
   <tr class="command-row">
-  <td class="series f"><tmpl_unless no_reorder><input value="<tmpl_lang Reorder>" onclick="reorder()" type="button" class="button"><tmpl_else>&nbsp;</tmpl_unless></td>
+  <td class="series f"><tmpl_unless no_reorder><input value="<tmpl_lang Reorder>&nbsp;&uarr;" onclick="reorder()" type="button" class="button"><tmpl_else>&nbsp;</tmpl_unless></td>
 
   <td>&nbsp;</td>
 
@@ -434,7 +434,7 @@ if( ! class_changer ) alert('no class_changer');
   </table>
   </td>
 
-  <td class="series l"><tmpl_unless no_delete><input value="<tmpl_lang Delete>" onclick="remove_children()" type="button" class="mini-list-button button"></tmpl_unless></td>
+  <td class="series l"><tmpl_unless no_delete><input value="<tmpl_lang Delete>&nbsp;&uarr;" onclick="remove_children()" type="button" class="mini-list-button button"></tmpl_unless></td>
   </tr>
 
   </tbody>

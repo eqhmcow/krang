@@ -6,6 +6,22 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+Fixed issue (discovered by Dave Kaufman) where Media and Category Edit 
+screens contained duplicate "Done With" & "Delete" buttons when editing
+containers, and -- in the case of Category -- the inner "Done With"
+was failing. (The above issues appear to have been caused by 
+ElementEditor.tmpl being changed without all of the templates that include 
+ElementEditor.tmpl being updated.) Also renamed the top-level (big green)
+Delete buttons on edit screens "Delete Story", "Delete Media", "Delete 
+Category", and "Delete Template" since top-level objects are being
+accidentally deleted from within containers by users who are intending
+to delete only the container. Finally, added upward arrow to the right 
+of innermost "Delete" on Edit screens in order to differentiate THIS 
+delete (which operates on the sub-elements above it) from the other two! 
+[Noam Weinstein]
+
+=item *
+
 Made ElementEditor's "Find Story" GUI remember (within a session) 
 previous selections for search string (simple search), and category, class, 
 contrib, cover_date, publish_date, story_id, title and url (advanced
