@@ -6,13 +6,19 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+Changed default sort order for Find Story and Find Media to
+*descending* ID so newest items are visible on the first page. 
+[Noam Weinstein]
+
+=over
+
 Fixed issue (discovered by Dave Kaufman) where Media and Category Edit 
 screens contained duplicate "Done With" & "Delete" buttons when editing
 containers, and -- in the case of Category -- the inner "Done With"
 was failing. (The above issues appear to have been caused by 
 ElementEditor.tmpl being changed without all of the templates that include 
 ElementEditor.tmpl being updated.) Also renamed the top-level (big green)
-Delete buttons on edit screens "Delete Story", "Delete Media", "Delete 
+"Delete" buttons on Edit screens "Delete Story", "Delete Media", "Delete 
 Category", and "Delete Template" since top-level objects are being
 accidentally deleted from within containers by users who are intending
 to delete only the container. Finally, added upward arrow to the right 

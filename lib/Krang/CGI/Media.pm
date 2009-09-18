@@ -2085,6 +2085,7 @@ sub make_pager {
         columns          => \@columns,
         column_labels    => \%column_labels,
         columns_sortable => [qw( media_id title url creation_date )],
+        default_sort_order_desc => 1,
         columns_hidden   => [qw( status )],
         row_handler =>
           sub { $self->find_media_row_handler($show_thumbnails, @_, retired => $retired); },
