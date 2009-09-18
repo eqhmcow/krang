@@ -6,9 +6,10 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
-Changed default sort order for Find Story and Find Media to
-*descending* ID so newest items are visible on the first page. 
-[Noam Weinstein]
+Per user requests, changed default sort order for Find Story 
+and Find Media interfaces (toplevel screens and StoryLink/MediaLink 
+screens) to descending ID (instead of ascending ID) so newest items 
+are visible on the first page. [Noam Weinstein]
 
 =over
 
