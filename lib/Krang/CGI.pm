@@ -16,7 +16,7 @@ use Krang::ClassLoader 'Charset';
 use Krang::ClassLoader Localization => qw(localize);
 use MIME::Base64 qw(decode_base64);
 use Encode qw(decode_utf8);
-
+use URI::Escape qw(uri_escape);
 
 =head1 NAME
 
@@ -468,7 +468,7 @@ sub access_forbidden {
 
     $msg ||= localize("You do not have permissions to access that portion of the site.");
 
-    return $self->redirect_to_login($msg);
+    return $self->redirect_to_workspace($msg);
 }
 
 =item * redirect_to_login($msg)
@@ -483,40 +483,32 @@ sub redirect_to_login {
 
     # delete user's session
     pkg('Session')->delete($ENV{KRANG_SESSION_ID});
+    return $self->_redirect_to_url_with_msg('login.pl', $msg);
+}
 
-    if ($msg) {
-
-        # care for non-urics in $msg
-        my $module = 'URI::Escape';
-        eval "require $module";
-        import $module qw(uri_escape);
-
-        $msg = '?alert=' . uri_escape($msg);
-    } else {
-        $msg = '';
-    }
+sub _redirect_to_url_with_msg {
+    my ($self, $url, $msg) = @_;
+    $url .= '?message=' . uri_escape($msg) if $msg;
 
     if ($self->param('ajax')) {
-        return qq{<script type="text/javascript">location.replace("login.pl$msg")</script>};
+        return qq{<script type="text/javascript">location.replace("$url")</script>};
     } else {
-        $self->header_add(-location => "login.pl$msg");
+        $self->header_add(-location => $url);
         $self->header_type('redirect');
-        return '';
+        return "Redirecting to <a href='$url'>$url</a>";
     }
 }
 
 =item * redirect_to_workspace()
 
-This runmode redirects the user to his or her workspace.
+This runmode redirects the user to his or her workspace. Optionally passing a
+message to be displayed when they get there.
 
 =cut
 
 sub redirect_to_workspace {
-    my $self = shift;
-    my $uri  = 'workspace.pl';
-    $self->header_props(-uri => $uri);
-    $self->header_type('redirect');
-    return "Redirect: <a href=\"$uri\">$uri</a>";
+    my ($self, $msg) = @_;
+    return $self->_redirect_to_url_with_msg('workspace.pl', $msg);
 }
 
 =item * cancel_edit()

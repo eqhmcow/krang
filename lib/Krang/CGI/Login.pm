@@ -119,7 +119,7 @@ sub show_form {
     my $template = $self->load_tmpl("login.tmpl", associate => $query);
 
     # this can be an arbitrary message coming from some other place
-    my $msg = $arg{alert} || $query->param('alert');
+    my $msg = $arg{alert} || $query->param('alert') || $query->param('message');
     add_alert('custom_msg', msg => $msg) if $msg;
     return $template->output();
 }

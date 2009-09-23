@@ -68,6 +68,11 @@ requires no parameters.
 sub show {
     my $self     = shift;
     my $query    = $self->query;
+
+    # this can be an arbitrary message coming from some other place
+    my $msg = $query->param('message');
+    add_alert('custom_msg', msg => $msg) if $msg;
+
     my $template = $self->load_tmpl(
         "workspace.tmpl",
         associate         => $query,
