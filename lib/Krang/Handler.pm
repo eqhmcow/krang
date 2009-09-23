@@ -624,7 +624,7 @@ sub cleanup_handler ($$) {
         # format an email message with all of the information that we want
         my $line = ('=' x 40);
         my $msg =
-            "INSTANCE\n$line\n%s (%s)\n\nUSER\n$line\n%s (#%s)\n\nTIMESTAMP\n$line\n%s\n"
+            "INSTANCE\n$line\n%s (%s)\n\nUSER\n$line\n%s (#%s)\n\nTIMESTAMP\n$line\n%s\n\n"
           . "SERVER\n$line\n%s\nURL\n$line\n%s\n\nPERL ERROR\n$line\n%s\n"
           . "REQUEST\n$line\n%s\nENV\n$line\n%s\nHTTP STATUS\n$line\n%s";
         my $instance     = Arcos::Conf->instance();
