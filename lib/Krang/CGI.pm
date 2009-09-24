@@ -16,6 +16,7 @@ use Krang::ClassLoader 'Charset';
 use Krang::ClassLoader Localization => qw(localize);
 use MIME::Base64 qw(decode_base64);
 use Encode qw(decode_utf8);
+use Unicode::Normalize;
 use URI::Escape qw(uri_escape);
 
 =head1 NAME
@@ -248,7 +249,7 @@ BEGIN {
                         # a string. There might be a better way to handle this if
                         # we might have UTF-8 named files.
                         next if lc(ref $values[$i]) eq 'fh';
-                        $values[$i] = decode_utf8($values[$i]);
+                        $values[$i] = Unicode::Normalize::NFC(decode_utf8($values[$i]));
                     }
 
                     $q->param($name => @values);

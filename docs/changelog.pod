@@ -6,6 +6,15 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+Normalize Unicode characters coming in so that we always have single
+grapheme characters. Unicode can have "composed" characters where the
+same character is actually represented by combining multiple characters.
+Use NFC normalization so that we just store a single character. This will
+make it easier to do things like full text search on Unicode characters
+that might have been submitted as multiple graphemes. [Michael Peters]
+
+=over
+
 Fixed IE (6, 7 & 8) where the Category Chooser on Edit Media screen
 was hidden behind every table but the initial one (the meta-data
 table). [Michael Peters]
