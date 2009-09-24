@@ -86,6 +86,16 @@ Krang.load = function(target) {
 };
 
 /*
+    Krang.is_ie()
+
+    Since there are lots of places where you have to work around IE
+    this at least let's you check it easier.
+*/
+Krang.is_ie = function() {
+    return Prototype.Browser.IEVersion > 0;
+}
+
+/*
     Krang.is_ie_6()
 
     Since there are lots of places where you have to work around IE 6
@@ -1945,6 +1955,21 @@ if (Krang.is_ie_6()) {
         },
         '#H .nav .menu' : function( el ) {
             el.onmouseover = el.onmouseout = function(){ this.toggleClassName( 'over' ); };
+        }
+    });
+}
+/*
+  IE- rules only
+*/
+if (Krang.is_ie()) {
+    // IE screws up z-index when something is absolutely positioned above a relatively position
+    // element that is not the parent of the absolutely positioned element. Yeah, that's a mouthful
+    // An example of this is the Edit Media screen where the category chooser is inside a table-container
+    // (which handles it fine) but the other table-container's on the screen all appear above the
+    // category chooser. So reset their z-index to 1 and it magically fixes everything.
+    Object.extend(rules,{
+        '.table-container' : function(el) {
+            el.style.zIndex = 1;
         }
     });
 }

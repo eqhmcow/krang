@@ -6,6 +6,12 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+Fixed IE (6, 7 & 8) where the Category Chooser on Edit Media screen
+was hidden behind every table but the initial one (the meta-data
+table). [Michael Peters]
+
+=over
+
 Per user requests, changed default sort order for Find Story 
 and Find Media interfaces (toplevel screens and StoryLink/MediaLink 
 screens) to descending ID (instead of ascending ID) so newest items 
