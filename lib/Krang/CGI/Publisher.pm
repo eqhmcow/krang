@@ -416,7 +416,7 @@ sub preview_story {
 
             } else {
                 critical($error);
-                die $error;
+                croak($error);
             }
 
             # put the messages on the screen
@@ -439,7 +439,7 @@ sub preview_story {
     debug("Cache Stats " . join(' : ', pkg('Cache')->stats()));
 
     # die a rightful death
-    die $err if $err;
+    croak($err) if $err;
 
     # this should always be true
     assert($url eq $story->preview_url) if ASSERT;
@@ -566,17 +566,7 @@ sub preview_media {
             critical($err_msg);
 
         } else {
-
-            # something not expected so log the error.  Can't croak()
-            # here because that will trigger bug.pl.
-            push(
-                @error_loop,
-                {
-                    err =>
-                      'An internal server error occurred.  Please check the error logs for details.'
-                }
-            );
-            critical($e);
+            croak($e);
         }
 
         # finish the error screen
@@ -802,10 +792,7 @@ sub _publish_assets_now {
                     );
                     critical($err->message);
                 } else {
-
-                    # something not expected so log the error.  Can't croak()
-                    # here because that will trigger bug.pl.
-                    die $err;
+                    croak($err);
                 }
 
                 # make sure to turn off caching
@@ -853,7 +840,7 @@ sub _publish_assets_now {
     debug("Cache stats " . join(' : ', pkg('Cache')->stats()));
 
     # die if you want to
-    die $err if $err;
+    croak($err) if $err;
 
     # dynamic redirect to workspace, but give the page time to update
     # itself
