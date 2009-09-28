@@ -258,7 +258,7 @@ sub fill_template {
     my $element   = $args{element};
     my $data      = $element->data;
 
-#    return unless $data;
+    return unless $data;
 
     my %params = ();
     my $width  = $data->width;
