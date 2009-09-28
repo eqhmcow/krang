@@ -252,32 +252,27 @@ sub template_data {
 # See Krang::ElementClass->fill_template for more information.
 #
 sub fill_template {
-    my $self = shift;
-    my %args = @_;
-
+    my ($self, %args) = @_;
     my $tmpl      = $args{tmpl};
     my $publisher = $args{publisher};
     my $element   = $args{element};
+    my $data      = $element->data;
+
+#    return unless $data;
 
     my %params = ();
-
-    $params{title} = $element->data()->title()
-      if $tmpl->query(name => 'title');
-    $params{caption} = $element->data()->caption()
-      if $tmpl->query(name => 'caption');
+    my $width  = $data->width;
+    my $height = $data->height;
 
     $params{url} = $element->template_data(publisher => $publisher);
-
-    my $width  = $element->data->width;
-    my $height = $element->data->height;
-
-    $params{width}  = $width  if $tmpl->query(name => 'width');
-    $params{height} = $height if $tmpl->query(name => 'height');
+    $params{title}   = $data->title   if $tmpl->query(name => 'title');
+    $params{caption} = $data->caption if $tmpl->query(name => 'caption');
+    $params{width}   = $width         if $tmpl->query(name => 'width');
+    $params{height}  = $height        if $tmpl->query(name => 'height');
     $params{image_dimensions} = "width='$width' height='$height'"
       if $tmpl->query(name => 'image_dimensions');
 
     $tmpl->param(\%params);
-
 }
 
 =head1 NAME
