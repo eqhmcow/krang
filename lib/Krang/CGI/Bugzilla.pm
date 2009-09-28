@@ -8,12 +8,14 @@ use Carp qw(croak);
 use Data::Dumper;
 use File::Path;
 use File::Spec::Functions qw(catdir catfile);
+use File::Basename qw(basename);
 use File::Temp qw/ tempdir /;
 use WWW::Bugzilla;
 use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Conf =>
   qw(KrangRoot BugzillaServer BugzillaEmail BugzillaPassword BugzillaComponent EnableBugzilla);
+use List::Util qw(first);
 
 =head1 NAME
 
@@ -61,7 +63,7 @@ sub setup {
 
 =item edit
 
-Displays a user-editable bug form.  If 'ise' is set to a true value
+Displays a user-editable bug form. If 'ise' is set to a true value
 then the user is informed that something just went boom.
 
 =cut
@@ -71,11 +73,25 @@ sub edit {
     my $error    = shift || '';
     my $q        = $self->query;
     my $template = $self->load_tmpl('edit.tmpl', associate => $q);
-    $template->param(bug_page => 1);
+    $template->param(
+        bug_page        => 1,
+        progress_screen => $self->is_progress_screen,
+    );
     $template->param($error                                      => 1) if $error;
     $template->param("reproduce_" . $q->param('reproduce')       => 1) if $q->param('reproduce');
     $template->param("bug_severity_" . $q->param('bug_severity') => 1) if $q->param('reproduce');
     return $template->output;
+}
+
+sub is_progress_screen {
+    my $self = shift;
+    my %progress_screens = (
+        'publisher.pl' => [qw(publish_assets publish_media preview_story preview_media)],
+    );
+    my $script = basename($ENV{REDIRECT_SCRIPT_NAME});
+    my $rm = CGI->new($ENV{REDIRECT_QUERY_STRING})->param('rm');
+
+    return 1 if $progress_screens{$script} && first { $rm eq $_ } @{$progress_screens{$script}};
 }
 
 =item commit() 

@@ -6,11 +6,20 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Unknown publish errors from the Web UI now result in a normal ISE
+(die) like other errors and are displayed with the same modal dialog
+in the UI. This also triggers the C<ErrorNotificationEmail> to be sent
+if configured.
+
+=item *
+
 Fixed error when publishing a MediaLink element that didn't actually
 have a media object selected. Now we just silently return and continue
 with the publish. [Michael Peters]
 
-=over
+=item *
 
 Normalize Unicode characters coming in so that we always have single
 grapheme characters. Unicode can have "composed" characters where the
@@ -19,20 +28,20 @@ Use NFC normalization so that we just store a single character. This will
 make it easier to do things like full text search on Unicode characters
 that might have been submitted as multiple graphemes. [Michael Peters]
 
-=over
+=item *
 
 Fixed IE (6, 7 & 8) where the Category Chooser on Edit Media screen
 was hidden behind every table but the initial one (the meta-data
 table). [Michael Peters]
 
-=over
+=item *
 
 Per user requests, changed default sort order for Find Story 
 and Find Media interfaces (toplevel screens and StoryLink/MediaLink 
 screens) to descending ID (instead of ascending ID) so newest items 
 are visible on the first page. [Noam Weinstein]
 
-=over
+=item *
 
 Fixed issue (discovered by Dave Kaufman) where Media and Category Edit 
 screens contained duplicate "Done With" & "Delete" buttons when editing

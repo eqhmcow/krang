@@ -1,10 +1,16 @@
+<tmpl_if progress_screen>
+<script type="text/javascript">
+Control.Modal.load();
+Krang.Error.show();
+</script>
+<tmpl_else>
 <tmpl_include header.tmpl>
 
 <tmpl_unless bug_added>
 
   <tmpl_if ise>
     <script type="text/javascript">
-    Krang.onload( Krang.Error.show );
+    Krang.onload( function() { Krang.Error.show() } );
     </script>
   </tmpl_if>
 
@@ -215,4 +221,5 @@
 </tmpl_unless>
 
 <tmpl_include footer.tmpl>
+</tmpl_if>
 
