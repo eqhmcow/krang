@@ -85,6 +85,8 @@ sub edit {
 
 sub is_progress_screen {
     my $self = shift;
+    my $query = $self->query;
+    return 1 if $query->param('progress_screen');
     my %progress_screens = (
         'publisher.pl' => [qw(publish_assets publish_media preview_story preview_media)],
     );
