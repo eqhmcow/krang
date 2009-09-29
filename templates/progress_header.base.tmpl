@@ -3,7 +3,7 @@
 <html lang="en-US"><head>
 
 <tmpl_if charset><meta http-equiv="Content-Type" content="text/html; charset=<tmpl_var charset>" /></tmpl_if>
-<title><tmpl_var escape=html krang_product_name> - <tmpl_var escape=html instance_display_name> - <tmpl_if preview><tmpl_lang Processing Preview Request><tmpl_else><tmpl_lang Processing Publish Request></tmpl_if></title>
+<title><tmpl_var escape=html krang_product_name> - <tmpl_var escape=html instance_display_name> - <tmpl_if preview><tmpl_lang Processing Request><tmpl_else><tmpl_lang Processing Publish Request></tmpl_if></title>
 
 <link href="favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon">
 
@@ -49,7 +49,7 @@ body { position: relative; font-size: 69%; }
 </tmpl_unless></tmpl_unless>
 </div>
 <div class="control">
-<input value="<tmpl_lang OK>" onclick="window.close()" type="button" class="button">
+<input value="<tmpl_lang OK>" onclick="Krang.Error.close()" type="button" class="button">
 </div>
 </div>
 
