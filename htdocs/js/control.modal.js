@@ -25,6 +25,7 @@ Object.extend(Control.Modal,{
 		zIndex: 9998
 	},
 	load: function(){		
+        if(Control.Modal.loaded) return;
 		Control.Modal.ie = (navigator.appName == 'Microsoft Internet Explorer');
 		body = document.getElementsByTagName('body')[0];
 		Control.Modal.overlay = $(document.createElement('div'));
@@ -36,6 +37,7 @@ Object.extend(Control.Modal,{
 		Control.Modal.container.hide();
 		body.appendChild(Control.Modal.overlay);
 		body.appendChild(Control.Modal.container);
+        Control.Modal.loaded = true;
 	},
 	close: function(){
 		if(Control.Modal.current)
