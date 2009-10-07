@@ -72,22 +72,23 @@ use File::Find;
 use Time::Piece;
 use Time::Piece::MySQL;
 use Time::Seconds;
-my ($help, $man);
+my ($help, $man, $dir);
 GetOptions(
-    help          => \$help,
-    man           => \$man,
+    'help'        => \$help,
+    'man'         => \$man,
+    'directory=s' => \$dir,
 );
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
-my $TMP_PATH = catdir(KrangRoot, 'tmp');
+my $TMP_PATH = $dir || catdir(KrangRoot, 'tmp');
 my $MAX_AGE = 24; # num of hours old before we delete
 
 my (@dirs, @files);
 my $date = localtime;
 $date = $date - ($MAX_AGE * ONE_HOUR);
 
-warn "Deleing files in tmp/ older than " . $date->mysql_datetime . "\n";
+warn "Deleing files in $TMP_PATH older than " . $date->mysql_datetime . "\n";
 
 # build a list of files to delete
 opendir(DIR, $TMP_PATH) || die "Can't open tmpdir: $!\n";
