@@ -464,7 +464,9 @@ sub checkout_and_edit {
 
     eval { $story->checkout };
     if( $@ && ref $@ && $@->isa('Krang::Story::CheckedOut')) {
-        add_alert('story_stolen_before_checkout', id => $story->story_id, thief => $@->user_id);
+        my ($thief) = pkg('User')->find(user_id => $@->user_id);
+        my $thief_name = CGI->escapeHTML($thief->first_name . ' ' . $thief->last_name);
+        add_alert('story_stolen_before_checkout', id => $story->story_id, thief => $thief_name);
         return $self->goto_workspace();
     } elsif( $@ ) {
         die $@;
