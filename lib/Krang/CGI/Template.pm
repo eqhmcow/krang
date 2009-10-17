@@ -437,19 +437,12 @@ sub deploy {
     # update template with CGI values
     $self->update_template($obj) || return $self->redirect_to_workspace;
 
-    if ($obj->template_id) {
-        my %errors = $self->validate($obj);
-        return $self->edit(%errors) if %errors;
-
-        %errors = $self->_save($obj);
-        return $self->edit(%errors) if %errors;
-    } else {
-        my %errors = $self->validate($obj);
-        return $self->add(%errors) if %errors;
-
-        %errors = $self->_save($obj);
-        return $self->add(%errors) if %errors;
-    }
+    # validate and go back if we have errors
+    my $return_rm = $obj->template_id ? 'edit' : 'add';
+    my %errors = $self->validate($obj);
+    return $self->$return_rm(%errors) if %errors;
+    %errors = $self->_save($obj);
+    return $self->$return_rm(%errors) if %errors;
 
     add_message('message_saved');
 
