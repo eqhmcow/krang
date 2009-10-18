@@ -827,7 +827,7 @@ worked on.
 
 sub dir {
     my $self = shift;
-    return $self->dir;
+    return $self->{dir};
 }
 
 =back
