@@ -818,6 +818,18 @@ sub map_file {
     return $full_path;
 }
 
+=item C<< $tmp_dir = $set->dir >>
+
+Get the full path to the directory where the dataset is being
+worked on.
+
+=cut
+
+sub dir {
+    my $self = shift;
+    return $self->dir;
+}
+
 =back
 
 =head1 EXCEPTIONS
