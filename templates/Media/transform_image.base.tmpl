@@ -117,10 +117,14 @@ new_cropper = function() {
     Krang.show_indicator();
     var cropper = new Cropper.Img('the_image', {
         onEndCrop: function(coords, dimensions) {
-            $('crop_x').value = coords.x1;
-            $('crop_y').value = coords.y1;
-            $('crop_width').value = dimensions.width;
-            $('crop_height').value = dimensions.height;
+            if( $('crop_x') ) {
+                $('crop_x').value = coords.x1;
+                $('crop_y').value = coords.y1;
+                $('crop_width').value = dimensions.width;
+                $('crop_height').value = dimensions.height;
+            } else {
+                cropper = null;
+            }
         }
     });
     Krang.hide_indicator();

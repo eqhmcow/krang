@@ -2,6 +2,17 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.07 - In Development
+
+=over
+
+=item *
+
+Fixed JS error on Transform Image screen when cancelling and going to
+another page. [Michael Peters]
+
+=back
+
 =head2 3.06 - October 18, 2009
 
 =over
