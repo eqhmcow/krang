@@ -36,6 +36,12 @@ Force reinstallation even if already installed.
 Removes the older version of the addon before installing
 the new one
 
+=item --no-upgrade
+
+Installs the addon without running any necessary upgrades.
+This can be useful in a cluster install where upgrades have
+already been performed on one server in the cluster.
+
 =item --verbose
 
 Print information about what's happening.
@@ -89,7 +95,7 @@ END
 use Krang::ClassFactory qw(pkg);
 use Pod::Usage;
 use Getopt::Long;
-our ($help, $man, $force, $clean, $source);
+our ($help, $man, $force, $clean, $source, $no_upgrade);
 our $verbose;
 
 BEGIN {
@@ -101,6 +107,7 @@ BEGIN {
         'verbose+' => \$verbose,
         force      => \$force,
         clean      => \$clean,
+        no_upgrade => \$no_upgrade,
       );
     pod2usage(1) if $help;
     pod2usage(-verbose => 2) if $man;
@@ -146,10 +153,11 @@ $source = $tempfile;
 
 # install the addon
 pkg('AddOn')->install(
-    src     => $source,
-    verbose => $verbose,
-    force   => $force,
-    clean   => $clean
+    src                     => $source,
+    verbose                 => $verbose,
+    force                   => $force,
+    clean                   => $clean,
+    'no_upgrade|no-upgrade' => $no_upgrade,
 );
 
 print "Installation complete.\n";

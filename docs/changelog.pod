@@ -8,10 +8,15 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Adding a C<--no-upgrade> option to F<bin/krang_addon_installer> to
+make it easier to manage in a cluster. [Michael Peters]
+
+=item *
+
 Unknown publish errors from the Web UI now result in a normal ISE
 (die) like other errors and are displayed with the same modal dialog
 in the UI. This also triggers the C<ErrorNotificationEmail> to be sent
-if configured.
+if configured. [Michael Peters]
 
 =item *
 

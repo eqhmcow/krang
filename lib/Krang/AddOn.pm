@@ -268,7 +268,8 @@ sub _flush_cache { @ADDONS = () }
 
 sub install {
     my ($pkg, %args) = @_;
-    my ($source, $verbose, $force, $clean) = @args{qw(src verbose force clean)};
+    my ($source, $verbose, $force, $clean, $no_upgrade) =
+      @args{qw(src verbose force clean no_upgrade)};
     croak("Missing src param!") unless $source;
 
     my $old_dir = fastcwd();
@@ -342,7 +343,7 @@ sub install {
     pkg('ClassFactory')->reload_configuration();
 
     # perform upgrades if necessary
-    $pkg->upgrade(%args, old_version => $old->version) if $old;
+    $pkg->upgrade(%args, old_version => $old->version) if $old && !$no_upgrade;
 
     # run the post install script if required
     system("KRANG_ROOT=" . KrangRoot . " $^X " . $conf->get('postinstallscript'))
