@@ -57,6 +57,9 @@ our @VALID_DIRECTIVES;
   KrangRoot
   KrangUser
   LogLevel
+  MinSpareServers
+  MaxSpareServers
+  MaxClients
   PasswordChangeTime
   PasswordChangeCount
   PreviewSSL

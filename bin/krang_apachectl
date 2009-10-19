@@ -232,6 +232,9 @@ sub write_conf {
                   ApacheAddr ApachePort
                   HostName
                   RewriteLogLevel
+                  MinSpareServers
+                  MaxSpareServers
+                  MaxClients
                   )
             )
         ),

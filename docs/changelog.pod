@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Adding C<MinSpareServers>, C<MaxSpareServers>, C<MaxClients> F<krang.conf>
+directives that can be used to control how many running Apache processes there
+are. [Michael Peters]
+
+=item *
+
 Fixed JS error on Transform Image screen when cancelling and going to
 another page. [Michael Peters]
 
