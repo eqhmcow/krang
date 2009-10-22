@@ -210,7 +210,7 @@ sub checkout_checked {
                 add_alert(
                     'story_stolen_before_checkout',
                     id    => $obj->story_id,
-                    thief => $theif_name,
+                    thief => $thief_name,
                 );
             } else {
                 die $e;    # just rethrow
