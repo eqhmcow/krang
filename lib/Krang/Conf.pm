@@ -132,7 +132,7 @@ Krang::Conf - Krang configuration module
   # all configuration directives are available as exported subs
   use Krang::ClassLoader Conf => qw(KrangRoot Things);
   $root = KrangRoot;
-  @thinks = Things;
+  @things = Things;
 
   # you can also call get() in Krang::Conf directly
   $root = pkg('Conf')->get("KrangRoot");
