@@ -66,6 +66,11 @@ div.autocomplete { height: expression( ( this.scrollHeight > 154 ) ? '154px' : '
 #C td .buttonbar ul li:hover, #C td .buttonbar ul li.over { background-position: 0 0; }
 </style><![endif]-->
 
+<!--[if IE 8]><style tyle="text/css">
+/* IE8 ignores <wbr> tags so we need to combine them with <span class="wbr"> to get the same effect in all browsers */
+.wbr:before { content: "\200B" }
+</style><![endif]-->
+
 <tmpl_if language_specific_css><tmpl_var language_specific_css></tmpl_if>
 
 <tmpl_if custom_css>

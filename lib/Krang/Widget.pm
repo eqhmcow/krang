@@ -766,18 +766,17 @@ sub format_url {
     # format wrapped URL in HTML
     my $format_url_html;
     my @url_lines = split("\n", $url);
+    my $wbr = '<wbr><span class="wbr"></span>';
     if ($linkto) {
-        my $target = $new_window ? ' target="_blank"' : '';
-
         # URL with links
-        $format_url_html = qq{<a href="$linkto"$target>} . join('&shy;', @url_lines) . qq{</a>};
+        my $target = $new_window ? ' target="_blank"' : '';
+        $format_url_html = qq{<a href="$linkto"$target>} . join($wbr, @url_lines) . qq{</a>};
     } elsif ($name) {
         # DOM2 event handling
-        $format_url_html = qq{<a href="" name="$name" class="$class">} . join('&shy;', @url_lines) . qq{</a>};
+        $format_url_html = qq{<a href="" name="$name" class="$class">} . join($wbr, @url_lines) . qq{</a>};
     } else {
-
         # URL without links
-        $format_url_html = join('&shy;', @url_lines);
+        $format_url_html = join($wbr, @url_lines);
     }
 
     return $format_url_html;

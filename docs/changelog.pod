@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed problem with URL wrapping that prevented copy-pasting of those URLs
+from the UI. [Michael Peters]
+
+=item *
+
 Adding C<MinSpareServers>, C<MaxSpareServers>, C<MaxClients> F<krang.conf>
 directives that can be used to control how many running Apache processes there
 are. [Michael Peters]
