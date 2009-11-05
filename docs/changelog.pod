@@ -22,6 +22,12 @@ are. [Michael Peters]
 Fixed JS error on Transform Image screen when cancelling and going to
 another page. [Michael Peters]
 
+=item *
+
+Fixed IE8 where the Category Chooser on Edit Media screen
+was hidden behind every table but the initial one (the meta-data
+table). [Michael Peters]
+
 =back
 
 =head2 3.06 - October 18, 2009
@@ -57,7 +63,7 @@ that might have been submitted as multiple graphemes. [Michael Peters]
 
 =item *
 
-Fixed IE (6, 7 & 8) where the Category Chooser on Edit Media screen
+Fixed IE7 where the Category Chooser on Edit Media screen
 was hidden behind every table but the initial one (the meta-data
 table). [Michael Peters]
 

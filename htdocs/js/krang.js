@@ -106,6 +106,16 @@ Krang.is_ie_6 = function() {
 }
 
 /*
+    Krang.is_ie_7()
+
+    Since there are places where you have to work around IE 7
+    this at least let's you check it easier.
+*/
+Krang.is_ie_7 = function() {
+    return Prototype.Browser.IEVersion == 7;
+}
+
+/*
     Krang.onload()
     Add some code that will get executed after the DOM is loaded
     (but without having to wait on images, etc to load).
@@ -1959,10 +1969,10 @@ if (Krang.is_ie_6()) {
     });
 }
 /*
-  IE- rules only
+  IE7 - rules only
 */
-if (Krang.is_ie()) {
-    // IE screws up z-index when something is absolutely positioned above a relatively position
+if (Krang.is_ie_7()) {
+    // IE7 screws up z-index when something is absolutely positioned above a relatively position
     // element that is not the parent of the absolutely positioned element. Yeah, that's a mouthful
     // An example of this is the Edit Media screen where the category chooser is inside a table-container
     // (which handles it fine) but the other table-container's on the screen all appear above the
