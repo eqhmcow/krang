@@ -78,8 +78,9 @@ my $site3 = pkg('Site')->new(
     url          => 'testsite.t'
 );
 eval { $site3->save(); };
-isa_ok($@, 'Krang::Site::Duplicate');
-like($@, qr/already exists/);
+my $e = $@;
+isa_ok($e, 'Krang::Site::Duplicate');
+like($e, qr/already exists/);
 
 # accessor/mutator tests
 #########################
@@ -179,9 +180,10 @@ like($cats[0]->url(), qr/testsite2\.t/, 'update_child_categories() test');
 #################
 # deletion test - failure
 eval { $site2->delete() };
-isa_ok($@, 'Krang::Site::Dependency');
-like($@, qr/Site cannot be deleted/, 'delete() failure test');
-my $dependents = $@->category_id;
+$e = $@;
+isa_ok($e, 'Krang::Site::Dependency');
+like($e, qr/Site cannot be deleted/, 'delete() failure test');
+my $dependents = $e->category_id;
 is($_ =~ /^\d+$/, 1, 'Krang::Site::Dependency test') for @$dependents;
 
 # delete '/blah'
