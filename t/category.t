@@ -101,9 +101,10 @@ my $dupe = pkg('Category')->new(
     parent_id => $parent->category_id
 );
 eval { $dupe->save() };
-isa_ok($@, 'Krang::Category::DuplicateURL');
-like($@, qr/Duplicate URL/, 'DuplicateURL exception test 1');
-like($@->category_id, qr/^\d+$/, 'DuplicateURL exception test 2');
+my $e = $@;
+isa_ok($e, 'Krang::Category::DuplicateURL');
+like($e, qr/Duplicate URL/, 'DuplicateURL exception test 1');
+like($e->category_id, qr/^\d+$/, 'DuplicateURL exception test 2');
 
 # make sure we can't create a category that matches a story URL
 my $test_story = pkg('Story')->new(
@@ -118,7 +119,8 @@ $dupe = pkg('Category')->new(
     parent_id => $parent->category_id
 );
 eval { $dupe->save() };
-isa_ok($@, 'Krang::Category::DuplicateURL');
+$e = $@;
+isa_ok($e, 'Krang::Category::DuplicateURL');
 $test_story->delete;
 
 # find() tests
@@ -273,17 +275,19 @@ SKIP: {
 # deletion tests
 ################
 eval { $parent->delete() };
-isa_ok($@, 'Krang::Category::RootDeletion');
+$e = $@;
+isa_ok($e, 'Krang::Category::RootDeletion');
 like(
-    $@,
+    $e,
     qr/Root categories can only be removed by deleting their Site object/,
     'RootDeletion exception test'
 );
 
 eval { $success = $category->delete() };
-isa_ok($@, 'Krang::Category::Dependent');
-like($@, qr/Category cannot be deleted/, 'delete() fail 1');
-my $dependents = $@->dependents;
+$e = $@;
+isa_ok($e, 'Krang::Category::Dependent');
+like($e, qr/Category cannot be deleted/, 'delete() fail 1');
+my $dependents = $e->dependents;
 is($_ =~ /Category|Media|Story|Template/i && $dependents->{$_}->[0] =~ /^\d+$/,
     1, 'Krang::Category::Dependent test')
   for keys %$dependents;
@@ -292,8 +296,8 @@ $success = $subcat->delete();
 is($success, 1, 'delete() 1');
 
 eval { $success = $category->delete() };
-isa_ok($@, 'Krang::Category::Dependent');
-like($@, qr/Category cannot be deleted/, 'delete() fail 2');
+isa_ok($e, 'Krang::Category::Dependent');
+like($e, qr/Category cannot be deleted/, 'delete() fail 2');
 
 $success = $tmpl->delete();
 is($success, 1, 'delete() 2');
@@ -382,16 +386,19 @@ is($success, 1, 'site delete()');
     $ptest_cat_id = $ptest_categories[1]->category_id();
     ($tmp) = pkg('Category')->find(category_id => $ptest_cat_id);
     eval { $tmp->save() };
-    isa_ok($@, "Krang::Category::NoEditAccess", "save() on read-only category exception");
+    $e = $@;
+    isa_ok($e, "Krang::Category::NoEditAccess", "save() on read-only category exception");
 
     # Try to delete()
     eval { $tmp->delete() };
-    isa_ok($@, "Krang::Category::NoEditAccess", "delete() on read-only category exception");
+    $e = $@;
+    isa_ok($e, "Krang::Category::NoEditAccess", "delete() on read-only category exception");
 
     # Try to add descendant category
     eval { pkg('Category')->new(dir => "cheeseypoofs", parent_id => $ptest_cat_id) };
+    $e = $@;
     isa_ok(
-        $@,
+        $e,
         "Krang::Category::NoEditAccess",
         "new() descendant from read-only category exception"
     );
