@@ -6,6 +6,10 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item * 
+
+Fixed various failing tests. [Michael Peters]
+
 =item *
 
 Fixed problem with URL wrapping that prevented copy-pasting of those URLs
