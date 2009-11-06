@@ -12,25 +12,22 @@ use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Template';
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Test::Content';
-
 use Net::FTP;
 use IPC::Run qw(start);
 use File::Spec::Functions qw(catfile);
 use IO::Scalar;
+use Test::More;
 
 # skip tests unless Apache running
-BEGIN {
-    unless (-e catfile(KrangRoot, 'tmp', 'krang_ftpd.pid')) {
-        eval "use Test::More skip_all => 'Krang FTP server not running.';";
-    } else {
-        eval "use Test::More qw(no_plan);";
-    }
-    die $@ if $@;
+unless (-e catfile(KrangRoot, 'tmp', 'krang_ftpd.pid')) {
+    plan(skip_all => 'Krang FTP server not running.');
+} else {
+    plan('no_plan');
 }
 
 my $creator = pkg('Test::Content')->new;
 
-END { $creator->cleanup() }
+END { $creator->cleanup() if $creator }
 
 my @sites;
 
@@ -80,7 +77,7 @@ for (0 .. 10) {
 my $ftp = Net::FTP->new(FTPAddress, Port => FTPPort, Timeout => 10);
 
 # set up end block to kill connection at end
-END { $ftp->quit; }
+END { $ftp->quit if $ftp }
 
 isa_ok($ftp, 'Net::FTP', 'is Net::FTP');
 
