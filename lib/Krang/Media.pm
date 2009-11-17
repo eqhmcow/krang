@@ -2468,6 +2468,10 @@ sub retire {
     # make sure we are the one
     $self->checkout;
 
+    # run the element class's retire_hook
+    my $element = $self->element;
+    $element->class->retire_hook(element => $element);
+
     # unpublish
     pkg('Publisher')->new->unpublish_media(media => $self);
 

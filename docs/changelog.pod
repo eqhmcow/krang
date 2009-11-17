@@ -2,6 +2,14 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.08 - In development
+
+=item *
+
+Media items now call the element's C<retire_hook>. [Michael Peters]
+
+=back
+
 =head2 3.07 - November 5, 2009
 
 =over
