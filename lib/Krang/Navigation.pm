@@ -96,16 +96,17 @@ sub render {
     # stop here if condition set and returns false
     my $condition = $node->condition;
     return if $condition and not $condition->($perms);
+    my @daughter_nodes = $node->daughters;
 
     # handle root
-    return join('', map { $pkg->render($_, $perms, $depth + 1, ++$index) } $node->daughters)
+    return join('', map { $pkg->render($_, $perms, $depth + 1, ++$index) } @daughter_nodes)
       unless $node->mother;
 
     # recurse and build up kids
     my $i    = 1;
     my $kids = join("</dt>\n<dt>",
         grep { defined }
-          map { $pkg->render($_, $perms, $depth + 1, $index + $i++) } $node->daughters);
+          map { $pkg->render($_, $perms, $depth + 1, $index + $i++) } @daughter_nodes);
 
     # get link for node
     my $link = $node->link;
@@ -126,12 +127,13 @@ sub render {
 
     if ($depth == 1) {
         my $opened_style = $opened_panels->{$index - 1} ? '' : ' style="display:none"';
+        my $panel_class = @daughter_nodes ? 'nav_panel' : '';
         if ($index == 1) {
             $pre =
-              qq{<div class="first nav_panel"><h2 class="$class"><span>$name</span></h2><div$opened_style><dl>\n<dt>};
+              qq{<div class="first $panel_class"><h2 class="$class"><span>$name</span></h2><div$opened_style><dl>\n<dt>};
         } else {
             $pre =
-              qq{<div class="nav_panel"><h2 class="$class"><span>$name</span></h2><div$opened_style><dl>\n<dt>};
+              qq{<div class="$panel_class"><h2 class="$class"><span>$name</span></h2><div$opened_style><dl>\n<dt>};
         }
         $post = qq{</dt>\n</dl></div></div>\n\n};
     } elsif ($depth == 2) {
@@ -366,6 +368,11 @@ sub default_tree {
     $sub->name('Submit a Bug');
     $sub->link('bug.cgi');
     $sub->condition(sub { EnableBugzilla });
+
+    my $trash_node = $root->new_daughter();
+    $trash_node->name('Trash');
+    $trash_node->link('trash.pl');
+    $trash_node->condition(sub { shift->{admin}->{may_view_trash} });
 
     return $root;
 }

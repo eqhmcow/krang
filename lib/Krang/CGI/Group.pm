@@ -65,7 +65,8 @@ use constant CHECKBOX_FIELDS => qw( may_publish
   admin_scheduler
   admin_desks
   admin_lists
-  admin_delete );
+  admin_delete 
+  may_view_trash);
 use constant GROUP_PROTOTYPE => {
     group_id       => '',
     name           => '',

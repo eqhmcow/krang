@@ -36,6 +36,7 @@ Krang::Group - Interface to manage Krang permissions
                                  admin_desks         => 1,
                                  admin_lists         => 1,
                                  admin_delete        => 1,
+                                 may_view_trash      => 1,
                                  asset_story         => 'edit',
                                  asset_media         => 'read-only',
                                  asset_template      => 'hide' );
@@ -85,6 +86,7 @@ Krang::Group - Interface to manage Krang permissions
   my $admin_desks      = $group->admin_desks();
   my $admin_desks      = $group->admin_lists();
   my $admin_delete     = $group->admin_delete();
+  my $may_view_trash   = $group->may_view_trash();
   my $asset_story      = $group->asset_story();
   my $asset_media      = $group->asset_media();
   my $asset_template   = $group->asset_template();
@@ -155,6 +157,7 @@ use constant FIELDS => qw( name
   admin_desks
   admin_lists
   admin_delete
+  may_view_trash
   asset_story
   asset_media
   asset_template );
@@ -681,6 +684,7 @@ sub serialize_xml {
     $writer->dataElement(admin_desks          => $self->{admin_desks});
     $writer->dataElement(admin_lists          => $self->{admin_lists});
     $writer->dataElement(admin_delete         => $self->{admin_delete});
+    $writer->dataElement(may_view_trash       => $self->{may_view_trash});
     $writer->dataElement(asset_story          => $self->{asset_story});
     $writer->dataElement(asset_media          => $self->{asset_media});
     $writer->dataElement(asset_template       => $self->{asset_template});
@@ -1327,6 +1331,7 @@ functions:
   admin_desks
   admin_lists
   admin_delete
+  may_view_trash
 
 This method combines the permissions of all the groups with which
 the user is affiliated.  Group permissions are combined using
@@ -1347,6 +1352,7 @@ assigned to the following groups:
               admin_desks         => 0
               admin_lists         => 0
               admin_delete        => 0
+              may_view_trash      => 0
 
    Group B => may_publish         => 0
               may_checkin_all     => 1
@@ -1362,6 +1368,7 @@ assigned to the following groups:
               admin_desks         => 1
               admin_lists         => 0
               admin_delete        => 1
+              may_view_trash      => 1
 
 In this case, the resultant permissions for this user will be:
 
@@ -1379,6 +1386,7 @@ In this case, the resultant permissions for this user will be:
    admin_desks         => 1
    admin_lists         => 0
    admin_delete        => 1
+   may_view_trash      => 1
 
 (N.B.:  The admin function "admin_users_limited" is deemed to be
 a high privilege when it is set to 0 -- not 1.)
@@ -1421,7 +1429,8 @@ sub user_admin_permissions {
       admin_scheduler
       admin_desks
       admin_lists
-      admin_delete );
+      admin_delete
+      may_view_trash);
 
     my %admin_perm_access = ();
 
