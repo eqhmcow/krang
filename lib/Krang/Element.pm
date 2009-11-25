@@ -1103,10 +1103,10 @@ syntax supported by match().
 
 # generate match() and xpath()
 use Class::XPath
-  get_name     => 'name',        # get the node name with the 'name' method
-  get_parent   => 'parent',      # get parent with the 'parent' method
-  get_root     => 'root',        # call get_root($node) to get the root
-  get_children => 'children',    # get children with the 'kids' method
+  get_name     => 'name',        # get node name with the 'name' method
+  get_parent   => 'parent',      # get parent node with the 'parent' method
+  get_root     => 'root',        # get root node with 'root' method
+  get_children => 'children',    # get children list with the 'children' method
 
   get_attr_names => '_xpath_attr_names',    # get attr names
   get_attr_value => '_xpath_attr_value',    # get attr values
