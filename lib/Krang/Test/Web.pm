@@ -207,9 +207,9 @@ sub lacks_message {
     {
         local $Test::Builder::Level = $Test::Builder::Level + 1;
         if (ref $text eq 'Regexp') {
-            $self->content_unlike($text, "contains message $key");
+            $self->content_unlike($text, "lacks message $key");
         } else {
-            $self->content_lacks($text, "contains message $key");
+            $self->content_lacks($text, "lacks message $key");
         }
     }
 }
