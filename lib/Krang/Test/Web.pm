@@ -185,6 +185,18 @@ sub _get_message_text {
     return $text;
 }
 
+=item contains_messages()
+
+Prints an OK test message if the current page contains any Krang messages.
+
+=cut
+
+sub contains_messages {
+    my $self = shift;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    return $self->content_contains('Krang.Messages.add', 'contains messages');
+}
+
 =item C<< lacks_message($key, $class [, %args ]) >>
 
 Prints an OK test message if the current page lacks the matching message from
@@ -212,6 +224,18 @@ sub lacks_message {
             $self->content_lacks($text, "lacks message $key");
         }
     }
+}
+
+=item lacks_messages()
+
+Prints an OK test message if the current page lacks any Krang messages.
+
+=cut
+
+sub lacks_messages {
+    my $self = shift;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    return $self->content_lacks('Krang.Messages.add', 'lacks messages');
 }
 
 =item C<< login($username, $password) >>
