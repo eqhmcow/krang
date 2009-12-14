@@ -304,7 +304,25 @@ sub checkout_and_edit {
 
     $self->_cancel_edit_goes_to('template.pl?rm=search', $t->checked_out_by);
 
-    $t->checkout;
+    eval { $t->checkout };
+    if( my $e = $@ ) {
+        if( ref $e && $e->isa('Krang::Template::Checkout')) {
+            my ($thief) = pkg('User')->find(user_id => $e->user_id);
+            my $thief_name = CGI->escapeHTML($thief->first_name . ' ' . $thief->last_name);
+            add_alert(
+                'template_stolen_before_checkout',
+                id    => $t->template_id,
+                thief => $thief_name,
+            );
+            return $self->redirect_to_workspace();
+        } elsif( ref $e && $e->isa('Krang::Template::NoEditAccess')) {
+            add_alert('template_permissions_changed', id => $t->template_id);
+            return $self->redirect_to_workspace();
+        } else {
+            die $e;
+        }
+    }
+
     return $self->edit;
 }
 
@@ -514,6 +532,7 @@ sub edit {
 }
 
 =item edit_checkin
+
 Saves changes to the template object the end-user enacted on the 'Edit' screen,
 then checks in.  The user is sent to 'My Workspace' if save succeeds and back
 to the 'Edit' screen if it fails.

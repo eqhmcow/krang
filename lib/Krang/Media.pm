@@ -1707,9 +1707,8 @@ sub checkout {
     return if ($self->{checked_out_by}
         and $self->{checked_out_by} == $user_id);
 
-    $dbh->do('LOCK tables media WRITE');
-
     eval {
+        $dbh->do('LOCK tables media WRITE');
         my $sth = $dbh->prepare('SELECT checked_out_by FROM media WHERE media_id = ?');
         $sth->execute($media_id);
 
@@ -1723,11 +1722,12 @@ sub checkout {
 
         $sth->finish();
         $dbh->do('update media set checked_out_by = ? where media_id = ?', undef, $user_id, $media_id);
+        $dbh->do('UNLOCK tables');
     };
 
-    if ($@) {
+    if (my $e = $@) {
         $dbh->do('UNLOCK tables');
-        croak("Error in checkout: $@");
+        croak($e);
     }
 
     $dbh->do('UNLOCK tables');

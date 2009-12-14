@@ -2014,12 +2014,10 @@ sub checkout {
         $dbh->do("UNLOCK TABLES");
     };
 
-    if ($@) {
-        my $eval_error = $@;
-
+    if (my $e = $@) {
         # unlock the table, so it's not locked forever
         $dbh->do("UNLOCK TABLES");
-        croak($eval_error);
+        croak($e);
     }
 
     # update some fields

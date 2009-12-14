@@ -8,6 +8,17 @@ This document contains a list of changes for each release of Krang.
 
 Media items now call the element's C<retire_hook>. [Michael Peters]
 
+=item *
+
+Added C<may_view_trash> permission. [Michael Peters]
+
+=item *
+
+Fixed ISEs that occurs if you try to check out media or templates
+that were checked out by someone else while you were looking at
+(normally prevented by the UI). Now you get a helpful alert message
+instead. [Michael Peters]
+
 =back
 
 =head2 3.07 - November 5, 2009
