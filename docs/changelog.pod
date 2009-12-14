@@ -19,6 +19,11 @@ that were checked out by someone else while you were looking at
 (normally prevented by the UI). Now you get a helpful alert message
 instead. [Michael Peters]
 
+=item *
+
+Fixed ISE on "New Media" screen when submitting the form via "enter"
+instead of clicking the "Create" button. [Michael Peters]
+
 =back
 
 =head2 3.07 - November 5, 2009

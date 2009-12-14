@@ -168,7 +168,7 @@ Krang.onload( function() {
 
 <form name="edit" method="post" enctype="multipart/form-data" action="media.pl">
 
-<input name="rm" value="save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>" type="hidden">
+<input name="rm" value="<tmpl_if add_mode>save_stay_add<tmpl_else>save_edit</tmpl_if>" type="hidden">
 <input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
 <input name="reverted_to_version" value="<tmpl_var reverted_to_version>" type="hidden">
 <tmpl_unless add_mode>
