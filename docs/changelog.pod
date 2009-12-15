@@ -29,6 +29,11 @@ instead of clicking the "Create" button. [Michael Peters]
 Going from Trash -> View Detail -> View Log -> Back for Media objects
 no longer results in an ISE. [Michael Peters]
 
+=item *
+
+Catch more kinds of template errors when previewing a story so they
+don't result in an ISE, but a better error message. [Michael Peters]
+
 =back
 
 =head2 3.07 - November 5, 2009

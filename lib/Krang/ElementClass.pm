@@ -906,9 +906,22 @@ sub fill_template {
     my %template_vars = map { $_ => 1 } $tmpl->query();
     if (exists($template_vars{element_loop})) {
         delete $template_vars{element_loop};
-        foreach ($tmpl->query(loop => 'element_loop')) {
-            $template_vars{element_loop}{$_} = 1;
+        my @loop_vars = eval { $tmpl->query(loop => 'element_loop') };
+        if( my $e = $@ ) {
+            if( $e =~ /non-loop parameter/ ) {
+                my $filename = $tmpl->{options}->{filename};
+                Krang::ElementClass::TemplateParseError->throw(
+                    message       => 'Coding error found in template: element_loop needs to be a TMPL_LOOP',
+                    element_name  => ($element ? localize($element->display_name) : $filename),
+                    template_name => $filename,
+                    category_url  => $publisher->category->url(),
+                    error_msg     => $e,
+                );
+            } else {
+                die $e;
+            }
         }
+        $template_vars{element_loop}{$_} = 1 foreach (@loop_vars);
     }
 
     # list of child element names that have been seen
