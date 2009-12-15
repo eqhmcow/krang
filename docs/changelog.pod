@@ -34,6 +34,10 @@ no longer results in an ISE. [Michael Peters]
 Catch more kinds of template errors when previewing a story so they
 don't result in an ISE, but a better error message. [Michael Peters]
 
+=item *
+
+Added Fedora 12 as a build target. [Michael Peters]
+
 =back
 
 =head2 3.07 - November 5, 2009
