@@ -235,7 +235,7 @@ Krang.onload( function() {
 <!-- BEGIN BUTTONS -->
 
 <div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_if prevent_edit> lame</tmpl_if></tmpl_if> capped">
-<input value="<tmpl_lang Back>" onclick="<tmpl_if parent_path>view_path('<tmpl_var escape=html parent_path>')<tmpl_else>do_return()</tmpl_if>" type="button" class="west">
+<input value="<tmpl_lang &#9664; Back>" onclick="<tmpl_if parent_path>view_path('<tmpl_var escape=html parent_path>')<tmpl_else>do_return()</tmpl_if>" type="button" class="west">
 <tmpl_unless is_old_version><tmpl_if can_edit>
   <input value="<tmpl_lang Edit>" onclick="do_edit_media()" type="button">
 </tmpl_if></tmpl_unless>
