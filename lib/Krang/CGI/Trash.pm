@@ -128,11 +128,10 @@ sub _row_handler {
     # format date
     my $date = $obj->{date};
     if ($date and $date ne '0000-00-00 00:00:00') {
-        $date = Time::Piece->from_mysql_datetime($date);
-        $row->{date} = $date->strftime('%m/%d/%Y %I:%M %p');
-    } else {
-        $row->{date} = '[n/a]';
+        my $date_obj = Time::Piece->from_mysql_datetime($date);
+        $row->{date} = $date_obj->strftime('%m/%d/%Y %I:%M %p') if $date_obj;
     }
+    $row->{date} ||= localize('[n/a]');
 
     # format URL
     if ($obj->{linkto}) {
