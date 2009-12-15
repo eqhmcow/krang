@@ -55,6 +55,7 @@ use File::Temp qw(tempdir);
 use File::Copy qw(copy);
 use File::Spec::Functions qw(catfile catdir abs2rel);
 use File::Basename qw(fileparse);
+use URI::Escape qw(uri_escape);
 
 sub _get_element     { $session{media}->element; }
 sub _get_script_name { "media.pl" }
@@ -1193,7 +1194,7 @@ sub save_and_view_log {
     my $return_rm = 'edit';
     my $url =
         "history.pl?history_return_script=media.pl"
-      . "&history_return_params=rm&history_return_params=$return_rm"
+      . "&history_return_params=rm&history_return_params=edit"
       . "&history_return_params=media_id&history_return_params=$id"
       . "&id=$id&class=Media&id_meth=media_id";
     $self->header_props(-uri => $url);
@@ -1217,11 +1218,15 @@ sub view_log {
     $return{rm} ||= 'view';    # default to going back to the view rm
 
     # Redirect to history screen
-    my $url =
-      "history.pl?history_return_script=media.pl&"
-      . join('&',
-        map { "history_return_params=$_&history_return_params=$return{$_}" } (keys %return))
-      . "&id=$media_id&class=Media&id_meth=media_id";
+    my $url = "history.pl?history_return_script=media.pl&" . join(
+        '&',
+        map {
+            'history_return_params='
+              . uri_escape($_)
+              . '&history_return_params='
+              . uri_escape($return{$_})
+          } (keys %return)
+    ) . "&id=$media_id&class=Media&id_meth=media_id";
     $self->header_props(-uri => $url);
     $self->header_type('redirect');
 

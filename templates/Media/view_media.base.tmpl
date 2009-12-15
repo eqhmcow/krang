@@ -10,17 +10,17 @@ Krang.onload( function() {
 
 <tmpl_unless parent_path>
 do_return = function() {
-  Krang.Form.submit( 'return_form' );
+  Krang.Form.submit('return_form');
 } 
 </tmpl_unless>
 
 view_log = function() {
-  Krang.Form.submit( 'view', { rm: 'view_log' } );
+  Krang.Form.submit('view_log_form');
 }
 
 <tmpl_unless is_old_version><tmpl_if can_edit>
   do_edit_media = function() {
-    Krang.Form.submit( 'edit_media_form' );
+    Krang.Form.submit('edit_media_form');
   }
 </tmpl_if></tmpl_unless>
 
@@ -37,7 +37,6 @@ Krang.onload( function() {
 
 <!-- BEGIN MAIN VIEW FORM -->
 
-<form name="view" method="post" action="media.pl">
 
 <span style="float: right">
   <tmpl_if thumbnail_path>
@@ -45,25 +44,37 @@ Krang.onload( function() {
   </tmpl_if>
 </span>
 
-<tmpl_unless is_old_version>
 <p class="cram east">
   <tmpl_if is_root>
     <input value="<tmpl_lang View Log>" onclick="view_log()" type="button" class="button">
   </tmpl_if>
 </p>
-</tmpl_unless>
 
 <h2>
 <tmpl_lang View Media>
 </h2>
 
-<input name="rm" value="view" type="hidden">
-<input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
-<input name="version" value="<tmpl_var escape=html version>" type="hidden">
+<form name="view_log_form" method="post" action="history.pl">
+<input name="rm" value="show" type="hidden">
+<input name="id" value="<tmpl_var escape=html media_id>" type="hidden">
+<input name="class" value="Media" type="hidden">
+<input name="id_meth" value="media_id" type="hidden">
 <input name="return_script" value="<tmpl_var escape=html return_script>" type="hidden">
+<input name="history_return_script" value="media.pl" type="hidden">
+<input name="history_return_params" value="rm" type="hidden">
+<input name="history_return_params" value="view" type="hidden">
+<input name="history_return_params" value="media_id" type="hidden">
+<input name="history_return_params" value="<tmpl_var escape=html media_id>" type="hidden">
+<input name="history_return_params" value="version" type="hidden">
+<input name="history_return_params" value="<tmpl_var escape=html version>" type="hidden">
+<input name="history_return_params" value="return_script" type="hidden">
+<input name="history_return_params" value="<tmpl_var escape=html return_script>" type="hidden">
+
 <tmpl_loop return_params_loop>
-  <input name="return_params" value="<tmpl_var escape=html name>" type="hidden">
-  <input name="return_params" value="<tmpl_var escape=html value>" type="hidden">
+  <input name="history_return_params" value="return_params" type="hidden">
+  <input name="history_return_params" value="<tmpl_var escape=html name>" type="hidden">
+  <input name="history_return_params" value="return_params" type="hidden">
+  <input name="history_return_params" value="<tmpl_var escape=html value>" type="hidden">
 </tmpl_loop>
 
 <!-- BEGIN BASIC PROPERTIES -->

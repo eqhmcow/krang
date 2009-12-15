@@ -24,6 +24,11 @@ instead. [Michael Peters]
 Fixed ISE on "New Media" screen when submitting the form via "enter"
 instead of clicking the "Create" button. [Michael Peters]
 
+=item *
+
+Going from Trash -> View Detail -> View Log -> Back for Media objects
+no longer results in an ISE. [Michael Peters]
+
 =back
 
 =head2 3.07 - November 5, 2009
