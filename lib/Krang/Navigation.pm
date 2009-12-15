@@ -384,7 +384,7 @@ sub _get_opened_panels {
     my $value   = '';
     $value = $cookie->value if $cookie;
 
-    my %opened = map { $_ => 1 } split(',', $value);
+    my %opened = map { $_ => 1 } split(',', $value || '');
     return \%opened;
 }
 
