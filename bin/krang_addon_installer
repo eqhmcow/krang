@@ -102,12 +102,12 @@ BEGIN {
     $verbose = 0;
     pod2usage(2)
       unless GetOptions(
-        help       => \$help,
-        man        => \$man,
-        'verbose+' => \$verbose,
-        force      => \$force,
-        clean      => \$clean,
-        no_upgrade => \$no_upgrade,
+        help                    => \$help,
+        man                     => \$man,
+        'verbose+'              => \$verbose,
+        force                   => \$force,
+        clean                   => \$clean,
+        'no_upgrade|no-upgrade' => \$no_upgrade,
       );
     pod2usage(1) if $help;
     pod2usage(-verbose => 2) if $man;
@@ -153,11 +153,11 @@ $source = $tempfile;
 
 # install the addon
 pkg('AddOn')->install(
-    src                     => $source,
-    verbose                 => $verbose,
-    force                   => $force,
-    clean                   => $clean,
-    'no_upgrade|no-upgrade' => $no_upgrade,
+    src        => $source,
+    verbose    => $verbose,
+    force      => $force,
+    clean      => $clean,
+    no_upgrade => $no_upgrade,
 );
 
 print "Installation complete.\n";
