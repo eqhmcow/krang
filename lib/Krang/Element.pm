@@ -613,7 +613,7 @@ sub reorder_children {
     croak("reorder_children called with wrong sized list")
       unless @$children == @_;
 
-    # normalize to a list of objects, in requested order
+    # make sure we have a list of objects in @_
     foreach my $x (0 .. $#_) {
         $_[$x] = $children->[$_[$x]] unless ref $_[$x];
         croak("Unable to find matching child!") unless $_[$x];
