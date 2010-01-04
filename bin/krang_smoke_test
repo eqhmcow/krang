@@ -155,7 +155,7 @@ sub send_results_to_smolder {
     }
 
     # now go to the add-smoke-report page for this project
-    $mech->get("$server/app/public_projects/add_report/$project_id");
+    $mech->get("$server/app/projects/add_report/$project_id");
     if ($mech->status ne '200' || $mech->content !~ /New Smoke Report/) {
         print "Could not reach the Add Smoke Report form in Smolder!\n";
         exit(1);
