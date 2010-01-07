@@ -7,9 +7,15 @@ use File::Temp qw(tempfile);
 use File::Spec::Functions qw(catfile);
 
 # a basic working conf file
+
+# cant just hard-code the "nobody" user and group 
+# they dont exist on all platforms (e.g. Debian)
+my $user = getpwuid($>); # effective uid to name
+my $group  = getgrgid($)); # effective gid to name
+
 my $base_conf = <<CONF;
-KrangUser nobody
-KrangGroup nobody
+KrangUser $user
+KrangGroup $group
 ApacheAddr 127.0.0.1
 ApachePort 80
 AvailableLanguages en de
