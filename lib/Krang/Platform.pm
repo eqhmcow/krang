@@ -71,6 +71,7 @@ sub verify_dependencies {
     my @libs = split(" ", $Config{libpth});
     my @lib_files;
     foreach my $lib (@libs) {
+        next unless -d $lib;
         opendir(DIR, $lib) or die $!;
         push(@lib_files, grep { not -d $_ } readdir(DIR));
         closedir(DIR);
