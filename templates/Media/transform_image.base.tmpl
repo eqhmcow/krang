@@ -50,6 +50,8 @@
 <script>
 var original_width = <tmpl_var original_width>;
 var original_height = <tmpl_var original_height>;
+var most_recent_width = original_width;
+var most_recent_height = original_height;
 var cropper;
 var slider;
 
@@ -82,8 +84,6 @@ do_save_image_transform = function() {
     Krang.Form.submit('transform_form', { rm: 'save_image_transform' });
 }
 
-change_width = function(new_width) {
-}
 Krang.onload(function() {
     slider = new Control.Slider('resize_handle','resize_track', { 
         axis        : 'horizontal', 
@@ -151,6 +151,7 @@ calculate_dimension = function(original, percent) {
 
 var dont_change_dimensions = false;
 change_width = function(new_width) {
+    if (most_recent_width == new_width) return;
     dont_change_dimensions = true;
     $('the_image').style.width = new_width + 'px';
     $('new_width').value = new_width;
@@ -163,7 +164,10 @@ change_width = function(new_width) {
     var new_height = Math.floor(original_height * ratio);
     $('the_image').style.height = new_height + 'px';
     $('control_height').value = new_height;
+    $('new_width').value = new_width;
     $('new_height').value = new_height;
+    most_recent_width = new_width;
+    most_recent_height = new_height;
 
     // calculate the slider position
     var position = Math.floor(ratio * 100) - 100;
@@ -171,6 +175,7 @@ change_width = function(new_width) {
     dont_change_dimensions = false;
 }
 change_height = function(new_height) {
+    if (most_recent_height == new_height) return;
     dont_change_dimensions = true;
     $('the_image').style.height = new_height + 'px';
     $('new_height').value = new_height;
@@ -184,6 +189,9 @@ change_height = function(new_height) {
     $('the_image').style.width = new_width + 'px';
     $('control_width').value = new_width;
     $('new_width').value = new_width;
+    $('new_height').value = new_height;
+    most_recent_width = new_width;
+    most_recent_height = new_height;
 
     // calculate the slider position
     var position = Math.floor(ratio * 100) - 100;

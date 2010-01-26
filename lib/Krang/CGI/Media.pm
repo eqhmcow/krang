@@ -2418,7 +2418,7 @@ sub _do_apply_transform {
     my $new_height = $query->param('new_height');
     if ($new_width || $new_height) {
         add_message('image_scaled', width => $new_width, height => $new_height);
-        $imager = $imager->scale(xpixels => $new_width, ypixels => $new_height);
+        $imager = $imager->scale(xpixels => $new_width, ypixels => $new_height, type=>'nonprop');
         $session{image_transform_actions}->{resize} = 1;
     }
 
