@@ -43,7 +43,7 @@ Krang::CGI::Media::BulkUpload - web interface used to upload archives of media f
 
 =head1 DESCRIPTION
 
-Krang::CGI::Media::BulkUpload provides a web based UI that takes a 
+Krang::CGI::Media::BulkUpload provides a web based UI that takes a
 valid archive file (.tar, .zip, .sit), opens it, evaluates the contents,
 and creates new media files corresponding with files in the archive.
 Directories in the archive match categories.
@@ -108,7 +108,7 @@ sub choose {
     return $template->output;
 }
 
-=item upload() 
+=item upload()
 
 Uploads archive of media files, and places them in appropriate categories.
 Returns error messages if categories do not exist.
@@ -261,7 +261,7 @@ sub create_media {
     my $update_count = 0;
 
     foreach my $file (@$media_list) {
-        if ($file->{media_id}) {    
+        if ($file->{media_id}) {
             # if media_id exists, update object
             my ($media) = pkg('Media')->find(media_id => $file->{media_id});
             my $fh = IO::File->new($file->{full_path});
@@ -269,7 +269,7 @@ sub create_media {
             $media->save();
             $media->preview();
             $update_count++;
-        } else {                    
+        } else {
             #else create new media object
             my $category_id = $category_list{$file->{category}};
             my $fh          = IO::File->new($file->{full_path});
@@ -305,7 +305,7 @@ sub create_media {
 =item check_media
 
 Check media files to see if they already exist and if so,
-if they are checked out.  If any are checked out to someone 
+if they are checked out.  If any are checked out to someone
 other than you, return 1. If exist and not checked out, check out.
 
 =cut
@@ -341,9 +341,9 @@ sub check_media {
 =item check_categories($create_cats)
 
 Check to see if all categories in the archive correspond with Krang
-Categories. 
+Categories.
 If true arg is passed in, create categories not found and return undef.
-Otherwise, returns 1 if bad categories found. 
+Otherwise, returns 1 if bad categories found.
 
 =cut
 
@@ -404,7 +404,7 @@ sub check_categories {
 
 =item open_media_source($filepath, $archive_type)
 
-Unzips, untars, or unstuffs media archive. Returns startpath for opened 
+Unzips, untars, or unstuffs media archive. Returns startpath for opened
 archive,
 
 =cut
@@ -454,7 +454,7 @@ sub open_media_source {
 
 returns file extenstion if one of (tar,zip,sit), else returns 0.
 
-=cut 
+=cut
 
 sub file_type {
     my $filename = shift;
@@ -473,7 +473,7 @@ sub file_type {
 
 Used by File::Find::find to process files.
 
-=cut 
+=cut
 
 sub build_image_list {
     my $path = $File::Find::dir;
