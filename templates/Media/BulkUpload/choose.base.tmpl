@@ -58,6 +58,19 @@ Krang.onload( function() {
 </td>
 </tr>
 
+<tr>
+<td colspan="2">
+<input id="resize_images" name="resize_images" type="checkbox" onclick="toggle_resize_dimensions(this.checked)">
+<tmpl_lang Resize large images><br />
+<div id="resize_images_dimensions" style="display:none">
+<input id="resize_max_height" name="resize_max_height" type="text" size=4>
+<tmpl_lang Maximum height> (number of pixels)<br />
+<input id="resize_max_width" name="resize_max_width" type="text" size=4>
+<tmpl_lang Maximum width> (number of pixels)<br />
+</div>
+</td>
+</tr>
+
 </tbody>
 
 </table>
@@ -67,6 +80,20 @@ Krang.onload( function() {
 </div>
 
 </form>
+
+<script type="text/javascript">
+toggle_resize_dimensions = function(value) {
+    if( value ) {
+        $('resize_max_height').enable();
+        $('resize_max_width').enable();
+        $('resize_images_dimensions').show();
+    } else {
+        $('resize_max_height').disable();
+        $('resize_max_width').disable();
+        $('resize_images_dimensions').hide();
+    }
+}
+</script>
 
 <tmpl_include footer.tmpl>
 

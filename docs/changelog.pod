@@ -2,6 +2,17 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.09 - In development
+
+=over
+
+=item *
+
+Media Bulk Upload can set a max height and/or max width to scale down
+large images. [Brad Oaks]
+
+=back
+
 =head2 3.08 - December 20, 2009
 
 =over

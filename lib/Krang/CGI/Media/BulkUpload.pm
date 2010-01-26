@@ -19,6 +19,9 @@ use File::Spec::Functions qw(catdir catfile abs2rel);
 use File::Find;
 use File::Path;
 use IO::File;
+use Image::Size qw(imgsize);
+use Imager;
+use File::Copy 'move';
 
 # these have to be global because of File::Find processing
 #
@@ -30,6 +33,7 @@ my %category_list;
 my $media_in_root;
 my $chosen_cat_id;
 my $chosen_cat_url;
+my %max_dimensions;
 
 =head1 NAME
 
@@ -125,6 +129,7 @@ sub upload {
     $media_in_root  = undef;
     $chosen_cat_id  = undef;
     $chosen_cat_url = undef;
+    %max_dimensions = ();
 
     # if file was uploaded
     if (my $fh = $q->upload('media_file')) {
@@ -183,6 +188,15 @@ sub upload {
 
         # check media to see if already exist or checked out
         rmtree($opened_root), return $self->choose if check_media();
+
+        # if we should resize images, do that now.
+        if ($q->param('resize_images')) {
+            $max_dimensions{'height'} = $q->param('resize_max_height');
+            $max_dimensions{'width'}  = $q->param('resize_max_width');
+
+            rmtree($opened_root), return $self->choose() if check_resize_dimensions();
+            resize_images();
+        }
 
         # if we have gotten this far, upload the files as Krang::Media
         my ($create_count, $update_count) = create_media();
@@ -502,6 +516,120 @@ sub build_image_list {
 
     push @$media_list, $temp;
     $category_list{$path} = 1 if ((not $category_list{$path}) and $path);
+}
+
+=item check_resize_dimensions
+
+Check resize dimensions to see if they contain only digits.
+If any are illegal characters, set the message and return 1.
+
+=cut
+
+sub check_resize_dimensions {
+    my $problem_found;
+    foreach my $key (qw(height width)) {
+        if (   exists $max_dimensions{$key}
+            && $max_dimensions{$key}
+            && $max_dimensions{$key} !~ m/^\s*\d+\s*$/)
+        {
+            add_alert('integer_dimensions_only', dimension => $key);
+            $problem_found = 1;
+            last;
+        }
+    }
+    return $problem_found;
+}
+
+=item resize_images
+
+Check media files for images and to see if they are larger in
+either height or width than a max_height or max_width parameters.
+if they are scale them down before they are uploaded as Krang::Media
+
+=cut
+
+sub resize_images {
+
+    return unless $max_dimensions{'height'} || $max_dimensions{'width'};
+
+    # only look at image files.
+  FILE:
+    foreach my $file (@$media_list) {
+        my $name = $file->{name};
+
+        my %media_types = pkg('Pref')->get('media_type');
+
+        # guess the media type based on the file's extension
+        $name =~ /\.(\w+)$/;
+        my $extension = lc $1;
+
+        #check if this is a type of image we know how to scale
+        next FILE unless grep { m/$extension/ } qw(png gif jpg tiff);
+        next FILE unless ($Imager::formats{$extension});
+
+        my $type_id = $EXTENSION_TYPES{$extension} || 'Text';
+        foreach my $k (keys %media_types) {
+            if ($type_id eq $media_types{$k}) {
+                $type_id = $k;
+                last;
+            }
+        }
+
+        # only look at image files.
+        next FILE unless $type_id && $type_id == 1;
+        my ($width, $height) = imgsize($file->{full_path});
+        next FILE unless $width && $height;
+
+        my $width_ratio  = ($width / $max_dimensions{'width'}) if $max_dimensions{'width'};
+        my $height_ratio = ($height / $max_dimensions{'height'}) if $max_dimensions{'height'};
+
+        my $scale_factor;
+        my $scale_by_height;
+        my $scale_by_width;
+        if ($width_ratio && $width_ratio > 1 && (!$height_ratio || ($width_ratio > $height_ratio))
+        ) {
+            # $scale_factor = sprintf('%.3f', (1 / $width_ratio));
+            $scale_by_width = 1;
+        } elsif ($height_ratio && $height_ratio > 1) {
+            # $scale_factor = sprintf('%.3f', (1 / $height_ratio));
+            $scale_by_height = 1;
+        }
+
+        # bail if there is no need to scale
+        next FILE unless ($scale_by_width || $scale_by_height);
+
+        # Create smaller version
+        my $uploaded_img = Imager->new();
+        $uploaded_img->read(file => $file->{full_path}) or next FILE;
+
+        # my $scaled_image  = $uploaded_img->scale(scalefactor => $scale_factor);
+        my $scaled_image;
+        if ($scale_by_width) {
+            $scaled_image  = $uploaded_img->scale(
+                xpixels => $max_dimensions{'width'},
+                type    => 'min',
+            );
+        } elsif ($scale_by_height) {
+            $scaled_image  = $uploaded_img->scale(
+                ypixels => $max_dimensions{'height'},
+                type    => 'min',
+            );
+        }
+
+        my $original_name = $file->{full_path};
+        my $scaled_name   = $original_name . '_scaled_down.' . $extension;
+
+        $scaled_image->write(file => $scaled_name) or next FILE;
+
+        my ($scaled_width, $scaled_height) = imgsize($scaled_name);
+        next FILE if ($max_dimensions{'width'}  && ($scaled_width > $max_dimensions{'width'}));
+        next FILE if ($max_dimensions{'height'} && ($scaled_height > $max_dimensions{'height'}));
+
+        # rename the scaled file to the original name
+        move($scaled_name, $original_name)
+          or warn "Could not move file $scaled_name to $original_name: $!";
+
+    }
 }
 
 =back
