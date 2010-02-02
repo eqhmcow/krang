@@ -359,6 +359,7 @@ sub _do_advanced_find {
       search_filename
       search_filter
       search_media_id
+      search_media_type_id
       search_title
       search_creation_date_day
       search_creation_date_month
@@ -493,6 +494,18 @@ sub _do_advanced_find {
         $t->param(search_media_id => $search_media_id);
     }
 
+    # search_media_type_id
+    my $search_media_type_id =
+      defined($q->param('search_media_type_id'))
+      ? $q->param('search_media_type_id')
+      : $session{KRANG_PERSIST}{pkg('Media')}{search_media_type_id};
+
+    if (defined($search_media_type_id)) {
+        $find_params->{media_type_id}         = $search_media_type_id;
+        $persist_vars->{search_media_type_id} = $search_media_type_id;
+#        $t->param(search_media_type_id => $search_media_type_id);
+    }
+
     # search_no_attributes
     my $search_no_attributes =
       ($q->param('rm') eq 'advanced_find')
@@ -541,7 +554,10 @@ sub _do_advanced_find {
             query    => $q,
             name     => 'search_creation_date_to',
             nochoice => 1,
-        )
+        ),
+        type_chooser    => $self->_media_types_popup_menu(
+            search   => 1,
+        ),
     );
 
     return $t->output();
@@ -1821,22 +1837,10 @@ sub make_media_tmpl_data {
         $tmpl_data{can_transform_image} = $Imager::formats{$extension};
     }
 
-    # Build type drop-down
-    my %media_types = pkg('Pref')->get('media_type');
-    %media_types = map { $_ => localize($media_types{$_}) } keys %media_types;
-    my @media_type_ids = ("", sort { $media_types{$a} cmp $media_types{$b} } keys(%media_types));
-
-    my $media_types_popup_menu = $q->popup_menu(
-        -name    => 'media_type_id',
-        -values  => \@media_type_ids,
-        -labels  => \%media_types,
-        -default => ($m->media_type_id() || $session{KRANG_PERSIST}{pkg('Media')}{media_type_id}),
-    );
-
     # persist media_type_id in session for next time someone adds media..
     $session{KRANG_PERSIST}{pkg('Media')}{media_type_id} = $m->media_type_id();
 
-    $tmpl_data{type_chooser} = $media_types_popup_menu;
+    $tmpl_data{type_chooser} = $self->_media_types_popup_menu();
 
     # Build category chooser
     my $category_id = $q->param('category_id');
@@ -2491,6 +2495,34 @@ sub _clear_image_transform_session {
 
     # clear any history actions
     delete $session{image_transform_actions};
+}
+
+# The "_media_types_popup_menu" method creates the popup menu for
+# the 'media_type_id' of Media objects.
+
+sub _media_types_popup_menu {
+    my $self = shift;
+    my %args = (@_);
+    my $q    = $self->query();
+    my $m    = $session{media};
+
+    # Build type drop-down
+    my %media_types = pkg('Pref')->get('media_type');
+    %media_types = map { $_ => localize($media_types{$_}) } keys %media_types;
+    my @media_type_ids = ("", sort { $media_types{$a} cmp $media_types{$b} } keys(%media_types));
+
+    my $search = $args{search} ? 1 : 0;
+    my $media_types_popup_menu = $q->popup_menu(
+        -name    => ($search ? 'search_media_type_id' : 'media_type_id'),
+        -values  => \@media_type_ids,
+        -labels  => \%media_types,
+        -default => (
+              $search
+            ? $session{KRANG_PERSIST}{pkg('Media')}{search_media_type_id}
+            : ($m->media_type_id() || $session{KRANG_PERSIST}{pkg('Media')}{media_type_id})
+        ),
+    );
+    return $media_types_popup_menu;
 }
 
 1;

@@ -14,12 +14,16 @@ large images. [Brad Oaks]
 =item *
 
 Added C<Krang.Form.get_form()> method to make it easier to get the
-form in custom Javascript code.
+form in custom Javascript code. [Michael Peters]
 
 =item *
 
 Added C<update> (which defaults to C<true>) option to C<Krang.Form.submit()>
-to make it easier for addons to create forms which submit and return JSON data. 
+to make it easier for addons to create forms which submit and return JSON data. [Michael Peters]
+
+=item *
+
+Added ability to search Media by C<Type> (which is C<media_type_id>). [Brad Oaks]
 
 =back
 
