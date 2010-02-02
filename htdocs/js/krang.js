@@ -585,6 +585,9 @@ Krang.Ajax.update = function(args) {
     Krang.Form.get_field(form, input);
     Returns the HTML object representing the input field of the form.
 
+    Krang.Form.get_form(form_name);
+    Returns the HTML Form object given a form's name.
+
     Krang.Form.submit(form, { input: 'value' }, { new_window: true })
     Select a form (can either be the name of the form, or the form object
     itself) optionally sets the values of those elements and then submits
@@ -604,6 +607,11 @@ Krang.Ajax.update = function(args) {
                      for
         onComplete : a callback to be executed when the request is finished
                      (only works with AJAX requests)
+        onFailure  : a callback to be executed when the request fails
+                     (only works with AJAX requests)
+        update     : If false, then no update of the current page will be
+                     done with the response from the server. This is useful
+                     if the server is returning JSON instead of HTML
 
     *NOTE* - This should not be used by the onclick handler of
     an input of type 'button' if the form is not of the 'non_ajax'
@@ -614,12 +622,15 @@ Krang.Ajax.update = function(args) {
     to set the values and let the form take care of the rest.
 */
 Krang.Form = {
-    set : function(form, inputs) {
+    get_form : function(form) {
         form = typeof form == 'object' ? form : document.forms[form];
         form = $(form);
-        var err = 'Krang.Form.set(): ';
+        if(!form) alert('Krang.Form.get_form(): form "' + form.name + '" does not exist!');
 
-        if( !form ) alert(err + 'form "' + form.name + '" does not exist!');
+        return form;
+    },
+    set : function(form, inputs) {
+        form = Krang.Form.get_form(form);
 
         if( inputs ) {
             $H(inputs).each( function(pair) {
@@ -630,12 +641,9 @@ Krang.Form = {
         }
     },
     get_field : function(form, input) {
-        form = typeof form == 'object' ? form : document.forms[form];
-        form = $(form);
-        var err = 'Krang.Form.get(): ';
+        form = Krang.Form.get_form(form);
+        if( !form.elements[input] ) alert('Krang.Form.get(): input "' + input + '" does not exist in form "' + form.name + '"!');
 
-        if( !form ) alert(err + 'form "' + form.name + '" does not exist!');
-        if( !form.elements[input] ) alert(err + 'input "' + input + '" does not exist in form "' + form.name + '"!');
         return form.elements[input];
     },
     get : function(form, input) {
@@ -643,12 +651,12 @@ Krang.Form = {
         return field.value;
     },
     submit : function(form, inputs, options) {
-        form = typeof form == 'object' ? form : document.forms[form];
-        form = $(form);
+        form = Krang.Form.get_form(form);
         if( inputs ) Krang.Form.set(form, inputs);
 
         // take care of our default options
         if(options == null ) options = {};
+        if(options.update == null) options.update = true; // defaults to true
 
         if( options.new_window ) {
             if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) return;
@@ -687,14 +695,25 @@ Krang.Form = {
                     url = url.replace(/\?.*/, '');
                 }
 
-                Krang.Ajax.update({
-                    url        : url,
-                    params     : Form.serialize(form, true),
-                    method     : form.method,
-                    target     : options.target,
-                    to_top     : options.to_top,
-                    onComplete : options['onComplete']
-                });
+                if( options.update ) {
+                    Krang.Ajax.update({
+                        url        : url,
+                        params     : Form.serialize(form, true),
+                        method     : form.method,
+                        target     : options.target,
+                        to_top     : options.to_top,
+                        onComplete : options['onComplete'],
+                        onFailure  : options['onFailure']
+                    });
+                } else {
+                    Krang.Ajax.request({
+                        url        : url,
+                        params     : Form.serialize(form, true),
+                        method     : form.method,
+                        onComplete : options['onComplete'],
+                        onFailure  : options['onFailure']
+                    });
+                }
             } else {
                 if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) return;
                 form.action = Krang.Window.pass_id(form.action);
@@ -1031,6 +1050,18 @@ Krang.Messages = {
             }
             // remove any unique_ tags we put on the class name
             el.className = 'krang-slider';
+        }
+    },
+    add_and_show : function(args) {
+        if(args && args.messages) {
+            Krang.Messages.clear('messages');
+            $A(args.messages).each(function(msg) { Krang.Messages.add(msg) });
+            Krang.Messages.show();
+        }
+        if(args && args.alerts) {
+            Krang.Messages.clear('alerts');
+            $A(args.alerts).each(function(msg) { Krang.Messages.add(msg, 'alerts') });
+            Krang.Messages.show('alerts');
         }
     }
 };

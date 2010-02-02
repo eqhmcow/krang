@@ -11,6 +11,16 @@ This document contains a list of changes for each release of Krang.
 Media Bulk Upload can set a max height and/or max width to scale down
 large images. [Brad Oaks]
 
+=item *
+
+Added C<Krang.Form.get_form()> method to make it easier to get the
+form in custom Javascript code.
+
+=item *
+
+Added C<update> (which defaults to C<true>) option to C<Krang.Form.submit()>
+to make it easier for addons to create forms which submit and return JSON data. 
+
 =back
 
 =head2 3.08 - December 20, 2009
