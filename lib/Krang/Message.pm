@@ -17,6 +17,12 @@ use Class::ISA;
 use base 'Exporter';
 our @EXPORT_OK =
   qw(add_message get_messages get_message_text clear_messages add_alert get_alerts clear_alerts);
+our %EXPORT_TAGS = (
+    add   => [qw(add_message add_alert)],
+    get   => [qw(get_messages get_message_text get_alerts)],
+    clear => [qw(clear_messages clear_alerts)],
+    all   => \@EXPORT_OK,
+);
 
 our %CONF;
 
