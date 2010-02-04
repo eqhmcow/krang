@@ -39,7 +39,7 @@ Krang.onload( function() {
 <tmpl_lang View Template>
 </h2>
 
-<form name="return_form" action="<tmpl_var escape=html return_script>" method="post">
+<form name="return_form" action="<tmpl_var escape=html return_script default='template.pl'>" method="post">
 
 <tmpl_var history_return_params>
 <input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">

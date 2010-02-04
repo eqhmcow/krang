@@ -25,6 +25,12 @@ to make it easier for addons to create forms which submit and return JSON data. 
 
 Added ability to search Media by C<Type> (which is C<media_type_id>). [Brad Oaks]
 
+=item *
+
+Fixed ISE that occurs on the Back button when viewing an older version of a template that you have checked out.
+It only happened when starting from Workspace and editing a template.  The form action was set to workspace.pl
+instead of template.pl in that case.  [Brad Oaks]
+
 =back
 
 =head2 3.08 - December 20, 2009
