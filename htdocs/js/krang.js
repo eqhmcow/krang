@@ -635,7 +635,7 @@ Krang.Form = {
         if( inputs ) {
             $H(inputs).each( function(pair) {
                 var el = form.elements[pair.key];
-                if(! el ) alert(err + 'input "' + pair.key + '" does not exist in form "' + form.name + '"!');
+                if(! el ) alert('Krang.Form.set() input "' + pair.key + '" does not exist in form "' + form.name + '"!');
                 el.value = pair.value;
             });
         }

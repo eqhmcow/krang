@@ -161,12 +161,15 @@ sub output {
       if $template->query(name => 'browser_speed_boost');
 
     # add the message and alert loops
+warn "In output()\n";
     if ($template->query(name => 'header_message_loop')) {
         $template->param(header_message_loop => [map { {message => $_} } get_messages()]);
         clear_messages();
     }
 
     if ($template->query(name => 'header_alert_loop')) {
+use Data::Dumper;
+warn Dumper [get_alerts()];
         $template->param(header_alert_loop => [map { {alert => $_} } get_alerts()]);
         clear_alerts();
     }
