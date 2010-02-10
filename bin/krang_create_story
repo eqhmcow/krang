@@ -115,11 +115,21 @@ name of the child element and then the filename of the media object:
 
 =item * --story-link
 
-If the element you want to add is a Story Link you can specify the story's id or
-uuid:
+If the element you want to add is a Story Link you can specify the
+story's id, UUID or url:
 
     --story-link more_info="123"
     --story-link more_info="FA47EA5C-0F23-11DE-9999-71D3CB6E427A"
+    --story-link more_info="/foo/more_info"
+
+=item * --category-link
+
+If the element you want to add is a Story Link you can specify the
+Category's id, UUID or url:
+
+    --category-link more_info="123"
+    --category-link more_info="FA47EA5C-0F23-11DE-9999-71D3CB6E427A"
+    --story-link more_info="/foo/bar"
 
 =item * --preview
 
@@ -175,9 +185,9 @@ use Time::Piece;
 use URI;
 
 my (
-    $type,          $title,      $slug,     $help,  $man,
-    $category_path, $site_url,   %elements, %media, %story_links,
-    $preview,       $cover_date, $story_uuid,
+    $type,           $title,    $slug,       $help,  $man,
+    $category_path,  $site_url, %elements,   %media, %story_links,
+    %category_links, $preview,  $cover_date, $story_uuid,
 );
 GetOptions(
     'title=s'    => \$title,
@@ -201,6 +211,10 @@ GetOptions(
     'story-links=s%' => sub {
         my (undef, $key, $value) = @_;
         push(@{$story_links{$key} ||= []}, $value);
+    },
+    'category-links=s%' => sub {
+        my (undef, $key, $value) = @_;
+        push(@{$category_links{$key} ||= []}, $value);
     },
     'preview'                 => \$preview,
     'cover-date=s'            => \$cover_date,
@@ -337,6 +351,38 @@ foreach my $name (keys %story_links) {
             push(@{$elements{$name} ||= []}, $other_story);
         } else {
             die "Could not find Story object with $key '$id'!\n";
+        }
+    }
+}
+
+# add the category links
+foreach my $name (keys %category_links) {
+    foreach my $id (@{$category_links{$name}}) {
+        my $key;
+        my $category;
+        if ($id =~ /^http:/) {
+            $key = 'url';
+            my $uri = URI->new($id);
+            die "Could not parse url '$id'!\n" unless $uri;
+
+            my @dirs = split(/\//, $uri->path);
+            my $category_path = join('/', @dirs);
+            my $category_url  = $uri->host . $category_path;
+            $category_url .= '/' unless ($category_url =~ /\/$/);
+
+            ($category) = pkg('Category')->find(url => $category_url);
+        } elsif ($id =~ /^\d+$/) {
+            $key = 'id';
+            ($category) = pkg('Category')->find(story_id => $id);
+        } else {
+            $key = 'uuid';
+            ($category) = pkg('Category')->find(story_uuid => $id);
+        }
+
+        if ($category) {
+            push(@{$elements{$name} ||= []}, $category);
+        } else {
+            die "Could not find Category object with $key '$id'!\n";
         }
     }
 }

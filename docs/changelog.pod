@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<--category-links> option to F<bin/krang_create_story>
+script. [Michael Peters]
+
+=item *
+
 Media Bulk Upload can set a max height and/or max width to scale down
 large images. [Brad Oaks]
 
