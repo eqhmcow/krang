@@ -22,6 +22,7 @@
                 <xs:element name="deployed_version" type="xs:int" minOccurs="0"/>
                 <xs:element name="retired" type="xs:boolean"/>
                 <xs:element name="trashed"  type="xs:boolean"/>
+                <xs:element name="read_only"  type="xs:boolean"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>

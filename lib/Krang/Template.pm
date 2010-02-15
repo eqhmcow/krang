@@ -124,7 +124,8 @@ use constant TEMPLATE_RO => qw(template_id
   url
   version
   retired
-  trashed);
+  trashed
+  read_only);
 
 # Read-write fields
 use constant TEMPLATE_RW => qw(category_id
@@ -671,6 +672,8 @@ The list valid search fields is:
 
 =item * version
 
+=item * read_only
+
 =item * simple_search
 
 =item * simple_search_check_full_text (boolean)
@@ -813,9 +816,13 @@ sub find {
             && (ref($args{$arg}) || "") eq 'ARRAY'
             && scalar(@{$args{$arg}}) > 0)
         {
-            my $tmp = join(" OR ", map { "t.category_id = ?" } @{$args{$arg}});
+            my $tmp = join(" OR ",
+                map { defined $_ ? "t.category_id = ?" : "t.category_id IS NULL" } @{$args{$arg}});
             $where_clause .= " ($tmp)";
-            push @params, @{$args{$arg}};
+
+            # only keep defined since we've taken care of NULL above
+            my @values = grep { defined $_ } @{$args{$arg}}; 
+            push @params, @values;
         } elsif ($arg eq 'below_category_id') {
             my ($cat) = pkg('Category')->find(category_id => $args{$arg});
             if ($cat) {
@@ -1096,6 +1103,7 @@ sub init {
     $self->{template_uuid}  = pkg('UUID')->new();
     $self->{retired}        = 0;
     $self->{trashed}        = 0;
+    $self->{read_only}      = 0;
 
     $self->hash_init(%args);
 
@@ -1434,8 +1442,9 @@ sub serialize_xml {
     $writer->dataElement(version       => $self->{version});
     $writer->dataElement(deployed_version => $self->{deployed_version})
       if $self->{deployed_version};
-    $writer->dataElement(retired => $self->retired);
-    $writer->dataElement(trashed => $self->trashed);
+    $writer->dataElement(retired   => $self->retired);
+    $writer->dataElement(trashed   => $self->trashed);
+    $writer->dataElement(read_only => $self->read_only);
 
     # add category to set
     $set->add(object => $self->category, from => $self)
@@ -1470,7 +1479,7 @@ sub deserialize_xml {
     @complex{
         qw(template_id deploy_date creation_date url
           checked_out checked_out_by version deployed testing
-          deployed_version category_id template_uuid trashed retired)
+          deployed_version category_id template_uuid trashed retired read_only)
       }
       = ();
     %simple = map { ($_, 1) } grep { not exists $complex{$_} } (TEMPLATE_RO, TEMPLATE_RW);

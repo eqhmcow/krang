@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<read_only> flag to Media and Template objects. This flag
+can only be set by the F<bin/krang_read_only> admin script so that these
+items can't be set/unset by users. [Michael Peters]
+
+=item *
+
 Added C<--category-links> option to F<bin/krang_create_story>
 script. [Michael Peters]
 

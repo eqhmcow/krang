@@ -1,0 +1,146 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+use Getopt::Long;
+use Pod::Usage;
+
+=head1 NAME
+
+krang_read_only - interface to mark Krang objects as read-only
+
+=head1 SYNOPSIS
+
+  krang_read_only --media --media_id 32
+
+=head1 DESCRIPTION
+
+This script provides a command-line interface to setting
+(or unsetting) the C<read_only> flag on Krang objects.
+
+Currently, this flag is only available for Media and Template
+objects.
+
+=head1 OPTIONS
+
+=over
+
+=item --type
+
+The type of object(s) to mark. Either C<media> or C<template>.
+
+=item --id
+
+The ID of the object being marked. Can be specified multiple times.
+
+=item --category
+
+The category of the object's being marked. Can be specified multiple times.
+
+If you want to check for top-level objects (with no category) you can
+use the special C<null> value for this.
+
+=item --undo
+
+By default this script marks the objects as C<read_only>. This option however
+does the opposite and undoes any C<read_only> flag.
+
+=item --verbose
+
+Print out a verbose log of what is being done.
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Script';
+
+my ($type, @ids, @categories, $undo, $v, $help, $man);
+
+pod2usage(2)
+  unless GetOptions(
+    help         => \$help,
+    man          => \$man,
+    verbose      => \$v,
+    'type=s'     => \$type,
+    'id=s'       => \@ids,
+    'category=s' => \@categories,
+    undo         => \$undo,
+  );
+
+pod2usage(1) if $help;
+pod2usage(-verbose => 2) if $man;
+
+die "You must specify a --type!\n" unless $type;
+die "--type must be either 'template' or 'media'\n" unless $type eq 'media' || $type eq 'template';
+die "--id and --category can't be used at the same time!\n" if @ids && @categories;
+die "You must specify at least one --id or --category!\n" unless @ids || @categories;
+
+my @objs;
+my $class = pkg(ucfirst $type);
+eval "require $class";
+die $@ if $@;
+my $id_meth = $class->id_meth;
+if( @ids ) {
+    if ($v) {
+        print "Finding $type objects with an id of "
+          . (@ids > 1 ? join(',', @ids) : $ids[0]) . "\n";
+    }
+    @objs = $class->find($id_meth => \@ids);
+} elsif( @categories ) {
+    if ($v) {
+        print "Finding $type objects with a category of "
+          . (@categories > 1 ? join(',', @categories) : $categories[0]) . "\n";
+    }
+    @categories = map { $_ eq 'null' ? undef : $_ } @categories;
+    @objs = $class->find(category_id => \@categories);
+}
+
+print "Found " . scalar @objs . " $type objects\n";
+
+foreach my $obj (@objs) {
+    if ($v) {
+        my $msg =
+            ($undo ? 'Unsetting' : 'Setting')
+          . " the read_only flag on $type #"
+          . $obj->$id_meth . "\n";
+        print $msg;
+    }
+    $obj->checkout;
+    $obj->{read_only} = $undo ? 0 : 1;
+    $obj->save;
+    $obj->checkin;
+}
+

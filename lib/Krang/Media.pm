@@ -32,7 +32,7 @@ use FileHandle;
 use constant THUMBNAIL_SIZE     => 35;
 use constant MED_THUMBNAIL_SIZE => 200;
 use constant FIELDS =>
-  qw(media_id media_uuid element_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published published_version preview_version publish_date checked_out_by retired trashed);
+  qw(media_id media_uuid element_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published published_version preview_version publish_date checked_out_by retired trashed read_only);
 
 # setup exceptions
 use Exception::Class (
@@ -261,6 +261,7 @@ use Krang::ClassLoader MethodMaker => new_with_init => 'new',
       may_edit
       retired
       trashed
+      read_only
       )
   ];
 
@@ -292,6 +293,7 @@ sub init {
     $self->{creation_date} = localtime unless defined $self->{creation_date};
     $self->{retired}       = 0;
     $self->{trashed}       = 0;
+    $self->{read_only}     = 0;
 
     # Set up temporary permissions
     $self->{may_see}  = 1;
@@ -2176,8 +2178,9 @@ sub serialize_xml {
     $writer->dataElement(creation_date => $self->{creation_date}->datetime);
     $writer->dataElement(publish_date  => $self->{publish_date}->datetime)
       if $self->{publish_date};
-    $writer->dataElement(retired => $self->retired);
-    $writer->dataElement(trashed => $self->trashed);
+    $writer->dataElement(retired   => $self->retired);
+    $writer->dataElement(trashed   => $self->trashed);
+    $writer->dataElement(read_only => $self->read_only);
 
     # add category to set
     $set->add(object => $self->category, from => $self);
@@ -2230,7 +2233,7 @@ sub deserialize_xml {
     my (%complex, %simple);
     @complex{
         qw(media_id filename publish_date creation_date checked_out_by element_id
-          version url published_version category_id media_uuid trashed retired)
+          version url published_version category_id media_uuid trashed retired read_only)
       }
       = ();
     %simple = map { ($_, 1) } grep { not exists $complex{$_} } (FIELDS);

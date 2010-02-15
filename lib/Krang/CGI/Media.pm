@@ -2174,6 +2174,14 @@ sub find_media_row_handler {
         return 1;
     }
 
+    # short-circuit for read_only media
+    if ($media->read_only) {
+        $pager->column_display(status => 1);
+        $row->{status}          = localize('Read-Only');
+        $row->{checkbox_column} = "&nbsp;";
+        return 1;
+    }
+
     # Buttons and status continued
     if ($list_retired) {
 

@@ -21,6 +21,7 @@ CREATE TABLE template (
         version 		smallint UNSIGNED NOT NULL,
         retired        BOOL NOT NULL DEFAULT 0,
         trashed         BOOL NOT NULL DEFAULT 0,
+        read_only       BOOL NOT NULL DEFAULT 0,
         PRIMARY KEY  (template_id),
         INDEX (category_id),
         INDEX (checked_out_by),

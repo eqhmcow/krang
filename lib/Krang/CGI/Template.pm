@@ -521,6 +521,7 @@ sub edit {
         $session{template} = $template;
     }
     croak("No template object.") unless ref $template;
+    croak("Can't edit read-only template.") if $template->read_only;
 
     my $t = $self->load_tmpl("edit.tmpl", associate => $q,);
 
@@ -544,6 +545,7 @@ sub edit_checkin {
     my $q        = $self->query();
     my $template = $session{template};
     croak("No object in session") unless ref $template;
+    croak("Can't edit read-only template.") if $template->read_only;
 
     # update template with CGI values
     $self->update_template($template) || return $self->redirect_to_workspace;
@@ -580,6 +582,7 @@ sub edit_save {
     my $template = $session{template};
 
     croak("No object in session") unless ref $template;
+    croak("Can't edit read-only template.") if $template->read_only;
 
     # update template with CGI values
     $self->update_template($template) || return $self->redirect_to_workspace;
@@ -612,6 +615,7 @@ sub edit_save_stay {
     my $q        = $self->query();
     my $template = $session{template};
     croak("No object in session") unless ref $template;
+    croak("Can't edit read-only template.") if $template->read_only;
 
     # update template with CGI values
     $self->update_template($template) || return $self->redirect_to_workspace;
@@ -658,8 +662,11 @@ sub revert_version {
     $q->delete_all();
     $q->param(reverted_to_version => $selected_version);
 
+    # get the template
+    my $template = $session{template};
+    croak("Can't edit read-only template.") if $template->read_only;
+
     # Perform revert & display result
-    my $template           = $session{template};
     my $pre_revert_version = $template->version;
     my $result             = $template->revert($selected_version);
     if ($result->isa('Krang::Template')) {
@@ -694,6 +701,8 @@ sub save_and_view_log {
 
     # Update template object
     my $template = $session{template};
+    croak("Can't edit read-only template.") if $template->read_only;
+
     $self->update_template($template) || return $self->redirect_to_workspace;
     my $id = $template->template_id;
 
@@ -1349,6 +1358,14 @@ sub search_row_handler {
         return 1;
     }
 
+    # short circuit for read_only template
+    if ($template->read_only) {
+        $pager->column_display(status => 1);
+        $row->{status}          = localize('Read-Only');
+        $row->{checkbox_column} = "&nbsp;";
+        return 1;
+    }
+
     # Buttons and status continued
     if ($list_retired) {
 
@@ -1604,9 +1621,8 @@ sub retire {
 
     # load template from DB and retire it
     my ($template) = pkg('Template')->find(template_id => $template_id);
-
-    croak("Unable to load Template '" . $template_id . "'.")
-      unless $template;
+    croak("Unable to load Template '" . $template_id . "'.") unless $template;
+    croak("Can't edit read-only template.") if $template->read_only;
 
     $template->retire();
 
@@ -1636,8 +1652,8 @@ sub unretire {
     # load template from DB and unretire it
     my ($template) = pkg('Template')->find(template_id => $template_id);
 
-    croak("Unable to load template '" . $template_id . "'.")
-      unless $template;
+    croak("Unable to load template '$template_id'.") unless $template;
+    croak("Can't edit read-only template.") if $template->read_only;
 
     eval { $template->unretire() };
 

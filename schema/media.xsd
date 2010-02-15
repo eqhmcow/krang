@@ -36,6 +36,7 @@
                 <xs:element name="publish_date" type="xs:dateTime" minOccurs="0"/>
                 <xs:element name="retired" type="xs:boolean"/>
                 <xs:element name="trashed"  type="xs:boolean"/>
+                <xs:element name="read_only"  type="xs:boolean"/>
                 <xs:element name="contrib" minOccurs="0" maxOccurs="unbounded">
                     <xs:complexType>
                         <xs:sequence>
