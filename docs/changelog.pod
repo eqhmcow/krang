@@ -6,6 +6,12 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item * 
+
+Added new C<command_column_extra_args> option to L<Krang::HTMLPager>
+so that more arguments can be passed into the C<command_column_commands>
+besides just the id. [Michael Peters]
+
 =item *
 
 Added C<read_only> flag to Media and Template objects. This flag

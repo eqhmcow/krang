@@ -65,6 +65,7 @@ use Krang::ClassLoader MethodMaker => (
           column_labels
           command_column_commands
           command_column_labels
+          command_column_extra_args
           columns_sortable
           columns_sort_map
           columns_hidden
@@ -606,8 +607,9 @@ a highly functional gadget in the header, which is probably required.
 An arrayref containing the names of the JavaScript functions to 
 be called when the user clicks on a particular command.  The
 function will be called with the "ID" (as returned per row by 
-the "id_handler" pager parameter described below) as the only
-argument.  For example, following would be the HTML generated
+the "id_handler" pager parameter described below) as the first
+argument. Additional parameters can be passed in via the C<command_column_extra_args>
+option. For example, following would be the HTML generated
 if ID was set to "4":
 
   <input onclick="edit_contrib('4')" type="button" class="button">
@@ -616,6 +618,15 @@ It is expected that a corresponding JavaScript function would be
 written to implement the functionality desired when the user
 clicks on the command link for a particular row.
 
+=item command_column_extra_args
+
+    command_column_extra_args => sub { return ('foo', 'bar') },
+
+A subroutine reference that returns extra parameters that will be passed
+to each C<command_column_commands> javascript function in addition
+to the row's C<ID>.
+
+This subroutine receives the object for the row being created.
 
 =item command_column_labels
 
@@ -1251,10 +1262,15 @@ sub make_dynamic_columns {
         my @command_column_commands = @{$self->command_column_commands()};
         my %command_column_labels   = %{$self->command_column_labels()};
 
+        my @js_args = ($row_id);
+        if( my $args_callback = $self->command_column_extra_args ) {
+            push(@js_args, $args_callback->($fobj));
+        }
+
         # Build HTML for commands
         my @commands_html = ();
         foreach my $command (@command_column_commands) {
-            my $href      = "$command('$row_id')";
+            my $href      = "$command(" . join(',', map { "'$_'" } @js_args) . ")";
             my $link_text = (
                 exists($command_column_labels{$command})
                 ? $command_column_labels{$command}
