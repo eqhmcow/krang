@@ -142,7 +142,7 @@ Krang.unload = function() {
     // run any code from Krang.onunload()
     Krang.run_code(Krang.onunload_code);
 }
-var oldOnUnload = document.onunload;
+var oldOnUnload = document.onunload || Prototype.emptyFunction;
 document.onunload = function() {
     Krang.unload();
     oldOnUnload();
