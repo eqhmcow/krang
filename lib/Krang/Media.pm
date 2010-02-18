@@ -670,9 +670,7 @@ sub file_path {
 sub _relativize_path {
     my ($self, $path) = @_;
     my $root = KrangRoot;
-warn "\n\n\nBefore: $path\n";
     $path =~ s/^$root\/?//;
-warn "After:  $path\n";
     return $path;
 }
 
