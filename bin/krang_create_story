@@ -177,12 +177,17 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'AddOn';
+
+BEGIN { pkg('AddOn')->call_handler('InitHandler') };
+
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Script';
 use Time::Piece;
 use URI;
+
 
 my (
     $type,           $title,    $slug,       $help,  $man,
