@@ -638,9 +638,7 @@ Both options may be combined.
 =cut
 
 sub file_path {
-    my $self     = shift;
-    my %args     = @_;
-    my $root     = KrangRoot;
+    my ($self, %args) = @_;
     my $media_id = $self->{media_id};
     my $filename = $self->{filename};
     my $path;
@@ -657,7 +655,7 @@ sub file_path {
         return undef unless $version <= $self->{version};
 
         $path =
-          catfile($root, 'data', 'media', $instance, $self->_media_id_path(), $version,
+          catfile(KrangRoot, 'data', 'media', $instance, $self->_media_id_path(), $version,
             $self->{filename});
     } else {
 
@@ -666,11 +664,15 @@ sub file_path {
     }
 
     # make path relative if requested
-    if ($args{relative}) {
-        my $root = KrangRoot;
-        $path =~ s/^$root\/?//;
-    }
+    return $args{relative} ? $self->_relativize_path($path) : $path;
+}
 
+sub _relativize_path {
+    my ($self, $path) = @_;
+    my $root = KrangRoot;
+warn "\n\n\nBefore: $path\n";
+    $path =~ s/^$root\/?//;
+warn "After:  $path\n";
     return $path;
 }
 
@@ -1608,22 +1610,21 @@ Returns undef if a thumbnail cannot be created.
 =cut
 
 sub thumbnail_path {
-    my $self     = shift;
-    my %args     = @_;
-    my $root     = KrangRoot;
+    my ($self, %args) = @_;
     my $filename = $self->{filename};
     return undef unless $filename;
 
     # thumbnail path is the same as the file path with t__ or m__ in front of
     # the filename (depending on whether or not it's medium or not)
     my $prefix = $args{medium} ? 'm__' : 't__';
-    my $path =
-      catfile((splitpath($self->file_path(relative => $args{relative})))[1], $prefix . $filename);
+    my $path = catfile((splitpath($self->file_path))[1], $prefix . $filename);
 
     # all done if it exists
-    return $path if (-s $path);
+    if( -s $path ) {
+        return $args{relative} ? $self->_relativize_path($path) : $path;
+    }
 
-    # don't bother with none images
+    # don't bother with non images
     return undef unless $self->{mime_type} =~ m!^image/!;
 
     # problems creating thumbnails shouldn't be fatal
@@ -1639,7 +1640,7 @@ sub thumbnail_path {
                 xpixels => $size,
                 ypixels => $size,
                 type    => 'min',
-                qtype   => 'preview'
+                qtype   => 'mixing',
             );
         } else {
             $thumb = $img;
@@ -1667,7 +1668,7 @@ sub thumbnail_path {
     }
 
     # all done, return the thumbnail path
-    return $path;
+    return $args{relative} ? $self->_relativize_path($path) : $path;
 }
 
 =item $media->checkout() || Krang::Media->checkout($media_id)

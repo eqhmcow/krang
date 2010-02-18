@@ -6,6 +6,12 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+We now generate higher quality thumbnails and there were a couple of
+places (like "Select Media") where thumbnails weren't showing up when
+they should have. [Michael Peters]
+
 =item * 
 
 Added new C<command_column_extra_args> option to L<Krang::HTMLPager>
