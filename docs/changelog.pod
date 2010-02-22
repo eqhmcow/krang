@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added the F<bin/krang_generate_csv> script. [Michael Peters]
+
+=item *
+
 We now generate higher quality thumbnails and there were a couple of
 places (like "Select Media") where thumbnails weren't showing up when
 they should have. [Michael Peters]

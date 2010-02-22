@@ -1,0 +1,139 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+=head1 NAME
+
+krang_generate_csv - create a CSV file from Krang data
+
+=head1 SYNOPSIS
+
+Run this SQL statement for the "foo" instance and print a CSV file to STDOUT
+
+  $ krang_generate_csv -i foo -q 'SELECT story_id, title FROM story'
+
+With a header line
+
+  $ krang_generate_csv -i foo -q 'SELECT story_id, title FROM story' -c 'ID,Title'
+
+=head1 DESCRIPTION
+
+It's common to want custom CSV reports from Krang data. This makes it really easy
+once you have the SQL. 
+
+=head2 OPTIONS
+
+=head3 -i or --instance
+
+The instance that the SQL is running against. This is optional and if not specified
+will fallback to using the C<KRANG_INSTANCE> environment variable.
+
+=head3 -q or --sql
+
+The SQL being executed.
+
+=head3 -c or --header
+
+A comma separated list of words that will be used as the header row for the CSV file.
+By default there is no header row.
+
+=head3 -h or --help
+
+=head3 -m or --man
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
+
+    eval { require Krang };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Conf';
+BEGIN { pkg('Conf')->instance($ENV{KRANG_INSTANCE}) }
+use Krang::ClassLoader Script => qw(instance_agnostic);
+use Krang::ClassLoader DB => qw(dbh);
+use Getopt::Long;
+use Pod::Usage;
+use File::Spec::Functions qw(catdir);
+
+BEGIN {
+    eval "require Text::CSV_XS";
+    die "Cannot load Text::CSV_XS which is required for this script: $@" if $@;
+};
+
+my ($help, $man, $instance, $sql, $header);
+GetOptions(
+    'i|instance=s'      => \$instance,
+    'q|sql=s'           => \$sql,
+    'c|header=s'        => \$header,
+    'h|help'            => \$help,
+    'm|man'             => \$man,
+) or pod2usage(2);
+pod2usage(1) if $help;
+pod2usage(-verbose => 2) if $man;
+
+die "You must provide --sql\n"         unless $sql;
+
+if(!$instance) {
+    if( $ENV{KRANG_INSTANCE} ) {
+        $instance = $ENV{KRANG_INSTANCE};
+    } else {
+        die "You must either set KRANG_INSTANCE or supply and --instance!\n";
+    }
+}
+pkg('Conf')->instance($instance);
+$ENV{KRANG_INSTANCE} = $instance;
+
+# execute the SQL
+my $sth = dbh()->prepare($sql);
+eval { $sth->execute() };
+die "Failed to execute SQL: $@\n" if $@;
+
+my $csv = Text::CSV_XS->new(
+    {
+        binary       => 1,
+        always_quote => 1
+    }
+);
+
+if ($header) {
+    if ($csv->combine(split(/\s*,\s*/, $header))) {
+        print STDOUT ($csv->string . "\n");
+    } else {
+        die "Could not parse header line: " . $csv->error_input . "\n";
+    }
+}
+
+while (my $row = $sth->fetchrow_arrayref) {
+    $csv->combine(@$row);
+    print STDOUT ($csv->string . "\n");
+}
+
