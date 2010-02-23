@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Upgraded L<Apache::Session> and changed our usage to not require
+an exclusive lock for every request. [Michael Peters]
+
+=item *
+
 Added the F<bin/krang_generate_csv> script. [Michael Peters]
 
 =item *
