@@ -1,13 +1,11 @@
 package Krang::Session;
-use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-
+use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader DB  => qw(dbh);
 use Krang::ClassLoader Log => qw(critical);
 use Krang::ClassLoader 'MyPref';
-
-use Apache::Session::MySQL;
+use Apache::Session::Flex;
 use Carp qw(croak);
 use Storable qw/nfreeze thaw/;
 
@@ -78,10 +76,12 @@ new session.
 sub create {
     my $pkg = shift;
     my $dbh = dbh();
-    tie %session, 'Apache::Session::MySQL', undef,
-      {
-        Handle     => $dbh,
-        LockHandle => $dbh
+    tie %session, 'Apache::Session::Flex', undef, {
+        Store     => 'MySQL',
+        Generate  => 'MD5',
+        Serialize => 'Storable',
+        Lock      => 'Null',
+        Handle    => $dbh,
       }
       or croak("Unable to create new session.");
     $tied = 1;
@@ -112,10 +112,12 @@ sub load {
 
     # try to tie the session
     eval {
-        tie %session, 'Apache::Session::MySQL', $session_id,
-          {
-            Handle     => $dbh,
-            LockHandle => $dbh
+        tie %session, 'Apache::Session::Flex', $session_id, {
+            Store     => 'MySQL',
+            Generate  => 'MD5',
+            Serialize => 'Storable',
+            Lock      => 'Null',
+            Handle    => $dbh,
           }
           or croak("Unable to create new session.");
         $tied = 1;
@@ -185,10 +187,13 @@ sub delete {
     my $dbh        = dbh();
 
     if ($session_id) {
-        tie my %doomed, 'Apache::Session::MySQL', $session_id,
+        tie my %doomed, 'Apache::Session::Flex', $session_id,
           {
-            Handle     => $dbh,
-            LockHandle => $dbh
+            Store     => 'MySQL',
+            Generate  => 'MD5',
+            Serialize => 'Storable',
+            Lock      => 'Null',
+            Handle    => $dbh,
           }
           or croak("Unable to create new session.");
         tied(%doomed)->delete();
