@@ -1228,13 +1228,11 @@ sub get_tmpl_params {
         $tmpl_params{history_return_params} = join("\n", @history_params);
 
         $tmpl_params{can_edit} = 1
-          unless (
-            not($template->may_edit)
-            or ($template->checked_out
-                and ($template->checked_out_by ne $ENV{REMOTE_USER}))
-            or $template->retired
-            or $template->trashed
-          );
+          unless ($template->read_only
+            || !$template->may_edit
+            || ($template->checked_out && ($template->checked_out_by ne $ENV{REMOTE_USER}))
+            || $template->retired
+            || $template->trashed);
 
         $tmpl_params{return_script} = $q->param('return_script');
     }
