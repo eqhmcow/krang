@@ -227,7 +227,6 @@ change_element_class = function(select) {
             new_name = el.name.replace(new RegExp('/' + old_class + '\\[\\d+\\]'), '/' + old_class + '[' + (old_index - 1) + ']');
             // we need to change the selector's id
             class_changer = $('for_' + el.name);  
-if( ! class_changer ) alert('no class_changer');
             if( class_changer ) class_changer.id = 'for_' + new_name;
 
             // now finally change the element itself
@@ -251,7 +250,6 @@ if( ! class_changer ) alert('no class_changer');
             new_name = el.name.replace(new RegExp('/' + new_class + '\\[\\d+\\]'), '/' + new_class + '[' + (old_index + 1) + ']');
             // we need to change the selector's id
             class_changer = $('for_' + el.name);  
-if( ! class_changer ) alert('no class_changer');
             if( class_changer ) class_changer.id = 'for_' + new_name;
 
             // now finally change the element itself
@@ -376,7 +374,7 @@ if( ! class_changer ) alert('no class_changer');
   <col class="series">
   <col class="c-label-smaller">
   <col>
-  <col class="c-type">
+  <col class="c-stat">
   </colgroup>
 
   <thead>
@@ -389,7 +387,7 @@ if( ! class_changer ) alert('no class_changer');
   <th><tmpl_lang Element></th>
   <th><tmpl_lang Data Entry></th>
 </tmpl_if>
-  <th class="series l"><tmpl_unless no_reorder><input type="checkbox" onclick="Krang.check_all(this,'remove_')"></tmpl_unless></th><!--:unnamed control(db2)-->
+  <th class="series l"><tmpl_unless no_reorder><input type="checkbox" onclick="Krang.check_all(this,'remove_')"></tmpl_unless></th>
   </tr>
   </thead>
 
