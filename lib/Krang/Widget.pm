@@ -692,7 +692,11 @@ sub decode_datetime {
 
     if ($date) {
         my $piece;
-        eval { $piece = Time::Piece->strptime($date, localize($format)) };
+        eval { 
+            $piece = Time::Piece->strptime($date, localize($format)); 
+            # triggers internal methods of Time::Piece that might be broken with bad dates
+            if($piece) { }; 
+        };
         return $piece unless $@;
     }
     return;
@@ -718,7 +722,11 @@ sub decode_date {
 
     if (my $date = $query->param($name)) {
         my $piece;
-        eval { $piece = Time::Piece->strptime($date, localize('%m/%d/%Y')) };
+        eval { 
+            $piece = Time::Piece->strptime($date, localize('%m/%d/%Y'));
+            # triggers internal methods of Time::Piece that might be broken with bad dates
+            if($piece) { };
+        };
         return $piece unless $@;
     }
     return;

@@ -1368,12 +1368,18 @@ sub _save {
         my $title      = $query->param('title');
         my $slug       = $query->param('slug') || '';
         my $cover_date = decode_datetime(name => 'cover_date', query => $query);
-
         my @bad;
-        push(@bad, 'title'), add_alert('missing_title')
-          unless $title;
-        push(@bad, 'cover_date'), add_alert('missing_cover_date')
-          unless $cover_date;
+
+        if(!$title) {
+            push(@bad, 'title');
+            add_alert('missing_title');
+        }
+
+        if(!$cover_date) {
+            push(@bad, 'cover_date');
+            add_alert($query->param('cover_date') ? 'invalid_cover_date' : 'missing_cover_date');
+        }
+
         push(@bad, 'slug')
           unless $self->process_slug_input(
             slug       => $slug,

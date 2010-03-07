@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed ISE that occurred when certain bad date formats were used
+for Cover Dates on stories. [Michael Peters]
+
+=item *
+
 Upgraded L<Apache::Session> and changed our usage to not require
 an exclusive lock for every request. [Michael Peters]
 
