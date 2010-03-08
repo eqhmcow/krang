@@ -8,6 +8,14 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Adding C<ReservedURLs> configuration directive.  This prevents Krang
+users from creating stories or categories with certain URLs.  This is
+useful when you have another application serving the Krang published
+content and it needs certain URLs reserved for it's functionality.
+This can be set per-instance or globally.
+
+=item *
+
 Fixed ISE that occurred when certain bad date formats were used
 for Cover Dates on stories. [Michael Peters]
 

@@ -290,5 +290,14 @@ SSLApachePort <tmpl_var SSLApachePort default="443">
    # InstanceSSLCertificateChainFile /path/to/krang/conf/rabbit-ca.crt
    # InstanceSSLCACertificateFile /path/to/krang/conf/rabbit-ca_client.crt
    # InstanceSSLCARevocationFile  /path/to/krang/conf/rabbit-ca_client.crl
+
+   # Prevent Krang users from creating stories or categories with certain URLs.
+   # This is useful when you have another application serving the Krang published
+   # content and it needs certain URLs reserved for it's functionality.
+   # This can be set per-instance or globally. It's a space separated list of URLs
+   # that can be either relative (so that they apply to all sites in the instance)
+   # or absolute.
+
+   # ReservedURLs "/api /login"
 </tmpl_if>
 </Instance>

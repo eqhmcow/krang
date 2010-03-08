@@ -1,18 +1,16 @@
 package Krang::Story;
-use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-
+use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Element => qw(foreach_element);
 use Krang::ClassLoader 'Category';
-use Krang::ClassLoader History => qw( add_history );
+use Krang::ClassLoader History => qw(add_history);
 use Krang::ClassLoader Log     => qw(assert ASSERT affirm debug info critical);
-use Krang::ClassLoader Conf    => qw(SavedVersionsPerStory);
+use Krang::ClassLoader Conf    => qw(SavedVersionsPerStory ReservedURLs);
 use Krang::ClassLoader DB      => qw(dbh);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader 'UUID';
-
 use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'Trash';
 use Carp qw(croak);
@@ -23,6 +21,7 @@ use File::Spec::Functions qw(catdir canonpath);
 # setup exceptions
 use Exception::Class
   'Krang::Story::DuplicateURL'         => {fields => ['stories', 'categories']},
+  'Krang::Story::ReservedURL'          => {fields => ['reserved']},
   'Krang::Story::MissingCategory'      => {fields => []},
   'Krang::Story::NoCategoryEditAccess' => {fields => ['category_id']},
   'Krang::Story::NoEditAccess'         => {fields => ['story_id']},
@@ -390,10 +389,10 @@ But a list of objects is always returned:
 
   @categories = $story->categories;
 
-This method may throw a Krang::Story::DuplicateURL exception if you
+This method may throw a C<Krang::Story::DuplicateURL> exception if you
 add a new category and it generates a duplicate URL.  When this
 exception is thrown the category list is still changed and you may
-continue to operate on the story.  However, if you try to call save()
+continue to operate on the story.  However, if you try to call C<save()>
 you will receive the same exception.
 
 =cut
@@ -403,7 +402,6 @@ sub categories {
 
     # get
     unless (@_) {
-
         # load the cache as necessary
         for (0 .. $#{$self->{category_ids}}) {
             next if $self->{category_cache}[$_];
@@ -430,9 +428,9 @@ sub categories {
     $self->{url_cache} = [];
 
     unless ($self->{slug} eq '_TEMP_SLUG_FOR_CONVERSION_') {
-
         # make sure this change didn't cause a conflict
         $self->_verify_unique();
+        $self->_verify_reserved();
     }
 }
 
@@ -549,8 +547,8 @@ new(), but C<class>, C<categories>, C<slug> and C<title> are all
 required.  After this call the object is guaranteed to be in a valid
 state and may be saved immediately with C<save()>.
 
-Will throw a Krang::Story::DuplicateURL exception with a story_id
-or category_id field if saving this story would conflict with an 
+Will throw a C<Krang::Story::DuplicateURL> exception with a C<story_id>
+or C<category_id> field if saving this story would conflict with an 
 existing story or category.
 
 
@@ -746,11 +744,11 @@ and C<story_version> tables unless C<no_history> is true.
 If the story is not checked out by the user attempting the save, then
 an error will be thrown unless C<no_verify_checkout> is true.
 
-Will throw a C<Krang::Story::DuplicateURL> exception with a story_id field
+Will throw a C<Krang::Story::DuplicateURL> exception with a C<story_id> field
 if saving this story would conflict with an existing story or category.
 
 Will throw a C<Krang::Story::MissingCategory> exception if this story
-doesn't have at least one category.  This can happen when a clone()
+doesn't have at least one category.  This can happen when a C<clone()>
 results in a story with no categories.
 
 Will throw a C<Krang::Story::NoCategoryEditAccess> exception if the
@@ -790,6 +788,9 @@ sub save {
 
         # make sure it's got a unique URL
         $self->_verify_unique();
+
+        # make sure it's not a reserved URL
+        $self->_verify_reserved();
 
         # update the version number
         $self->{version}++ unless $args{keep_version};
@@ -980,6 +981,31 @@ sub _verify_unique {
               ($a->{id} < $b->{id} ? -1 : $a->{url} cmp $b->{url})
         } @dupes;
         Krang::Story::DuplicateURL->throw(message => "Duplicate URL", stories => \@dupes);
+    }
+}
+
+# makes sure this story doesn't have a reserved URL
+sub _verify_reserved {
+    my $self = shift;
+    foreach my $url ($self->urls) {
+        # make sure they end with a slash
+        $url = "$url/" unless $url =~ /\/$/;
+        $url = "$url/" unless $url =~ /\/$/;
+
+        # create a relative version of this url
+        my $relative_url = $url;
+        $relative_url =~ s/^[^\/]+\//\//;
+
+        # now compare them to the configured ReservedURLs
+        foreach my $reserved (split(/\s+/, ReservedURLs)) {
+            $reserved = "$reserved/" unless $reserved =~ /\/$/;
+            my $compare = $reserved =~ /^\// ? $relative_url : $url;
+            # throw exception
+            Krang::Story::ReservedURL->throw(
+                message  => "Reserved URL ($reserved)",
+                reserved => $reserved,
+            ) if $compare eq $reserved;
+        }
     }
 }
 
@@ -2937,6 +2963,9 @@ sub unretire {
     # make sure no other story occupies our initial place (URL)
     $self->_verify_unique;
 
+    # make sure it's not now a reserved URL
+    $self->_verify_reserved();
+
     # unretire the story
     my $dbh = dbh();
     $dbh->do('UPDATE story SET retired = 0 WHERE story_id = ?', undef, $self->{story_id});
@@ -3033,8 +3062,12 @@ sub untrash {
         story_id => $self->story_id
     ) unless ($self->may_edit);
 
-    # make sure no other story occupies our initial place (URL)
-    $self->_verify_unique unless $self->retired;
+    unless($self->retired) {
+        # make sure no other story occupies our initial place (URL)
+        $self->_verify_unique;
+        # make sure this isn't now a reserved URL
+        $self->_verify_reserved();
+    }
 
     # make sure we are the one
     $self->checkout;

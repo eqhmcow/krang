@@ -318,17 +318,22 @@ sub create {
         );
     };
 
-    # is it a dup?
-    if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-
-        my $class = pkg('ElementLibrary')->top_level(name => $type);
-        $self->alert_duplicate_url(error => $@, class => $class);
-        return $self->new_story(bad => ['category_id', $class->url_attributes]);
-
+    # it's an exception
+    if ($@ and ref($@)) {
+        if ($@->isa('Krang::Story::DuplicateURL')) {
+            # it's a dup
+            my $class = pkg('ElementLibrary')->top_level(name => $type);
+            $self->alert_duplicate_url(error => $@, class => $class);
+            return $self->new_story(bad => ['category_id', $class->url_attributes]);
+        } elsif ($@->isa('Krang::Story::ReservedURL')) {
+            # it's a reserved url
+            add_alert('reserved_url', reserved => $@->reserved);
+            return $self->new_story(bad => ['slug']);
+        } else {
+            die($@);    # rethrow
+        }
     } elsif ($@) {
-
-        # rethrow
-        die($@);
+        die($@);        # rethrow
     }
 
     # save it
@@ -2301,14 +2306,18 @@ sub steal_selected {
 # handle edit save errors (used by db_save, db_save_and_stay, and revert)
 sub add_save_alert {
     my ($self, $story, $error) = @_;
-    if (ref($error) and $error->isa('Krang::Story::DuplicateURL')) {
-        $self->alert_duplicate_url(error => $error, class => $story->class);
+    if (ref $error) {
+        if ($error->isa('Krang::Story::DuplicateURL')) {
+            $self->alert_duplicate_url(error => $error, class => $story->class);
+        } elsif ($error->isa('Krang::Story::ReservedURL')) {
+            add_alert('reserved_url', reserved => $error->reserved);
+        } else {
+            die($error);    # rethrow
+        }
     } elsif (ref($error) and $error->isa('Krang::Story::MissingCategory')) {
         add_alert('missing_category_on_save');
     } else {
-
-        # rethrow
-        die($error);
+        die($error);        # rethrow
     }
 }
 
@@ -2487,7 +2496,6 @@ sub autocomplete {
 }
 
 sub update_categories {
-
     my ($self, %args) = @_;
     my $query    = $args{query};
     my $story    = $args{story};
@@ -2521,33 +2529,34 @@ sub update_categories {
     # slug is safe on current cats, so now let's try the new cats
     eval { $story->categories(@new_cats) };
     if (!$@) {
-
-        # success!
-        return 1;
-
+        return 1;    # success!
     } else {
+        if (ref $@) {
+            if ($@->isa('Krang::Story::DuplicateURL')) {
+                $self->alert_duplicate_url(
+                    error      => $@,
+                    class      => $story->class,
+                    added_cats => \@added_cats
+                );
+                eval { $story->categories(@old_cats) };
 
-        # failure...
-        if (ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
+                # if slug has changed, even the old categories may fail...
+                if ($@ && ($new_slug ne $old_slug)) {
+                    $story->slug($old_slug);          # revert slug just long
+                    $story->categories(@old_cats);    # enough to load old URLs
+                    $story->slug($new_slug);          # and return user to Edit
+                }
 
-            $self->alert_duplicate_url(
-                error      => $@,
-                class      => $story->class,
-                added_cats => \@added_cats
-            );
-            eval { $story->categories(@old_cats) };
-
-            # if slug has changed, even the old categories may fail...
-            if (@$ && ($new_slug ne $old_slug)) {
-                $story->slug($old_slug);          # revert slug just long
-                $story->categories(@old_cats);    # enough to load old URLs
-                $story->slug($new_slug);          # and return user to Edit
+                # in either case - return failure
+                return 0;
+            } elsif ($@->isa('Krang::Story::ReservedURL')) {
+                add_alert('reserved_url', reserved => $@->reserved);
+                return 0;
+            } else {
+                die $@;
             }
-
-            # in either case - return failure
-            return 0;
         } else {
-            die($@);
+            die $@;
         }
     }
 }
@@ -2595,17 +2604,14 @@ sub process_category_input {
 }
 
 sub process_slug_input {
-
     my ($self, %args) = @_;
-
-    my $slug       = $args{slug};
-    my $story      = $args{story};
-    my $type       = $args{type} || ($story && $story->class->name);
-    my $cat_idx    = $args{cat_idx};
-    my @categories = $args{categories} && @{$args{categories}};
-
+    my $slug                = $args{slug};
+    my $story               = $args{story};
+    my $type                = $args{type} || ($story && $story->class->name);
+    my $cat_idx             = $args{cat_idx};
+    my @categories          = $args{categories} && @{$args{categories}};
     my $slug_entry_for_type = pkg('ElementLibrary')->top_level(name => $type)->slug_use();
-    my $slug_required = ($slug_entry_for_type eq 'require');
+    my $slug_required       = ($slug_entry_for_type eq 'require');
     my $slug_optional =
       (($slug_entry_for_type eq 'encourage') || ($slug_entry_for_type eq 'discourage'));
 
@@ -2619,27 +2625,31 @@ sub process_slug_input {
         add_alert('no_slug_no_cat_idx');
         return 0;
     } elsif ($story && ($story->slug ne $slug)) {
-
         # and if we've been given categories to check against new slug...
         if (@categories) {
-
             # store old slug/categories in case we need to revert
             my $old_slug = $story->slug;
             my @old_cats = $story->categories;
 
-            # try out new slug on category list to see if it causes any dupes
+            # try out new slug on category list to see if it causes any dupes or is reserved
             $story->slug($slug);
             eval { $story->categories(@categories) };
-            if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-                $self->alert_duplicate_url(error => $@, class => $story->class);
-                $story->slug($old_slug);
-                $story->categories(@old_cats);
-                return 0;
+            if ($@ && ref $@) {
+                if($@->isa('Krang::Story::DuplicateURL')) {
+                    $self->alert_duplicate_url(error => $@, class => $story->class);
+                    $story->slug($old_slug);
+                    $story->categories(@old_cats);
+                    return 0;
+                } elsif( $@->isa('Krang::Story::ReservedURL')) {
+                    add_alert('reserved_url', reserved => $@->reserved);
+                    return 0;
+                } else {
+                    die $@;
+                }
             } elsif ($@) {
-                die($@);
+                die $@;
             }
         } else {
-
             # even if we're not checking categories, update slug
             $story->slug($slug);
         }
@@ -2650,9 +2660,7 @@ sub process_slug_input {
 }
 
 sub alert_duplicate_url {
-
     my ($self, %args) = @_;
-
     my $class      = $args{class};
     my $error      = $args{error};
     my $added_cats = $args{added_cats};
@@ -2817,9 +2825,8 @@ Comments:   Modify the story's slug or clear its categories if it
 =cut
 
 sub unretire {
-    my $self = shift;
-    my $q    = $self->query;
-
+    my $self     = shift;
+    my $q        = $self->query;
     my $story_id = $q->param('story_id');
 
     croak("No story_id found in CGI params when trying to unretire story.")
@@ -2831,12 +2838,11 @@ sub unretire {
     croak("Unable to load story '" . $story_id . "'.")
       unless $story;
 
-    eval { $story->unretire() };    # may through a Krang::Story::DuplicateURL exception
-
     my @conflict_cats    = ();
     my @conflict_stories = ();
+    eval { $story->unretire() }; # may through an exception
 
-    if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
+    if ($@ && ref($@) && $@->isa('Krang::Story::DuplicateURL')) {
         if ($@->categories) {
             @conflict_cats = @{$@->categories};
         } elsif ($@->stories) {
@@ -2910,6 +2916,11 @@ sub unretire {
         $session{story} = $story;
 
         return $self->edit;
+    } elsif ($@ && ref($@) && $@->isa('Krang::Story::ReservedURL')) {
+        add_alert('reserved_url', reserved => $@->reserved);
+        return $self->edit;
+    } elsif($@) {
+        die $@;
     }
 
     add_message('story_unretired', id => $story_id, url => $story->url);

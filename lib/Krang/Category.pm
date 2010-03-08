@@ -98,6 +98,7 @@ use Carp qw(verbose croak);
 use Exception::Class (
     'Krang::Category::Dependent'    => {fields => 'dependents'},
     'Krang::Category::DuplicateURL' => {fields => [qw(category_id story_id url)]},
+    'Krang::Category::ReservedURL'  => {fields => [qw(reserved)]},
     'Krang::Category::NoEditAccess' => {fields => [qw(category_id category_url)]},
     'Krang::Category::RootDeletion',
     'Krang::Category::CopyAssetConflict',
@@ -111,13 +112,13 @@ use Storable qw(nfreeze thaw);
 ###################
 use Krang::ClassLoader DB      => qw(dbh);
 use Krang::ClassLoader Element => qw(foreach_element);
-
 use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Template';
 use Krang::ClassLoader 'Group';
 use Krang::ClassLoader 'UUID';
 use Krang::ClassLoader Log => qw(debug assert ASSERT);
+use Krang::ClassLoader Conf => qw(ReservedURLs);
 
 #
 # Package Variables
@@ -630,6 +631,45 @@ SQL
     return 0;
 }
 
+=item * $category->reserved_check()
+
+This method checks to see if URL of this category clashes with a reserved
+URL as specified by the C<ReservedURLs> configuration directive. If it
+conflicts, then a C<Krang::Category::ReservedURL> exception will be thrown.
+
+    eval { $self->reserved_check() };
+    if ($@ and $@->isa('Krang::Category::ReservedURL')) {
+        croak("The 'url' of this category is reserved");
+    }
+
+=cut
+
+sub reserved_check {
+    my $self = shift;
+    my $url  = $self->{url};
+
+    # make sure they end with a slash
+    $url = "$url/" unless $url =~ /\/$/;
+    $url = "$url/" unless $url =~ /\/$/;
+
+    # create a relative version of this url
+    my $relative_url = $url;
+    $relative_url =~ s/^[^\/]+\//\//;
+
+    # now compare them to the configured ReservedURLs
+    foreach my $reserved (split(/\s+/, ReservedURLs)) {
+        $reserved = "$reserved/" unless $reserved =~ /\/$/;
+        my $compare = $reserved =~ /^\// ? $relative_url : $url;
+        # throw exception
+        Krang::Category::ReservedURL->throw(
+            message  => "Reserved URL ($reserved)",
+            reserved => $reserved,
+        ) if $compare eq $reserved;
+    }
+
+    return 0;
+}
+
 =item * @categories = $category->ancestors()
 
 =item * @category_ids = $category->ancestors( ids_only => 1 )
@@ -1056,6 +1096,9 @@ sub save {
     # check for duplicates: a DuplicateURL exception will be thrown if a
     # duplicate is found
     $self->duplicate_check();
+
+    # check for reserved urls
+    $self->reserved_check();
 
     # save element, get id back
     my $element = $self->element;

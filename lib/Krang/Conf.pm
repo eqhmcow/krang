@@ -63,6 +63,7 @@ our @VALID_DIRECTIVES;
   PasswordChangeTime
   PasswordChangeCount
   PreviewSSL
+  ReservedURLs
   RewriteLogLevel
   SavedVersionsPerMedia
   SavedVersionsPerStory
