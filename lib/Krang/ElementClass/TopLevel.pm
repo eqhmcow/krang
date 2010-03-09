@@ -78,7 +78,9 @@ sub build_url {
     my ($self,  %arg)      = @_;
     my ($story, $category) = @arg{qw(story category)};
     my $use_slug = ($story->slug && ($story->class->slug_use ne 'prohibit'));
-    return ($category ? $category->url : '') . ($use_slug ? CGI::Util::escape($story->slug) : '');
+    my $url = ($category ? $category->url : '') . ($use_slug ? CGI::Util::escape($story->slug) : '');
+    $url =~ s/\/$//; # remove trailing slashes to make things consisten;
+    return $url;
 }
 
 =item C<< $url = $class->build_preview_url(story => $story, category => $category) >>
