@@ -345,7 +345,7 @@ sub preview_story {
           unless $story;
     } else {
         $story = $session{$session_key};
-        croak("Unable to load story from sesssion '$session_key'")
+        croak("Unable to load story from session '$session_key'")
           unless $story;
         $unsaved = 1 if ($session_key eq 'story');
     }
