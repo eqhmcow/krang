@@ -80,6 +80,7 @@ use Krang::ClassLoader 'Conf';
 BEGIN { pkg('Conf')->instance($ENV{KRANG_INSTANCE}) }
 use Krang::ClassLoader Script => qw(instance_agnostic);
 use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader 'Charset';
 use Getopt::Long;
 use Pod::Usage;
 use File::Spec::Functions qw(catdir);
@@ -131,6 +132,8 @@ if ($header) {
         die "Could not parse header line: " . $csv->error_input . "\n";
     }
 }
+
+binmode(STDOUT, ":encoding(utf8)") if pkg('Charset')->is_utf8;
 
 while (my $row = $sth->fetchrow_arrayref) {
     $csv->combine(@$row);
