@@ -2,8 +2,6 @@
 use strict;
 use warnings;
 
-=pod
-
 =head1 NAME
 
 krang_exec - run some piece of code under the Krang install
@@ -118,6 +116,7 @@ END
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader 'Conf';
+use Krang::ClassLoader 'Charset';
 
 BEGIN {
 
@@ -156,6 +155,8 @@ GetOptions(
 ) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
+
+binmode(STDOUT, ":encoding(utf8)") if pkg('Charset')->is_utf8;
 
 $code ||= do { local $/; <STDIN> };
 unless ($code) {
