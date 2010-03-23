@@ -13,18 +13,19 @@ use Krang::ClassLoader History => qw( add_history );
 use Krang::ClassLoader 'Publisher';
 use Krang::ClassLoader 'UUID';
 use Krang::ClassLoader 'IO';
+use Krang::ClassLoader 'Pref';
 use Carp qw(croak);
 use Storable qw(nfreeze thaw);
 use File::Spec::Functions qw(catdir catfile splitpath canonpath);
 use File::Path;
 use File::Copy;
 use File::Basename qw(fileparse);
-use LWP::MediaTypes qw(guess_media_type);
+use LWP::MediaTypes ();
 use Imager;
 use File::stat;
 use Time::Piece;
 use Time::Piece::MySQL;
-use File::Temp qw/ tempdir /;
+use File::Temp qw(tempdir);
 use Image::Size;
 use FileHandle;
 
@@ -570,8 +571,9 @@ sub upload_file {
     }
     $self->{filename} = $name;
 
-    # guess the mime_type
-    $self->{mime_type} = guess_media_type($path);
+    # guess the mime_type and media_type
+    $self->{mime_type} = $self->guess_mime_type($path);
+    $self->{media_type_id} = $self->guess_media_type($path);
 }
 
 =item $media->store_temp_file(filename => $filename, content=> $text)
@@ -615,7 +617,8 @@ sub store_temp_file {
     undef $self->{url_cache};
 
     # guess the mime_type
-    return $self->{mime_type} = guess_media_type($filepath);
+    $self->{mime_type} = $self->guess_mime_type($filepath);
+    $self->{media_type_id} = $self->guess_media_type($filepath);
 
     return $self;
 }
@@ -2744,6 +2747,85 @@ Returns true if this media object appears to be an image.
 sub is_image {
     my $self = shift;
     return $self->filename && $self->mime_type && $self->mime_type =~ /^image\//;
+}
+
+=item C<< Krang::Media->guess_media_type($filename) >>
+
+Returns a C<media_type_id> based on a good guess from the filename.
+
+=cut
+
+my %EXTENSION_TYPES = (
+    jpg   => 'Image',
+    jpeg  => 'Image',
+    png   => 'Image',
+    gif   => 'Image',
+    tiff  => 'Image',
+    tif   => 'Image',
+    bmp   => 'Image',
+    text  => 'Text',
+    txt   => 'Text',
+    html  => 'HTML',
+    htm   => 'HTML',
+    pdf   => 'PDF',
+    xls   => 'Excel',
+    csv   => 'Excel',
+    tsv   => 'Excel',
+    ods   => 'Excel',
+    sxc   => 'Excel',
+    doc   => 'Word',
+    sxw   => 'Word',
+    odt   => 'Word',
+    docx  => 'Word',
+    mpe   => 'Video',
+    mpg   => 'Video',
+    mpeg  => 'Video',
+    avi   => 'Video',
+    divx  => 'Video',
+    f4v   => 'Video',
+    flv   => 'Video',
+    ogm   => 'Video',
+    wmv   => 'Video',
+    mp3   => 'Audio',
+    ogg   => 'Audio',
+    flacc => 'Audio',
+    wav   => 'Audio',
+    fla   => 'Flash',
+    swf   => 'Flash',
+    js    => 'JavaScript',
+    css   => 'Stylesheet',
+    ssi   => 'Include',
+    ppt   => 'Power Point',
+    sxi   => 'Power Point',
+    odp   => 'Power Point',
+);
+
+sub guess_media_type {
+    my ($pkg, $filename) = @_;
+    my %media_types = pkg('Pref')->get('media_type');
+
+    # guess the media type based on the file's extension
+    $filename =~ /\.(\w+)$/;
+    my $type_id = $EXTENSION_TYPES{lc $1} || 'Text';
+    foreach my $k (keys %media_types) {
+        if( $type_id eq $media_types{$k} ) {
+            $type_id = $k;
+            last;
+        }
+    }
+
+    return $type_id;
+}
+
+=item C<< Krang::Media->guess_mime_type($filename) >>
+
+Returns a C<mime_type> based on a good guess from the filename.
+
+=cut
+
+sub guess_mime_type {
+    my ($pkg, $filename) = @_;
+    return LWP::MediaTypes::guess_media_type($filename);
 }
 
 =back

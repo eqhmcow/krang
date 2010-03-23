@@ -2,6 +2,17 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.10 - In development
+
+=over
+
+=item *
+
+Krang will now correctly guess the media type when media files are uploaded
+via the FTP interface. [Michael Peters]
+
+=back
+
 =head2 3.09 - March 08, 2010
 
 =over
@@ -12,7 +23,7 @@ Adding C<ReservedURLs> configuration directive.  This prevents Krang
 users from creating stories or categories with certain URLs.  This is
 useful when you have another application serving the Krang published
 content and it needs certain URLs reserved for it's functionality.
-This can be set per-instance or globally.
+This can be set per-instance or globally. [Michael Peters]
 
 =item *
 

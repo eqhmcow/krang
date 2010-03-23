@@ -226,50 +226,6 @@ Returns number of uploaded media.
 
 =cut
 
-my %EXTENSION_TYPES = (
-    jpg   => 'Image',
-    jpeg  => 'Image',
-    png   => 'Image',
-    gif   => 'Image',
-    tiff  => 'Image',
-    tif   => 'Image',
-    bmp   => 'Image',
-    text  => 'Text',
-    txt   => 'Text',
-    html  => 'HTML',
-    htm   => 'HTML',
-    pdf   => 'PDF',
-    xls   => 'Excel',
-    csv   => 'Excel',
-    tsv   => 'Excel',
-    ods   => 'Excel',
-    sxc   => 'Excel',
-    doc   => 'Word',
-    sxw   => 'Word',
-    odt   => 'Word',
-    docx  => 'Word',
-    mpe   => 'Video',
-    mpg   => 'Video',
-    mpeg  => 'Video',
-    avi   => 'Video',
-    divx  => 'Video',
-    f4v   => 'Video',
-    flv   => 'Video',
-    ogm   => 'Video',
-    wmv   => 'Video',
-    mp3   => 'Audio',
-    ogg   => 'Audio',
-    flacc => 'Audio',
-    wav   => 'Audio',
-    fla   => 'Flash',
-    swf   => 'Flash',
-    js    => 'JavaScript',
-    css   => 'Stylesheet',
-    ssi   => 'Include',
-    ppt   => 'Power Point',
-    sxi   => 'Power Point',
-    odp   => 'Power Point',
-);
 sub create_media {
     my $new_count    = 0;
     my $update_count = 0;
@@ -287,25 +243,13 @@ sub create_media {
             #else create new media object
             my $category_id = $category_list{$file->{category}};
             my $fh          = IO::File->new($file->{full_path});
-            my %media_types = pkg('Pref')->get('media_type');
-            my $name = $file->{name};
-
-            # guess the media type based on the file's extension
-            $name =~ /\.(\w+)$/;
-            my $type_id = $EXTENSION_TYPES{lc $1} || 'Text';
-            foreach my $k (keys %media_types) {
-                if( $type_id eq $media_types{$k} ) {
-                    $type_id = $k;
-                    last;
-                }
-            }
-
-            my $media = pkg('Media')->new(
+            my $name        = $file->{name};
+            my $media       = pkg('Media')->new(
                 title         => $name,
                 category_id   => $category_id,
                 filename      => $name,
                 filehandle    => $fh,
-                media_type_id => $type_id,
+                media_type_id => pkg('Media')->guess_media_type($name),
             );
             $media->save();
             $media->preview();
@@ -557,8 +501,6 @@ sub resize_images {
     foreach my $file (@$media_list) {
         my $name = $file->{name};
 
-        my %media_types = pkg('Pref')->get('media_type');
-
         # guess the media type based on the file's extension
         $name =~ /\.(\w+)$/;
         my $extension = lc $1;
@@ -567,16 +509,8 @@ sub resize_images {
         next FILE unless grep { m/$extension/ } qw(png gif jpg tiff);
         next FILE unless ($Imager::formats{$extension});
 
-        my $type_id = $EXTENSION_TYPES{$extension} || 'Text';
-        foreach my $k (keys %media_types) {
-            if ($type_id eq $media_types{$k}) {
-                $type_id = $k;
-                last;
-            }
-        }
-
-        # only look at image files.
-        next FILE unless $type_id && $type_id == 1;
+        # only look at image files that have dimensions
+        next FILE unless pkg('Media')->guess_media_type($name) == 1;
         my ($width, $height) = imgsize($file->{full_path});
         next FILE unless $width && $height;
 

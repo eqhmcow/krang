@@ -165,7 +165,7 @@ sub status {
 
     if ($type eq 'template') {
         $data = $object->content;
-        $size = length($data);
+        $size = $data ? length($data) : 0;
     } else {
         $size = $object->file_size();
     }
