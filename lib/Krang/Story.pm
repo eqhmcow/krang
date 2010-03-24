@@ -987,6 +987,7 @@ sub _verify_unique {
 # makes sure this story doesn't have a reserved URL
 sub _verify_reserved {
     my $self = shift;
+    return unless ReservedURLs;
     foreach my $url ($self->urls) {
         # make sure they end with a slash
         $url = "$url/" unless $url =~ /\/$/;
