@@ -399,6 +399,10 @@ you will receive the same exception.
 
 sub categories {
     my $self = shift;
+    my $args = {};
+    if( @_ && ref $_[$#_] && ref $_[$#_] eq 'HASH' ) {
+        $args = pop(@_);
+    }
 
     # get
     unless (@_) {
@@ -412,8 +416,6 @@ sub categories {
         }
         return $self->{category_cache} ? @{$self->{category_cache}} : ();
     }
-
-    # else, set
 
     # transform array ref to list
     @_ = @{$_[0]} if @_ == 1 and ref($_[0]) and ref($_[0]) eq 'ARRAY';
@@ -429,8 +431,8 @@ sub categories {
 
     unless ($self->{slug} eq '_TEMP_SLUG_FOR_CONVERSION_') {
         # make sure this change didn't cause a conflict
-        $self->_verify_unique();
-        $self->_verify_reserved();
+        $self->_verify_unique()   unless $args->{no_verify_unique};
+        $self->_verify_reserved() unless $args->{no_verify_reserved};
     }
 }
 
@@ -599,13 +601,21 @@ sub init {
     # handle categories setup specially since it needs to call
     # _verify_unique which won't work right without an otherwise
     # complete object.
-    my $categories = delete $args{categories};
+    my $categories         = delete $args{categories};
+    my $no_verify_unique   = delete $args{no_verify_unique};
+    my $no_verify_reserved = delete $args{no_verify_reserved};
 
     # finish the object, calling set methods for each key/value pair
     $self->hash_init(%args);
 
     # setup categories
-    $self->categories(@$categories);
+    $self->categories(
+        @$categories,
+        {
+            no_verify_unique   => $no_verify_unique,
+            no_verify_reserved => $no_verify_reserved,
+        },
+    );
 
     return $self;
 }
@@ -761,8 +771,7 @@ doesn't have edit access to the story.
 =cut
 
 sub save {
-    my $self = shift;
-    my %args = @_;
+    my ($self, %args) = @_;
 
     # make sure it's ok to save
     $self->_verify_checkout() unless $args{no_verify_checkout};
@@ -772,25 +781,27 @@ sub save {
       unless $self->category;
 
     # Is user allowed to otherwise edit this object?
-    Krang::Story::NoEditAccess->throw(
-        message  => "Not allowed to edit story",
-        story_id => $self->story_id
-    ) unless ($self->may_edit);
+    unless($args{ignore_permissions}) {
+        Krang::Story::NoEditAccess->throw(
+            message  => "Not allowed to edit story",
+            story_id => $self->story_id
+        ) unless ($self->may_edit);
 
-    # make sure we have edit access to the primary category
-    Krang::Story::NoCategoryEditAccess->throw(
-        message     => "Not allowed to edit story in this category",
-        category_id => $self->category->category_id
-    ) unless ($self->category->may_edit);
+        # make sure we have edit access to the primary category
+        Krang::Story::NoCategoryEditAccess->throw(
+            message     => "Not allowed to edit story in this category",
+            category_id => $self->category->category_id
+        ) unless ($self->category->may_edit);
+    }
 
     # unless we're halfway through a category-index conversion...
     unless ($self->{slug} eq '_TEMP_SLUG_FOR_CONVERSION_') {
 
         # make sure it's got a unique URL
-        $self->_verify_unique();
+        $self->_verify_unique() unless $args{no_verify_unique};
 
         # make sure it's not a reserved URL
-        $self->_verify_reserved();
+        $self->_verify_reserved() unless $args{no_verify_reserved};
 
         # update the version number
         $self->{version}++ unless $args{keep_version};
@@ -803,7 +814,7 @@ sub save {
     $self->_save_core();
 
     # save categories
-    $self->_save_cat();
+    $self->_save_cat() unless $args{skip_categories};
 
     # save schedules
     $self->_save_schedules($args{keep_version});
@@ -812,7 +823,7 @@ sub save {
     $self->_save_contrib;
 
     # save a serialized copy in the version table
-    $self->_save_version;
+    $self->_save_version unless $args{skip_save_version};
 
     # prune previous versions from the version table (see TopLevel.pm::versions_to_keep)
     $self->prune_versions(number_to_keep => $self->class->versions_to_keep);
@@ -971,9 +982,7 @@ sub _verify_unique {
       . 'WHERE  retired = 0 AND trashed = 0 AND ('
       . join(' OR ', ('url = ?') x @urls) . ')'
       . ($self->{story_id} ? ' AND s.story_id != ?' : '');
-    my $result =
-      $dbh->selectall_arrayref($query, undef, $self->urls,
-        ($self->{story_id} ? ($self->{story_id}) : ()));
+    my $result = $dbh->selectall_arrayref($query, undef, @urls, $self->{story_id} || undef);
     if ($result && @$result) {
         my @dupes = map { {id => $_->[0], url => $_->[1]} } @$result;
         @dupes = sort {
@@ -1148,6 +1157,10 @@ performs a full-text search on the input.
 
 Pass an array ref of IDs to be excluded from the result set
 
+=item exclude_story_uuids
+
+Pass an array ref of UUIDs to be excluded from the result set
+
 =item below_category_id
 
 Returns stories in the category and in categories below as well.
@@ -1255,6 +1268,13 @@ B<WARNING - A NOTE TO KRANG DEVELOPERS:> Be aware that unless the
 above search terms are used, you B<MUST> use this modifier whenever UI
 or bin/ scripts make calls to C<find()>!
 
+=item ignore_permissions
+
+When true, any permission restrictions of the stories are ignored.
+B<WARNING> - Be very careful when using this option so that data isn't
+exposed to the end user. This option should only be used in Admin scripts
+or actions where the resulting data is not shown to the end user.
+
 =back
 
 =cut
@@ -1281,6 +1301,7 @@ or bin/ scripts make calls to C<find()>!
         my $include_live    = delete $args{include_live};
         $include_live = 1 unless defined($include_live);
         my $simple_full_text = delete $args{simple_search_check_full_text} || 0;
+        my $ignore_perms    = delete $args{ignore_permissions} || 0;
 
         # determine whether or not to display hidden stories.
         my $show_hidden = delete $args{show_hidden} || 0;
@@ -1562,6 +1583,15 @@ or bin/ scripts make calls to C<find()>!
                 next;
             }
 
+            # handle exclude_story_uuids => [1, 2, 3]
+            if ($key eq 'exclude_story_uuids') {
+                if (@$value) {
+                    push(@where, ('s.story_uuid != ?') x @$value);
+                    push(@param, @$value);
+                }
+                next;
+            }
+
             # handle published flag
             if ($key eq 'published') {
                 my $ps =
@@ -1573,14 +1603,14 @@ or bin/ scripts make calls to C<find()>!
             }
 
             # handle may_see
-            if ($key eq 'may_see') {
+            if ($key eq 'may_see' && !$ignore_perms) {
                 push(@where, 'ucpc.may_see = ?');
                 push(@param, 1);
                 next;
             }
 
             # handle may_edit
-            if ($key eq 'may_edit') {
+            if ($key eq 'may_edit' && !$ignore_perms) {
                 push(@where, 'ucpc.may_edit = ?');
                 push(@param, 1);
                 next;
@@ -1636,9 +1666,11 @@ or bin/ scripts make calls to C<find()>!
         }
 
         # Add user_id into the query
-        my $user_id = $ENV{REMOTE_USER} || croak("No user_id in REMOTE_USER");
-        push(@where, "ucpc.user_id = ?");
-        push(@param, $user_id);
+        if(!$ignore_perms) {
+            my $user_id = $ENV{REMOTE_USER} || croak("No user_id in REMOTE_USER");
+            push(@where, "ucpc.user_id = ?");
+            push(@param, $user_id);
+        }
 
         # restrict to visible stories unless show_hidden is passed.
         unless ($show_hidden) {
@@ -1667,15 +1699,19 @@ or bin/ scripts make calls to C<find()>!
         my $query;
         my $from = " FROM story AS s 
                  LEFT JOIN story_category AS sc
-                   ON s.story_id = sc.story_id
-                 LEFT JOIN user_category_permission_cache as ucpc
+                   ON s.story_id = sc.story_id ";
+        if(!$ignore_perms) {
+            $from .= " LEFT JOIN user_category_permission_cache as ucpc
                    ON sc.category_id = ucpc.category_id ";
+        }
         my $group_by = 0;
 
         if ($count) {
             $query = "SELECT COUNT(DISTINCT(s.story_id)) $from";
         } elsif ($ids_only) {
             $query = "SELECT DISTINCT(s.story_id) $from";
+        } elsif( $ignore_perms ) {
+            $query = "SELECT " . join(', ', map { "s.$_" } STORY_FIELDS) . $from;
         } else {
 
             # Get user asset permissions -- overrides may_edit if false
@@ -1993,19 +2029,20 @@ the story is already checked out.
 =cut
 
 sub checkout {
-    my ($self, $story_id) = @_;
-    croak("Invalid call: object method takes no parameters")
-      if ref $self and @_ > 1;
+    my ($self, $story_id, $args) = @_;
+    $args ||= {};
     $self = (pkg('Story')->find(story_id => $story_id))[0]
       unless $self;
     my $dbh     = dbh();
     my $user_id = $ENV{REMOTE_USER};
 
-    # Is user allowed to otherwise edit this object?
-    Krang::Story::NoEditAccess->throw(
-        message  => "Not allowed to edit story",
-        story_id => $self->story_id
-    ) unless ($self->may_edit);
+    unless($args->{ignore_permissions}) {
+        # Is user allowed to otherwise edit this object?
+        Krang::Story::NoEditAccess->throw(
+            message  => "Not allowed to edit story",
+            story_id => $self->story_id
+        ) unless ($self->may_edit);
+    }
 
     # short circuit checkout
     return
@@ -2069,24 +2106,29 @@ fail if the story is not checked out.
 =cut
 
 sub checkin {
-    my $self =
-      ref $_[0]
-      ? $_[0]
-      : (pkg('Story')->find(story_id => $_[1]))[0];
-    my $story_id = $self->{story_id};
-    my $dbh      = dbh();
-    my $user_id  = $ENV{REMOTE_USER};
+    my $self = shift;
+    my $story_id;
+    if (!ref $self) {
+        $story_id = shift;
+        ($self) = pkg('Story')->find(story_id => $story_id);
+    } else {
+        $story_id = $self->{story_id};
+    }
+    my $args    = shift || {};
+    my $dbh     = dbh();
+    my $user_id = $ENV{REMOTE_USER};
 
     # Is user allowed to otherwise edit this object?
-    Krang::Story::NoEditAccess->throw(
-        message  => "Not allowed to edit story",
-        story_id => $self->story_id
-    ) unless ($self->may_edit);
+    unless($args->{ignore_permissions}) {
+        Krang::Story::NoEditAccess->throw(
+            message  => "Not allowed to edit story",
+            story_id => $self->story_id
+        ) unless ($self->may_edit);
 
-    # get admin permissions
-    my %admin_perms = pkg('Group')->user_admin_permissions();
+    }
 
     # make sure we're checked out, unless we have may_checkin_all powers
+    my %admin_perms = pkg('Group')->user_admin_permissions();
     $self->_verify_checkout() unless $admin_perms{may_checkin_all};
 
     # checkin the story
@@ -2721,8 +2763,9 @@ sub deserialize_xml {
     my $match_type;
     if (not $args{no_uuid} and $data->{story_uuid}) {
         ($story) = $pkg->find(
-            story_uuid  => $data->{story_uuid},
-            show_hidden => 1
+            story_uuid         => $data->{story_uuid},
+            show_hidden        => 1,
+            ignore_permissions => 1,
         );
 
         # if not updating this is fatal
@@ -2734,7 +2777,11 @@ sub deserialize_xml {
 
     # proceed to URL lookup if no dice
     unless ($story or $args{uuid_only}) {
-        ($story) = pkg('Story')->find(url => $data->{url}[0], show_hidden => 1);
+        ($story) = pkg('Story')->find(
+            url                => $data->{url}[0],
+            show_hidden        => 1,
+            ignore_permissions => 1,
+        );
 
         # if not updating this is fatal
         Krang::DataSet::DeserializationFailed->throw(
@@ -2744,12 +2791,13 @@ sub deserialize_xml {
     }
 
     if ($story) {
-
         # if primary url of this imported story matches a non-primary
         # url of an existing story, reject
         my ($fail) = $pkg->find(
-            non_primary_url => $data->{url}[0],
-            ids_only        => 1
+            non_primary_url     => $data->{url}[0],
+            ids_only            => 1,
+            ignore_permissions  => 1,
+            exclude_story_uuids => [$story->story_uuid],
         );
         Krang::DataSet::DeserializationFailed->throw(
             message => "A story object with a non-primary url "
@@ -2757,7 +2805,7 @@ sub deserialize_xml {
           if $fail;
 
         # check it out to make changes
-        $story->checkout;
+        $story->checkout(undef, { ignore_permissions => 1 });
 
         # update slug and title
         $story->slug($data->{slug}   || "");
@@ -2767,16 +2815,16 @@ sub deserialize_xml {
         my @category_ids =
           map { $set->map_id(class => pkg('Category'), id => $_) } @{$data->{category_id}};
 
-        # set categories, which might have changed if this was a match
-        # by UUID
-        $story->categories(\@category_ids);
+        # set categories, which might have changed if this was a match by UUID
+        $story->categories(\@category_ids, {no_verify_unique => 1, no_verify_reserved => 1});
 
     } else {
 
         # check primary URL for conflict - can happen with uuid_only on
         my ($fail) = $pkg->find(
-            primary_url => $data->{url}[0],
-            ids_only    => 1
+            primary_url        => $data->{url}[0],
+            ids_only           => 1,
+            ignore_permissions => 1,
         );
         Krang::DataSet::DeserializationFailed->throw(
             message => "A story object with a primary url " . "'$data->{url}[0]' already exists.")
@@ -2785,7 +2833,11 @@ sub deserialize_xml {
         # check if any of the secondary urls match existing stories
         # and fail if so
         for (my $count = 1 ; $count < @{$data->{url}} ; $count++) {
-            my ($found) = pkg('Story')->find(url => $data->{url}[$count], show_hidden => 1);
+            my ($found) = pkg('Story')->find(
+                url                => $data->{url}[$count],
+                show_hidden        => 1,
+                ignore_permissions => 1,
+            );
             Krang::DataSet::DeserializationFailed->throw(message =>
                   "A story object with url '$data->{url}[$count]' already exists, which conflicts with one of this story's secondary URLs."
             ) if $found;
@@ -2797,16 +2849,18 @@ sub deserialize_xml {
 
         # this might have caused this Story to get completed via a
         # circular link, end early if it did
-        my ($dup) = pkg('Story')->find(url => $data->{url});
+        my ($dup) = pkg('Story')->find(url => $data->{url}, ignore_permissions => 1);
         return $dup if ($dup);
 
         # create a new story object using categories, slug, title,
         # and class
         $story = pkg('Story')->new(
-            categories => \@categories,
-            slug  => $data->{slug}  || "",
-            title => $data->{title} || "",
-            class => $data->{class}
+            categories         => \@categories,
+            slug               => $data->{slug} || "",
+            title              => $data->{title} || "",
+            class              => $data->{class},
+            no_verify_unique   => 1,
+            no_verify_reserved => 1,
         );
     }
 
@@ -2819,8 +2873,14 @@ sub deserialize_xml {
     $story->notes($data->{notes})
       if exists $data->{notes};
 
-    # save changes
-    $story->save();
+    # save some changes temporarily so we can get a story_id
+    $story->save(
+        no_verify_unique   => 1,
+        no_verify_reserved => 1,
+        ignore_permissions => 1,
+        skip_categories    => 1,
+        skip_save_version  => 1,
+    );
 
     # register id before deserializing elements, since they may
     # contain circular references
@@ -2841,6 +2901,7 @@ sub deserialize_xml {
     # update element
     $story->{element}->delete(skip_delete_hook => 1) if $story->{element};
     $story->{element} = $element;
+    $story->{class} = $data->{class};
 
     # get hash of contrib type names to ids
     my %contrib_types = reverse pkg('Pref')->get('contrib_type');
@@ -2867,8 +2928,8 @@ sub deserialize_xml {
     }
 
     # finish the story, not incrementing version
-    $story->save(keep_version => 1);
-    $story->checkin;
+    $story->save(ignore_permissions => 1);
+    $story->checkin({ignore_permissions => 1});
 
     return $story;
 }

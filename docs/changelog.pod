@@ -11,6 +11,20 @@ This document contains a list of changes for each release of Krang.
 Krang will now correctly guess the media type when media files are uploaded
 via the FTP interface. [Michael Peters]
 
+=item *
+
+Importing stories has been greatly improved in the following ways [Michael Peters]
+
+=over
+
+=item * Circular dependencies between categories and stories are now handled better
+
+=item * Stories that are changing their class in the import are now handled
+
+=item * When checking for stories who's non-primary url might conflict, we correctly ignore the imported story's other URLs
+
+=back
+
 =back
 
 =head2 3.09 - March 08, 2010
