@@ -982,7 +982,7 @@ sub _verify_unique {
       . 'WHERE  retired = 0 AND trashed = 0 AND ('
       . join(' OR ', ('url = ?') x @urls) . ')'
       . ($self->{story_id} ? ' AND s.story_id != ?' : '');
-    my $result = $dbh->selectall_arrayref($query, undef, @urls, $self->{story_id} || undef);
+    my $result = $dbh->selectall_arrayref($query, undef, @urls, $self->{story_id} || ());
     if ($result && @$result) {
         my @dupes = map { {id => $_->[0], url => $_->[1]} } @$result;
         @dupes = sort {
