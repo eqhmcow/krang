@@ -403,7 +403,7 @@ sub preview_story {
 
                 # pass a more informative message to the log file - ops should know.
                 my $err_msg = sprintf("Could not write '%s' to disk.  Error='%s'",
-                    $error->destination, $error->system_error);
+                    $error->destination, $error->message);
                 critical($err_msg);
 
             } elsif (ref $error and $error->isa('Krang::Publisher::ZeroSizeOutput')) {
@@ -562,7 +562,7 @@ sub preview_media {
 
             # pass a more informative message to the log file - ops should know.
             my $err_msg = sprintf("Could not write '%s' to disk.  Error='%s'",
-                $e->destination, $e->system_error);
+                $e->destination, $e->message);
             critical($err_msg);
 
         } else {
@@ -779,7 +779,7 @@ sub _publish_assets_now {
 
                     # pass a more informative message to the log file - ops should know.
                     my $err_msg = sprintf("Could not write '%s' to disk.  Error='%s'",
-                        $err->destination, $err->system_error);
+                        $err->destination, $err->message);
                     critical($err_msg);
                 } elsif (ref $err
                     && $err->isa('Krang::Publisher::ZeroSizeOutput'))

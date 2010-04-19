@@ -2288,7 +2288,7 @@ sub _write_media {
     # copy file out to the production path
     unless (copy($internal_path, $output_path)) {
         Krang::Publisher::FileWriteError->throw(
-            message      => "Could not copy media file: $@",
+            message      => "Could not copy media file from " . $internal_path . ": $!",
             media_id     => $media->media_id(),
             source       => $internal_path,
             destination  => $output_path,
