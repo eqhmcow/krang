@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Krang scheduler can now be disabled per-instance with the DisableScheduler
+directive set to 1. [Brad Oaks]
+
+=item *
+
 Krang will now correctly guess the media type when media files are uploaded
 via the FTP interface. [Michael Peters]
 

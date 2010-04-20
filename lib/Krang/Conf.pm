@@ -28,6 +28,7 @@ our @VALID_DIRECTIVES;
   DBUser
   DBHost
   DBSock
+  DisableScheduler
   EnableTemplateCache
   EnableBugzilla
   EnableFTP

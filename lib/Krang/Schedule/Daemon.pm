@@ -13,7 +13,7 @@ use Time::Piece;
 use Time::Seconds;
 
 use Krang::ClassLoader Conf =>
-  qw(KrangRoot instance instances SchedulerMaxChildren SchedulerDefaultFailureDelay SMTPServer FromAddress);
+  qw(KrangRoot instance instances SchedulerMaxChildren SchedulerDefaultFailureDelay SMTPServer FromAddress DisableScheduler);
 use Krang::ClassLoader Log => qw/critical debug info reopen_log/;
 use Krang::ClassLoader 'Schedule';
 use Krang::ClassLoader DB => qw(dbh forget_all_dbhs);
@@ -149,6 +149,10 @@ sub run {
             # switch instance and reset REMOTE_USER to the system user
             # for this instance, needed for permissions checks
             pkg('Conf')->instance($instance);
+            if (DisableScheduler) {
+                debug('DisableScheduler directive is in effect for this instance.');
+                next;
+            }
             unless ($system_user{$instance}) {
                 ($system_user{$instance}) = pkg('User')->find(
                     login    => 'system',
