@@ -527,6 +527,11 @@ sub _open_addon {
     # doesn't work on OSX for some damn reason
     local $Archive::Tar::CHOWN = 0;
 
+    # Lots of warnings about not being able to update timestamps
+    # if the machine which generated the .tar has a different clock
+    # than the machine consuming it
+    local $Archive::Tar::WARN = 0;
+
     # open up the tar file
     my $tar = Archive::Tar->new();
     my $ok = eval { $tar->read($source); 1 };
