@@ -125,7 +125,7 @@ Krang.onload( function() {
   <li><input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button" class="list-btn"></li>
   <tmpl_if desk_loop>
    <li class="menu">
-    <input value="<tmpl_lang Check In To> &#9660;" onclick="return false;" type="button" class="list-btn">
+    <input value="<tmpl_lang Check In To> &#9660;" type="button" class="no-action list-btn">
     <ul>
     <tmpl_loop desk_loop>
       <li>
@@ -214,7 +214,7 @@ Krang.onload( function() {
         <li><input value="<tmpl_lang Copy>" onclick="copy('<tmpl_var escape=html id>')" type="button" class="button"></li>
         <tmpl_if desk_loop>
           <li class="menu">
-          <input value="<tmpl_lang Check In To> &#9660;" onclick="return false;" type="button" class="button">
+          <input value="<tmpl_lang Check In To> &#9660;" type="button" class="button">
           <ul>
           <tmpl_loop desk_loop>
             <li>
@@ -273,7 +273,7 @@ Krang.onload( function() {
   <li><input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button" class="list-btn"></li>
   <tmpl_if desk_loop>
    <li class="menu">
-    <input value="<tmpl_lang Check In To> &#9660;" onclick="return false;" type="button" class="list-btn">
+    <input value="<tmpl_lang Check In To> &#9660;" type="button" class="no-action list-btn">
     <ul>
     <tmpl_loop desk_loop>
       <li>
