@@ -1063,13 +1063,11 @@ sub autocomplete_values {
     my ($phrase, $table, $fields, $dbh, $where, $no_split) =
       @args{qw(phrase table fields dbh where no_split)};
     $dbh ||= dbh();
+
     if (!$phrase) {
         my $cgi = CGI->new();
         $phrase = $cgi->param('phrase');
     }
-
-    # we need to escape special characters that could throw off SQL regular expressions
-    $phrase = quotemeta($phrase);
 
     # query the db for these values
     my $sql =
@@ -1079,19 +1077,20 @@ sub autocomplete_values {
       . join(' OR ', map { "`$_` REGEXP ?" } @$fields) . ')';
     $sql .= " AND $where" if $where;
 
-    my $regex = '(^|[[:blank:]_.//])' . $phrase;
+    my $regex = '(^|[[:blank:]_.//])' . quotemeta($phrase);
     my $sth   = $dbh->prepare_cached($sql);
     my @binds = map { $regex } @$fields;
     $sth->execute(@binds);
 
     # split into individual words and then sort
-    my %words;
+    my (@words, %seen);
     while (my $row = $sth->fetchrow_arrayref) {
         foreach my $pos (0 .. (scalar @$row - 1)) {
-            my $answer = lc($row->[$pos]);
+            my $answer = $row->[$pos];
 
             if ($no_split) {
-                $words{$answer} = 1;
+                push(@words, $answer) unless $seen{$answer};
+                $seen{$answer} = 1;
             } else {
 
                 # remove these characters
@@ -1100,22 +1099,24 @@ sub autocomplete_values {
                 # split on '_', \s, '/' or '.' to make words and only keep the ones that
                 # start with our phrase
                 foreach (split(/(?:_|\s|\/|\.)+/, $answer)) {
-                    my $w = lc($_);
-                    if (index($w, $phrase) == 0) {
-                        $words{$w} = 1;
+                    my $word    = $_;
+                    if (index($word, $phrase) == 0) {
+                        push(@words, $word) unless $seen{$word};
+                        $seen{$word} = 1;
                     }
                 }
 
                 # if it has an '_' and no spaces, keep the whole word as well
                 if ($answer =~ /_/ && $answer !~ /\s/ && (index($answer, $phrase) == 0)) {
-                    $words{$answer} = 1;
+                    push(@words, $answer) unless $seen{$answer};
+                    $seen{$answer} = 1;
                 }
             }
         }
     }
 
     my $html = '<ul>';
-    foreach (sort keys %words) {
+    foreach (sort @words) {
         s/</&lt;/g;
         s/&/&amp;/g;
         $html .= "<li>$_</li>";

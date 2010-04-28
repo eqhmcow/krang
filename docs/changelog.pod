@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item * 
+
+Some autocomplete values were coming back as all lower-case. Case is
+now preserved. [Michael Peters]
+
 =item *
 
 Krang scheduler can now be disabled per-instance with the DisableScheduler
@@ -18,7 +23,8 @@ via the FTP interface. [Michael Peters]
 
 =item *
 
-Importing stories has been greatly improved in the following ways [Michael Peters]
+Importing stories has been greatly improved in the following
+ways. [Michael Peters]
 
 =over
 
