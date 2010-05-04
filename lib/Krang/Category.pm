@@ -618,7 +618,13 @@ AND    url = ?
 SQL
 
     my ($url_without_trailing_slash) = ($self->{url} =~ /^(.+)\/$/);
-    my ($story_id) = $dbh->selectrow_array($query, undef, $url_without_trailing_slash);
+    @params = ($url_without_trailing_slash);
+    if( $id ) {
+        $query .= "AND category_id != ?\n";
+        push(@params, $id);
+    }
+
+    my ($story_id) = $dbh->selectrow_array($query, undef, @params);
 
     # throw exception
     Krang::Category::DuplicateURL->throw(
