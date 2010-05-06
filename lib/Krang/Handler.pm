@@ -202,17 +202,9 @@ sub trans_handler ($$) {
 
     } else {
 
-        # allow xinha requests through
-        if ($uri =~ /xinha/i) {
-            my $filename = pkg('File')->find("htdocs/$uri");
-            if ($filename) {
-                $r->filename($filename);
-                return OK;
-            }
-        }
-
         # allow requests for static files through if they're present
-        if ($uri =~ /\.(css|js|jpg|gif|png|js|html)$/i) {
+        # including things in wysiwyg editors
+        if ($uri =~ /\.(ico|css|js|jpg|gif|png|js|html?)$/i || $uri =~ /xinha/) {
             my $filename = pkg('File')->find("htdocs/$uri");
             if ($filename) {
                 $r->filename($filename);
