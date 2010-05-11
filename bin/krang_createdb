@@ -280,13 +280,17 @@ foreach my $instance (@instances) {
     # find them in reverse order so that krang files get run first
     # and addons have a chance to change them later
     my @sql_dirs = reverse pkg('File')->find_all('sql');
-    print STDERR "Loading SQL for '$name' from " . join(', ', @sql_dirs) . "...\n" if $verbose;
-    $cmd = "cat " . join(' ', map { catfile($_, '*.sql') } @sql_dirs) . " | mysql -u$user $name ";
+    $cmd = "mysql -u$user $name ";
     $cmd .= " -p$pass"     if $pass;
     $cmd .= " -h$hostname" if defined $hostname;
     $cmd .= " -v"          if $verbose > 1;
-    print "Running '$cmd'\n" if $verbose > 1;
-    system($cmd) && die "Couldn't load SQL: $?: $!";
+    foreach my $sql_dir (@sql_dirs) {
+        foreach my $file (glob(catfile($sql_dir, '*.sql'))) {
+            print STDERR "Loading SQL for '$name' from $file...\n" if $verbose;
+            print "Running '$cmd < $file'\n" if $verbose > 1;
+            system("$cmd < $file") && die "Couldn't load SQL from $file - $?: $!";
+        }
+    }
 
     # Set the db_version
     my $krang_version = $Krang::VERSION;
