@@ -69,6 +69,8 @@ div.autocomplete { height: expression( ( this.scrollHeight > 154 ) ? '154px' : '
 <!--[if IE 8]><style tyle="text/css">
 /* IE8 ignores <wbr> tags so we need to combine them with <span class="wbr"> to get the same effect in all browsers */
 .wbr:before { content: "\200B" }
+/* IE8 has a problem with the logo image and it tries to put a background color on it when hovering
+#logo_link { background-color: inherit }
 </style><![endif]-->
 
 <tmpl_if language_specific_css><tmpl_var language_specific_css></tmpl_if>
@@ -158,7 +160,7 @@ if( Prototype.Browser.WebKit ) {
 
 <div id="H">
 
-<h1><a title="<tmpl_lang About> <tmpl_var escape=html krang_product_name>" href="about.pl" class="popup small"><!--
+<h1><a title="<tmpl_lang About> <tmpl_var escape=html krang_product_name>" href="about.pl" class="popup small" id="logo_link"><!--
 --><img alt="<tmpl_var escape=html krang_product_name>" src="<tmpl_var static_url>/images/logo-cms.jpg" height="90" width="180"><!--
 --></a></h1>
 
