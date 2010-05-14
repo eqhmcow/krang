@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<--skip-media> and C<--skip-stories> options to
+F<bin/krang_publish>. [Michael Peters]
+
+=item *
+
 Fixed bug that prevented new categories from being created with the same
 URL as an existing story in some circumstances. [Michael Peters]
 

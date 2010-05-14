@@ -62,8 +62,20 @@ UI is not well-suited to larger publish runs.
 
 Publish all content (stories and media) in a Krang installation.
 
-Using the --everything flag will cause krang_publish to ignore the
---site-id, --category-id, --story-id and --media-id options.
+Using the C<--everything> flag will cause krang_publish to ignore the
+C<--site-id>, C<--category-id>, C<--story-id> and C<--media-id> options.
+
+The definition of "everything" can be altered with the C<--skip-stories>
+and C<--skip-media> flags.
+
+=item --skip-media
+
+If true, then media files will be skipped from publishing. This does not
+however prevent media files that are related to stories from getting published.
+
+=item --skip-stories
+
+If true, then stories will be skipped from publishing.
 
 =item --all-instances
 
@@ -81,12 +93,12 @@ This only works along with the C<--everything> flag.
 Publish all content (stories and media) under the site specified by
 the site-id.  May only be specified once.
 
-Using the --site-id flag will cause krang_publish to ignore the
---story-id and --media-id options.
+Using the C<--site-id> flag will cause krang_publish to ignore the
+C<--story-id> and C<--media-id> options.
 
 =item --limited-to-site
 
-An option addendum to --site-id, any related stories or media that are
+An option addendum to C<--site-id>, any related stories or media that are
 outside of the specified site will not be published.
 
 B<WARNING>: The intended use case for this option would be an
@@ -101,8 +113,8 @@ publish path, or broken links in the publish path may result.
 Publish all content (stories and media) under the category specified
 by the category_id. May only be specified once.
 
-Using the --category-id flag will cause krang_publish to ignore the
---story-id and --media-id options.
+Using the C<--category-id> flag will cause krang_publish to ignore the
+C<--story-id> and C<--media-id> options.
 
 =item --below-category-id
 
@@ -111,7 +123,7 @@ its child categories.  May only be specified once.
 
 =item --limited-to-category
 
-An option addendum to --category-id and --below-category-id, any
+An option addendum to C<--category-id> and C<--below-category-id>, any
 related stories or media that are outside of the specified category
 will not be published.
 
@@ -126,12 +138,12 @@ result.
 =item --story-id
 
 Publishes the story and related media objects associated with the
-story_id.  Supports multiple --story-id arguments, or a single
---story-id argument with a comma-separated list of IDs to publish more
+story_id.  Supports multiple C<--story-id> arguments, or a single
+C<--story-id> argument with a comma-separated list of IDs to publish more
 than one story.
 
-Using the --story-id flag will cause krang_publish to ignore the
---site-id, --category-id and --below-category-id options.
+Using the C<--story-id> flag will cause krang_publish to ignore the
+C<--site-id>, C<--category-id> and C<--below-category-id> options.
 
 =item --story-class
 
@@ -151,7 +163,7 @@ published previously.
 
 =item --maintain-versions
 
-Adding this to a --republish-only will cause the last-published
+Adding this to a C<--republish-only> will cause the last-published
 version of each asset to be republished (instead of the
 latest version). This mode is not available when publishing to 
 preview.
@@ -251,6 +263,8 @@ my $to_preview          = 0;
 my $not_on_desk         = 0;
 my @story_class         = ();
 my $no_cache            = 0;
+my $skip_media          = 0;
+my $skip_stories        = 0;
 
 # for backwards compatibility, convert all underscores in options (but not in their values) to hyphens
 for (0 .. $#ARGV) {
@@ -279,6 +293,8 @@ GetOptions(
     'story-class=s'       => \@story_class,
     'no-cache'            => \$no_cache,
     'flavor=s'            => \$flavor,
+    'skip-media'          => \$skip_media,
+    'skip-stories'        => \$skip_stories,
 
     # handle --story-id, --site-id, etc.
     (map { ("$_-id=s", $id{$_}) } keys %id)
@@ -339,8 +355,9 @@ $arg_string .= " --all-instances"     if $all_instances;
 
 if ($everything) {
 
-    # removes checking for related stories/media.
-    $publish_args{disable_related_assets} = 1;
+    # removes checking for related stories/media unless we know
+    # we aren't going to publish the media files
+    $publish_args{disable_related_assets} = 1 unless $skip_media;
 
     $arg_string .= " --everything";
 
@@ -433,15 +450,18 @@ if ($everything) {
     foreach my $instance (@instances) {
         print "INSTANCE $instance\n" if @instances > 1;
         pkg('Conf')->instance($instance);
-        publish_media(\%find_options, \%publish_args);
-        publish_stories(\%find_options, \%publish_args);
+        publish_media(\%find_options, \%publish_args) unless $skip_media;
+        publish_stories(\%find_options, \%publish_args) unless $skip_stories;
     }
 
 } else {
-    if (   $find_options{site_id}
-        || $find_options{category_id}
-        || $find_options{below_category_id}
-        || $find_options{media_id})
+    if (
+        !$skip_media
+        && (   $find_options{site_id}
+            || $find_options{category_id}
+            || $find_options{below_category_id}
+            || $find_options{media_id})
+      )
     {
 
         # publish media first - remove story_id arg
@@ -451,11 +471,14 @@ if ($everything) {
         publish_media(\%media_find_options, \%publish_args);
     }
 
-    if (   $find_options{site_id}
-        || $find_options{category_id}
-        || $find_options{below_category_id}
-        || $find_options{story_id}
-        || $find_options{class})
+    if (
+        !$skip_stories
+        && (   $find_options{site_id}
+            || $find_options{category_id}
+            || $find_options{below_category_id}
+            || $find_options{story_id}
+            || $find_options{class})
+      )
     {
         my %story_find_options = %find_options;
         delete $story_find_options{media_id};
