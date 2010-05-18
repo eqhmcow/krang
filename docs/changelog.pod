@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Searching for media on the advanced tab will now return media of all types
+when no media_type_id is selected. [Brad Oaks]
+
+=item *
+
 Added C<--skip-media> and C<--skip-stories> options to
 F<bin/krang_publish>. [Michael Peters]
 

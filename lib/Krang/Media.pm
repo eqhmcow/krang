@@ -1207,6 +1207,7 @@ sub find {
       contrib_id checked_out_by may_see may_edit media_uuid
       mime_type );
     foreach my $key (keys %args) {
+        next unless (length $args{$key});
         if (grep { $key eq $_ } @simple_keys) {
             push @where, $key;
         }
