@@ -16,7 +16,11 @@ do_search = function() {
 }
 
 other_search_rm = function() {
-  Krang.Form.submit('search_form', { rm: 'find', other_search_place: 'Search in Retire' });
+  Krang.Form.submit('search_form', {
+    rm: 'find',
+    other_search_place: 'Search in Retire',
+    krang_pager_curr_page_num: '1'
+  });
 }
 
 <tmpl_if do_advanced_search>

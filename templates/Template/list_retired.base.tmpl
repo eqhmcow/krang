@@ -6,7 +6,11 @@ Krang.onload( function() {
 } );
 
 other_search_rm = function() {
-  Krang.Form.submit('template_search_form', { rm: 'search', other_search_place: 'Search in Retire' });
+  Krang.Form.submit('template_search_form', {
+    rm: 'search',
+    other_search_place: 'Search in Retire',
+    krang_pager_curr_page_num: '1'
+  });
 }
 
 show_advanced_search = function( show_advanced )

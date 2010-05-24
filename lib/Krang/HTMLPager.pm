@@ -962,8 +962,21 @@ sub calculate_limit {
     my ($self, $q, $cache_key) = @_;
     my $limit;
 
+    # if we weren't given a cache key and we're called as an object method
+    $cache_key ||= ref $self ? $self->_get_cache_key : '';
+
     # Page size is either 100, or user preferred size.
-    my $show_big_view  = ($q->param('krang_pager_show_big_view') || '0');
+    my $show_big_view;
+    if (defined $q->param('krang_pager_show_big_view')) {
+        $show_big_view = $q->param('krang_pager_show_big_view');
+
+        # store it in the session if we have a module to key it off of
+        $session{"KRANG_${cache_key}_PAGER_SHOW_BIG_VIEW"} = $show_big_view if $cache_key;
+    } elsif ($cache_key && $session{"KRANG_${cache_key}_PAGER_SHOW_BIG_VIEW"}) {
+        $show_big_view = $session{"KRANG_${cache_key}_PAGER_SHOW_BIG_VIEW"};
+        $q->param(-name => 'krang_pager_show_big_view', -value => $show_big_view);
+    }
+
     my $user_page_size = $self->get_user_page_size();
     my $big_view_size  = $user_page_size == 100 ? 20 : 100;
     return ($show_big_view) ? ($user_page_size == 100 ? 20 : 100) : $user_page_size;
@@ -971,7 +984,23 @@ sub calculate_limit {
 
 sub calculate_current_page_num {
     my ($self, $q, $cache_key) = @_;
-    return (scalar $q->param('krang_pager_curr_page_num') || '1');
+
+    # if we weren't given a cache key and we're called as an object method
+    $cache_key ||= ref $self ? $self->_get_cache_key : '';
+
+    my $curr_page_num;
+    if (defined $q->param('krang_pager_curr_page_num')) {
+        $curr_page_num = $q->param('krang_pager_curr_page_num');
+
+        # store it in the session if we have a module to key it off of
+        $session{"KRANG_${cache_key}_PAGER_CURR_PAGE_NUM"} = $curr_page_num if $cache_key;
+    } elsif ($cache_key && $session{"KRANG_${cache_key}_PAGER_CURR_PAGE_NUM"}) {
+        $curr_page_num = $session{"KRANG_${cache_key}_PAGER_CURR_PAGE_NUM"};
+    } elsif (ref $self) {
+        $curr_page_num = 1; # default value
+        $q->param(-name => 'krang_pager_curr_page_num', -value => $curr_page_num);
+    }
+    return $curr_page_num;
 }
 
 ###########################

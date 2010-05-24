@@ -15,7 +15,11 @@ show_advanced_search = function(show_advanced) {
 }
 
 other_search_rm = function() {
-    Krang.Form.submit('template_search_form', { rm: 'list_retired', other_search_place: 'Search in Live' });
+  Krang.Form.submit('template_search_form', {
+    rm: 'list_retired',
+    other_search_place: 'Search in Live',
+    krang_pager_curr_page_num: '1'
+  });
 }
 
 <tmpl_if do_advanced_search>
