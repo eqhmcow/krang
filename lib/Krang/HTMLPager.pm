@@ -990,7 +990,7 @@ sub calculate_current_page_num {
 
     my $curr_page_num;
     if (defined $q->param('krang_pager_curr_page_num')) {
-        $curr_page_num = $q->param('krang_pager_curr_page_num');
+        $curr_page_num = $q->param('krang_pager_curr_page_num') || 1;
 
         # store it in the session if we have a module to key it off of
         $session{"KRANG_${cache_key}_PAGER_CURR_PAGE_NUM"} = $curr_page_num if $cache_key;
@@ -999,6 +999,8 @@ sub calculate_current_page_num {
     } elsif (ref $self) {
         $curr_page_num = 1; # default value
         $q->param(-name => 'krang_pager_curr_page_num', -value => $curr_page_num);
+    } else {
+        $curr_page_num = 1; # default value
     }
     return $curr_page_num;
 }
