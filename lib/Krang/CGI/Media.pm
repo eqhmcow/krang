@@ -1712,7 +1712,7 @@ sub update_media {
     );
 
     # unset the 'published' flag if the category has changed
-    if ($m->category_id != $q->param('category_id')) {
+    if ($q->param('category_id') && $m->category_id != $q->param('category_id')) {
         $m->published(0);
     }
 
@@ -1804,7 +1804,7 @@ sub make_media_tmpl_data {
         $tmpl_data{media_version_chooser} = $media_version_chooser;
     }
 
-    my $extension = $m->file_path =~ /\.([^\.]+)$/ ? $1 : '';
+    my $extension = $m->file_path && $m->file_path =~ /\.([^\.]+)$/ ? $1 : '';
     if ($m->is_text) {
         $tmpl_data{is_text} = 1;
 
