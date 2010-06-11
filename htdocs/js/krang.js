@@ -1895,6 +1895,7 @@ var rules = {
     // object. We only do this if the user has the "use_autocomplete"
     // preference.
     // Can specifically ignore inputs by giving them the 'non_auto' class
+    // If the 'single_phrase' class is used then we won't tokenize the input on spaces
     'input.autocomplete' : function(el) {
         // ignore 'non_auto'
         if( el.hasClassName('non_auto') ) return;
@@ -1915,7 +1916,7 @@ var rules = {
                 Krang.Window.pass_id(request_url),
                 {
                     paramName: 'phrase',
-                    tokens   : [' '],
+                    tokens   : el.hasClassName('single_phrase') ? [] : [' '],
                     callback : function(el, url) {
                         url = url + '&rm=autocomplete&input=' + el.name;
                         return url;
