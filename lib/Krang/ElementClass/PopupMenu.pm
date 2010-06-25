@@ -70,7 +70,14 @@ sub labels {
     } else {
 
         # We've only got values
-        for my $val (@{$self->{values}}) {
+        my $values;
+        if (defined $self->{values} && ref $self->{values} eq 'CODE') {
+            # run coderefs
+            $values = &{$self->{values}};
+        } else {
+            $values = $self->{values};
+        }
+        for my $val (@{$values}) {
             $localized_labels{$val} = localize($val);
         }
     }

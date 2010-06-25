@@ -48,6 +48,10 @@ When bulk editing a Story, the C<Done With Bulk Edit> button is now working.  [B
 
 =item *
 
+C<ElementClass::PopupMenu> will now execute subroutine references which are passed to new() for the C<value> key.  [Brad Oaks]
+
+=item *
+
 Importing stories has been greatly improved in the following
 ways. [Michael Peters]
 
