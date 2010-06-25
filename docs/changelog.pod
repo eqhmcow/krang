@@ -44,6 +44,10 @@ via the FTP interface. [Michael Peters]
 
 =item *
 
+When bulk editing a Story, the C<Done With Bulk Edit> button is now working.  [Brad Oaks]
+
+=item *
+
 Importing stories has been greatly improved in the following
 ways. [Michael Peters]
 

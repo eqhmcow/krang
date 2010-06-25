@@ -283,7 +283,7 @@ change_element_class = function(select) {
 <tmpl_if crumbs>
 <p class="cram east">
   <tmpl_if bulk_edit>
-    <input value="<tmpl_lang Done With Bulk Edit>" onclick="save_and_go_up()" type="button" class="button">
+    <input value="<tmpl_lang Done With Bulk Edit>" onclick="save_and_leave_bulk_edit()" type="button" class="button">
   <tmpl_else>
     <input value="<tmpl_var done_with_this_element>" onclick="save_and_go_up()" type="button" class="button">
     <tmpl_if allow_delete>
@@ -444,7 +444,7 @@ change_element_class = function(select) {
 <tmpl_if crumbs>
 <p class="cram east">
   <tmpl_if bulk_edit>
-    <input value="Done With Bulk Edit" onclick="save_and_go_up()" type="button" class="button">
+    <input value="<tmpl_lang Done With Bulk Edit>" onclick="save_and_leave_bulk_edit()" type="button" class="button">
   <tmpl_else>
     <input value="<tmpl_var done_with_this_element>" onclick="save_and_go_up()" type="button" class="button">
     <tmpl_if allow_delete>
