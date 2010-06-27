@@ -187,8 +187,8 @@ sub add {
     my $object_type = $params{object_type};
     my $object_id   = $params{object_id};
     my $object_pkg  = ucfirst($object_type);
-    add_alert("object_type_requires_id"), return $self->edit()
-      if (($object_type eq 'NULL') != ($object_id eq 'NULL'));
+    add_alert("object_id_requires_type"), return $self->edit()
+      if (($object_type eq 'NULL') && ($object_id ne 'NULL'));
     add_alert("no_object_with_that_id", type => $object_type, id => $object_id),
       return $self->edit()
       if ($object_id ne 'NULL' && !pkg($object_pkg)->find($object_type . '_id' => $object_id));

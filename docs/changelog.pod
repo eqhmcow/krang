@@ -48,6 +48,10 @@ When bulk editing a Story, the C<Done With Bulk Edit> button is now working.  [B
 
 =item *
 
+Alerts are now able to be sent for actions on any Story or any Media instead of only on specific ones.  [Brad Oaks]
+
+=item *
+
 C<ElementClass::PopupMenu> will now execute subroutine references which are passed to new() for the C<value> key.  [Brad Oaks]
 
 =item *

@@ -280,8 +280,8 @@ sub find {
           . "->find(): 'count' and 'ids_only' were supplied. "
           . "Only one can be present.")
       if $args{count} and $args{ids_only};
-    croak(__PACKAGE__ . "->find(): 'object_type' and 'object_id' must be specified together.")
-      unless (defined $args{object_type} == defined $args{object_id});
+    croak(__PACKAGE__ . "->find(): 'object_type' must be specified if 'object_id' is specified.")
+      if (defined $args{object_id} && ! defined $args{object_type});
 
     # set defaults if need be
     my $order_by   = $args{'order_by'}   ? $args{'order_by'} : 'alert_id';
@@ -302,6 +302,9 @@ sub find {
         if ($args{'object_type'} eq 'NULL') {
             $where_string .=
               ($where_string ? ' and ' : '') . ' object_type is NULL and object_id is NULL';
+        } elsif ($args{'object_id'} eq 'NULL') {
+            $where_string .= ($where_string ? ' and ' : '') . ' object_type = ? AND object_id is NULL';
+            push @where, ('object_type');
         } else {
             $where_string .= ($where_string ? ' and ' : '') . ' object_type = ? AND object_id = ?';
             push @where, ('object_type', 'object_id');
@@ -464,6 +467,18 @@ sub check_alert {
         object_type => $object_type,
         object_id   => $object_id
     );
+
+    # next get any object-general alerts
+    my @object_wide_alerts = pkg('Alert')->find(
+        ids_only    => 1,
+        action      => $action,
+        object_type => $object_type,
+        object_id   => 'NULL'
+    );
+    if (@object_wide_alerts) {
+        my %dupe_check = map { $_ => 1 } @matched_alerts;
+        push @matched_alerts, grep { !$dupe_check{$_} } @object_wide_alerts;
+    }
 
     # then add any category/desk-general alerts (when means object_type/id are NULL)
     my %search_criteria = (

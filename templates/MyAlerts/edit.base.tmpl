@@ -69,7 +69,7 @@ Krang.onload( function() {
   <tbody><tmpl_loop alert_loop>
     <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
     <td class="f"><tmpl_var escape=html action></td>
-    <td><tmpl_if object_type><tmpl_var escape=html object_type> #<tmpl_var object_id><tmpl_else>Any</tmpl_if></td>
+    <td><tmpl_unless object_type><tmpl_lang Any><tmpl_else><tmpl_var escape=html object_type><tmpl_if object_id> #<tmpl_var object_id></tmpl_if></tmpl_unless></td>
     <td><tmpl_if category><tmpl_var escape=html category><tmpl_else><tmpl_lang Any></tmpl_if></td>
     <td><tmpl_if desk><tmpl_var escape=html desk><tmpl_else><tmpl_lang Any></tmpl_if></td>
     <td class="series l"><input name="alert_delete_list" value="<tmpl_var escape=html alert_id>" type="checkbox" class="hilite-row"></td>
