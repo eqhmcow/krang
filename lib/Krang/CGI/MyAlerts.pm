@@ -191,7 +191,7 @@ sub add {
       if (($object_type eq 'NULL') != ($object_id eq 'NULL'));
     add_alert("no_object_with_that_id", type => $object_type, id => $object_id),
       return $self->edit()
-      if ($object_id != 'NULL' && !pkg($object_pkg)->find($object_type . '_id' => $object_id));
+      if ($object_id ne 'NULL' && !pkg($object_pkg)->find($object_type . '_id' => $object_id));
 
     # return error message on bad desk combination
     add_alert("bad_desk_combo"), return $self->edit()
