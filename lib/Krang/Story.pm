@@ -2278,7 +2278,7 @@ sub preview_path {
     );
 
     # remove the site part
-    $url =~ s![^/]+/!!;
+    $url =~ s!^[^/]+/?!!;
 
     # paste them together
     return canonpath(catdir($path, $url));
