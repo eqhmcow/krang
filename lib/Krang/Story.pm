@@ -1453,6 +1453,7 @@ or actions where the resulting data is not shown to the end user.
             # handle search by url
             if ($key eq 'url') {
                 $value =~ s/^https?:\/\///;
+                $value =~ s/\/$//;
                 push(@where, 's.story_id = sc.story_id');
                 push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'));
                 push(@param, $value);
@@ -1462,6 +1463,7 @@ or actions where the resulting data is not shown to the end user.
             # handle search by primary_url
             if ($key eq 'primary_url') {
                 $value =~ s/^https?:\/\///;
+                $value =~ s/\/$//;
                 push(@where, 's.story_id = sc.story_id');
                 push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'), 'sc.ord = 0');
                 push(@param, $value);
@@ -1471,6 +1473,7 @@ or actions where the resulting data is not shown to the end user.
             # handle search by non-primary_url
             if ($key eq 'non_primary_url') {
                 $value =~ s/^https?:\/\///;
+                $value =~ s/\/$//;
                 push(@where, 's.story_id = sc.story_id');
                 push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'), 'sc.ord != 0');
                 push(@param, $value);

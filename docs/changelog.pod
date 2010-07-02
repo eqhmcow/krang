@@ -2,20 +2,32 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.11 - In development
+
+=over
+
+=item *
+
+Searching for a story by a url with a trailing slash now strips off that
+slash. [Michael Peters]
+
+=back
+
 =head2 3.10 - June 29, 201
 
 =over
 
 =item *
 
-Added storage of C<krang_pager_curr_page_num> and C<krang_pager_show_big_view>
-to session cache in In L<Krang::HTMLPager>. The page number is forced to C<1>
-when switching between Retired or Live templates, media, and stories. [Brad Oaks]
+Added storage of C<krang_pager_curr_page_num> and
+C<krang_pager_show_big_view> to session cache in In
+L<Krang::HTMLPager>. The page number is forced to C<1> when switching
+between Retired or Live templates, media, and stories. [Brad Oaks]
 
 =item *
 
-Searching for media on the advanced tab will now return media of all types
-when no media_type_id is selected. [Brad Oaks]
+Searching for media on the advanced tab will now return media of all
+types when no media_type_id is selected. [Brad Oaks]
 
 =item *
 
