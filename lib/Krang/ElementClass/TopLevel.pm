@@ -79,7 +79,7 @@ sub build_url {
     my ($story, $category) = @arg{qw(story category)};
     my $use_slug = ($story->slug && ($story->class->slug_use ne 'prohibit'));
     my $url = ($category ? $category->url : '') . ($use_slug ? CGI::Util::escape($story->slug) : '');
-    $url =~ s/\/$//; # remove trailing slashes to make things consisten;
+    $url .= '/' unless $url =~ /\/$/; # add a trailing slash to make things consistent
     return $url;
 }
 
@@ -97,8 +97,10 @@ sub build_preview_url {
     my ($self,  %arg)      = @_;
     my ($story, $category) = @arg{qw(story category)};
     my $use_slug = ($story->slug && ($story->class->slug_use ne 'prohibit'));
-    return ($category ? $category->preview_url          : '')
+    my $url = ($category ? $category->preview_url          : '')
       . ($use_slug    ? CGI::Util::escape($story->slug) : '');
+    $url .= '/' unless $url =~ /\/$/; # add a trailing slash to make things consistent
+    return $url;
 }
 
 =item C<< @fields = $class->url_attributes() >>

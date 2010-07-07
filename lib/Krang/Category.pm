@@ -617,10 +617,9 @@ WHERE  retired = 0 AND trashed = 0
 AND    url = ?
 SQL
 
-    my ($url_without_trailing_slash) = ($self->{url} =~ /^(.+)\/$/);
-    @params = ($url_without_trailing_slash);
+    @params = ($self->{url});
     if( $id ) {
-        $query .= "AND category_id != ?\n";
+        $query .= " AND category_id != ?";
         push(@params, $id);
     }
 
@@ -628,9 +627,9 @@ SQL
 
     # throw exception
     Krang::Category::DuplicateURL->throw(
-        message  => "Duplicate URL ($self->{url}) for story ID " . "$story_id.",
+        message  => "Duplicate URL ($self->{url}) for story ID $story_id.",
         story_id => $story_id,
-        url      => $url_without_trailing_slash
+        url      => $self->{url},
     ) if $story_id;
 
     # 3) return false if there were no duplicates

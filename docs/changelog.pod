@@ -2,20 +2,14 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 3.11 - In development
+=head2 3.10 - June 29, 201
 
 =over
 
 =item *
 
-Searching for a story by a url with a trailing slash now strips off that
-slash. [Michael Peters]
-
-=back
-
-=head2 3.10 - June 29, 201
-
-=over
+Searching for a story now normalizes the url so it can be compared
+without problems. [Michael Peters]
 
 =item *
 
