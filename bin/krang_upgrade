@@ -297,25 +297,27 @@ sub check_prereqs {
       if ($running);
 
     # MySQLRootPassword must be valid, and MySQL should be running
-    my $mysql_bin         = $MYSQL_BIN;
-    my $MySQLRootPassword = $options{'MySQLRootPassword'};
-    my $MySQLHost         = $options{'MySQLHost'};
-    my $test_mysql        = "$ECHO_BIN 'select \"world\" as hello' | $mysql_bin -uroot";
-    $test_mysql .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
-    $test_mysql .= " -h$MySQLHost"         if (length($MySQLHost));
-    $test_mysql .= " 2>&1";
-    my $mysql_test_output = `$test_mysql`;
+    unless($options{'no-db'}) {
+        my $mysql_bin         = $MYSQL_BIN;
+        my $MySQLRootPassword = $options{'MySQLRootPassword'};
+        my $MySQLHost         = $options{'MySQLHost'};
+        my $test_mysql        = "$ECHO_BIN 'select \"world\" as hello' | $mysql_bin -uroot";
+        $test_mysql .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+        $test_mysql .= " -h$MySQLHost"         if (length($MySQLHost));
+        $test_mysql .= " 2>&1";
+        my $mysql_test_output = `$test_mysql`;
 
-    unless (($mysql_test_output =~ /hello/) and ($mysql_test_output =~ /world/)) {
-        print STDERR "$mysql_test_output";
-        if ($mysql_test_output =~ /ERROR 1045: Access denied/) {
-            exit_error("MySQLRootPassword '$MySQLRootPassword' is not valid");
-        } elsif ($mysql_test_output =~ /ERROR 2002: Can\'t connect/) {
-            exit_error(
-                "Can't connect to MySQL. Do you need to use the MySQLHost option? Start MySQL and try again."
-            );
-        } else {
-            exit_error("Unable to verify connection to MySQL.");
+        unless (($mysql_test_output =~ /hello/) and ($mysql_test_output =~ /world/)) {
+            print STDERR "$mysql_test_output";
+            if ($mysql_test_output =~ /ERROR 1045: Access denied/) {
+                exit_error("MySQLRootPassword '$MySQLRootPassword' is not valid");
+            } elsif ($mysql_test_output =~ /ERROR 2002: Can\'t connect/) {
+                exit_error(
+                    "Can't connect to MySQL. Do you need to use the MySQLHost option? Start MySQL and try again."
+                );
+            } else {
+                exit_error("Unable to verify connection to MySQL.");
+            }
         }
     }
 
@@ -329,8 +331,7 @@ sub check_prereqs {
     # No Instances?
     exit_error("No instances found.  Unable to continue.") unless (keys(%instance_dbs));
 
-    print "  Found instances: "
-      . join(", ", (map { "$_ (" . $instance_dbs{$_} . ")" } sort(keys(%instance_dbs)))) . "\n";
+    print "  Found instances: " . join(", ", sort(keys(%instance_dbs))) . "\n";
 
     ## End of prereq check
 }
