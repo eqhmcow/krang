@@ -360,11 +360,11 @@ BEGIN {
                 unless (pkg('Charset')->is_utf8()) {
                     $uri .= '&is_non_utf8_redirect=1';
                 }
-            }
 
-            # and allow non-AJAXy redirects
-            $props{'-uri'} = $uri if $uri;
-            $self->header_props(%props);
+                # and allow non-AJAXy redirects
+                $props{'-uri'} = $uri if $uri;
+                $self->header_props(%props);
+            }
         }
     );
 
