@@ -93,8 +93,7 @@ Both requests:
 #                      :  If in instance path, rewrite uri to point to real assets in htdocs root.
 
 sub trans_handler ($$) {
-    my $self = shift;
-    my ($r)  = @_;
+    my ($self, $r) = @_;
     my $uri  = $r->uri;
 
     # if it's a request for a /static file then strip off the static
@@ -234,9 +233,7 @@ work with Krang.
 # Check the browser using HTTP::BrowserDetect and bounce old browsers
 # before they can get into trouble.
 sub access_handler ($$) {
-
-    my $self = shift;
-    my ($r) = @_;
+    my ($self, $r) = @_;
 
     my %allow_browsers = $self->supported_browsers;
 
@@ -322,8 +319,7 @@ C<$ENV{REMOTE_USER}> will properly report the user who is logged in.
 # Attempt to retrieve user identity from session cookie.
 # Set REMOTE_USER and KRANG_SESSION_ID if successful.
 sub authen_handler ($$) {
-    my $self = shift;
-    my ($r) = @_;
+    my ($self, $r) = @_;
 
     # If the request (or redirected request) was for a static item, let it through
     return OK if $r->uri =~ /^\/static\// or ($r->prev && $r->prev->uri =~ /^\/static\//);
@@ -504,8 +500,7 @@ runmode of the C<CGI::MyPref> class.
 
 # Authorization
 sub authz_handler ($$) {
-    my $self = shift;
-    my ($r) = @_;
+    my ($self, $r) = @_;
 
     # If the request (or redirected request) was for a static item, let it through
     return OK if $r->uri =~ /^\/static\// or ($r->prev && $r->prev->uri =~ /^\/static\//);
@@ -569,8 +564,7 @@ C<< $r->notes() >> and logs them with Krang::Log.
 =cut
 
 sub log_handler ($$) {
-    my $pkg = shift;
-    my $r   = shift;
+    my ($pkg, $r) = @_;
 
     # in Apache::Registry mode this is where we collect die() and
     # warn()s since they don't get caught by Krang::ErrorHandler
@@ -695,7 +689,7 @@ sub login_uri {
 
 # display a menu of available instances
 sub instance_menu {
-    my ($r) = @_;
+    my $r = shift;
 
     # setup the instance loop
     my (@loop, @instances);
@@ -736,8 +730,7 @@ sub instance_menu {
 # the site-server transhandler maps requests to a site's preview or
 # publish path
 sub siteserver_trans_handler ($$) {
-    my $self = shift;
-    my ($r)  = @_;
+    my ($self, $r) = @_;
     my $host = $r->hostname;
     my $port = $r->get_server_port;
 
@@ -781,8 +774,7 @@ sub siteserver_trans_handler ($$) {
 }
 
 sub _redirect_to_login {
-    my $self = shift;
-    my ($r, $flavor, $instance) = @_;
+    my ($self, $r, $flavor, $instance) = @_;
 
     my $login_app = $self->login_uri();
 
@@ -798,8 +790,7 @@ sub _redirect_to_login {
 }
 
 sub _redirect_to_workspace {
-    my $self = shift;
-    my ($r, $instance, $window_id) = @_;
+    my ($self, $r, $instance, $window_id) = @_;
 
     my $app = "workspace.pl?window_id=$window_id";
     my $new_uri = $r->dir_config('flavor') eq 'instance' ? "/$app" : "/$instance/$app";
@@ -808,8 +799,7 @@ sub _redirect_to_workspace {
 }
 
 sub _redirect_to_change_pw {
-    my $self = shift;
-    my ($r, $flavor, $instance) = @_;
+    my ($self, $r, $flavor, $instance) = @_;
 
     my $app = 'my_pref.pl?rm=force_pw_change';
     my $new_uri = ($flavor eq 'instance' ? "/$app" : "/$instance/$app");
@@ -818,8 +808,7 @@ sub _redirect_to_change_pw {
 }
 
 sub _do_redirect {
-    my $self = shift;
-    my ($r, $new_uri) = @_;
+    my ($self, $r, $new_uri) = @_;
 
     $r->err_header_out(Location => $new_uri);
     my $output = "Redirect: <a href=\"$new_uri\">$new_uri</a>";
