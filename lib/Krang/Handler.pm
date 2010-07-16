@@ -320,12 +320,13 @@ C<$ENV{REMOTE_USER}> will properly report the user who is logged in.
 # Set REMOTE_USER and KRANG_SESSION_ID if successful.
 sub authen_handler ($$) {
     my ($self, $r) = @_;
+    my $uri = $r->uri;
 
     # If the request (or redirected request) was for a static item, let it through
-    return OK if $r->uri =~ /^\/static\// or ($r->prev && $r->prev->uri =~ /^\/static\//);
+    return OK if $uri =~ /^\/static\// or ($r->prev && $r->prev->uri =~ /^\/static\//);
 
     # Only handle main requests, unless request is for bug.pl (which happens on ISE redirects)
-    return DECLINED unless $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/;
+    return DECLINED unless $r->is_initial_req() or $uri =~ /\/bug\.cgi/;
 
     # Get Krang instance name
     my $instance = pkg('Conf')->instance();
@@ -356,7 +357,7 @@ sub authen_handler ($$) {
 
     # A non-PERL request (e.g. image), bug, or help file: let it through
     # (we are already authenticated)
-    if ($r->uri !~ /(\.pl|\/|$instance)$/ || $r->uri =~ /\/bug\.cgi$/ || $r->uri =~ /\/help\.pl$/) {
+    if ($uri !~ /(\.pl|\/|$instance)$/ || $uri =~ /\/bug\.cgi$/ || $uri =~ /\/help\.pl$/) {
 
         # We are authenticated:  Setup REMOTE_USER
         $r->connection->user($cookie{user_id});
@@ -474,7 +475,7 @@ sub authen_handler ($$) {
     # We are authenticated, we've got a window_id and a valid session:
     # Redirect to workspace if user typed a login URI in a new window
     my $login_uri = $self->login_uri;
-    if ($r->uri =~ m!$login_uri!) {
+    if ($uri =~ m!$login_uri!) {
         if (!$args{rm} || ($args{rm} && $args{rm} ne 'logout')) {
             return $self->_redirect_to_workspace($r, $instance, $window_id);
         }
@@ -501,15 +502,16 @@ runmode of the C<CGI::MyPref> class.
 # Authorization
 sub authz_handler ($$) {
     my ($self, $r) = @_;
+    my $uri = $r->uri;
 
     # If the request (or redirected request) was for a static item, let it through
-    return OK if $r->uri =~ /^\/static\// or ($r->prev && $r->prev->uri =~ /^\/static\//);
+    return OK if $uri =~ /^\/static\// or ($r->prev && $r->prev->uri =~ /^\/static\//);
 
     # Only handle main requests, unless this is a request for bug.pl
     # which happens on redirects from ISEs
-    return DECLINED unless $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/;
+    return DECLINED unless $r->is_initial_req() or $uri =~ /\/bug\.cgi/;
 
-    my $path     = $r->uri();
+    my $path     = $uri;
     my $instance = pkg('Conf')->instance();
     my $flavor   = $r->dir_config('flavor');
 
