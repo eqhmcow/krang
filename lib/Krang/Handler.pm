@@ -400,6 +400,9 @@ sub authen_handler ($$) {
     if ($window_id && not ($r->header_in("Referer") || $args{posted_window_id})) {
         undef $window_id;
         debug("No referer header; Unsetting window_id");
+    } elsif( $cookies{window_id} ) {
+        $window_id = $cookies{window_id}->value;
+        debug("Got window_id $window_id from cookie");
     }
 
     # Get session_id for window_id

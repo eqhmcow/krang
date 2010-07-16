@@ -366,7 +366,7 @@ sub default_tree {
 
     $sub = $other_node->new_daughter();
     $sub->name('Submit a Bug');
-    $sub->link('bug.cgi');
+    $sub->link('bug.pl');
     $sub->condition(sub { EnableBugzilla });
 
     my $trash_node = $root->new_daughter();
