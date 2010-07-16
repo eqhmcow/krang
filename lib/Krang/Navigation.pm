@@ -89,9 +89,10 @@ sub fill_template {
 
 # render the navigation menu held in the navigation tree
 sub render {
-    my ($pkg, $node, $perms, $depth, $index) = @_;
-    $depth ||= 0;
-    $index ||= 0;
+    my ($pkg, $node, $perms, $depth, $index, $opened_panels) = @_;
+    $depth         ||= 0;
+    $index         ||= 0;
+    $opened_panels ||= $pkg->_get_opened_panels();
 
     # stop here if condition set and returns false
     my $condition = $node->condition;
@@ -99,14 +100,14 @@ sub render {
     my @daughter_nodes = $node->daughters;
 
     # handle root
-    return join('', map { $pkg->render($_, $perms, $depth + 1, ++$index) } @daughter_nodes)
+    return join('', map { $pkg->render($_, $perms, $depth + 1, ++$index, $opened_panels) } @daughter_nodes)
       unless $node->mother;
 
     # recurse and build up kids
     my $i    = 1;
     my $kids = join("</dt>\n<dt>",
         grep { defined }
-          map { $pkg->render($_, $perms, $depth + 1, $index + $i++) } @daughter_nodes);
+          map { $pkg->render($_, $perms, $depth + 1, $index + $i++, $opened_panels) } @daughter_nodes);
 
     # get link for node
     my $link = $node->link;
@@ -123,7 +124,6 @@ sub render {
 
     # setup blocks as needed
     my ($pre, $post) = ("", "");
-    my $opened_panels = $pkg->_get_opened_panels();
 
     if ($depth == 1) {
         my $opened_style = $opened_panels->{$index - 1} ? '' : ' style="display:none"';
