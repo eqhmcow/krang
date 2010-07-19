@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Improved performance of ISE notification by running the code under mod_perl
+and not CGI. [Michael Peters]
+
 =item * 
 
 Added C<--profile-mode> option to turn on profiling with L<Devel::NYTProf>
