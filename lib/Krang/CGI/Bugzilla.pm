@@ -46,16 +46,7 @@ sub setup {
     my $self = shift;
 
     $self->start_mode('edit');
-
-    $self->run_modes(
-        [
-            qw(
-              edit
-              commit
-              )
-        ]
-    );
-
+    $self->run_modes([qw( edit commit)]);
     $self->tmpl_path('Bugzilla/');
 }
 

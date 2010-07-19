@@ -136,7 +136,7 @@ sub trans_handler ($$) {
 
     # Only handle main requests, unless this is a request for bug.pl
     # which happens on redirects from ISEs
-    unless ($r->is_initial_req() or $uri =~ /\/bug\.cgi/) {
+    unless ($r->is_initial_req() or $uri =~ /\/bug\.pl/) {
         return DECLINED;
     }
 
@@ -326,7 +326,7 @@ sub authen_handler ($$) {
     return OK if $uri =~ /^\/static\// or ($r->prev && $r->prev->uri =~ /^\/static\//);
 
     # Only handle main requests, unless request is for bug.pl (which happens on ISE redirects)
-    return DECLINED unless $r->is_initial_req() or $uri =~ /\/bug\.cgi/;
+    return DECLINED unless $r->is_initial_req() or $uri =~ /\/bug\.pl/;
 
     # Get Krang instance name
     my $instance = pkg('Conf')->instance();
@@ -357,7 +357,7 @@ sub authen_handler ($$) {
 
     # A non-PERL request (e.g. image), bug, or help file: let it through
     # (we are already authenticated)
-    if ($uri !~ /(\.pl|\/|$instance)$/ || $uri =~ /\/bug\.cgi$/ || $uri =~ /\/help\.pl$/) {
+    if ($uri !~ /(\.pl|\/|$instance)$/ || $uri =~ /\/bug\.pl$/ || $uri =~ /\/help\.pl$/) {
 
         # We are authenticated:  Setup REMOTE_USER
         $r->connection->user($cookie{user_id});
@@ -512,7 +512,7 @@ sub authz_handler ($$) {
 
     # Only handle main requests, unless this is a request for bug.pl
     # which happens on redirects from ISEs
-    return DECLINED unless $r->is_initial_req() or $uri =~ /\/bug\.cgi/;
+    return DECLINED unless $r->is_initial_req() or $uri =~ /\/bug\.pl/;
 
     my $path     = $uri;
     my $instance = pkg('Conf')->instance();
