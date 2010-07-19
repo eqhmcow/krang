@@ -12,7 +12,7 @@ KeepAliveTimeout     15
 MinSpareServers      <tmpl_var MinSpareServers default="5">
 MaxSpareServers      <tmpl_var MaxSpareServers default="10">
 StartServers         <tmpl_var MinSpareServers default="5">
-MaxClients           <tmpl_var MaxClients default="150">
+MaxClients           <tmpl_if PROFILE_MODE>1<tmpl_else><tmpl_var MaxClients default="150"></tmpl_if>
 MaxRequestsPerChild  100
 ErrorLog             <tmpl_var KrangRoot>/logs/apache_error_log
 LogFormat            "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
@@ -95,6 +95,9 @@ PassEnv KRANG_DEBUG
 PassEnv CGI_MODE
 PassEnv PERL5LIB
 PassEnv HTML_TEMPLATE_ROOT
+<tmpl_if PROFILE_MODE>
+PassEnv NYTPROF
+</tmpl_if>
 
 #
 # MOD_PERL Configuration for Krang
@@ -105,10 +108,17 @@ PerlPassEnv KRANG_DEBUG
 PerlPassEnv CGI_MODE
 PerlPassEnv PERL5LIB
 PerlPassEnv HTML_TEMPLATE_ROOT
+<tmpl_if PROFILE_MODE>
+PerlPassEnv NYTPROF
+</tmpl_if>
 
 PerlSendHeader Off
 PerlWarn On
 PerlRequire "<tmpl_var KrangRoot>/conf/krang-preload.pl"
+
+<tmpl_if PROFILE_MODE>
+PerlModule Devel::NYTProf::Apache
+</tmpl_if>
 
 <Perl>
         use Krang::Handler;

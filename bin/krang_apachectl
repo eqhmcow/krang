@@ -29,15 +29,30 @@ to show an offline page.
 
 Usage information can be obtained by running the script with no arguments.
 
-=head2 FOR DEVELOPERS
+=head1 OPTIONS
 
-The environment variable B<CGI_MODE> may be set to a true value
-(e.g., '1'), which will cause all CGI applications to be run as true
-CGIs, via mod_cgi.  If this environment variable is not present,
-or is false, then all CGI applications will run via Apache::Registry.
+=over
 
-CGI_MODE is only useful for debugging during development.  In production
-is it inadvisable to invoke this mode.
+=item --cgi-mode
+
+If true, will cause all CGI applications to be run as true
+CGIs, via mod_cgi. Otherwise all Perl files will be run under
+mod_perl using L<Apache::Registry>.
+
+CGI mode is only useful for debugging during development. In production
+is it inadvisable to add this option.
+This option can also be turned on using the C<CGI_MODE> environment variable.
+
+=item --profile-mode
+
+If true, then Krang will use L<Devel::NYTProf> and run with a single
+process so that the code can be profiled. L<Devel::NYTProf> will
+print a banner indicating where the profiling data is stored and it can
+be analyzed with programs like C<nytprofhtml>.
+
+This option can also be turned on using the C<PROFILE_MODE> environment variable.
+
+=back
 
 =cut
 
@@ -96,6 +111,17 @@ use Krang::ClassLoader Conf => qw(KrangRoot InstanceHostName Skin KrangUser Kran
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader Localization => qw(%LANG);
 use Krang::ClassLoader 'IO';
+use Getopt::Long;
+
+my $cgi_mode     = exists $ENV{CGI_MODE}     && $ENV{CGI_MODE}     ? 1 : 0;
+my $profile_mode = exists $ENV{PROFILE_MODE} && $ENV{PROFILE_MODE} ? 1 : 0;
+GetOptions(
+    'cgi|cgi-mode|cgi_mode'             => \$cgi_mode,
+    'profile|profile-mode|profile_mode' => \$profile_mode,
+);
+
+print STDERR "CGI Mode activated\n" if $cgi_mode;
+print STDERR "Profile Mode (using Devel::NYTProf) activated\n" if $profile_mode;
 
 # SSL directives
 my @ssl_directives = qw(
@@ -220,10 +246,11 @@ sub write_conf {
     my $apache_root = rel2abs(catdir(KrangRoot, APACHE_ROOT));
     $template->param(ApacheRoot => $apache_root);
 
-    # Set "CGI MODE" (i.e., non-Apache::Registry) if env var "CGI_MODE is set to a true value"
-    my $cgi_mode = (defined($ENV{CGI_MODE}) ? $ENV{CGI_MODE} : '0');
-    print STDERR ($cgi_mode ? "CGI Mode activated" : "Apache::Registry Mode activated") . "\n";
-    $template->param(CGI_MODE => $cgi_mode);
+    # CGI/Profile modes
+    $template->param(
+        CGI_MODE     => $cgi_mode,
+        PROFILE_MODE => $profile_mode,
+    );
 
     $template->param(
         (

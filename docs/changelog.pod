@@ -6,6 +6,16 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item * 
+
+Added C<--profile-mode> option to turn on profiling with L<Devel::NYTProf>
+from F<bin/krang_apachectl>. [Michael Peters]
+
+=item *
+
+Allow CGI mode to be activated with C<--cgi-mode> option to
+F<bin/krang_apachectl>. [Michael Peters]
+
 =item *
 
 Improved navigation rendering performance. [Michael Peters]
