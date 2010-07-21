@@ -198,6 +198,8 @@ sub create {
     my @bad;
     push(@bad, 'parent_id'), add_alert('missing_parent_id')
       unless $parent_id;
+    push(@bad, 'parent_id'), add_alert('bad_parent_id')
+      unless $parent_id && $parent_id =~ /^\d+$/;
     push(@bad, 'dir'), add_alert('missing_dir')
       unless $dir;
     push(@bad, 'dir'), add_alert('bad_dir')
@@ -769,7 +771,6 @@ sub _load_category {
 
     # load category from database or session
     if (my $id = $query->param($args{param})) {
-
         # load category from DB
         ($category) = pkg('Category')->find(category_id => $id);
         croak("Unable to load Category $id.")
