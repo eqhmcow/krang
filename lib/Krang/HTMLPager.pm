@@ -16,35 +16,31 @@ use File::Spec::Functions qw(catdir);
 
 Krang::HTMLPager - Web-paginate lists of records
 
-
 =head1 SYNOPSIS
 
-  #### In your Krang::CGI::* module...
-  #
-  use Krang::ClassLoader 'HTMLPager';
+    # In your Krang::CGI::* module...
+    use Krang::ClassLoader 'HTMLPager';
 
-  ## In a run-mode, instantiate new pager object...
-  my $pager = pkg('HTMLPager')->new(
-    cgi_query   => $query,
-    use_module  => pkg('Contrib'),
-    columns     => [ 'last', 'first', 'command_column', 'checkbox_column' ],
-    columns_sortable => [ 'last', 'first' ],
-    command_column_commands => [ 'edit_contrib' ],
-    id_handler  => sub { return $_[0]->contrib_id },
-    row_handler => sub { $_[0]->{last} = $_[1]->last(); $_[0]->{first} = $_[1]->first(); },
-  );
+    # In a run-mode, instantiate new pager object...
+    my $pager = pkg('HTMLPager')->new(
+        cgi_query  => $query,
+        use_module => pkg('Contrib'),
+        columns    => ['last', 'first', 'command_column', 'checkbox_column'],
+        columns_sortable        => ['last', 'first'],
+        command_column_commands => ['edit_contrib'],
+        id_handler              => sub      { return $_[0]->contrib_id },
+        row_handler => sub { $_[0]->{last} = $_[1]->last(); $_[0]->{first} = $_[1]->first(); },
+    );
 
-  # Run the pager
-  my $pager_html = $pager->output();
-  $template->param(pager_html => $pager_html);
+    # Run the pager
+    my $pager_html = $pager->output();
+    $template->param(pager_html => $pager_html);
 
 
-  #### In your HTML::Template file...
-  #
-  <!-- pkg('HTMLPager') Output START -->
-  <tmpl_var pager_html>
-  <!-- pkg('HTMLPager') Output END -->
-
+    # In your HTML::Template file...
+    <!-- pkg('HTMLPager') Output START -->
+    <tmpl_var pager_html>
+    <!-- pkg('HTMLPager') Output END -->
 
 =cut
 
@@ -79,22 +75,29 @@ use Krang::ClassLoader MethodMaker => (
 
 =head1 DESCRIPTION
 
-The primary purpose of Krang::HTMLPager is to allow Krang-style
-page able lists of results to be easily created.  The secondary
-purpose is to enforce a standard function and appearance to these
-lists.
+The primary purpose of Krang::HTMLPager is to allow Krang-style page
+able lists of results to be easily created.  The secondary purpose is
+to enforce a standard function and appearance to these lists.
 
 The pager interface is designed to work specifically with the Krang
 system, and to be as simple to use as possible.  It is modeled after
-HTML::Pager, but is more specialized for use with Krang.  In
-particular Krang::HTMLPager provides the following functions which are
-unique to Krang:
+HTML::Pager, but is more specialized for use with Krang.  In particular
+Krang::HTMLPager provides the following functions which are unique
+to Krang:
 
-  * Use of class find() methods
-  * Generation of "checkbox columns"
-  * Generation of "command columns"
-  * Krang-style sort controls
-  * Krang-style user interface
+=over
+
+=item * Use of class find() methods
+
+=item * Generation of "checkbox columns"
+
+=item * Generation of "command columns"
+
+=item * Krang-style sort controls
+
+=item * Krang-style user interface
+
+=back
 
 =head1 INTERFACE
 
@@ -102,15 +105,13 @@ Krang::HTMLPager implements the following primary methods:
 
 =over 4
 
-
-
 =item new()
 
-  my $pager = pkg('HTMLPager')->new(%pager_props);
+    my $pager = pkg('HTMLPager')->new(%pager_props);
 
 The new() method instantiates a new pager.  It takes a litany of
-parameters, which are documented in full later in this POD in the
-section "Krang::HTMLPager Properties".
+parameters, which are documented in full later in this POD in the section
+"Krang::HTMLPager Properties".
 
 =cut
 
@@ -158,34 +159,34 @@ sub init {
 
 =item output()
 
-  my $pager_html = $pager->output();
+    my $pager_html = $pager->output();
 
-The output() method is one of two ways to execute a paged view    
-and utilize the output.  This method is intended for use when 
-the standard built-in pager templates are being employed, as 
-opposed to a custom pager template.
+The C<output()> method is one of two ways to execute a paged view and
+utilize the output.  This method is intended for use when the standard
+built-in pager templates are being employed, as opposed to a custom
+pager template.
 
-The output() method runs the Krang::HTMLPager and returns a block of
-HTML containing the data output.  This is expected to be used in the
+The C<output()> method runs the Krang::HTMLPager and returns a block
+of HTML containing the data output.  This is expected to be used in the
 context of a larger template:
 
-  $template_object->param( pager_html => $pager->output() );
+    $template_object->param( pager_html => $pager->output() );
 
 The output returned is contained in a form with the name
 "krang_pager_form".  This is important to know if you have a checkbox
-column on which you want to operate.  In this case you are expected 
-to implement a button which calls a javascript function.  The 
-javascript function would have to submit the pager form to 
-get access to the checked rows.  For example:
+column on which you want to operate.  In this case you are expected to
+implement a button which calls a javascript function.  The javascript
+function would have to submit the pager form to get access to the
+checked rows.  For example:
 
-  function delete_selected () {
-    var myform = document.forms["krang_pager_form"];
-    myform.rm.value = "delete_selected";
-    myform.submit();
-  }
+    function delete_selected () {
+        var myform = document.forms["krang_pager_form"];
+        myform.rm.value = "delete_selected";
+        myform.submit();
+    }
 
 This assumes that your run-mode parameter is "rm" and that you have
-set "rm" to be included in the pager form via the "persist_vars"
+set "rm" to be included in the pager form via the C<persist_vars>
 pager property.
 
 =cut
@@ -209,17 +210,17 @@ sub output {
 
 =item fill_template()
 
-  $pager->fill_template($template_object);
+    $pager->fill_template($template_object);
 
-The fill_template() method is one of two ways to execute a paged view
-and utilize the output.  This method is used in the context of a 
-custom pager template.  The section later in this POD, "Creating Custom 
-Pager Templates", more fully describes how and why you would want to 
-use a custom template.
+The C<fill_template()> method is one of two ways to execute a paged view
+and utilize the output.  This method is used in the context of a custom
+pager template.  The section later in this POD, "Creating Custom Pager
+Templates", more fully describes how and why you would want to use a
+custom template.
 
-The fill_template() method runs the Krang::HTMLPager and sets template 
-variables in the $template_object you provide.  It is then your 
-responsibility to output that $template_object.
+The C<fill_template()> method runs the Krang::HTMLPager and sets template
+variables in the C<$template_object> you provide.  It is then your
+responsibility to output that C<$template_object>.
 
 =cut
 
@@ -239,14 +240,12 @@ sub fill_template {
 
     my $row_count = $pager->row_count();
 
-The row_count() method returns the number of rows output
-by the pager.  It is expected to be called after output()
-or fill_template().  Until one of those methods are called
-row_count() will return undef.
+The C<row_count()> method returns the number of rows output by the pager.
+It is expected to be called after C<output()> or C<fill_template()>.
+Until one of those methods are called C<row_count()> will return undef.
 
-This method is useful for changing the UI based on whether 
-or not any results were found.
-
+This method is useful for changing the UI based on whether or not any
+results were found.
 
 =cut
 
@@ -256,13 +255,13 @@ or not any results were found.
 
   my $template = $pager->make_internal_template();
 
-The make_internal_template() method returns a dynamically created template
-for use with Krang::HTMLPager.  This method is used internally by output()
-to generate a template based on your specification.
+The C<make_internal_template()> method returns a dynamically created
+template for use with Krang::HTMLPager.  This method is used internally
+by C<output()> to generate a template based on your specification.
 
 This method is made public to assist in the creation of custom pager
-templates.  Using this method you can specify and create a template which can
-be saved to a file and customized as needed.
+templates.  Using this method you can specify and create a template
+which can be saved to a file and customized as needed.
 
 =cut
 
@@ -364,22 +363,22 @@ EOF
 
 =item column_display($col => 0 | 1)
 
-   $pager->column_display(status => 1, ...)
+    $pager->column_display(status => 1, ...)
 
-This method allows to control whether certain columns should be
-displayed or not.  It is meant to be used in row handlers.  This way,
-columns that would be displayed per default can be hidden depending on
-some row object property.  Likewise, columns that would be hidden (see
-the property 'columns_hidden' below) can be shown.
+This method allows to control whether certain columns should be displayed
+or not.  It is meant to be used in row handlers.  This way, columns
+that would be displayed per default can be hidden depending on some row
+object property.  Likewise, columns that would be hidden (see the property
+'columns_hidden' below) can be shown.
 
-For each column name passed to this method, the pager creates a
-special tmpl_if that can be used to actually control the column
-display in the templates:
+For each column name passed to this method, the pager creates a special
+tmpl_if that can be used to actually control the column display in
+the templates:
 
-   <tmpl_if __show_status__><td><tmpl_var status></tmpl_if>
+    <tmpl_if __show_status__><td><tmpl_var status></tmpl_if>
 
-This method can be called multiple times for the same column name
-allowing for more involved control schemes.
+This method can be called multiple times for the same column name allowing
+for more involved control schemes.
 
 Displaying the list buttons can be controlled via the checkbox_column
 display.
@@ -410,147 +409,163 @@ sub column_display {
 =head2 Krang::HTMLPager Properties
 
 Krang::HTMLPager expects a number of parameters to be set via the
-new() method.  These parameters set properties which are used to
+C<new()> method.  These parameters set properties which are used to
 create a specification for your pager, such as the list of columns and
 which of those columns are sortable.
 
-Following is a list of the parameters for Krang::HTMLPager.
-These parameters are also accessible via object methods.
+Following is a list of the parameters for Krang::HTMLPager.  These
+parameters are also accessible via object methods.
 
 =over 4
 
 
 =item cgi_query
 
-  cgi_query => $query
+    cgi_query => $query
 
-Contains the CGI.pm query object for this request.  The query object
-is needed to read in the pager state parameters, such as
-krang_pager_curr_page_num, krang_pager_sort_field, and krang_pager_sort_order.
+Contains the CGI.pm query object for this request.  The query
+object is needed to read in the pager state parameters, such
+as C<krang_pager_curr_page_num>, C<krang_pager_sort_field>, and
+C<krang_pager_sort_order>.
 
 
 =item persist_vars
 
-  persist_vars => {
-                    rm => 'search',
-                    search_filter => $search_filter,
-                  }
+    persist_vars => {
+        rm            => 'search',
+        search_filter => $search_filter,
+    }
 
-A hashref containing the names and values of CGI parameters which should be
-remembered as hidden data within the pager form.  This is necessary
-for maintaining web application state.  The pager expects to have its 
+A hashref containing the names and values of CGI parameters which should
+be remembered as hidden data within the pager form.  This is necessary
+for maintaining web application state.  The pager expects to have its
 own form for paging through data and re-sorting results.
 
-Values set in persist_vars will be implemented via CGI.pm's hidden() method
-with "-override=>1" set.  This will ensure that the value you specify will be
-set regardless of the current state of that form parameter.
+Values set in persist_vars will be implemented via CGI.pm's C<hidden()>
+method with C<< -override=>1 >> set.  This will ensure that the value
+you specify will be set regardless of the current state of that form
+parameter.
 
 
 =item use_module
 
-  use_module => pkg('Contrib')
+    use_module => pkg('Contrib')
 
-The name of the Krang object module which contains the find() method 
-pager should use for retrieving data.  This module's find() method 
-will be used for handling all queries, sorting, and paging (limit, 
-offset).
+The name of the Krang object module which contains the C<find()> method
+pager should use for retrieving data.  This module's C<find()> method will
+be used for handling all queries, sorting, and paging (limit, offset).
 
 Although it is expected that use_module will specify a Krang object
-module, any module which implements a sufficiently compatible find()
-method can be used.  In this case, "sufficiently compatible" means
-the following parameters are supported:
+module, any module which implements a sufficiently compatible C<find()>
+method can be used.  In this case, "sufficiently compatible" means the
+following parameters are supported:
 
-  * count
-  * order_by
-  * order_desc
-  * offset
-  * limit
+=over
+
+=item * count
+
+=item * order_by
+
+=item * order_desc
+
+=item * offset
+
+=item * limit
+
+=back
 
 =item use_data
 
-In some cases you might already have the data you want to page
-and you just need HTMLPager to do the formatting. In this case
-pass in an array ref to your data here instead of providing
-a value for L<use_module>.
+In some cases you might already have the data you want to page and you
+just need HTMLPager to do the formatting. In this case pass in an array
+ref to your data here instead of providing a value for L<use_module>.
 
 =item use_data_size
 
-If you are using L<use_data> and what you provided was not the
-entire dataset, then you can let HTMLPager know what the full
-size is. This allows it to accurately build the paging links.
+If you are using L<use_data> and what you provided was not the entire
+dataset, then you can let HTMLPager know what the full size is. This
+allows it to accurately build the paging links.
 
 =item cache_key
 
-HTMLPager uses the session cache to store some information about
-a paged list to re-use that same information on future requests
-for the same list. By default we use L<use_module> as the cache
-key, but you may need to provide your own key if you use the
-same L<use_module> in multiple places or you are using L<use_data>.
+HTMLPager uses the session cache to store some information about a
+paged list to re-use that same information on future requests for the
+same list. By default we use L<use_module> as the cache key, but you
+may need to provide your own key if you use the same L<use_module>
+in multiple places or you are using L<use_data>.
 
 =item find_params
 
-  find_params => { simple_search => $q->param('search_filter') }
+    find_params => { simple_search => $q->param('search_filter') }
 
-A hashref containing the search parameters exactly as they should be 
-passed to find().  This hashref will be augmented to include 
-parameters related to sorting (order_by, order_desc) and paging 
-(limit, offset). 
+A hashref containing the search parameters exactly as they should
+be passed to C<find()>.  This hashref will be augmented to include
+parameters related to sorting (C<order_by>, C<order_desc>) and paging
+(C<limit>, C<offset>).
 
 =item columns
 
-  columns => [qw( last first_middle type command_column checkbox_column )]
+    columns => [qw( last first_middle type command_column checkbox_column )]
 
-An arrayref containing columns names.  This property defines two
-things: The order of the columns in the table (left to right), and the
-key names which will be expected in custom templates.
+An arrayref containing columns names.  This property defines two things:
+The order of the columns in the table (left to right), and the key names
+which will be expected in custom templates.
 
-There are two special values which can be included in the list of
-columns.  If included in the column list, these columns will be
-automagically handled by pager as follows:
+There are two special values which can be included in the list of columns.
+If included in the column list, these columns will be automagically
+handled by pager as follows:
 
-  "command_column"   - A list of actions, implemented as button controls.
-  "checkbox_column"  - A series of checkboxes, one per record/row.
+=over
 
-"command_column" is used for button links such as "Edit" or "View Detail".
-How these buttons are configured is described in more detail below
-(pager parameters "command_column_commands" and
-"command_column_labels").
+=item command_column
 
-"command_column" also sets up the column header as a blank field.
-This column header functionality can be overridden via "column_labels"
+A list of actions, implemented as button controls.
+
+=item checkbox_column
+
+A series of checkboxes, one per record/row.
+
+=back
+
+C<command_column> is used for button links such as "Edit" or
+"View Detail".  How these buttons are configured is described in
+more detail below (pager parameters C<command_column_commands> and
+C<command_column_labels>).
+
+C<command_column> also sets up the column header as a blank field.
+This column header functionality can be overridden via C<column_labels>
 below.
 
-
-"checkbox_column" is used for interfaces where the user is allowed to
-check a set of records for the purpose of processing them in a
+C<checkbox_column> is used for interfaces where the user is allowed
+to check a set of records for the purpose of processing them in a
 particular way.  For example, "delete checked", "check out", and
 "associate" are examples of functionality which use these checkboxes.
 
 Pager will automatically create these checkboxes for you.  The
 checkboxes will be implemented as CGI form inputs which all are named
-"krang_pager_rows_checked".  The value of each checkbox is set by
-pager to be the "ID" as returned per row by the "id_handler" pager
-parameter (described below).  In HTML, a typical set of checkboxes
-might look like this:
+C<krang_pager_rows_checked>.  The value of each checkbox is set by pager
+to be the "ID" as returned per row by the C<id_handler> pager parameter
+(described below).  In HTML, a typical set of checkboxes might look
+like this:
 
-  <input type="checkbox" name="krang_pager_rows_checked" value="1">
-  <input type="checkbox" name="krang_pager_rows_checked" value="2">
-  <input type="checkbox" name="krang_pager_rows_checked" value="3">
-  <input type="checkbox" name="krang_pager_rows_checked" value="4">
+    <input type="checkbox" name="krang_pager_rows_checked" value="1">
+    <input type="checkbox" name="krang_pager_rows_checked" value="2">
+    <input type="checkbox" name="krang_pager_rows_checked" value="3">
+    <input type="checkbox" name="krang_pager_rows_checked" value="4">
 
 This will allow you to easily retrieve an array of checked rows via
- CGI.pm:
+CGI.pm:
 
-  my @rows_checked = $query->param('krang_pager_rows_checked');
+    my @rows_checked = $query->param('krang_pager_rows_checked');
 
-"checkbox_column" also sets up the column header as a widget through
+C<checkbox_column> also sets up the column header as a widget through
 which "select all" and "un-select all" functions can be triggered.
-This column header functionality can be overridden via "column_labels"
+This column header functionality can be overridden via C<column_labels>
 below.
 
 =item columns_hidden
 
-  columns_hidden => [qw( status )]
+    columns_hidden => [qw( status )]
 
 An arrayref containing the names of columns that should not be
 displayed per default.  Members of this list must also be members of
@@ -760,46 +775,40 @@ Refer to the make_internal_template() POD in this document for more
 details.
 
 The template which is created contains all the variables necessary
-in a custom template, for the pager specification (%pager_props) 
+in a custom template, for the pager specification (C<%pager_props>) 
 you have provided.  Following is a summary of the variables you 
 will find.
 
 =over 4
 
-
 =item <tmpl_include HTMLPager/pager-internals.tmpl>
 
-This tmpl_include brings in a special template containing 
-JavaScript and CGI form elements required for all pagers.
-(This should not be confused with the "internal" template.
-The template name, F<pager-internals.tmpl>, is coincidental.)
-
+This tmpl_include brings in a special template containing JavaScript and
+CGI form elements required for all pagers.  (This should not be confused
+with the "internal" template.  The template name, F<pager-internals.tmpl>,
+is coincidental.)
 
 =item krang_pager_rows
 
-This variable contains the rows of data on the current screen of 
-the pager.  It is expected to be called as a <TMPL_LOOP>.  It is also
-used in the context of a <TMPL_IF>/<TMPL_ELSE> to provide alternate
-output if there are no results -- for instance, a search for which 
-there are no matching records found.
-
+This variable contains the rows of data on the current screen of the
+pager.  It is expected to be called as a C<< <TMPL_LOOP> >>.  It is
+also used in the context of a C<< <TMPL_IF>/<TMPL_ELSE> >> to provide
+alternate output if there are no results -- for instance, a search for
+which there are no matching records found.
 
 =item found_count
 
 The number of records found as the result of a search, in total.
-
 
 =item start_row
 
 The number of the row in the total result set at which the current page
 is starting its display.
 
-
 =item end_row
 
 The number of the row in the total result set at which the current page
 is ending its display.
-
 
 =item colhead_<column name>
 
@@ -810,100 +819,101 @@ State information is added to sortable column headers if they are the
 currently selected sort row.  Other behaviors are articulated here, 
 as documented elsewhere in this POD.
 
-In order to implement this functionality, one <TMPL_VAR> is 
+In order to implement this functionality, one C<< <TMPL_VAR> >> is 
 expected for each column in the pager.  These variables are named
 using the column name (as defined by the "columns" pager property), 
 with the prefix, "colhead_".
 
-
 =item <column name>
 
-The rows within the "krang_pager_rows" <TMPL_LOOP> are expected to 
-each contain one <TMPL_VAR> for each column.  These variables are named
-using the column name (as defined by the "columns" pager property).
-
+The rows within the "krang_pager_rows" C<< <TMPL_LOOP> >> are expected to
+each contain one C<< <TMPL_VAR> >> for each column.  These variables are
+named using the column name (as defined by the C<columns> pager property).
 
 =item prev_page_number
 
-The pager is expected to provide a link to the previous page if the current 
-page is not the first page.  The <TMPL_VAR> "prev_page_number" contains the
-number of the previous page, or "0" if we're already on the first page.
+The pager is expected to provide a link to the previous page
+if the current page is not the first page. The C<< <TMPL_VAR> >>
+C<prev_page_number> contains the number of the previous page, or "0"
+if we're already on the first page.
 
-The internal template uses "prev_page_number" in the context of a
-<TMPL_IF> to hide the previous page button on the first page.
+The internal template uses C<prev_page_number> in the context of a C<<
+<TMPL_IF> >> to hide the previous page button on the first page.
 
-(N.b.: A JavaScript function, "Krang.Pager.goto_page()", is provided for navigation
-between pages by F<pager-internals.tmpl>.  You are encouraged to use it.)
-
+(N.b.: A JavaScript function, C<Krang.Pager.goto_page()>, is provided for
+navigation between pages by F<pager-internals.tmpl>.  You are encouraged
+to use it.)
 
 =item next_page_number
 
-The pager is expected to provide a link to the next page if the current 
-page is not the last page.  The <TMPL_VAR> "next_page_number" contains the
-number of the next page, or "0" if we're already on the last page.
+The pager is expected to provide a link to the next page if the current
+page is not the last page.  The C<< <TMPL_VAR> >> C<next_page_number>
+contains the number of the next page, or "0" if we're already on the
+last page.
 
-The internal template uses "next_page_number" in the context of a
-<TMPL_IF> to hide the next page button on the last page.
+The internal template uses C<next_page_number> in the context of a C<<
+<TMPL_IF> >> to hide the next page button on the last page.
 
-(N.b.: A JavaScript function, "Krang.Pager.goto_page()", is provided for navigation
-between pages by F<pager-internals.tmpl>.  You are encouraged to use it.)
-
+(N.b.: A JavaScript function, C<Krang.Pager.goto_page()>, is provided for
+navigation between pages by F<pager-internals.tmpl>.  You are encouraged
+to use it.)
 
 =item page_numbers
 
 The pager is expected to provide a list of page numbers which are
-links to allow the user to jump between pages.  The <TMPL_LOOP>
-"page_numbers" contains this list.  Each for in "page_numbers" is
-expected to implement three variables, "page_number",
-"page_number_label" and "is_current_page" which are described below.
-
+links to allow the user to jump between pages.  The C<< <TMPL_LOOP>
+>> C<page_numbers> contains this list.  Each for in C<page_numbers>
+is expected to implement three variables, C<page_number>,
+C<page_number_label> and C<is_current_page> which are described below.
 
 =item page_number
 
-Available in the context of the <TMPL_LOOP> "page_numbers", the
-<TMPL_VAR> "page_number" contains the number of the page.  
-This is used by the internal template as a link to jump to a 
-particular page of output.
+Available in the context of the C<< <TMPL_LOOP> >> C<page_numbers>,
+the C<< <TMPL_VAR> >> C<page_number> contains the number of the page.
+This is used by the internal template as a link to jump to a particular
+page of output.
 
-(N.b.: A JavaScript function, "Krang.Pager.goto_page()", is provided for navigation
-between pages by F<pager-internals.tmpl>.  You are encouraged to use it.)
+(N.b.: A JavaScript function, C<Krang.Pager.goto_page()>, is provided for
+navigation between pages by F<pager-internals.tmpl>.  You are encouraged
+to use it.)
 
 =item page_number_label
 
-Available in the context of the <TMPL_LOOP> "page_numbers", the
-<TMPL_VAR> "page_number_label" contains the label for a page number.  This
-might be the number itself or it might be the string "...".
-
+Available in the context of the C<< <TMPL_LOOP> >>  C<page_numbers>,
+the C<< <TMPL_VAR> >> C<page_number_label> contains the label for a page
+number.  This might be the number itself or it might be the string "...".
 
 =item is_current_page
 
-Available in the context of the <TMPL_LOOP> "page_numbers", the
-<TMPL_VAR> "is_current_page" contains "1" if the current "page_number"
-is, in fact, the current page being viewed, "0" if not.  This is used by the
-internal template in the context of a <TMPL_IF>/<TMPL_ELSE> to 
-conditionally disable the link to the current page.
+Available in the context of the C<< <TMPL_LOOP> >> C<page_numbers>,
+the C<< <TMPL_VAR> >> C<is_current_page> contains "1" if the current
+C<page_number> is, in fact, the current page being viewed, "0"
+if not.  This is used by the internal template in the context of a
+C<< <TMPL_IF>/<TMPL_ELSE> >> to conditionally disable the link to the
+current page.
 
-(N.b.: A JavaScript function, "Krang.Pager.goto_page()", is provided for navigation
-between pages by F<pager-internals.tmpl>.  You are encouraged to use it.)
-
+(N.b.: A JavaScript function, C<Krang.Pager.goto_page()>, is provided for
+navigation between pages by F<pager-internals.tmpl>.  You are encouraged
+to use it.)
 
 =item show_big_view
 
-Krang::HTMLPager allows the user to toggle between two page sizes: 
+Krang::HTMLPager allows the user to toggle between two page sizes:
 Custom size (set by user preference) and "Show 100 rows" (unless Custom
-size is 100, then this becomes "Show 20 rows").  The
-<TMPL_VAR> "show_big_view" is set to "1" if the user is in the 
-"100 rows" mode, "0" otherwise.
+size is 100, then this becomes "Show 20 rows").  The C<< <TMPL_VAR> >>
+C<show_big_view> is set to "1" if the user is in the "100 rows" mode,
+"0" otherwise.
 
-(N.b.: A JavaScript function, "Krang.Pager.show_big_view()", is provided for 
-toggling between modes by F<pager-internals.tmpl>.  You are encouraged to use it.)
+(N.b.: A JavaScript function, C<Krang.Pager.show_big_view()>, is provided
+for toggling between modes by F<pager-internals.tmpl>.  You are encouraged
+to use it.)
 
 =item user_page_size
 
-Krang::HTMLPager allows the user to toggle between two page sizes: 
+Krang::HTMLPager allows the user to toggle between two page sizes:
 Custom size (set by user preference) and "Show 100 rows" (unless Custom
-size is 100, then this becomes "Show 20 rows").  The
-<TMPL_VAR> "user_page_size" is set to the custom page size.
+size is 100, then this becomes "Show 20 rows").  The C<< <TMPL_VAR> >>
+C<user_page_size> is set to the custom page size.
 
 =item big_view_page_size
 
