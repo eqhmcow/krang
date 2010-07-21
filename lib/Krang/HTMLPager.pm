@@ -36,7 +36,6 @@ Krang::HTMLPager - Web-paginate lists of records
     my $pager_html = $pager->output();
     $template->param(pager_html => $pager_html);
 
-
     # In your HTML::Template file...
     <!-- pkg('HTMLPager') Output START -->
     <tmpl_var pager_html>
@@ -418,7 +417,6 @@ parameters are also accessible via object methods.
 
 =over 4
 
-
 =item cgi_query
 
     cgi_query => $query
@@ -427,7 +425,6 @@ Contains the CGI.pm query object for this request.  The query
 object is needed to read in the pager state parameters, such
 as C<krang_pager_curr_page_num>, C<krang_pager_sort_field>, and
 C<krang_pager_sort_order>.
-
 
 =item persist_vars
 
@@ -445,7 +442,6 @@ Values set in persist_vars will be implemented via CGI.pm's C<hidden()>
 method with C<< -override=>1 >> set.  This will ensure that the value
 you specify will be set regardless of the current state of that form
 parameter.
-
 
 =item use_module
 
@@ -593,7 +589,6 @@ is done via B<column_display()>.
 
   <tmpl_if __show_status__><td><tmpl_var status></tmpl_if>
 
-
 =item column_labels
 
   column_labels => { last=>'Last Name', first_middle=>'First, Middle Name' }
@@ -612,8 +607,6 @@ could use "column_labels" to change it to "Commands" or something else
 intuitive.  In the case of a "checkbox_column", overriding the label
 via "column_labels" is probably undesirable.  A "checkbox_column" puts
 a highly functional gadget in the header, which is probably required.
-
-
 
 =item command_column_commands
 
@@ -656,7 +649,6 @@ For example, the above might generate:
 If a label is not defined for a particular command, the name will 
 be used instead.
 
-
 =item columns_sortable
 
   columns_sortable => [qw( last first_middle )]
@@ -675,7 +667,6 @@ This column will be used for sort the first time the pager is invoked.
 This behavior, combined with the "default_sort_order_desc"
 property, allows you to control the default pager sort behavior.
 
-
 =item columns_sort_map
 
   columns_sort_map => { first_middle => 'first,middle' }
@@ -686,7 +677,6 @@ the string which should be passed to find() via the
 is not specified, its name will be used instead.  This
 is probably adequate in most cases.
 
-
 =item default_sort_order_desc
 
   default_sort_order_desc => 1
@@ -696,7 +686,6 @@ when the pager is first called the sort order will be
 set to "descending"  If not set, this property will
 default to "0" and sort order will consequently default
 to "ascending".
-
 
 =item row_handler
 
@@ -745,7 +734,6 @@ display.  Any more pages outside this number will be represented by a
 default is 10.
 
 =back
-
 
 =head2 Creating Custom Pager Templates
 
@@ -938,6 +926,7 @@ sub calculate_order_by {
         $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"} = $order_by if $cache_key;
     } elsif ($cache_key && $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"}) {
         $order_by = $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"};
+        $q->param(-name => 'krang_pager_sort_field', -value => $order_by);
     } elsif (ref $self) {
         $order_by = $self->columns_sortable()->[0];    # First sort column
         $q->param(-name => 'krang_pager_sort_field', -value => $order_by);
