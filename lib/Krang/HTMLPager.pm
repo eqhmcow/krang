@@ -11,6 +11,7 @@ use Krang::ClassLoader 'Info';
 use Krang::ClassLoader Session      => qw(%session);
 use Krang::ClassLoader Localization => qw(localize);
 use File::Spec::Functions qw(catdir);
+use List::Util qw(first);
 
 =head1 NAME
 
@@ -914,18 +915,28 @@ sub calculate_order_by {
     # if we weren't given a cache key and we're called as an object method
     $cache_key ||= ref $self ? $self->_get_cache_key : '';
 
+    # first see if it's coming via the query
     if (defined $q->param('krang_pager_sort_field')) {
         $order_by = scalar $q->param('krang_pager_sort_field');
 
-        # store it in the session if we have a module to key it off of
-        $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"} = $order_by if $cache_key;
-    } elsif ($cache_key && $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"}) {
-        $order_by = $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"};
-        $q->param(-name => 'krang_pager_sort_field', -value => $order_by);
-    } elsif (ref $self) {
-        $order_by = $self->columns_sortable()->[0];    # First sort column
-        $q->param(-name => 'krang_pager_sort_field', -value => $order_by);
+        # make sure it's a column that should be sortable
+        $order_by = first { $_ eq $order_by } @{$self->columns_sortable};
     }
+
+    # check other places
+    if(!$order_by) {
+        if($cache_key && $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"}) {
+            # like the session
+            $order_by = $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"};
+        } elsif( ref $self ) {
+            # or the first orderable column
+            $order_by = $self->columns_sortable()->[0];    # First sort column
+        }
+    }
+
+    # store it for future reference
+    $q->param(krang_pager_sort_field => $order_by);
+    $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"} = $order_by if $cache_key;
 
     return $order_by;
 }
