@@ -572,7 +572,7 @@ property.
 For each member of this list, the pager creates a special tmpl_if that
 can be used to control the column display in the templates.  The
 default value of those tmpl_if is '0', but can be changed via
-column_display().
+C<column_display()>.
 
  B<Example:>
 
@@ -587,109 +587,105 @@ nonetheless.  The default -- hide the column -- is specified using the
 'columns_hidden' list, inverting the default from within a row handler
 is done via B<column_display()>.
 
-  <tmpl_if __show_status__><td><tmpl_var status></tmpl_if>
+    <tmpl_if __show_status__><td><tmpl_var status></tmpl_if>
 
 =item column_labels
 
-  column_labels => { last=>'Last Name', first_middle=>'First, Middle Name' }
+    column_labels => { last=>'Last Name', first_middle=>'First, Middle Name' }
 
-A hashref mapping column names (as defined by the "columns" pager
+A hashref mapping column names (as defined by the C<columns> pager
 parameter) to the text label which should appear in the column header
 line at the top of the table.
 
-It is not necessary to define a column label for every column.  If
-not supplied, the column name will be used instead, except in the case
-of magic internal column types, "command_column" and
-"checkbox_column".
+It is not necessary to define a column label for every column.  If not
+supplied, the column name will be used instead, except in the case of
+magic internal column types, C<command_column> and C<checkbox_column>.
 
-A "command_column" header is automatically set to be blank.  You
-could use "column_labels" to change it to "Commands" or something else
-intuitive.  In the case of a "checkbox_column", overriding the label
-via "column_labels" is probably undesirable.  A "checkbox_column" puts
-a highly functional gadget in the header, which is probably required.
+A C<command_column> header is automatically set to be blank.  You could
+use C<column_labels> to change it to "Commands" or something else
+intuitive.  In the case of a C<checkbox_column>, overriding the label
+via C<column_labels> is probably undesirable.  A C<checkbox_column>
+puts a highly functional gadget in the header, which is probably required.
 
 =item command_column_commands
 
-  command_column_commands => [qw( edit_contrib )]
+    command_column_commands => [qw( edit_contrib )]
 
-An arrayref containing the names of the JavaScript functions to 
-be called when the user clicks on a particular command.  The
-function will be called with the "ID" (as returned per row by 
-the "id_handler" pager parameter described below) as the first
-argument. Additional parameters can be passed in via the C<command_column_extra_args>
-option. For example, following would be the HTML generated
-if ID was set to "4":
+An arrayref containing the names of the JavaScript functions to be
+called when the user clicks on a particular command.  The function will
+be called with the "ID" (as returned per row by the C<id_handler> pager
+parameter described below) as the first argument. Additional parameters
+can be passed in via the C<command_column_extra_args> option. For example,
+following would be the HTML generated if ID was set to "4":
 
-  <input onclick="edit_contrib('4')" type="button" class="button">
+    <input onclick="edit_contrib('4')" type="button" class="button">
 
-It is expected that a corresponding JavaScript function would be
-written to implement the functionality desired when the user
-clicks on the command link for a particular row.
+It is expected that a corresponding JavaScript function would be written
+to implement the functionality desired when the user clicks on the
+command link for a particular row.
 
 =item command_column_extra_args
 
     command_column_extra_args => sub { return ('foo', 'bar') },
 
 A subroutine reference that returns extra parameters that will be passed
-to each C<command_column_commands> javascript function in addition
-to the row's C<ID>.
+to each C<command_column_commands> javascript function in addition to
+the row's C<ID>.
 
 This subroutine receives the object for the row being created.
 
 =item command_column_labels
 
-  command_column_labels => { edit_contrib => 'Edit' }
+    command_column_labels => { edit_contrib => 'Edit' }
 
-A hashref containing a map of command names (as defined by "command_column_commands")
-to the text which should be in the link which appears to the user.
-For example, the above might generate:
+A hashref containing a map of command names (as defined by
+C<command_column_commands>) to the text which should be in the link
+which appears to the user.  For example, the above might generate:
 
-  <input value="Edit" onclick="edit_contrib('4')" type="button" class="button">
+    <input value="Edit" onclick="edit_contrib('4')" type="button" class="button">
 
-If a label is not defined for a particular command, the name will 
-be used instead.
+If a label is not defined for a particular command, the name will be
+used instead.
 
 =item columns_sortable
 
-  columns_sortable => [qw( last first_middle )]
+    columns_sortable => [qw( last first_middle )]
 
-An arrayref containing the names of the columns (as defined by
-"columns") by which the user is allowed to sort.  These column
-headers will be clickable JavaScript links which will modify the
-sorting order of the data listed.
+An arrayref containing the names of the columns (as defined by C<columns>)
+by which the user is allowed to sort.  These column headers will be
+clickable JavaScript links which will modify the sorting order of the
+data listed.
 
-An arrow will appear next to the current sort column.  This 
-graphical arrow will identify if the current sort order is 
-ascending (up arrow) or descending (down arrow).
+An arrow will appear next to the current sort column.  This graphical
+arrow will identify if the current sort order is ascending (up arrow)
+or descending (down arrow).
 
 The first item in the list will be regarded as the B<default sort column>.
 This column will be used for sort the first time the pager is invoked.
-This behavior, combined with the "default_sort_order_desc"
-property, allows you to control the default pager sort behavior.
+This behavior, combined with the C<default_sort_order_desc> property,
+allows you to control the default pager sort behavior.
 
 =item columns_sort_map
 
-  columns_sort_map => { first_middle => 'first,middle' }
+    columns_sort_map => { first_middle => 'first,middle' }
 
-A hashref mapping the name of a sortable column to
-the string which should be passed to find() via the 
-"order_by" parameter.  If a particular sortable column
-is not specified, its name will be used instead.  This
-is probably adequate in most cases.
+A hashref mapping the name of a sortable column to the string which should
+be passed to C<find()> via the C<order_by> parameter.  If a particular
+sortable column is not specified, its name will be used instead.  This is
+probably adequate in most cases.
 
 =item default_sort_order_desc
 
-  default_sort_order_desc => 1
+    default_sort_order_desc => 1
 
-A scalar containing a Boolean (1 or 0) value.  If true,
-when the pager is first called the sort order will be
-set to "descending"  If not set, this property will
-default to "0" and sort order will consequently default
-to "ascending".
+A scalar containing a Boolean (1 or 0) value.  If true, when the pager
+is first called the sort order will be set to C<descending>  If not
+set, this property will default to "0" and sort order will consequently
+default to C<ascending>.
 
 =item row_handler
 
-  row_handler => sub { $self->my_row_handler(@_) }
+    row_handler => sub { $self->my_row_handler(@_) }
 
 A subroutine reference pointing to a custom function to process each
 row of data.  This function will receive, as arguments, a hashref into
@@ -698,13 +694,13 @@ displayed on this row and a reference to the pager object.  The job of
 your custom function is to convert the object attributes into template
 data and set that data in the hashref.  For example:
 
-  sub my_row_handler {
-    my ($self, $row_hashref, $row_obj, $pager) = @_;
-    $row_hashref->{first_middle} = $row_obj->first() . " " . $row_obj->middle();
-    $row_hashref->{last} = $row_obj->last();
-    $row_hashref->{type} = join(", ", ($row_obj->contrib_type_names()) );
-    $pager->column_display('checkbox_column' => 1) if $row_obj->may_edit;
-  }
+    sub my_row_handler {
+        my ($self, $row_hashref, $row_obj, $pager) = @_;
+        $row_hashref->{first_middle} = $row_obj->first() . " " . $row_obj->middle();
+        $row_hashref->{last}         = $row_obj->last();
+        $row_hashref->{type}         = join(", ", ($row_obj->contrib_type_names()));
+        $pager->column_display('checkbox_column' => 1) if $row_obj->may_edit;
+    }
 
 The purpose of passing in the pager object is to make the display of
 list controls (list checkbox and buttons) dependant on some row object
@@ -714,7 +710,7 @@ contains no templates, the list controls should not be displayed.
 
 =item id_handler
 
-  id_handler => sub { return $_[0]->contrib_id }
+    id_handler => sub { return $_[0]->contrib_id }
 
 A subroutine reference pointing to a custom function to return a
 unique identifier for each row of data.  This ID is needed for
@@ -726,7 +722,7 @@ a unique identifier for this row.
 
 =item max_page_links
 
-  max_page_links => 10
+    max_page_links => 10
 
 Set this to the maximum number of page links that the pager should
 display.  Any more pages outside this number will be represented by a
@@ -737,30 +733,29 @@ default is 10.
 
 =head2 Creating Custom Pager Templates
 
-It is expected that most of the time you will use the output() method
-to run the pager and return a rendered block of HTML with your
-interface.  The HTML which is returned is generated internally within 
+It is expected that most of the time you will use the C<output()>
+method to run the pager and return a rendered block of HTML with your
+interface.  The HTML which is returned is generated internally within
 Krang::HTMLPager.
 
 In some cases, this internally-created HTML will not suffice.  You may
 have to implement a screen which has a slightly different style to it.
-You may have additional functionality which is not compatible with 
-that provided by the stock Krang::HTMLPager output.  In these cases
-you may want to create your own custom Krang::HTMLPager template
-to replace the internal one.
+You may have additional functionality which is not compatible with that
+provided by the stock Krang::HTMLPager output.  In these cases you may
+want to create your own custom Krang::HTMLPager template to replace the
+internal one.
 
-This is not a task for the faint of heart.  Your template must be 
-structured to be fully compatible with the internal template in
-terms of HTML::Template structures.  The easiest way to get started
-with a custom template is to have Krang::HTMLPager dynamically 
-generate a template for you, which you can then customize.  This 
-can be done via the make_internal_template() method:
+This is not a task for the faint of heart.  Your template must be
+structured to be fully compatible with the internal template in terms
+of L<HTML::Template> structures.  The easiest way to get started with
+a custom template is to have Krang::HTMLPager dynamically generate a
+template for you, which you can then customize.  This can be done via
+the C<make_internal_template()> method:
 
-  my $pager = pkg('HTMLPager')->new(%pager_props);
-  my $template = $pager->make_internal_template();
+    my $pager    = pkg('HTMLPager')->new(%pager_props);
+    my $template = $pager->make_internal_template();
 
-Refer to the make_internal_template() POD in this document for more 
-details.
+Refer to C<make_internal_template()> in this document for more details.
 
 The template which is created contains all the variables necessary
 in a custom template, for the pager specification (C<%pager_props>) 
