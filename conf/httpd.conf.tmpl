@@ -139,9 +139,22 @@ PerlModule Devel::NYTProf::Apache
 </TMPL_IF>
 </FilesMatch>
 
+# hide important files
 <FilesMatch "\.(conf|pid|db)$">
+    Order allow,deny
     Deny from all
 </FilesMatch>
+
+# hide hidden files and directories
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<DirectoryMatch "(^\.)|(\/\.)">
+    Order allow,deny
+    Deny from all
+</DirectoryMatch>
 
 <tmpl_if EnableSSL>
 #
