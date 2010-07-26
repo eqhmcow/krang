@@ -22,8 +22,8 @@ None.
 =cut
 
 use Krang::ClassLoader base => 'CGI';
-use CGI qw/:html/;
-use Krang::ClassLoader 'Conf';
+use Krang::ClassLoader Conf => 'Charset';
+use CGI ':html';
 
 sub setup {
     my $self = shift;
@@ -33,6 +33,7 @@ sub setup {
 
 sub status {
     my $self   = shift;
+    charset(Charset) if Charset;
     my $output = join(
         "\n",
         start_html('Krang Status'),

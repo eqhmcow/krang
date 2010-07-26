@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Status page now uses the C<Charset> directive like the rest of Krang. [Michael Peters]
+
+=item *
+
 Improved performance of ISE notification by running the code under mod_perl
 and not CGI. [Michael Peters]
 
