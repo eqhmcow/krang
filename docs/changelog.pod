@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Pager page numbers and count are now formatted numbers [Michael Peters]
+
+=item *
+
 Status page now uses the C<Charset> directive like the rest of Krang. [Michael Peters]
 
 =item *
