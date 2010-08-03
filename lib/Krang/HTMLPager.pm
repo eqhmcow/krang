@@ -1175,7 +1175,7 @@ sub get_pager_view {
             map {
                 {
                     page_number       => $_,
-                    page_number_label => $_,
+                    page_number_label => _commify($_),
                     is_current_page   => ($_ eq $curr_page_num)
                 }
               } ($start .. $end)
@@ -1188,7 +1188,7 @@ sub get_pager_view {
             },
             {
                 page_number       => $total_pages,
-                page_number_label => $total_pages
+                page_number_label => _commify($total_pages)
             }
         ) if $end != $total_pages;
     } else {
@@ -1197,7 +1197,7 @@ sub get_pager_view {
               map {
                 {
                     page_number       => $_,
-                    page_number_label => $_,
+                    page_number_label => _commify($_),
                     is_current_page   => ($_ eq $curr_page_num)
                 }
               } (1 .. $total_pages);
@@ -1265,12 +1265,12 @@ sub get_pager_view {
         show_big_view      => ($q->param('krang_pager_show_big_view') || '0'),
         user_page_size     => $self->get_user_page_size,
         big_view_page_size => ($self->get_user_page_size == 100 ? 20 : 100),
-        found_count        => $found_count,
-        start_row          => $start_row,
-        end_row            => $end_row,
+        found_count        => _commify($found_count),
+        start_row          => _commify($start_row),
+        end_row            => _commify($end_row),
         page_numbers       => \@page_numbers,
-        prev_page_number   => $prev_page_number,
-        next_page_number   => $next_page_number,
+        prev_page_number   => _commify($prev_page_number),
+        next_page_number   => _commify($next_page_number),
         krang_pager_rows   => \@krang_pager_rows,
         plural             => ($found_count > 1 ? 1 : 0),
         other_search_place => ($q->param('other_search_place') || ''),
@@ -1502,12 +1502,19 @@ sub create_colgroup {
 
         $html .= "<!-- '$name' column -->\n";
         $html .=
-          "<col" . (%attr ? " " : "") . join(" ", map { qq{$_="$attr{$_}"} } keys %attr) . ">\n";
+          "<col" . (%attr ? " " : "") . join(" ", map { qq($_="$attr{$_}") } keys %attr) . ">\n";
 
     }
     $html .= "</colgroup>";
 
     return $html;
+}
+
+sub _commify {
+    return $_[0] unless length $_[0] > 3;
+    my $val = reverse $_[0];
+    $val =~ s/(\d\d\d)(?=\d)/$1,/g;
+    return scalar reverse $val;
 }
 
 sub _get_cache_key {
