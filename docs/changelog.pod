@@ -6,6 +6,12 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item * 
+
+Added C<DBIgnoreVersion> configuration directive to allow for times when
+you're upgrading multiple Krang machines at the same time while others
+are running. [Michael Peters]
+
 =item *
 
 Pager page numbers and count are now formatted numbers [Michael Peters]

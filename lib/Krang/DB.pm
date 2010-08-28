@@ -35,7 +35,7 @@ use Carp qw(croak);
 use DBI;
 
 use Krang;
-use Krang::ClassLoader Conf => qw(InstanceDBName DBUser DBPass DBHost DBSock KrangRoot);
+use Krang::ClassLoader Conf => qw(InstanceDBName DBUser DBPass DBHost DBSock KrangRoot DBIgnoreVersion);
 use Krang::ClassLoader Log  => qw(info debug critical);
 use Krang::ClassLoader 'Charset';
 
@@ -101,7 +101,7 @@ sub dbh {
     $DBH{$name} = DBI->connect($dsn, DBUser, DBPass, \%connect_options);
 
     # Check version, unless specifically asked not to
-    unless ($args{ignore_version}) {
+    unless ($args{ignore_version} || DBIgnoreVersion) {
         my ($db_version) = $DBH{$name}->selectrow_array("select db_version from db_version");
         my $krang_version = $Krang::VERSION;
         die(
