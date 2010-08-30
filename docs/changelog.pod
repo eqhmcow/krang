@@ -2,7 +2,7 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 3.11 - In development
+=head2 3.11 - August 30, 2010
 
 =over
 
@@ -41,7 +41,7 @@ Improved navigation rendering performance. [Michael Peters]
 
 =back
 
-=head2 3.10 - June 29, 201
+=head2 3.10 - June 29, 2010
 
 =over
 
