@@ -635,12 +635,7 @@ sub edit_save_stay {
     $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER})
       if $self->_cancel_edit_changes_owner;
 
-    # Redirect to edit
-    my $url = $q->url(-relative => 1);
-    $url .= "?rm=edit&template_id=" . $template->template_id();
-    $self->header_props(-uri => $url);
-    $self->header_type('redirect');
-    return "Redirect: <a href=\"$url\">$url</a>";
+    return $self->json_messages(); 
 }
 
 =item revert_version

@@ -10,9 +10,9 @@ BEGIN { $ENV{MOD_PERL} or eval "use pkg('lib')" }
 # trigger InitHandler when not in mod_perl
 BEGIN { $ENV{MOD_PERL} or pkg('AddOn')->call_handler('InitHandler') }
 
-use Krang::ClassLoader Message => qw(add_message);
-use Krang::ClassLoader Widget  => qw(category_chooser_object);
 use Krang::ClassLoader 'Charset';
+use Krang::ClassLoader Message      => ':all';
+use Krang::ClassLoader Widget       => qw(category_chooser_object);
 use Krang::ClassLoader Localization => qw(localize);
 use MIME::Base64 qw(decode_base64);
 use Encode qw(decode_utf8);
@@ -165,7 +165,6 @@ use Krang::ClassLoader 'HTMLTemplate';
 use Krang::ClassLoader Log     => qw(critical info debug);
 use Krang::ClassLoader Session => qw/%session/;
 use Krang::ClassLoader 'User';
-
 use CGI::Application::Plugin::JSON qw(:all);
 use Data::Dumper ();
 use File::Spec::Functions qw(catdir rel2abs);
@@ -437,21 +436,13 @@ sub _check_assets {
     }
 }
 
-=head1 RUN MODES
+=head1 METHODS
+
+=head2 Run Modes
 
 This base class provides four runmodes:
 
-  * access_forbidden
-
-  * redirect_to_login
-
-  * redirect_to_workspace
-
-  * cancel_edit
-
-=over 4
-
-=item * access_forbidden($msg)
+=head3 access_forbidden
 
 This runmode logs an unauthorized access attempt and passes $msg to
 C<$pkg->redirect_to_login($msg)>.
@@ -472,7 +463,7 @@ sub access_forbidden {
     return $self->redirect_to_workspace($msg);
 }
 
-=item * redirect_to_login($msg)
+=head3 redirect_to_login
 
 This runmode deletes the user's session and redirects to the login
 screen, where $msg will be shown.
@@ -501,7 +492,7 @@ sub _redirect_to_url_with_msg {
     }
 }
 
-=item * redirect_to_workspace()
+=head3 redirect_to_workspace
 
 This runmode redirects the user to his or her workspace. Optionally passing a
 message to be displayed when they get there.
@@ -513,7 +504,7 @@ sub redirect_to_workspace {
     return $self->_redirect_to_url_with_msg('workspace.pl', $msg);
 }
 
-=item * cancel_edit()
+=head3 cancel_edit
 
 Returns object to the state it was in previous to Edit (though a new 
 version may have been written to disk via Save & Stay)
@@ -570,12 +561,6 @@ sub cancel_edit {
     return "";
 }
 
-# end of POD notes
-
-=back
-
-=cut
-
 sub _cancel_edit_goes_to {
     my ($self, $pre_edit_url, $pre_edit_owner) = @_;
     if (!$pre_edit_url) {
@@ -612,8 +597,79 @@ sub _cancel_edit_goes_to_workspace {
     return $goto eq 'workspace.pl';
 }
 
-# load template using Krang::HTMLTemplate.  CGI::App doesn't provide a
-# way to specify a different class to use, so this code is copied in.
+=head2 Helper Methods
+
+The following methods are also provided to help with common tasks:
+
+=head3 script_name
+
+The name of the script being run.
+
+=cut
+
+sub script_name {
+    return shift->query->url(-relative => 1);
+}
+
+=head3 update_nav
+
+Tell the Front-End UI that whatever action we just took could alter the
+Navigation of the current user, so it should update the Navigation after
+this request.
+
+=cut
+
+sub update_nav {
+    my $self = shift;
+    my $q    = $self->query;
+
+    $self->add_json_header('krang_update_nav' => 1);
+}
+
+=head3 add_to_query
+
+Add a parameter to the given URL (reference)
+
+    $self->add_to_query(\$uri, "ajax=$ajax")
+
+=cut
+
+sub add_to_query {
+    my ($self, $uri, $param) = @_;
+    if ($$uri =~ /\?/) {
+        $$uri .= '&';
+    } else {
+        $$uri .= '?';
+    }
+    $$uri .= $param;
+}
+
+=head3 json_messages
+
+Return any messages or alerts that were added via L<Krang::Message>
+as JSON request body. Any extra parameters passed in will be part of the
+JSON data structure returned.
+
+    return $self->json_messages();
+    return $self->json_messages(success => 1);
+
+=cut
+
+sub json_messages {
+    my ($self, %extras) = @_;
+    my @msgs   = get_messages();
+    my @alerts = get_alerts();
+    clear_messages();
+    clear_alerts();
+    return $self->json_body(
+        {
+            messages => \@msgs,
+            alerts   => \@alerts,
+            %extras,
+        }
+    );
+}
+
 sub load_tmpl {
     my $self = shift;
     my ($tmpl_file, @extra_params) = @_;
@@ -702,25 +758,5 @@ sub dump_html {
     return qq|<div style="text-align:left;margin-left:170px">\n$output\n</div>|;
 }
 
-sub script_name {
-    return shift->query->url(-relative => 1);
-}
-
-sub update_nav {
-    my $self = shift;
-    my $q    = $self->query;
-
-    $self->add_json_header('krang_update_nav' => 1);
-}
-
-sub add_to_query {
-    my ($self, $uri, $param) = @_;
-    if ($$uri =~ /\?/) {
-        $$uri .= '&';
-    } else {
-        $$uri .= '?';
-    }
-    $$uri .= $param;
-}
 
 1;

@@ -4,7 +4,10 @@
 var use_editor = !Prototype.Browser.WebKit && Krang.my_prefs().syntax_highlighting == 1;
 
 save_editor_text = function() {
-    if(use_editor) templateEditor.toggleEditor();
+    if(use_editor) {
+        Krang.Form.get_field('edit_template_form', 'content').disabled = false;
+        Krang.Form.set('edit_template_form', { content: templateEditor.getCode() });
+    }
 }
 
 Krang.onload( function() {
@@ -14,7 +17,21 @@ Krang.onload( function() {
 
 do_save_stay = function() {
   save_editor_text();
-  Krang.Form.submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save_stay' }, { to_top: false });
+
+  // handle slightly differently than other pages so that when you save and stay the 
+  // browser doesn't reset the big textareas you're working on to be back at the top
+  Krang.Form.submit(
+      'edit_template_form', 
+      { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save_stay' }, 
+      { 
+          to_top: false,
+          update: false,
+          onComplete: function(args, resp) { 
+              // messages will come back as application/json
+              Krang.Messages.add_and_show(resp.responseJSON) 
+          }
+      }
+  );
 }
 
 do_save = function() {

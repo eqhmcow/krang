@@ -2,6 +2,17 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.12 - In development
+
+=over
+
+=item *
+
+Hitting "Save & Stay" on the "Edit Template" screen now doesn't reset the
+template editor, so you don't lose your place. [Michael Peters[
+
+=back
+
 =head2 3.11 - August 30, 2010
 
 =over
