@@ -451,7 +451,7 @@ sub preview_story {
     if (pkg('MyPref')->get('use_preview_editor') && !$query->param('exit_preview_editor')) {
         # display the previewed story in a frame within the main window
         my $qstring = "rm=preview_editor&story_preview_url="
-          .uri_escape("$scheme://$url")
+          . uri_escape("$scheme://$url");
 
         print qq|
             <script type="text/javascript">
