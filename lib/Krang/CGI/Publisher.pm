@@ -452,12 +452,11 @@ sub preview_story {
         # display the previewed story in a frame within the main window
         my $qstring = "rm=preview_editor&story_preview_url="
           .uri_escape("$scheme://$url")
-          ."&window_id=$ENV{KRANG_WINDOW_ID}";
 
         print qq|
             <script type="text/javascript">
                 setTimeout(
-                    function() { location.replace("publisher.pl?$qstring") },
+                    function() { Krang.goto_url("publisher.pl?$qstring") },
                     10
                 )
             </script>
@@ -465,7 +464,7 @@ sub preview_story {
         return;
     } else {
         # display the previewed story in the main window
-        print qq|<script type="text/javascript">\nwindow.location = '$scheme://$url';\n</script>\n|
+        print qq(<script type="text/javascript">Krang.goto_url('$scheme://$url')</script>);
     }
 }
 

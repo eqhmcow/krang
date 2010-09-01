@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in IE where people randomly lose their session if they are doing
+a lot of publishing and previewing. [Michael Peters]
+
+=item *
+
 Hitting "Save & Stay" on the "Edit Template" screen now doesn't reset the
 template editor, so you don't lose your place. [Michael Peters[
 
