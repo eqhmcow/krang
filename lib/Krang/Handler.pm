@@ -96,35 +96,41 @@ sub trans_handler ($$) {
     my ($self, $r) = @_;
     my $uri  = $r->uri;
 
+    debug("Krang::Handler:  REQUEST: $uri");
+
     # if it's a request for a /static file then strip off the static
     # prefix that looks like "/static/XXXX" where "XXXX" is the install_id
     if ($uri =~ /^\/static\//) {
+        debug("Krang::Handler:  URI is for static resource");
 
         # find the appropriate krang file
         my $file = $uri;
         $file =~ s{^/static/[^/]+/}{};
         $file = pkg('File')->find(catfile('htdocs', $file));
-        return NOT_FOUND unless $file;
+        if( $file ) {
+            debug("Krang::Handler:  Rewriting to $file");
+        } else {
+            debug("Krang::Handler:  Could not find file");
+            return NOT_FOUND unless $file;
+        }
 
         if (BrowserSpeedBoost) {
-
+            debug("Krang::Handler:  Setting far future expiration date: Mon, 28 Jul 2014 23:30:00 GMT");
             # make it expire waaaaay in the future since we know the resource won't change
             $r->err_header_out('Expires'       => 'Mon, 28 Jul 2014 23:30:00 GMT');
             $r->err_header_out('Cache-Control' => 'max-age=315360000');
 
-            if ($uri =~ /combined.\w\w\.js$/) {
-
+            if ($uri =~ /combined.\w\w\.js$/ && $self->_can_handle_gzip($r)) {
                 # the prebuilt combined JS file needs to be redirected to the gzip one if we can
-                if ($self->_can_handle_gzip($r)) {
-                    $file = "$file.gz";
-                    $r->err_header_out('Content-Encoding' => 'gzip');
-                }
+                $file = "$file.gz";
+                $r->err_header_out('Content-Encoding' => 'gzip');
+                debug("Krang::Handler:  Rewriting to use pre-compressed file $file");
             } elsif ($uri =~ /\.(css|js|html)$/) {
-
                 # if it's a CSS/JS/HTML file then let's minify it and optionally compress it
                 my $type = $1;
                 my $new_file = $self->_minify_and_gzip($r, $file, $type);
                 $file = $new_file if $new_file;
+                debug("Krang::Handler:  Minifying and compressing on the fly to $file");
             }
         }
 
@@ -137,6 +143,7 @@ sub trans_handler ($$) {
     # Only handle main requests, unless this is a request for bug.pl
     # which happens on redirects from ISEs
     unless ($r->is_initial_req() or $uri =~ /\/bug\.pl/) {
+        debug("Krang::Handler:  Don't rewrite internal redirects");
         return DECLINED;
     }
 
@@ -258,7 +265,7 @@ sub access_handler ($$) {
             {
                 if ($engine_of{$browser} eq 'Gecko') {
                     my $gecko_version = $bd->gecko_version();
-                    debug("Gecko Version: ".$gecko_version);
+                    debug("Krang::Handler:  Gecko Version: ".$gecko_version);
                     $r->subprocess_env("KRANG_GECKO_VERSION" => $gecko_version);
                 }
 
@@ -270,7 +277,7 @@ sub access_handler ($$) {
     }
 
     # failure
-    debug("Unsupported browser detected: " . ($r->header_in('User-Agent') || ''));
+    debug("Krang::Handler:  Unsupported browser detected: " . ($r->header_in('User-Agent') || ''));
     $r->custom_response(FORBIDDEN, $self->forbidden_browser_message);
     return FORBIDDEN;
 }
@@ -336,9 +343,8 @@ sub authen_handler ($$) {
 
     # If there's no ID or no session cookie, redirect to Login
     unless ($cookies{$instance}) {
-
         # no cookie, redirect to login
-        debug("No cookie found, passing Authen without user login");
+        debug("Krang::Handler:  No cookie found, passing Authen without user login");
         return OK;
     }
 
@@ -347,7 +353,6 @@ sub authen_handler ($$) {
     my $session_id = $cookie{session_id};
     my $hash       = md5_hex($cookie{user_id} . $cookie{instance} . $session_id . Secret());
     if ($cookie{hash} ne $hash or $cookie{instance} ne pkg('Conf')->instance()) {
-
         # invalid cookie, send to login
         critical("Invalid cookie found, possible breakin attempt from IP "
               . $r->connection->remote_ip
@@ -358,7 +363,6 @@ sub authen_handler ($$) {
     # A non-PERL request (e.g. image), bug, or help file: let it through
     # (we are already authenticated)
     if ($uri !~ /(\.pl|\/|$instance)$/ || $uri =~ /\/bug\.pl$/ || $uri =~ /\/help\.pl$/) {
-
         # We are authenticated:  Setup REMOTE_USER
         $r->connection->user($cookie{user_id});
         return OK;
@@ -383,6 +387,7 @@ sub authen_handler ($$) {
 
     # Change POST into GET when window_id is passed as a form input
     if ($args{posted_window_id}) {
+        debug("Krang::Handler:  posted_window_id, so get args from POST");
         $r->args(scalar $r->content);
         $r->method('GET');
         $r->method_number(M_GET);
@@ -392,42 +397,44 @@ sub authen_handler ($$) {
 
     # Get window_id from query
     my $window_id = $args{window_id} || '';
-    debug("Got window_id $window_id from request");
+    if( $window_id ) {
+        debug("Krang::Handler:  Got window_id $window_id from request");
+    } else {
+        debug("Krang::Handler:  No window_id from request");
+    }
 
     # User opened a new window manually, typed or copied URL or
     # accessed it via History: make sure we create a new id for this
     # new window
     if ($window_id && not ($r->header_in("Referer") || $args{posted_window_id})) {
         undef $window_id;
-        debug("No referer header; Unsetting window_id");
+        debug("Krang::Handler:  No referer header; Unsetting window_id");
     } elsif( $cookies{window_id} ) {
         $window_id = $cookies{window_id}->value;
-        debug("Got window_id $window_id from cookie");
+        debug("Krang::Handler:  Got window_id $window_id from cookie");
     }
 
     # Get session_id for window_id
     if ($window_id) {
-
         # existing window
-        debug("Retrieving session from wid_$window_id cookie");
+        debug("Krang::Handler:  Retrieving session from wid_$window_id cookie");
         $session_id = $cookie{"wid_$window_id"};
 
         # if there's no $session_id for this window, logout happened in other window
         if (!$session_id) {
             undef $window_id;
-            debug("No session found; Unsetting window_id");
+            debug("Krang::Handler:  No session found; Unsetting window_id");
         }
     }
 
     # No window ID means no session for this window: create a new one
     unless ($window_id) {
-
         # new window ID
         $window_id = $cookie{next_wid}++;
 
         # new session
-        debug("Creating new session for new window_id $window_id");
         $session_id = pkg('Session')->create();
+        debug("Krang::Handler:  Creating new session $session_id for new window_id $window_id");
 
         # store mapping between new window ID and new session ID in cookie
         $cookie{"wid_$window_id"} = $session_id;
@@ -464,7 +471,7 @@ sub authen_handler ($$) {
 
     # Check for invalid session
     unless (pkg('Session')->validate($session_id)) {
-        debug("Invalid session '$session_id' for window $window_id. Wiping its cookie.");
+        debug("Krang::Handler:  Invalid session '$session_id' for window $window_id. Wiping its cookie.");
         return OK;
     }
 
@@ -480,6 +487,7 @@ sub authen_handler ($$) {
     my $login_uri = $self->login_uri;
     if ($uri =~ m!$login_uri!) {
         if (!$args{rm} || ($args{rm} && $args{rm} ne 'logout')) {
+            debug("Krang::Handler:  Already logged in, redirecting to workspace");
             return $self->_redirect_to_workspace($r, $instance, $window_id);
         }
     }
