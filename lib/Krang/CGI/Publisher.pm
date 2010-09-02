@@ -456,7 +456,7 @@ sub preview_story {
         print qq|
             <script type="text/javascript">
                 setTimeout(
-                    function() { Krang.goto_url("publisher.pl?$qstring") },
+                    function() { Krang.Nav.goto_url("publisher.pl?$qstring") },
                     10
                 )
             </script>
@@ -464,7 +464,7 @@ sub preview_story {
         return;
     } else {
         # display the previewed story in the main window
-        print qq(<script type="text/javascript">Krang.goto_url('$scheme://$url')</script>);
+        print qq(<script type="text/javascript">Krang.Nav.goto_url('$scheme://$url')</script>);
     }
 }
 
