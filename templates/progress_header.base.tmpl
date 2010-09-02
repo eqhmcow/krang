@@ -33,6 +33,12 @@ body { position: relative; font-size: 69%; }
 <script src="<tmpl_var static_url>/js/lexicon.<tmpl_lang en>.js" type="text/javascript"></script>
 <script src="<tmpl_var static_url>/js/krang.js" type="text/javascript"></script>
 
+<script type="text/javascript">
+Krang.instance = '<tmpl_var escape=js instance_display_name>';
+Krang.Window.init('<tmpl_var window_id>');
+Krang.Instance.set('<tmpl_var escape=js instance>');
+</script>
+
 </head><body>
 <div id="B">
 
