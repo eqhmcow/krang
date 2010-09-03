@@ -91,7 +91,7 @@ save_and_publish = function() {
     var v = f.version.options[f.version.selectedIndex].value;
 
     if ( v == <tmpl_var version> ) {
-	alert(Krang.L10N.loc('You cannot revert to the current version!'));
+        alert(Krang.L10N.loc('You cannot revert to the current version!'));
     } else if ( confirm( Krang.L10N.loc('Are you SURE you want to discard any unsaved changes and revert to version') + ' ' + v + '?') ) {
         Krang.Form.submit('edit', { rm: 'revert' });
     }
