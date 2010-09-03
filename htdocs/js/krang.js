@@ -167,9 +167,19 @@ Krang.Window = {
     init : function(id) {
         // set name and title of our window
         if (id) {
-            window.name = 'krang_window_' + id;
-            if( id > 1 ) {
-                document.title += ' ('+id+')';
+            var needs_new_name = true;
+            if( window.name ) {
+                var results = window.name.match(/^krang_window_(\d+)_/);
+                if( results && results[1] == id ) {
+                    needs_new_name = false;
+                }
+            }
+            var new_name = 'krang_window_' + id;
+            if( needs_new_name && window.name != new_name) {
+                window.name = new_name;
+                if( id > 1 ) {
+                    document.title += ' ('+id+')';
+                }
             }
         }
     },
@@ -188,7 +198,7 @@ Krang.Window = {
     },
 
     get_id : function() {
-        var matches = window.name.match(/^krang_window_(\w+)/);
+        var matches = window.name.match(/^krang_window_(\d+)/);
         if(matches == null ) {
             return '';
         } else {
@@ -597,21 +607,23 @@ Krang.Ajax.update = function(args) {
     flags that can be passed to dictate the behaviour.
     These flags include:
 
-        new_window : open the request into a new window.
-                     Defaults to false.
-        to_top     : if the request will be performed using AJAX sometimes
-                     you don't want to force the user to go back to the top
-                     of the page. Setting this to false will do just that.
-                     Defaults to true.
-        target     : the id of an element for which the content is intended
-                     for
-        onComplete : a callback to be executed when the request is finished
-                     (only works with AJAX requests)
-        onFailure  : a callback to be executed when the request fails
-                     (only works with AJAX requests)
-        update     : If false, then no update of the current page will be
-                     done with the response from the server. This is useful
-                     if the server is returning JSON instead of HTML
+        to_top       : if the request will be performed using AJAX sometimes
+                       you don't want to force the user to go back to the top
+                       of the page. Setting this to false will do just that.
+                       Defaults to true.
+        target       : the id of an element for which the content is intended
+                       for
+        onComplete   : a callback to be executed when the request is finished
+                       (only works with AJAX requests)
+        onFailure    : a callback to be executed when the request fails
+                       (only works with AJAX requests)
+        update       : If false, then no update of the current page will be
+                       done with the response from the server. This is useful
+                       if the server is returning JSON instead of HTML
+        new_window   : open the request into a new window.
+                       Defaults to false.
+        new_session  : Used in conjunction with new_window, if you want the new
+                       window to have a completely different session
 
     *NOTE* - This should not be used by the onclick handler of
     an input of type 'button' if the form is not of the 'non_ajax'
@@ -664,9 +676,16 @@ Krang.Form = {
             // save the old target of the form so we can restore it after
             // submission
             var old_target = form.target;
-            form.target = '_blank';
+            var old_action = form.action;
+            if( options.new_session ) {
+                form.target = '_blank';
+            } else {
+                form.target = 'krang_window_' + Krang.Window.get_id() + '_b';
+                form.action = Krang.Window.pass_id(form.action);
+            }
             form.submit();
             form.target = old_target;
+            form.action = old_action;
         } else {
             Krang.show_indicator();
 
@@ -1243,16 +1262,17 @@ Krang.preview = function(type, id) {
     // remove problematic characters for use as window name (IE may otherwise choke)
     instance = instance.toLowerCase().replace( new RegExp( '[^a-z]' , 'g' ), '' );
 
+    var new_window_name = 'krang_window_' + Krang.Window.get_id() + '_preview_' + instance;
     if (Prototype.Browser.IE) {
         // we need the referer to be sent
         // see http://webbugtrack.blogspot.com/search/label/HTTP%20Referer
         // the 'target' attribute takes arbitrary values in IE6/7 (undocumented)
         var a = new Element('a', {href : url });
-        a.target = instance;
+        a.target = new_window_name;
         document.body.appendChild(a);
         a.click();
     } else {
-        var pop = window.open( url, instance + 'preview' );
+        var pop = window.open( url, new_window_name );
         if ( pop ) pop.focus();
     }
 }
