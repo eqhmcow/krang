@@ -434,7 +434,7 @@ sub authen_handler ($$) {
 
         # new session
         $session_id = pkg('Session')->create();
-        debug("Krang::Handler:  Creating new session $session_id for new window_id $window_id");
+        debug("Krang::Handler:  Creating new session $session_id, for user $cookie{user_id}, new window_id $window_id");
 
         # store mapping between new window ID and new session ID in cookie
         $cookie{"wid_$window_id"} = $session_id;
