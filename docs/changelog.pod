@@ -14,7 +14,12 @@ a lot of publishing and previewing. [Michael Peters]
 =item *
 
 Hitting "Save & Stay" on the "Edit Template" screen now doesn't reset the
-template editor, so you don't lose your place. [Michael Peters[
+template editor, so you don't lose your place. [Michael Peters]
+
+=item *
+
+Bulk Upload of Media can now handle resizing images with .jpg and .jpeg
+extensions in addition to .png, .gif, and .tiff files.  [Brad Oaks]
 
 =back
 

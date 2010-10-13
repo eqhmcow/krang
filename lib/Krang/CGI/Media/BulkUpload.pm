@@ -506,8 +506,10 @@ sub resize_images {
         my $extension = lc $1;
 
         #check if this is a type of image we know how to scale
-        next FILE unless grep { m/$extension/ } qw(png gif jpg tiff);
-        next FILE unless ($Imager::formats{$extension});
+        next FILE unless grep { m/$extension/ } qw(png gif jpeg jpg tiff);
+        my $imager_extension = $extension;
+        $imager_extension =~ s/jpg/jpeg/;
+        next FILE unless ($Imager::formats{$imager_extension});
 
         # only look at image files that have dimensions
         next FILE unless pkg('Media')->guess_media_type($name) == 1;
