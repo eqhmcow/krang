@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fix bug of F<krang_ftpd> where the new FTP daemon wasn't always detaching
+itself from the terminal process that started it, thus hanging SSH
+sessions when trying to disconnect.
+
+=item *
+
 Fixed bug in IE where people randomly lose their session if they are doing
 a lot of publishing and previewing. [Michael Peters]
 
