@@ -6,10 +6,11 @@ use Carp qw(croak);
 use Krang::ClassLoader Conf => qw(KrangUser KrangGroup);
 use Krang::ClassLoader 'User';
 use Krang::ClassLoader Log => qw(debug info critical);
-use Net::FTPServer;
 use Krang::ClassLoader 'FTP::FileHandle';
 use Krang::ClassLoader 'FTP::DirHandle';
 use Krang::ClassLoader DB => qw( forget_dbh );
+use Net::FTPServer;
+use Proc::Daemon;
 
 # Inheritance
 our @ISA = qw(Net::FTPServer);
@@ -265,6 +266,16 @@ sub system_error_hook {
       if exists $self->{error};
     return "Unknown error occurred.";
 }
+
+# override Net::FTPServer's forking sub so that we properly close
+# our IO handles to the terminal. Not sure why Net::FTPServer doesn't
+# do this because it does try. But Proc::Daemon does a better job and
+# actually gets it right
+sub _fork_into_background {
+    my $self = shift;
+    Proc::Daemon::Init();
+}
+
 
 1;
 
