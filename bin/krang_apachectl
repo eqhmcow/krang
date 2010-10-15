@@ -70,7 +70,6 @@ $|++;
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
 use FindBin qw($RealBin);
 use Config;
-use Capture::Tiny qw(capture);
 
 BEGIN {
 
@@ -115,6 +114,7 @@ use Krang::ClassLoader 'File';
 use Krang::ClassLoader Localization => qw(%LANG);
 use Krang::ClassLoader 'IO';
 use Getopt::Long;
+use Capture::Tiny qw(capture);
 
 my $cgi_mode     = exists $ENV{CGI_MODE}     && $ENV{CGI_MODE}     ? 1 : 0;
 my $profile_mode = exists $ENV{PROFILE_MODE} && $ENV{PROFILE_MODE} ? 1 : 0;
