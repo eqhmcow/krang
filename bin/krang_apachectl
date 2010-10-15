@@ -57,7 +57,7 @@ This option can also be turned on using the C<PROFILE_MODE> environment variable
 =cut
 
 # how long to wait for stop on restart (in seconds)
-use constant MAX_RESTART_WAIT => 10;
+use constant MAX_RESTART_WAIT => 20;
 
 # location of ApacheRoot, relative to $KRANG_ROOT
 use constant APACHE_ROOT => 'apache/';
