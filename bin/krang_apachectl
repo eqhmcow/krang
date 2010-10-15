@@ -70,6 +70,7 @@ $|++;
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
 use FindBin qw($RealBin);
 use Config;
+use Capture::Tiny qw(capture);
 
 BEGIN {
 
@@ -141,7 +142,7 @@ my @ssl_directives = qw(
 
 # the httpd command
 my $apache_bin = rel2abs(catfile(KrangRoot, APACHE_ROOT, APACHE_BIN));
-my $httpd = $apache_bin . ' -f ' . rel2abs(catfile(KrangRoot, "tmp", "httpd.conf"));
+my @httpd = ($apache_bin, '-f', rel2abs(catfile(KrangRoot, "tmp", "httpd.conf")));
 
 # get status from the pid file
 my $pid_file         = catfile(KrangRoot, 'tmp', 'httpd.pid');
@@ -219,7 +220,11 @@ sub start {
     combine_preview_editor_js() if EnablePreviewEditor;
 
     print "krang_apachectl $command: starting httpd\n";
-    unless (system($httpd)) {
+    my $return;
+    my ($out, $err) = capture { $return = system(@httpd) };
+    print $out;
+    print STDERR $err;
+    if($return == 0) {
         print "krang_apachectl $command: httpd started";
         print " (SSL enabled)" if EnableSSL;
         print "\n";
@@ -485,7 +490,11 @@ sub offline {
     make_offline_pages();
 
     print "krang_apachectl offline: starting httpd\n";
-    unless (system($httpd)) {
+    my $return;
+    my ($out, $err) = capture { $return = system(@httpd) };
+    print $out;
+    print STDERR $err;
+    if($return == 0 ) {
         print "krang_apachectl offline: httpd started";
         print " (SSL enabled)" if EnableSSL;
         print "\n";
