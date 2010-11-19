@@ -1712,7 +1712,9 @@ sub update_media {
     );
 
     # unset the 'published' flag if the category has changed
-    if ($q->param('category_id') && $m->category_id != $q->param('category_id')) {
+    if (!$m->category_id
+        || ($q->param('category_id') && $m->category_id != $q->param('category_id')))
+    {
         $m->published(0);
     }
 
