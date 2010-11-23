@@ -2,12 +2,10 @@ package Krang::DataSet;
 use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-
 use Exporter;
 use File::Temp qw(tempdir tempfile);
 use File::Path qw(mkpath rmtree);
-use File::Spec::Functions qw(catdir catfile splitpath
-  file_name_is_absolute rel2abs);
+use File::Spec::Functions qw(catdir catfile splitpath file_name_is_absolute rel2abs);
 use File::Copy qw(copy);
 use File::Find qw(find);
 use Krang::ClassLoader Conf => qw(KrangRoot);
@@ -221,7 +219,7 @@ sub new {
 # cleanup tempdir
 sub DESTROY {
     my $self = shift;
-    rmtree(delete $self->{dir}) if $self->{dir};
+    rmtree(delete $self->{dir}) if $self->{dir} && !$self->{fatal};
 }
 
 # runs each file in the kds through a validating parser, matching up
@@ -251,13 +249,16 @@ sub _validate {
     chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
 
     # cough up error, if we got one
-    Krang::DataSet::ValidationFailed->throw(
-        errors  => \%invalid,
-        message => join(
-            "\n", map { "File '$_' failed validation: \n$invalid{$_}\n" }
-              keys %invalid
-        )
-    ) if %invalid;
+    if (%invalid) {
+        $self->{fatal} = 1;
+        Krang::DataSet::ValidationFailed->throw(
+            errors  => \%invalid,
+            message => join(
+                "\n", map { "File '$_' failed validation: \n$invalid{$_}\n" }
+                  keys %invalid
+            )
+        );
+    }
 }
 
 sub _validate_file {
@@ -269,10 +270,13 @@ sub _validate_file {
     my ($ok, $err) = $validator->validate(path => $path);
 
     # cough up error, if we got one
-    Krang::DataSet::ValidationFailed->throw(
-        errors  => $err,
-        message => "File '$path' failed validation: \n$err\n"
-    ) if $err;
+    if ($err) {
+        $self->{fatal} = 1;
+        Krang::DataSet::ValidationFailed->throw(
+            errors  => $err,
+            message => "File '$path' failed validation: \n$err\n"
+        );
+    }
 
 }
 
@@ -579,11 +583,13 @@ sub _check_index {
     foreach my $class (keys %{$self->{objects}}) {
         foreach my $id (keys %{$self->{objects}{$class}}) {
             my $path = catfile($self->{dir}, $self->{objects}{$class}{$id}{xml});
-            Krang::DataSet::InvalidArchive->throw(
-                    message => "Data set 'index.xml' refers to a file '"
-                  . $self->{objects}{$class}{$id}{xml}
-                  . "' which does not exist.")
-              unless -e $path;
+            if (!-e $path) {
+                $self->{fatal} = 1;
+                Krang::DataSet::InvalidArchive->throw(
+                        message => "Data set 'index.xml' refers to a file '"
+                      . $self->{objects}{$class}{$id}{xml}
+                      . "' which does not exist.");
+            }
             $self->_validate_file($path);
         }
     }
@@ -700,6 +706,7 @@ sub import_all {
 
     # did any imports fail?
     if (@failed) {
+        $self->{fatal} = 1;
         Krang::DataSet::ImportRejected->throw(message => join("\n", map { $_->{message} } @failed));
     }
 }
