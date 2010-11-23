@@ -8,6 +8,16 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Updated accidental limit where publisher couldn't handle story_ids over
+4194304. [Mike Lampson & Michael Peters]
+
+=item *
+
+Don't delete temporary expanded XML files when a KDS import fails so it
+can be inspected. [Michael Peters]
+
+=item *
+
 Fix problem of starting Apache still being attached to the IO of the starting
 terminal making it hang SSH sessions. [Michael Peters]
 
