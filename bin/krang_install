@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 use warnings;
 use strict;
 use File::Find;
@@ -620,6 +620,7 @@ sub install_krang {
     $chmod = $FIND_BIN . " $InstallPath -type d | " . $XARGS_BIN . " " . $CHMOD_BIN . " +rx";
     system($chmod) && die("Can't fix directory read permissions: $!");
 
+    # fix scripts shebang line
     print "  Setting #! on scripts to " . $PERL_BIN . "\n";
     my @scripts = ();
     for my $dir ('bin', catdir('lang', 'bin')) {
@@ -641,7 +642,6 @@ sub install_krang {
         close SOURCE;
     }
 
-    # fix scripts shebang line
     my @dirs = (
         catdir($InstallPath, 'htdocs'),
         catdir($InstallPath, 'conf'),
