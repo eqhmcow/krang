@@ -396,11 +396,11 @@ sub make_backups {
 }
 
 sub install_new_krang {
-    my $new_krang   = $ENV{KRANG_ROOT};
-    my $InstallPath = $options{KrangRoot};
+    my $install_path = $options{KrangRoot};
+    print "Installing new Krang files into '$install_path'\n";
 
-    print "Installing new Krang files into '$InstallPath'\n";
-    chdir($ENV{KRANG_ROOT});
+    my $cwd = $ENV{KRANG_ROOT};
+    chdir($cwd);
 
     # change Krang.pm's name so it doesn't stomp the installed version
     # before the upgrade is really finished
@@ -411,14 +411,14 @@ sub install_new_krang {
     if ($build_params{SSL}) {
 
         # make sure we don't over-write existing ssl certs
-        if (-e catfile($InstallPath, 'conf', 'ssl.crt', 'server.crt')) {
+        if (-e catfile($install_path, 'conf', 'ssl.crt', 'server.crt')) {
             my $src_crt = catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.crt', 'server.crt');
             if (-e $src_crt) {
                 rename($src_crt, "$src_crt.sample")
                   or die "Unable to rename $src_crt to $src_crt.sample: $!\n";
             }
         }
-        if (-e catfile($InstallPath, 'conf', 'ssl.key', 'server.key')) {
+        if (-e catfile($install_path, 'conf', 'ssl.key', 'server.key')) {
             my $src_key = catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.key', 'server.key');
             if (-e $src_key) {
                 rename($src_key, "$src_key.sample")
@@ -427,12 +427,8 @@ sub install_new_krang {
         }
     }
 
-    my $cwd = getcwd();
-    eval {
-        # we can't use COPY_BIN here since one of the destination directories
-        # could be a symlink and cp chokes on those
-        dircopy($cwd, $InstallPath);
-    };
+    # can't use COPY_BIN since one of the dest dirs could be a symlink and cp chokes on those
+    eval { dircopy($cwd, $install_path) };
     my $err = $@;
     rename('./lib/Krang.new', './lib/Krang.pm');
     die $err if $err;
@@ -445,7 +441,7 @@ sub install_new_krang {
 
         # go into the conf/ssl.* dirs
         foreach my $ext qw(crl crt csr key prm) {
-            my $dir = catdir($InstallPath, 'conf', "ssl.$ext");
+            my $dir = catdir($install_path, 'conf', "ssl.$ext");
             chdir($dir)
               or die "Could not change into directory $dir : $!";
             if (-e catfile($dir, 'Makefile')) {
@@ -479,8 +475,70 @@ sub install_new_krang {
                   and warn(qq/   Warning: unable to chown "$_".\n/);
               }
         },
-        $InstallPath
+        $install_path
     );
+
+    # fix scripts shebang line
+    print "  Setting #! on scripts to $PERL_BIN\n";
+    my @scripts = ();
+    for my $dir ('bin', catdir('lang', 'bin')) {
+        my $bin = catdir($install_path, $dir);
+        opendir(DIR, $bin) or die $!;
+        push @scripts, grep { -f $_ }
+          map { catfile($bin, $_) } readdir(DIR);
+        closedir DIR;
+    }
+    foreach my $script (@scripts) {
+        open(SOURCE, $script) or die "Unable to open '$script' for reading: $!";
+        my $source = do { local $/; <SOURCE> };
+
+        $source =~ s/^#!.*$/#!$PERL_BIN/m
+          or die "Couldn't find shebang line in $script to replace!";
+
+        open(SOURCE, '>', $script) or die "Unable to write $script: $!";
+        print SOURCE $source;
+        close SOURCE;
+    }
+
+    my $wanted = sub {
+        my $script = $File::Find::name;
+        if ($script =~ /\.(?:pl|cgi)$/) {
+            open(my $SOURCE, $script) or die "Unable to $script: $!";
+            my $source = do { local $/; <$SOURCE> };
+
+            if ($source =~ s/^#!.*$/#!$PERL_BIN/m) {
+                open($SOURCE, '>', $script) or die "Unable to write $script: $!";
+                print $SOURCE $source;
+                close $SOURCE;
+            } else {
+                warn "    can't find shebang line in $script\n";
+            }
+        }
+    };
+
+    my @dirs = grep { -d $_ } map { catdir($install_path, $_) } qw(htdocs conf docs bench);
+    find($wanted, @dirs);
+
+    print "  Setting execute bits on scripts\n";
+    # save some time - only search bin/ conf/ docs/ htdocs/ lib/
+    my $binpath = join ' ', map { catdir($install_path, $_) } qw/bin conf docs htdocs lib bench/;
+
+    # Set all *.pl files
+    $chmod =
+      $FIND_BIN . " $binpath -type f -name '*.pl' | " . $XARGS_BIN . " " . $CHMOD_BIN . " +x";
+    system($chmod) && die("Can't set execute bits: $!");
+
+    # Set all *.cgi files
+    $chmod =
+      $FIND_BIN . " $binpath -type f -name '*.cgi' | " . $XARGS_BIN . " " . $CHMOD_BIN . " +x";
+    system($chmod) && die("Can't set execute bits: $!");
+
+    # Set all files in bin/* and lang/bin/*
+    for my $dir ('bin', catdir('lang', 'bin')) {
+        my $bin = catdir($install_path, $dir);
+        $chmod = $CHMOD_BIN . " +x $bin/*";
+        system($chmod) && die("Can't set execute bits: $!");
+    }
 
     print "  Krang files installed.\n";
 }
