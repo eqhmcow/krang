@@ -1,4 +1,4 @@
-#!/usr/bin/perl -p 
+#!/usr/bin/env perl -p 
 
 # translate HREF(foo|bar) into <a href="bar">foo</a>.  pod2html should
 # provide this, but it doesn't unless you want to use a full URL.

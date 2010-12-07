@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use Krang::Script;
 use Krang::Element;
 use Krang::Benchmark qw(run_benchmark);

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use warnings;
 use CGI;
 use Krang::ClassFactory qw(pkg);

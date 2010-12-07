@@ -1,4 +1,4 @@
-#!/usr/bin/perl -p
+#!/usr/bin/env perl -p
 
 # process =item foo into =item *\nfoo, to make nicer looking ordered
 # lists with less work.

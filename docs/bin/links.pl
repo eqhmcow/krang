@@ -1,4 +1,4 @@
-#!/usr/bin/perl -p
+#!/usr/bin/env perl -p
 
 # fixup links to modules
 s!<A[^>]+>\s*the\s+(\S+)\s+manpage\s*</A>!find_link($1)!ige;

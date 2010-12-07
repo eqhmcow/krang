@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 $in = shift;
 $out = shift;
 if (-e $out and -e $in and (stat($out))[9] >= ((stat($in))[9])) {

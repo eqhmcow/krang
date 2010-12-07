@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/env perl 
 #
 # krang_ctl     Start Krang CMS
 #
