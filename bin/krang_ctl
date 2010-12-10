@@ -98,7 +98,7 @@ push(@ctl, {name => 'krang_siteserverctl', port => 'SiteServerPort'})
 
 # call ctl scripts
 foreach my $service (@ctl) {
-    my $script = catfile(KrangRoot, 'bin', $service->{'name'});
+    my $script = "$^X " . catfile(KrangRoot, 'bin', $service->{'name'});
 
     # will need sudo?
     if (($< != 0 or $> != 0)
