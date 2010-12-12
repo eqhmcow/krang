@@ -275,13 +275,18 @@ sub _notify {
     return if not defined $old and not defined $new;
     $self->{url_cache} = '';
     $self->{cat_cache} = () if ($which eq 'category_id');
+
+    # clean up the filename if it's changed
+    if( $which eq 'filename' ) {
+        $self->{filename} = $self->clean_filename($new);
+    }
 }
 
 sub init {
     my $self = shift;
     my %args = @_;
 
-    my $filename = $args{'filename'};
+    my $filename = $self->clean_filename($args{'filename'});
 
     my $filehandle = delete $args{'filehandle'};
 
@@ -542,15 +547,15 @@ sub upload_file {
     my ($path, $name, $handle, $tmpdir) = @_;
     if ($path = $args{'filepath'}) {
         ($name, $tmpdir) = fileparse($path);
+        $name = $self->clean_filename($name);
     } else {
-        $name = $args{'filename'}
+        $name = $self->clean_filename($args{'filename'})
           || croak(
             'You must pass in a filename in order to upload a file if you are not using filepath');
         $handle = $args{'filehandle'}
           || croak(
             'You must pass in a filehandle in order to upload a file if you are not using filepath'
           );
-        croak('You cannot use a / in a filename!') if $name =~ /\//;
 
         $tmpdir = tempdir(DIR => catdir(KrangRoot, 'tmp'));
         $path = catfile($tmpdir, $name);
@@ -1173,6 +1178,9 @@ sub find {
     my $include_trashed = delete $args{include_trashed} || 0;
     my $include_live    = delete $args{include_live};
     $include_live = 1 unless defined($include_live);
+
+    # cleanup filename
+    $args{filename} = $self->clean_filename($args{filename}) if $args{filename};
 
     # Put table name "media." in front of each orderby, and $order_desc after
     my @order_bys = split(/\s*\,\s*/, $order_by);
@@ -2829,8 +2837,24 @@ sub guess_mime_type {
     return LWP::MediaTypes::guess_media_type($filename);
 }
 
+=item C<< Krang::Media->clean_filename($filename) >>
+
+Cleans up the filename just like Krang::Media does internally
+before saving filename changes. This method let's perform those
+same cleanups in case you need to work with the file prior
+to creating a media object.
+
 =back
 
 =cut
+
+sub clean_filename {
+    my ($pkg, $filename) = @_;
+    return $filename unless $filename;
+    $filename =~ s/[^\w\s\.\-]//g;     # clean invalid chars
+    $filename =~ s/(^\s+|\s+$)+//g;    # trim leading and trailing whitespace
+    $filename =~ s/[\s\-\_]+/_/g;      # use underscores btw words
+    return $filename;
+}
 
 1;

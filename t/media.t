@@ -3,7 +3,7 @@ use Test::More qw(no_plan);
 use strict;
 use warnings;
 use Krang::ClassLoader 'Script';
-use Krang::ClassLoader Conf => qw (KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot);
 use Krang::ClassLoader 'Contrib';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Category';
@@ -333,6 +333,10 @@ pkg('Media')->delete($m2->media_id);
 # delete other media object also
 $medias[1]->delete();
 
+# test clean_filename
+is(pkg('Media')->clean_filename('me & you.png'), 'me_you.png', 'clean_filename() with spaces and ampersand');
+is(pkg('Media')->clean_filename(' some /   junk.jpg  '), 'some_junk.jpg', 'clean_filename() with leading/trailing spaces and slash');
+
 ### Permission tests #################
 #
 {
@@ -530,7 +534,7 @@ $medias[1]->delete();
 sub _test_copy {
     my ($orig, $copy) = @_;
 
-    diag("Comparing original and copy after clone()'ing media");
+    note("Comparing original and copy after clone()'ing media");
 
     is($orig->title,         $copy->title,         "Title ok");
     is($orig->filename,      $copy->filename,      "Filename ok");
@@ -541,7 +545,7 @@ sub _test_copy {
     is($orig->mime_type,     $copy->mime_type,     "Mime_type ok");
     is($orig->media_type_id, $copy->media_type_id, "Media_type_id ok");
 
-    diag("Verifying redefined properties on copy");
+    note("Verifying redefined properties on copy");
 
     is($copy->version,           1,                 "Version ok");
     is($copy->published,         0,                 "Published flag ok");

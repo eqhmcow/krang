@@ -216,7 +216,7 @@ sub open {
 
             my $new_m = pkg('Media')->new(
                 filename      => $filename,
-                title         => $filename,
+                title         => pkg('Media')->clean_filename($filename),
                 category_id   => $category_id,
                 media_type_id => $media_type[0]
             );

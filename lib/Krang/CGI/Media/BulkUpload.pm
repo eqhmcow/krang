@@ -140,9 +140,6 @@ sub upload {
         # remove filename from potential path (IE)
         $filename = (split(/\\/, $filename))[-1];
 
-        # get rid of spaces now
-        $filename =~ s/ /_/g;
-
         my $archive_type = file_type($filename);
 
         if (not $archive_type) {
@@ -245,7 +242,7 @@ sub create_media {
             my $fh          = IO::File->new($file->{full_path});
             my $name        = $file->{name};
             my $media       = pkg('Media')->new(
-                title         => $name,
+                title         => pkg('Media')->clean_filename($name),
                 category_id   => $category_id,
                 filename      => $name,
                 filehandle    => $fh,
@@ -272,10 +269,10 @@ sub check_media {
     my $checked_out;
     foreach my $file (@$media_list) {
         my $category_id = $category_list{$file->{category}};
-        my $media       = (
+        my $media = (
             pkg('Media')->find(
                 category_id => $category_id,
-                filename    => $file->{name}
+                filename    => $file->{name},
             )
           )[0]
           || '';

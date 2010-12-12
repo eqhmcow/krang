@@ -1568,17 +1568,14 @@ sub validate_media {
             push(@errors, 'error_media_file');
         } elsif (!@errors) {
 
-            # text types allow auto-creation
-            my $filename = $media->title;
-            $filename =~ s/[^\w\s\.\-]//g;     # clean invalid chars
-            $filename =~ s/(^\s+|\s+$)+//g;    # clean excess whitespace
-            $filename =~ s/[\s\-\_]+/_/g;      # use underscores btw words
+            # text types allow auto-creation from title
+            $media->filename($media->title);
             open(my $filehandle);
             $media->upload_file(
                 filehandle => $filehandle,
-                filename   => $filename
+                filename   => $media->filename,
             );
-            add_message('empty_file_created', filename => $filename);
+            add_message('empty_file_created', filename => $media->filename);
 
             # Remember that a file was created (affects dupe-URL error)
             $self->query->param('created_empty_file' => 1);
@@ -1729,12 +1726,12 @@ sub update_media {
 
             # Coerce a reasonable name from what we get
             my @filename_parts = split(/[\/\\\:]/, $media_file);
-            my $filename = $filename_parts[-1];
+            $m->filename($filename_parts[-1]);
 
             # Put the file in the Media object
             $m->upload_file(
                 filehandle => $filehandle,
-                filename   => $filename
+                filename   => $m->filename,
             );
 
             next;
