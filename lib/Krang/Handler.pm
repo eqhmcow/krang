@@ -219,7 +219,10 @@ sub trans_handler ($$) {
         }
 
         # stop other requests unless they're for the root
-        return FORBIDDEN unless ($uri eq '/');
+        unless( $uri eq '/' ) {
+            debug("Can't access anything but root or static files if no instance is set");
+            return FORBIDDEN;
+        }
 
         # We're looking at the root.  Set handler to show list of instances
         $r->handler("perl-script");
@@ -774,6 +777,7 @@ sub siteserver_trans_handler ($$) {
     # Didn't find a site?  Null out doc root and forbid request
     unless ($path) {
         $r->document_root(catdir(KrangRoot, "tmp"));
+        debug("Not site found for $host");
         return FORBIDDEN;
     }
 
