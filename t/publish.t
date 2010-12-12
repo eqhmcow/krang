@@ -451,7 +451,7 @@ sub test_full_preview {
     foreach ($story, $story2, @stories) {
         my @paths = build_preview_paths($_);
         foreach my $path (@paths) {
-            diag("Missing $path")
+            note("Missing $path")
               unless (ok(-e $path, 'Krang::Publisher->preview_story() -- complete story writeout'));
         }
     }
@@ -551,7 +551,7 @@ sub test_publish_category_per_page {
         if ($page =~ /$string/) {
             pass('Krang::Publisher - publish_category_per_page');
         } else {
-            diag("Cannot find '$string':\n\n$page");
+            note("Cannot find '$string':\n\n$page");
             fail('Krang::Publisher - publish_category_per_page');
             die;
         }
@@ -602,7 +602,7 @@ sub test_publish_status {
     };
 
     if ($@) {
-        diag("Unexpected croak: $@");
+        note("Unexpected croak: $@");
         fail('Krang::Publisher->test_publish_status()');
     } else {
         is($bool, 1, 'Krang::Publisher->test_publish_status()');
@@ -949,12 +949,12 @@ sub test_publish_list {
     foreach (@$publist) {
         if ($_->isa('Krang::Story')) {
             unless (ok(exists($expected->{story}{$_->story_id}), 'asset_list() - story check')) {
-                diag("Found story that should not be in publish list");
+                note("Found story that should not be in publish list");
             }
             $lookup{story}{$_->story_id} = 1;
         } elsif ($_->isa('Krang::Media')) {
             unless (ok(exists($expected->{media}{$_->media_id}), 'asset_list() - media check')) {
-                diag("Found media that should not be in publish list");
+                note("Found media that should not be in publish list");
             }
             $lookup{media}{$_->media_id} = 1;
         } else {
@@ -968,11 +968,11 @@ sub test_publish_list {
             my $obj = $expected->{$_}{$key};
             if ($_ eq 'story') {
                 unless (ok(exists($lookup{story}{$obj->story_id}), 'asset_list() - story check')) {
-                    diag("Missing expected story in publish list");
+                    note("Missing expected story in publish list");
                 }
             } elsif ($_ eq 'media') {
                 unless (ok(exists($lookup{media}{$obj->media_id}), 'asset_list() - media check')) {
-                    diag("Missing expected media in publish list");
+                    note("Missing expected media in publish list");
                 }
             }
         }
@@ -1021,7 +1021,7 @@ sub test_undeploy_template {
     eval { $publisher->undeploy_template(template => $tmpl); };
 
     if ($@) {
-        diag($@);
+        note($@);
         fail('Krang::Publisher->undeploy_template()');
     } else {
         ok(!(-e $file), 'Krang::Publisher->undeploy_template()');
@@ -1043,7 +1043,7 @@ sub test_deploy_template {
     eval { $result = $publisher->deploy_template(template => $tmpl); };
 
     if ($@) {
-        diag($@);
+        note($@);
         fail('Krang::Publisher->deploy_template()');
     } else {
         ok(-e $file && ($file eq $result), 'Krang::Publisher->deploy_template()');
@@ -1306,7 +1306,7 @@ sub test_story_build {
     if ($@) {
         pass('Krang::ElementClass->publish() -- missing tmpl');
     } else {
-        diag('page.tmpl was undeployed - publish should croak.');
+        note('page.tmpl was undeployed - publish should croak.');
         fail('Krang::ElementClass->publish() -- missing tmpl');
     }
 
@@ -1347,11 +1347,11 @@ sub test_publish_story {
                 'Krang::Publisher->publish_story() -- compare'
             );
             if ($article_output{($i + 1)} ne $story_txt) {
-                diag('Story content on filesystem does not match expected results');
+                note('Story content on filesystem does not match expected results');
                 die Dumper($article_output{($i + 1)}, $story_txt);
             }
         } else {
-            diag('Missing story content in ' . $story_paths[$i]);
+            note('Missing story content in ' . $story_paths[$i]);
             fail('Krang::Publisher->publish_story() -- compare');
         }
     }
@@ -1757,7 +1757,7 @@ sub test_find_templates {
     eval { $tmpl = $e->class->find_template(publisher => $publisher, element => $e); };
     if ($@) {
         if (scalar($e->children())) {
-            diag($@);
+            note($@);
             fail("Krang::ElementClass->find_template(" . $e->name() . ")");
             die;
         } else {
@@ -1816,7 +1816,7 @@ sub deploy_test_templates {
         eval { $template->save(); };
 
         if ($@) {
-            diag("ERROR: $@");
+            note("ERROR: $@");
             fail('Krang::Template->new()');
         } else {
             push @test_templates_delete, $template;
@@ -2039,7 +2039,7 @@ sub load_story_page {
         $data = <$PAGE>;
         close $PAGE;
     } else {
-        diag("Cannot open $filename: $!");
+        note("Cannot open $filename: $!");
         fail('Krang::Publisher->publish_story();');
     }
 
@@ -2060,7 +2060,7 @@ sub walk_tree {
 
     foreach ($el->children()) {
         my $txt = sprintf("WALK: $tabs p='%s' n='%s'", $el->name(), $_->name());
-        diag($txt);
+        note($txt);
         &walk_tree($_, ++$level);
     }
 

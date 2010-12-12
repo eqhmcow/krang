@@ -29,5 +29,5 @@ eval {
 };
 
 ok(not($@), "story.t ran with LazyLoader add-on installed");
-diag($@) if ($@);
+note($@) if ($@);
 

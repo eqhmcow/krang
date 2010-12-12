@@ -152,9 +152,9 @@ SQL
 
         ### test exceptions on restore
         #
-        diag("");
-        diag("1. Test restoring slug-provided story when its URL is occupied by another story");
-        diag("");
+        note("");
+        note("1. Test restoring slug-provided story when its URL is occupied by another story");
+        note("");
         $story = $stories[3];
         my $sid = $story->story_id;
         $story->trash;
@@ -171,10 +171,10 @@ SQL
         );
         $dupe->save;
 
-        diag("Created another story having a slug with the same URL as Story $sid");
+        note("Created another story having a slug with the same URL as Story $sid");
 
         # try to restore our story
-        diag("Try to restore Story $sid - should throw Krang::Story::DuplicateURL exception");
+        note("Try to restore Story $sid - should throw Krang::Story::DuplicateURL exception");
         eval { pkg('Trash')->restore(object => $story) };
         isa_ok($@, 'Krang::Story::DuplicateURL');
         is(ref($@->stories), 'ARRAY',
@@ -185,12 +185,12 @@ SQL
         # delete dupe and try again
         $dupe->delete;
         eval { pkg('Trash')->restore(object => $story) };
-        ok(!$@) and diag "After deleting dupe, restoring Story $sid was successful";
+        ok(!$@) and note("After deleting dupe, restoring Story $sid was successful");
         _verify_flag_status($story);
 
-        diag("");
-        diag("2. Test story restoring when story's URL is occupied by a category");
-        diag("");
+        note("");
+        note("2. Test story restoring when story's URL is occupied by a category");
+        note("");
         $story->trash;
 
         # should be trashed again
@@ -208,7 +208,7 @@ SQL
         (my $cat_url = $dupe_cat->url) =~ s{/$}{};
         is($cat_url, $story->url, "Created category $cid with same URL as Story $sid");
 
-        diag("Try to restore the story - should throw a Krang::Story::DuplicateURL exception");
+        note("Try to restore the story - should throw a Krang::Story::DuplicateURL exception");
         eval { pkg('Trash')->restore(object => $story) };
         isa_ok($@, 'Krang::Story::DuplicateURL');
         is(ref($@->categories), 'ARRAY',
@@ -223,12 +223,12 @@ SQL
         # delete dupe and try again
         $dupe_cat->delete;
         eval { pkg('Trash')->restore(object => $story) };
-        ok(!$@) and diag "After deleting dupe category $cid, restoring Story $sid was successful";
+        ok(!$@) and note("After deleting dupe category $cid, restoring Story $sid was successful");
         _verify_flag_status($story);
 
-        diag("");
-        diag("3. Test restoring slugless story when its URL is occupied by another story");
-        diag("");
+        note("");
+        note("3. Test restoring slugless story when its URL is occupied by another story");
+        note("");
 
         # create a slugless story
         $story = $creator->create_story(slug => '');
@@ -249,10 +249,10 @@ SQL
         $dupe->save;
         my $did = $dupe->story_id;
 
-        diag("Created another slugless story $did with the same URL as Story $sid");
+        note("Created another slugless story $did with the same URL as Story $sid");
 
         # try to restore our story
-        diag("Try to restore Story $sid - should throw Krang::Story::DuplicateURL exception");
+        note("Try to restore Story $sid - should throw Krang::Story::DuplicateURL exception");
         eval { pkg('Trash')->restore(object => $story) };
         isa_ok($@, 'Krang::Story::DuplicateURL');
         is(ref($@->stories), 'ARRAY',
@@ -267,22 +267,22 @@ SQL
         # delete dupe and try again
         $dupe->delete;
         eval { pkg('Trash')->restore(object => $story) };
-        ok(!$@) and diag "After deleting dupe story $did, restoring Story $sid was successful";
+        ok(!$@) and note("After deleting dupe story $did, restoring Story $sid was successful");
         _verify_flag_status($story);
 
-        diag("");
-        diag("4. Test restoring Story without restore permission");
-        diag("");
+        note("");
+        note("4. Test restoring Story without restore permission");
+        note("");
         $story->trash;
 
         # should be trashed
         is($story->trashed, 1, "Story $sid lives in trash");
 
         {
-            diag("We are now a user without restore permissions");
+            note("We are now a user without restore permissions");
             local $ENV{REMOTE_USER} = $user->user_id;
 
-            diag(
+            note(
                 "Trying to restore Story $sid - should throw a Krang::Story::NoRestoreAccess exception"
             );
 
@@ -385,9 +385,9 @@ SQL
 
     ### test exceptions on restore
     #
-    diag("");
-    diag("1. Test restoring media when its URL is occupied by another media");
-    diag("");
+    note("");
+    note("1. Test restoring media when its URL is occupied by another media");
+    note("");
     $media = $media[3];
     my $mid = $media->media_id;
     $media->trash;
@@ -409,10 +409,10 @@ SQL
     $dupe->upload_file(filename => $media->filename, filehandle => $fh);
     $dupe->save;
 
-    diag("Created another media having the same URL as Media $mid");
+    note("Created another media having the same URL as Media $mid");
 
     # try to restore our media
-    diag("Try to restore Media $mid - should throw Krang::Media::DuplicateURL exception");
+    note("Try to restore Media $mid - should throw Krang::Media::DuplicateURL exception");
     eval { pkg('Trash')->restore(object => $media) };
     isa_ok($@, 'Krang::Media::DuplicateURL');
     is($dupe->media_id, $@->media_id, "Our dupe found in exception's media_id attrib");
@@ -421,23 +421,22 @@ SQL
     # delete dupe and try again
     $dupe->delete;
     eval { pkg('Trash')->restore(object => $media) };
-    ok(!$@) and diag "After deleting dupe, restoring Media $mid was successful";
+    ok(!$@) and note("After deleting dupe, restoring Media $mid was successful");
     _verify_flag_status($media);
 
-    diag("");
-    diag("2. Test restoring Media without restore permission");
-    diag("");
+    note("");
+    note("2. Test restoring Media without restore permission");
+    note("");
     $media->trash;
 
     # should be trashed
     is($media->trashed, 1, "Media $mid lives in trash");
 
     {
-        diag("We are now a user without restore permissions");
+        note("We are now a user without restore permissions");
         local $ENV{REMOTE_USER} = $user->user_id;
 
-        diag("Trying to restore Media $mid - should throw a Krang::Media::NoRestoreAccess exception"
-        );
+        note("Trying to restore Media $mid - should throw a Krang::Media::NoRestoreAccess exception");
 
         # fetch it again, so that may_edit flag is correctly set on $media object
         my ($media) = pkg('Media')->find(media_id => $mid);

@@ -56,7 +56,7 @@ BEGIN {
             sleep 5;
 
             unless (-e $pidfile) {
-                diag('Scheduler Daemon Startup failed.  Exiting.');
+                note('Scheduler Daemon Startup failed.  Exiting.');
                 exit(1);
             }
         }

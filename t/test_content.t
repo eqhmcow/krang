@@ -220,7 +220,7 @@ foreach my $t (@test_templates) {
 
     my $ok = ok(-e $f, sprintf("deploy_test_templates('%s')", $t->filename()));
 
-    diag("Missing file '$f'") unless $ok;
+    note("Missing file '$f'") unless $ok;
 
     push @template_paths, $f;
 }
@@ -246,7 +246,7 @@ my $story_id = $story->story_id();
 eval { $creator->delete_item(item => $story); };
 
 if ($@) {
-    diag("Unexpected Failure: $@");
+    note("Unexpected Failure: $@");
     fail('delete_item()');
 } else {
 
@@ -255,19 +255,19 @@ if ($@) {
     foreach my $s (@{$creator->{stack}{story}}) {
         if ($s->isa('Krang::Story')) {
             if ($s->story_id == $story_id) {
-                diag('delete_item() did not delete story -- found in stack');
+                note('delete_item() did not delete story -- found in stack');
                 fail('delete_item()');
                 last;
             }
         } else {
-            diag("Found non-story object in story stack: " . ref($s));
+            note("Found non-story object in story stack: " . ref($s));
         }
     }
 
     # use find() as well.
     my ($s) = pkg('Story')->find(story_id => $story_id);
     if (defined($s)) {
-        diag("delete_item() did not delete the story -- found by pkg('Story')->find().");
+        note("delete_item() did not delete the story -- found by pkg('Story')->find().");
         fail('delete_item()');
     } else {
         pass('delete_item()');
@@ -340,8 +340,8 @@ for (1 .. 10) {
 eval { $creator->cleanup(); };
 
 if ($@) {
-    diag("cleanup() failed: $@");
-    diag("make db may be required to clean things up.");
+    note("cleanup() failed: $@");
+    note("make db may be required to clean things up.");
     fail('cleanup');
 } else {
     my ($tmpsite) = pkg('Site')->find(site_id => [$site_id]);

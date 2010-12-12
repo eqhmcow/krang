@@ -60,9 +60,9 @@ END { $user->delete }
 my ($creator, $this, $that, $source, $destination, $water, $conflict, $copied);
 my (@categories, @stories, @media, @templates, @tmp);
 
-diag('');
-diag('1. Test without conflict possibility');
-diag('');
+note('');
+note('1. Test without conflict possibility');
+note('');
 setup_tree();
 
 # can we copy?
@@ -93,9 +93,9 @@ push @stories,    @{$copied->{story}}    if $copied->{story};
 push @media,      @{$copied->{media}}    if $copied->{media};
 push @templates,  @{$copied->{template}} if $copied->{template};
 
-diag('');
-diag('2. Story conflict without overwrite');
-diag('');
+note('');
+note('2. Story conflict without overwrite');
+note('');
 setup_tree();
 $conflict = pkg('Story')->new(
     categories => [$that],
@@ -115,7 +115,7 @@ eval {
         overwrite    => 0
     );
 };
-diag('Testing Story conflict without overwrite - should throw exception');
+note('Testing Story conflict without overwrite - should throw exception');
 isa_ok($@, 'Krang::Category::CopyAssetConflict');
 
 # do copy
@@ -140,9 +140,9 @@ push @stories,    @{$copied->{story}}    if $copied->{story};
 push @media,      @{$copied->{media}}    if $copied->{media};
 push @templates,  @{$copied->{template}} if $copied->{template};
 
-diag('');
-diag('3. Story conflict with overwrite');
-diag('');
+note('');
+note('3. Story conflict with overwrite');
+note('');
 setup_tree();
 $conflict = pkg('Story')->new(
     categories => [$that],
@@ -185,9 +185,9 @@ push @stories,    @copied_stories;
 push @media,      @{$copied->{media}}    if $copied->{media};
 push @templates,  @{$copied->{template}} if $copied->{template};
 
-diag('');
-diag('4. Media conflict without overwrite');
-diag('');
+note('');
+note('4. Media conflict without overwrite');
+note('');
 setup_tree();
 
 # Add a TO category also existing in FROM
@@ -214,7 +214,7 @@ eval {
         overwrite    => 0
     );
 };
-diag('Testing Media conflict without overwrite - should throw exception');
+note('Testing Media conflict without overwrite - should throw exception');
 isa_ok($@, 'Krang::Category::CopyAssetConflict');
 
 # do copy
@@ -239,9 +239,9 @@ push @stories,    @{$copied->{story}}    if $copied->{story};
 push @media,      @{$copied->{media}}    if $copied->{media};
 push @templates,  @{$copied->{template}} if $copied->{template};
 
-diag('');
-diag('5. Media conflict with overwrite');
-diag('');
+note('');
+note('5. Media conflict with overwrite');
+note('');
 setup_tree();
 
 # Add a TO category also existing in FROM
@@ -291,9 +291,9 @@ push @stories,    @{$copied->{story}}    if $copied->{story};
 push @media,      @copied_media;
 push @templates,  @{$copied->{template}} if $copied->{template};
 
-diag('');
-diag('6. Template conflict without overwrite');
-diag('');
+note('');
+note('6. Template conflict without overwrite');
+note('');
 setup_tree();
 
 # Add a TO category also existing in FROM
@@ -325,7 +325,7 @@ eval {
         overwrite    => 0
     );
 };
-diag('Testing Template conflict without overwrite - should throw exception');
+note('Testing Template conflict without overwrite - should throw exception');
 isa_ok($@, 'Krang::Category::CopyAssetConflict');
 
 # do copy
@@ -350,9 +350,9 @@ push @stories,    @{$copied->{story}}    if $copied->{story};
 push @media,      @{$copied->{media}}    if $copied->{media};
 push @templates,  @{$copied->{template}} if $copied->{template};
 
-diag('');
-diag('7. Template conflict with overwrite');
-diag('');
+note('');
+note('7. Template conflict with overwrite');
+note('');
 setup_tree();
 
 # Add a TO category also existing in FROM
@@ -408,9 +408,9 @@ push @stories,    @{$copied->{story}}    if $copied->{story};
 push @media,      @{$copied->{media}}    if $copied->{media};
 push @templates,  @copied_templates;
 
-diag('');
-diag('8. Resolvable URL Conflict between would-be-created category and story existing in TO');
-diag('');
+note('');
+note('8. Resolvable URL Conflict between would-be-created category and story existing in TO');
+note('');
 setup_tree();
 $conflict = pkg('Story')->new(
     categories => [$that],
@@ -459,9 +459,9 @@ push @stories,    @{$copied->{story}}    if $copied->{story};
 push @media,      @{$copied->{media}}    if $copied->{media};
 push @templates,  @{$copied->{template}} if $copied->{template};
 
-diag('');
-diag('9. Unresolvable URL Conflict between would-be-created category and story existing in TO');
-diag('');
+note('');
+note('9. Unresolvable URL Conflict between would-be-created category and story existing in TO');
+note('');
 setup_tree();
 $conflict = pkg('Story')->new(
     categories => [$that],
@@ -475,7 +475,7 @@ push @stories, $conflict;
 $conflict->checkin();
 
 # checkout as other user
-diag(
+note(
     "We are now another user - testing unresolvable conflict between would-be-created category and slug-provided story in copy destination"
 );
 {
@@ -484,7 +484,7 @@ diag(
     $conflict->checkout;
     is($conflict->checked_out_by, $user->user_id, "Conflicting story checked out by other user");
 }
-diag(
+note(
     "We are the normal test user again: Can-copy-test should throw a Krang::Story::CantCheckOut exception"
 );
 eval {
@@ -498,7 +498,7 @@ eval {
 };
 isa_ok($@, 'Krang::Story::CantCheckOut');
 
-diag(
+note(
     "Trying to copy although we can't check out some story should throw a Krang::Category::DuplicateURL"
 );
 eval {
@@ -512,17 +512,17 @@ eval {
 };
 isa_ok($@, 'Krang::Category::DuplicateURL');
 {
-    diag("We are now another user");
+    note("We are now another user");
     local $ENV{REMOTE_USER} = $user->user_id;
 
     $conflict->checkin;
     is($conflict->checked_out, 0, "Conflicting story is checked in back again.");
 }
-diag("We are the normal test user again.");
+note("We are the normal test user again.");
 
-diag('');
-diag('10. Conflict with existing destination category to which we have no EditAcces');
-diag('');
+note('');
+note('10. Conflict with existing destination category to which we have no EditAcces');
+note('');
 setup_tree();
 
 # Add a TO category also existing in FROM
@@ -554,7 +554,7 @@ push @categories, $conflict;
     $user->save();
     END { $user->delete }
 
-    diag("We are a user without edit permission to Category " . $conflict->category_id);
+    note("We are a user without edit permission to Category " . $conflict->category_id);
     local $ENV{REMOTE_USER} = $user->user_id;
 
     eval {
@@ -569,9 +569,9 @@ push @categories, $conflict;
     isa_ok($@, 'Krang::Category::NoEditAccess');
 }
 
-diag('');
-diag('11. Conflict between would-be-created story and existing category');
-diag('');
+note('');
+note('11. Conflict between would-be-created story and existing category');
+note('');
 setup_tree();
 
 $conflict = pkg('Story')->new(
@@ -585,7 +585,7 @@ $conflict->checkin;
 push @stories, $conflict;
 $conflict->checkin();
 
-diag('Testing without overwrite - should not throw exception');
+note('Testing without overwrite - should not throw exception');
 
 eval {
     $this->can_copy_test(
@@ -596,7 +596,7 @@ eval {
         overwrite    => 0
     );
 };
-diag($@);
+note($@);
 is(!$@, 1, 'No Krang::Category::CopyAssetConflict thrown');
 
 # do copy
@@ -619,11 +619,11 @@ push @stories,    @{$copied->{story}}    if $copied->{story};
 push @media,      @{$copied->{media}}    if $copied->{media};
 push @templates,  @{$copied->{template}} if $copied->{template};
 
-diag('');
-diag(
+note('');
+note(
     '12. Conflict between would-be-created story and existing category having index story - without overwrite'
 );
-diag('');
+note('');
 setup_tree();
 
 $conflict = pkg('Story')->new(
@@ -656,7 +656,7 @@ eval {
     );
 };
 
-diag('Testing without overwrite - should throw exception');
+note('Testing without overwrite - should throw exception');
 isa_ok($@, 'Krang::Category::CopyAssetConflict');
 
 # do copy
@@ -679,11 +679,11 @@ push @media,      @{$copied->{media}}    if $copied->{media};
 push @templates,  @{$copied->{template}} if $copied->{template};
 push @stories,    @{$copied->{story}}    if $copied->{story};
 
-diag('');
-diag(
+note('');
+note(
     '13. Conflict between would-be-created story and existing category having index story - with overwrite'
 );
-diag('');
+note('');
 setup_tree();
 
 $conflict = pkg('Story')->new(
@@ -716,7 +716,7 @@ eval {
     );
 };
 
-diag('Testing with overwrite - should not throw exception');
+note('Testing with overwrite - should not throw exception');
 is(!$@, 1, 'No Krang::Category::CopyAssetConflict thrown');
 
 # do copy

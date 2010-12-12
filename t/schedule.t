@@ -46,7 +46,7 @@ BEGIN {
             `$schedulectl stop`;
             sleep 5;
             if (-e $pidfile) {
-                diag('Shutdown failed.  Exiting.');
+                note('Shutdown failed.  Exiting.');
                 exit(1);
             } else {
                 $restart = 1;
@@ -677,7 +677,7 @@ eval { $sched->execute(); };
 $@
   ? fail('Krang::Schedule::Action::publish->execute()')
   : pass('Krang::Schedule::Action::publish->execute()');
-diag($@) if $@;
+note($@) if $@;
 
 # check to see if the stories exist
 my @story_paths = $creator->publish_paths(story => $story);
@@ -867,7 +867,7 @@ if (-e $tmpfile) {
       : pass('Krang::Schedule::Action::clean->_clean_tmp()');
 
 } else {
-    diag("Cannot touch $tmpfile.  Skipping tmp tests.");
+    note("Cannot touch $tmpfile.  Skipping tmp tests.");
 }
 
 # Test Session cleanup -- insert bad record.
@@ -932,7 +932,6 @@ sub _check_calc_next_run {
         $publish_date->mysql_datetime,
         'Krang::Schedule->_calc_next_run()'
     );
-    diag("failed date check: date='$now_string', pubdate='$publish_string'") unless ($ok);
-
+    note("failed date check: date='$now_string', pubdate='$publish_string'") unless ($ok);
 }
 

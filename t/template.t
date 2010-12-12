@@ -133,7 +133,7 @@ $tmpl2->save();
 # test mark_as_deployed
 eval { $tmpl2->mark_as_deployed(); };
 if ($@) {
-    diag($@);
+    note($@);
     fail('Krang::Template->mark_as_deployed()');
 } else {
     pass('Krang::Template->mark_as_deployed()');
@@ -145,7 +145,7 @@ if ($@) {
 # test mark_as_undeployed
 eval { $tmpl2->mark_as_undeployed(); };
 if ($@) {
-    diag($@);
+    note($@);
     fail('Krang::Template->mark_as_undeployed()');
 } else {
     pass('Krang::Template->mark_as_undeployed()');
@@ -488,13 +488,13 @@ END {
 sub _test_copy {
     my ($orig, $copy) = @_;
 
-    diag("Comparing original and copy after clone()'ing media");
+    note("Comparing original and copy after clone()'ing media");
 
     is($orig->filename, $copy->filename, "Filename ok");
     is($orig->content,  $copy->content,  "Content ok");
 ##    is($orig->element_class_name, $copy->element_class_name, "Element Class Name ok"); # obviously unused DB column
 
-    diag("Verifying redefined properties on copy");
+    note("Verifying redefined properties on copy");
 
     is($copy->version,          1,                 "Version ok");
     is($copy->testing,          0,                 "Testing ok");
