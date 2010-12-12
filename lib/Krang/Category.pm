@@ -662,14 +662,16 @@ sub reserved_check {
     $relative_url =~ s/^[^\/]+\//\//;
 
     # now compare them to the configured ReservedURLs
-    foreach my $reserved (split(/\s+/, ReservedURLs)) {
-        $reserved = "$reserved/" unless $reserved =~ /\/$/;
-        my $compare = $reserved =~ /^\// ? $relative_url : $url;
-        # throw exception
-        Krang::Category::ReservedURL->throw(
-            message  => "Reserved URL ($reserved)",
-            reserved => $reserved,
-        ) if $compare eq $reserved;
+    if( ReservedURLs ) {
+        foreach my $reserved (split(/\s+/, ReservedURLs)) {
+            $reserved = "$reserved/" unless $reserved =~ /\/$/;
+            my $compare = $reserved =~ /^\// ? $relative_url : $url;
+            # throw exception
+            Krang::Category::ReservedURL->throw(
+                message  => "Reserved URL ($reserved)",
+                reserved => $reserved,
+            ) if $compare eq $reserved;
+        }
     }
 
     return 0;
