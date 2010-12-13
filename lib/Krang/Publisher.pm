@@ -2221,7 +2221,7 @@ sub _init_asset_lists {
     my $instance = pkg('Conf')->instance();
 
     foreach (qw(story_publish_set media_publish_set checked_links_set)) {
-        $self->{asset_list}{$instance}{$_} = Set::IntRange->new(0, 4_294_967_295)
+        $self->{asset_list}{$instance}{$_} = Set::IntRange->new(0, 4_194_304)
           unless (exists($self->{asset_list}{$instance}{$_}));
     }
 }
