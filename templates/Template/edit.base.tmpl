@@ -1,12 +1,12 @@
 <tmpl_include header.tmpl>
 
 <script type="text/javascript">
-var use_editor = !Prototype.Browser.WebKit && Krang.my_prefs().syntax_highlighting == 1;
+use_editor = !Prototype.Browser.WebKit && Krang.my_prefs().syntax_highlighting == 1;
 
 save_editor_text = function() {
     if(use_editor) {
-        Krang.Form.get_field('edit_template_form', 'content').disabled = false;
         Krang.Form.set('edit_template_form', { content: templateEditor.getCode() });
+        Krang.Form.get_field('edit_template_form', 'content').disabled = false;
     }
 }
 
