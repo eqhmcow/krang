@@ -8,6 +8,9 @@ our $CHOWN_BIN;
 our $ECHO_BIN;
 our $PERL_BIN = $^X;
 our $MYSQL_BIN;
+our $FIND_BIN;
+our $XARGS_BIN;
+our $CHMOD_BIN;
 
 =head1 NAME
 
@@ -363,6 +366,9 @@ sub load_platform {
     $CHOWN_BIN = $PLATFORM->find_bin(bin => 'chown');
     $ECHO_BIN  = $PLATFORM->find_bin(bin => 'echo');
     $MYSQL_BIN = $PLATFORM->find_bin(bin => 'mysql');
+    $FIND_BIN  = $PLATFORM->find_bin(bin => 'find');
+    $XARGS_BIN = $PLATFORM->find_bin(bin => 'xargs');
+    $CHMOD_BIN = $PLATFORM->find_bin(bin => 'chmod');
 }
 
 sub make_backups {
@@ -524,7 +530,7 @@ sub install_new_krang {
     my $binpath = join ' ', map { catdir($install_path, $_) } qw/bin conf docs htdocs lib bench/;
 
     # Set all *.pl files
-    $chmod =
+    my $chmod =
       $FIND_BIN . " $binpath -type f -name '*.pl' | " . $XARGS_BIN . " " . $CHMOD_BIN . " +x";
     system($chmod) && die("Can't set execute bits: $!");
 
