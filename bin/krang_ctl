@@ -91,7 +91,7 @@ usage()
 my @ctl = (
     {name => 'krang_apachectl',   port => 'ApachePort'},
     {name => 'krang_ftpctl',      port => 'FTPPort'},
-    {name => 'krang_schedulectl', port => 'ApachePort'},
+    {name => 'krang_schedulectl'},
 );
 push(@ctl, {name => 'krang_siteserverctl', port => 'SiteServerPort'})
   if EnableSiteServer;
@@ -100,10 +100,9 @@ push(@ctl, {name => 'krang_siteserverctl', port => 'SiteServerPort'})
 foreach my $service (@ctl) {
     my $script = "$^X " . catfile(KrangRoot, 'bin', $service->{'name'});
 
-    # will need sudo?
-    if (($< != 0 or $> != 0)
-        and pkg('Conf')->get($service->{'port'}) <= 1024)
-    {
+    # we need sudo if we aren't already root and this service uses a port less than 1024
+    my $port = $service->{port};
+    if (($< != 0 || $> != 0) && $port && pkg('Conf')->get($port) <= 1024) {
         $script = "sudo $script";
     }
 
