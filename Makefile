@@ -30,14 +30,20 @@
 #   upgrade - upgrade an existing Krang installation from a distribution
 #
 
+ifdef DISPLAY
+notify = notify-send -i $(KRANG_ROOT)/data/notify.png --urgency normal --expire-time 10000 $(1) $(2)
+endif
+
 all:
 	@echo "No default make target."
 
 build: clean
 	bin/krang_build
+	$(call notify, "Krang build finished", "at $(KRANG_ROOT)")
 
 dist:
 	bin/krang_makedist
+	$(call notify, "Krang Dist created")
 
 clean:	bench_clean
 	- find lib/ -mindepth 1 -maxdepth 1 | grep -v Krang | grep -v .svn | grep -v '.cvsignore' | grep -v '^lib/Devel/CheckLib.pm' | grep -v '^lib/Devel' | xargs rm -rf
@@ -50,6 +56,7 @@ clean:	bench_clean
 	- rm -rf conf/ssl.csr
 	- rm -rf conf/ssl.key
 	- rm -rf conf/ssl.prm
+	- $(call notify, "Krang cleaned", "at $(KRANG_ROOT)")
 
 TAGS:	
 	find -name '*.pm' | etags --language="perl" --regex='/[ \\t]*[A-Za-z]+::[a-zA-Z:]+/' -
@@ -59,9 +66,11 @@ TEST_VERBOSE = 0
 TEST_FILES = 0
 test:
 	bin/krang_test --verbose-i="$(TEST_VERBOSE)" --files="$(TEST_FILES)"
+	$(call notify, "Krang test finished", "at $(KRANG_ROOT)")
 
 test_archive:
 	bin/krang_test --verbose-i="$(TEST_VERBOSE)" --files="$(TEST_FILES)" --tap-archive
+	$(call notify, "Krang test finished", "at $(KRANG_ROOT)")
 
 # setup default BENCH_NAME
 BENCH_NAME  = $(shell date +'[ %D %H:%M ]')
@@ -75,12 +84,15 @@ bench_clean:
 
 db:
 	bin/krang_createdb --destroy --all
+	$(call notify, "Krang DB created", "at $(KRANG_ROOT)")
 
 db_q:
 	bin/krang_createdb --destroy --all --no_prompt
+	$(call notify, "Krang DB created", "at $(KRANG_ROOT)")
 
 restart:
 	bin/krang_ctl restart
+	$(call notify, "Krang restarted", "at $(KRANG_ROOT)")
 
 docs:
 	cd docs && $(MAKE)
