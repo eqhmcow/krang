@@ -128,10 +128,10 @@ Other options correspond to attribute methods below:
 
 =back
 
-When an element is created, any child elements with 
+When an element is created, any child elements with
 C<< $child->class->min >> greater than one will be automatically created
-as children of the new element.  This may be supressed by passing 
-C<< no_expand => 1 >> to new(), but this should only be done from within 
+as children of the new element.  This may be supressed by passing
+C<< no_expand => 1 >> to new(), but this should only be done from within
 this class.
 
 =item C<< $element_id = $element->element_id() >>
