@@ -105,7 +105,6 @@ use File::Copy qw(copy);
 use File::Path;
 use File::Temp qw(tempdir);
 use Time::Piece;
-use Set::IntRange;
 
 use Krang::ClassLoader Conf => qw(KrangRoot instance PreviewSSL EnablePreviewEditor);
 use Krang::ClassLoader 'Story';
@@ -2123,12 +2122,12 @@ sub _mark_asset {
         croak sprintf("%s->_mark_asset: unknown object type: %s\n", __PACKAGE__, $object->isa);
     }
 
-    if ($self->{asset_list}{$instance}{$set}->contains($id)) {
+    if ($self->{asset_list}{$instance}{$set}{$id}) {
         return 0;
     }
 
     # not seen before.
-    $self->{asset_list}{$instance}{$set}->Bit_On($id);
+    $self->{asset_list}{$instance}{$set}{$id} = 1;
     return 1;
 
 }
@@ -2155,10 +2154,10 @@ sub _mark_asset_links {
     my $instance = pkg('Conf')->instance();
     my $story_id = $object->story_id();
 
-    if ($self->{asset_list}{$instance}{checked_links_set}->contains($story_id)) {
+    if ($self->{asset_list}{$instance}{checked_links_set}{$story_id}) {
         return 0;
     }
-    $self->{asset_list}{$instance}{checked_links_set}->Bit_On($story_id);
+    $self->{asset_list}{$instance}{checked_links_set}{$story_id} = 1;
     return 1;
 
 }
@@ -2210,9 +2209,6 @@ sub _check_object_missing {
 # these lists are used by asset_list to determine which assets are
 # going to get published.
 #
-# Note - Set::IntRange is being used as an efficient method for storing
-# potentially large sets of integers.
-#
 
 sub _init_asset_lists {
 
@@ -2221,8 +2217,7 @@ sub _init_asset_lists {
     my $instance = pkg('Conf')->instance();
 
     foreach (qw(story_publish_set media_publish_set checked_links_set)) {
-        $self->{asset_list}{$instance}{$_} = Set::IntRange->new(0, 4_194_304)
-          unless (exists($self->{asset_list}{$instance}{$_}));
+        $self->{asset_list}{$instance}{$_} = {} unless (exists($self->{asset_list}{$instance}{$_}));
     }
 }
 
@@ -2239,7 +2234,6 @@ sub _clear_asset_lists {
     my $instance = pkg('Conf')->instance();
 
     foreach (keys %{$self->{asset_list}{$instance}}) {
-        $self->{asset_list}{$instance}{$_}->Empty();
         delete $self->{asset_list}{$instance}{$_};
     }
 
