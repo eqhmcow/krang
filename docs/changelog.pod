@@ -8,10 +8,21 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<--NoStart> option to F<bin/krang_install> when you want to install
+but then later tweek things (like F<conf/krang.conf>) before starting the
+servers. [Michael Peters]
+
+=item *
+
+Added C<--NoDB> option to F<bin/krang_install> for use when you already
+have an existing Krang DB and want a new install to use that. [Michael Peters]
+
+=item *
+
 Added "hostname dictionary" feature to F<krang.conf> so that you can
 specify different values for configuration directives per-hostname.
 This allows multiple machines in a Krang cluster to share the same
-F<krang.conf> file.
+F<krang.conf> file. [Michael Peters]
 
 =item *
 

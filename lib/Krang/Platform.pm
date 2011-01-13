@@ -847,7 +847,7 @@ sub post_install_message {
 
     my @sslreport = $pkg->_get_ssl_report(\%options);
 
-    print <<EOREPORT;
+    my $report = <<EOREPORT;
 
 
 #####                                                         #####
@@ -860,18 +860,24 @@ sub post_install_message {
    Installed at        :  $options{InstallPath}
    Control script      :  $options{InstallPath}/bin/krang_ctl
    Krang conf file     :  $options{InstallPath}/conf/krang.conf
-$sslreport[0]
-
-   Running on $options{IPAddress} --
-$sslreport[1]     http://$options{HostName}:$options{ApachePort}/
-     ftp://$options{HostName}:$options{FTPPort}/
-
-$sslreport[2]
-   CMS admin user password:  "$options{AdminPassword}"
-
 
 EOREPORT
 
+    $report .= $sslreport[0];
+    unless($options{NoStart}) {
+        $report .= "\n\n  Running on $options{IPAddress} --\n" unless $options{NoStart};
+        $report .= $sslreport[1];
+        $report .= "    http://$options{HostName}:$options{ApachePort}/\n";
+        $report .= "    ftp://$options{HostName}:$options{FTPPort}/\n";
+    }
+
+    $report .= $sslreport[2];
+
+    if( $options{AdminPassword} ) {
+        $report .= qq(   CMS admin user password:  "$options{AdminPassword}"\n);
+    }
+
+    print $report;
 }
 
 =item C<post_upgrade_message(options => \%options)>

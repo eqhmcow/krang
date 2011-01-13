@@ -176,15 +176,19 @@ use File::Temp qw(tempdir);
 my @original_args = ();
 my $uniqueness    = time();
 my ($help, $man, $run_tests);
-my @req_params = qw( HostName
+my @req_params = qw(
+  HostName
   IPAddress
   InstanceHostName
+);
+my @req_params_db = qw(
   AdminPassword
   InstanceDBName
   DBUser
-  DBPass);
-
-my @opt_params = qw( FromBackup
+  DBPass
+);
+my @opt_params = qw(
+  FromBackup
   MySQLRootPassword
   DBHost
   InstallPath
@@ -198,9 +202,14 @@ my @opt_params = qw( FromBackup
   InstanceElementSet
   EnableSSL
   SSLApachePort
-  Charset);
+  Charset
+);
+my @opt_params_bool = qw(
+  NoDB
+  NoStart
+);
 
-my %options = (map { $_ => undef } @req_params, @opt_params);
+my %options = (map { $_ => undef } @req_params, @req_params_db, @opt_params, @opt_params_bool);
 my %build_params;
 
 # SSL directives
@@ -239,11 +248,16 @@ sub do_install {
     install_krang();
     configure_krang();
     install_addons();
-    create_database();
-    create_mysql_user();
-    update_password();
+
+    # any database work we need to do
+    unless( $options{NoDB} ) {
+        create_database();
+        create_mysql_user();
+        update_password();
+    }
+
     finish_install();
-    start_krang();
+    start_krang() unless $options{NoStart};
     make_test() if ($run_tests);
     output_report();
 }
@@ -626,6 +640,7 @@ sub install_krang {
         my $bin = catdir($install_path, $dir);
         opendir(DIR, $bin) or die $!;
         push @scripts, grep { -f $_ }
+          grep { $_ !~ /^./ }
           map { catfile($bin, $_) } readdir(DIR);
         closedir DIR;
     }
@@ -726,7 +741,7 @@ sub configure_krang {
 
             # Filter out params which are not in HTML::Template file 'krang.conf.tmpl'
             unless (grep { $param eq $_ }
-                qw/AdminPassword MySQLRootPassword InstallPath FromBackup WithAddon/)
+                qw(AdminPassword MySQLRootPassword InstallPath FromBackup WithAddon NoDB NoStart))
             {
                 $t->param($param => $options{$param});
             }
@@ -884,7 +899,8 @@ sub setup_getopts {
         'man'         => \$man,
         'run-tests'   => \$run_tests,
         'WithAddon=s' => $options{WithAddon},
-        (map { $_ . "=s" => \$options{$_} } @req_params, @opt_params),
+        (map { $_ . "=s" => \$options{$_} } @req_params, @req_params_db, @opt_params),
+        (map { $_ => \$options{$_} } @opt_params_bool),
       );
 
     pod2usage(1) if $help;
@@ -896,7 +912,7 @@ sub enforce_requirements {
 
     # Enforce required params
     my $error_output = "";
-    foreach my $p (@req_params) {
+    foreach my $p (@req_params, $options{NoDB} ? () : @req_params_db) {
         next if defined($options{$p});
         $error_output .= "Missing --" . $p . "\n";
     }
