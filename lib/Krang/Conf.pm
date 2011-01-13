@@ -1,6 +1,8 @@
 package Krang::Conf;
 use strict;
 use warnings;
+use Sys::Hostname qw(hostname);
+use Fcntl qw(:DEFAULT :flock);
 
 # all valid configuration directives must be listed here
 our @VALID_DIRECTIVES;
@@ -190,6 +192,36 @@ which will have a conf/krang.conf file.  You might be trying to run a
 Krang script from a Krang source directory.
 
 CROAK
+
+    # get the original config file into a variable so we can do some manipulation
+    my $orig_conf_file = $conf_file;
+    open(my $IN, '<', $conf_file) or die "Could not open file $conf_file for reading: $!";
+    my $content = do { local $/; <$IN> };
+    close($IN);
+
+    # now expand any "host-name dictionaries"
+    while ($content =~ /(([\s#]*)(\S+)\s+{([^}]*)}\n?)/s) {
+        my ($orig, $indent, $directive, $lines, %dict) = ($1, $2, $3, $4);
+        foreach my $line (split("\n", $lines)) {
+            if ($line =~ /[\s#]*(\S+)\s+["']?([^\s"']+)["']?\s*/) {
+                $dict{$1} = $2;
+            }
+        }
+
+        my $real_val = $dict{hostname()};
+        $real_val = $dict{default} unless defined $real_val;
+        $content =~ s/\Q$orig\E/$indent$directive "$real_val"\n/g if defined $real_val;
+    }
+
+    # write it out to the new file in a cooperative/locking way
+    my $new_conf_file = catfile($ENV{KRANG_ROOT}, 'tmp', 'krang.conf.expanded');
+    sysopen(my $OUT, $new_conf_file, O_WRONLY | O_CREAT) or die "Could not open $new_conf_file for writing: $!";
+    flock($OUT, LOCK_EX) or die "Could not obtain write lock on $new_conf_file: $!";
+    truncate($OUT, 0) or die "Could not truncate file $new_conf_file: $!";
+    print $OUT $content;
+    close($OUT);
+    $conf_file = $new_conf_file;
+
 
     # load conf file into package global
     eval {

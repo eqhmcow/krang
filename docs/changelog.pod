@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added "hostname dictionary" feature to F<krang.conf> so that you can
+specify different values for configuration directives per-hostname.
+This allows multiple machines in a Krang cluster to share the same
+F<krang.conf> file.
+
+=item *
+
 Fix bug in F<krang_ctl> that incorrectly used C<sudo> when
 starting/stopping the scheduler. [Michael Peters]
 

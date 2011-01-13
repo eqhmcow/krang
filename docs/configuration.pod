@@ -33,11 +33,42 @@ overridden inside the Instance blocks, reducing overall configuration
 size.
 
 The actual configuration directives used to configure Krang are
-documented inside the C<krang.conf>.
+documented inside the F<krang.conf>.
 
 B<NOTE:> After you edit F<krang.conf> don't forget to restart Krang
 so your changes can take effect:
 
   bin/krang_ctl restart
+
+=head2 Hostname Dictionaries
+
+If you are running a Krang cluster, it can be extremely helpful to
+use the same F<krang.conf> file for each machine. Unfortunately, some
+Krang directives are very machine specific (like IP addresses). And
+it can be a pain and very error prone to have to manually keep multiple
+config files in sync.
+
+This can be accomplished by using a "Hostname Dictionary" for the value
+of a particular directive. For instance, let's say you had an instance
+which has an IP address of 10.32.0.1 on machine A, but 10.32.0.2 on machine B
+with a load balancer sending traffic between them. 
+
+    # krang.conf on machine A
+    InstanceApacheAddr 10.32.0.1
+
+    # krang.conf on machine A
+    InstanceApacheAddr 10.32.0.1
+
+You can instead use a Hostname Dictionary to consolitdate that into a single
+directive. The hostname of the machine will be used to pick the correct value
+when Krang is started:
+
+    # krang.conf on either machines
+    InstanceApacheAddr {
+        A 10.32.0.1
+        B 10.32.0.2
+    }
+
+A Hostname Dictionary can be used for any directive in F<krang.conf>.
 
 
