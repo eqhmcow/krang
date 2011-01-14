@@ -441,24 +441,26 @@ sub check_prereqs {
         }
     }
 
-    # MySQLRootPassword must be valid, and MySQL should be running
-    my $MySQLRootPassword = $options{'MySQLRootPassword'};
-    my $DBHost            = $options{'DBHost'};
-    my $mysql_cmd         = "$MYSQL_BIN -uroot";
-    my $test_sql          = 'select "world" as hello';
-    $mysql_cmd .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
-    $mysql_cmd .= " -h$DBHost"            if (defined($DBHost));
-    $mysql_cmd .= " 2>&1";
-    my $mysql_test_output = `$ECHO_BIN '$test_sql' | $mysql_cmd`;
+    unless( $options{NoDB} ) {
+        # MySQLRootPassword must be valid, and MySQL should be running
+        my $MySQLRootPassword = $options{'MySQLRootPassword'};
+        my $DBHost            = $options{'DBHost'};
+        my $mysql_cmd         = "$MYSQL_BIN -uroot";
+        my $test_sql          = 'select "world" as hello';
+        $mysql_cmd .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+        $mysql_cmd .= " -h$DBHost"            if (defined($DBHost));
+        $mysql_cmd .= " 2>&1";
+        my $mysql_test_output = `$ECHO_BIN '$test_sql' | $mysql_cmd`;
 
-    unless (($mysql_test_output =~ /hello/) and ($mysql_test_output =~ /world/)) {
-        print STDERR "$mysql_test_output";
-        if ($mysql_test_output =~ /ERROR 1045: Access denied/) {
-            exit_error("MySQLRootPassword '$MySQLRootPassword' is not valid");
-        } elsif ($mysql_test_output =~ /ERROR 2002: Can\'t connect/) {
-            exit_error("Can't connect to MySQL.  Start MySQL and try again.");
-        } else {
-            exit_error("Unable to verify MySQLRootPassword.");
+        unless (($mysql_test_output =~ /hello/) and ($mysql_test_output =~ /world/)) {
+            print STDERR "$mysql_test_output";
+            if ($mysql_test_output =~ /ERROR 1045: Access denied/) {
+                exit_error("MySQLRootPassword '$MySQLRootPassword' is not valid");
+            } elsif ($mysql_test_output =~ /ERROR 2002: Can\'t connect/) {
+                exit_error("Can't connect to MySQL.  Start MySQL and try again.");
+            } else {
+                exit_error("Unable to verify MySQLRootPassword.");
+            }
         }
     }
 
