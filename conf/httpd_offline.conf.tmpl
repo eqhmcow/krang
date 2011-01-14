@@ -75,7 +75,7 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
 </tmpl_loop>
 
 <tmpl_loop InstanceLoop>
-<VirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>>
+<VirtualHost <tmpl_var InstanceApacheAddr>:<tmpl_var ApachePort>>
     ServerName <tmpl_var HostName>
     RewriteEngine On
     RewriteLogLevel 4
@@ -87,7 +87,7 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
     RewriteRule ^.*$ /<tmpl_var InstanceName>.html [L]
 </VirtualHost>
 <tmpl_if EnableSSL>
-<VirtualHost <tmpl_var ApacheAddr>:<tmpl_var SSLApachePort>>
+<VirtualHost <tmpl_var InstanceApacheAddr>:<tmpl_var SSLApachePort>>
     ServerName <tmpl_var HostName>
     RewriteEngine On
     RewriteLogLevel 4
