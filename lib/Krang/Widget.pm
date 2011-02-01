@@ -477,12 +477,14 @@ sub time_chooser {
         <input id="$name" name="$name" value="$value" size="9"$onchange_attr class="time_chooser">
         <img alt="" src="${img_prefix}images/clock.gif" id="${name}_trigger" class="clock_trigger">
         <div id="${name}_clock" class="clock_widget" style="display:none">
-            <select name="${name}_hour" onchange="Krang.Widget.update_time_chooser('$name', $js_use_ampm_time); $onchange" disabled>
+            <select name="${name}_hour" onchange="Krang.Widget.update_time_chooser('$name', $js_use_ampm_time); $onchange" 
+                class="time_chooser" disabled>
                 <option value="">$Hour</option> |
       . join(' ', map { qq|<option value="$_">$_</option>| } @hours) . qq|
             </select>
             :
-            <select name="${name}_minute" onchange="Krang.Widget.update_time_chooser('$name', $js_use_ampm_time); $onchange" disabled>
+            <select name="${name}_minute" onchange="Krang.Widget.update_time_chooser('$name', $js_use_ampm_time); $onchange" 
+                class="time_chooser" disabled>
                 <option value="">$Minute</option> |
       . join(' ',
         map { qq|<option value="$_">$_</option>| }
@@ -492,7 +494,8 @@ sub time_chooser {
     if ($use_ampm_time) {
         $html .= qq|
             &nbsp;
-            <select name="${name}_ampm" onchange="Krang.Widget.update_time_chooser('$name', $js_use_ampm_time); $onchange" disabled>
+            <select name="${name}_ampm" onchange="Krang.Widget.update_time_chooser('$name', $js_use_ampm_time); $onchange" 
+                class="time_chooser" disabled>
                 <option value="AM">AM</option> <option value="PM">PM</option>
             </select>|;
     }
