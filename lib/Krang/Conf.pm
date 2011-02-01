@@ -208,8 +208,10 @@ CROAK
             }
         }
 
-        my $real_val = $dict{hostname()};
+        my $hostname = hostname();
+        my $real_val = $dict{$hostname};
         $real_val = $dict{default} unless defined $real_val;
+        die "No default configured for Hostname $hostname at $directive\n" unless defined $real_val;
         $content =~ s/\Q$orig\E/$indent$directive "$real_val"\n/g if defined $real_val;
     }
 
