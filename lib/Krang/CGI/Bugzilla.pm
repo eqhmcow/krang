@@ -83,7 +83,7 @@ sub is_progress_screen {
         'publisher.pl' => [qw(publish_assets publish_media preview_story preview_media)],
     );
     my $script = basename($ENV{REDIRECT_SCRIPT_NAME});
-    my $rm = CGI->new($ENV{REDIRECT_QUERY_STRING})->param('rm');
+    my $rm = CGI->new($ENV{REDIRECT_QUERY_STRING})->param('rm') || '';
 
     return 1 if $progress_screens{$script} && first { $rm eq $_ } @{$progress_screens{$script}};
 }
