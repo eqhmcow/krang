@@ -1090,6 +1090,7 @@ sub autocomplete_values {
     while (my $row = $sth->fetchrow_arrayref) {
         foreach my $pos (0 .. (scalar @$row - 1)) {
             my $answer = $row->[$pos];
+            next unless $answer;
 
             if ($no_split) {
                 push(@words, $answer) unless $seen{$answer};
@@ -1098,6 +1099,7 @@ sub autocomplete_values {
 
                 # remove these characters
                 $answer =~ s/['"\,:]//g;
+                next unless $answer;
 
                 # split on '_', \s, '/' or '.' to make words and only keep the ones that
                 # start with our phrase
