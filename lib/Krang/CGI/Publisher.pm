@@ -791,7 +791,10 @@ sub _publish_assets_now {
                     );
                     critical($err->message);
                 } else {
-                    croak($err);
+                    add_alert('unknown_publish_error');
+                    $err = "Error while publishing: $err";
+                    critical($err); # to krang.log
+                    warn "$err\n";  # to apache log
                 }
 
                 # make sure to turn off caching

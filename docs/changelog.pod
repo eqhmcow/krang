@@ -2,6 +2,17 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.13 - In development
+
+=over
+
+=item *
+
+Fixed wacky partial error screen when unexpected erorrs happened during
+publish from the web UI. [Michael Peters]
+
+=back
+
 =head2 3.12 - Jan, 13 2011
 
 =over
