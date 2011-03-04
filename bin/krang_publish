@@ -77,6 +77,13 @@ however prevent media files that are related to stories from getting published.
 
 If true, then stories will be skipped from publishing.
 
+=item --skip-related-assests
+
+If true, do not publish related stories or media.
+
+B<WARNING>: Use with care! This option is mainly meant for development
+purposes.
+
 =item --all-instances
 
 Normally we just publish the content for a single instance:
@@ -267,6 +274,7 @@ my @story_class         = ();
 my $no_cache            = 0;
 my $skip_media          = 0;
 my $skip_stories        = 0;
+my $skip_related_assets = 0;
 
 # for backwards compatibility, convert all underscores in options (but not in their values) to hyphens
 for (0 .. $#ARGV) {
@@ -297,6 +305,7 @@ GetOptions(
     'flavor=s'            => \$flavor,
     'skip-media'          => \$skip_media,
     'skip-stories'        => \$skip_stories,
+    'skip-related-assests'=> \$skip_related_assets,
 
     # handle --story-id, --site-id, etc.
     (map { ("$_-id=s", $id{$_}) } keys %id)
@@ -628,7 +637,8 @@ sub publish_stories {
                 }
 
             } else {
-                $publisher->publish_story(story => \@stories, %$publish_args);
+                $publisher->publish_story(story => \@stories, %$publish_args,
+                                          disable_related_assets => $skip_related_assets);
             }
         };
 
