@@ -2782,6 +2782,7 @@ my %EXTENSION_TYPES = (
     tsv   => 'Excel',
     ods   => 'Excel',
     sxc   => 'Excel',
+    xlsx  => 'Excel',
     doc   => 'Word',
     sxw   => 'Word',
     odt   => 'Word',
