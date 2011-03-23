@@ -723,7 +723,7 @@ sub run {
     if (my $err = $@) {
         debug("Krang::CGI:  UN-Loading Session after error");
         pkg('Session')->unload();
-        die $@;
+        die $err;
     }
 
     # In debug mode append dump_html()

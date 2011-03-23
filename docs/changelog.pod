@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed problems with un-localized C<$@> which could make some error
+messages not appear in the logs. [Michael Peters]
+
+=item *
+
 Fixed wacky partial error screen when unexpected erorrs happened during
 publish from the web UI. [Michael Peters]
 
