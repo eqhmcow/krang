@@ -200,22 +200,25 @@ BEGIN {
         }
     }
 
-    if (not @parts) {
-        if ($LOG_LEVEL_DEFAULT != 3) {
-            eval 'sub debug ($) { }';
-        } else {
-            eval 'sub debug    ($) { __PACKAGE__->log(level => "debug",    message => shift); }';
-        }
+    {
+        local $@;
+        if (not @parts) {
+            if ($LOG_LEVEL_DEFAULT != 3) {
+                eval 'sub debug ($) { }';
+            } else {
+                eval 'sub debug ($) { __PACKAGE__->log(level => "debug", message => shift) }';
+            }
 
-        if ($LOG_LEVEL_DEFAULT == 1) {
-            eval 'sub info ($) { }';
-        } else {
-            eval 'sub info     ($) { __PACKAGE__->log(level => "info",     message => shift); }';
-        }
+            if ($LOG_LEVEL_DEFAULT == 1) {
+                eval 'sub info ($) { }';
+            } else {
+                eval 'sub info ($) { __PACKAGE__->log(level => "info", message => shift) }';
+            }
 
-    } else {
-        eval 'sub debug    ($) { __PACKAGE__->log(level => "debug",    message => shift); }';
-        eval 'sub info     ($) { __PACKAGE__->log(level => "info",     message => shift); }';
+        } else {
+            eval 'sub debug ($) { __PACKAGE__->log(level => "debug", message => shift) }';
+            eval 'sub info  ($) { __PACKAGE__->log(level => "info",  message => shift) }';
+        }
     }
 
     # turn assertions on or off based on KRANG_ASSERT or Assertions
@@ -268,6 +271,7 @@ The string to be logged to the logfile.
 sub log {
     my $self = shift;
     my %args = @_;
+    local $@;
 
     # check for the required arguments
     my $level   = $args{level};
