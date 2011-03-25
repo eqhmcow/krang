@@ -77,12 +77,12 @@ use Krang::ClassLoader MethodMaker => new_with_init => 'new',
       before_bulk_save
       required
       reorderable
-      hidden
       allow_delete
       default
       pageable
       indexed
       lazy_loaded
+      _hidden
       )
   ];
 
@@ -118,6 +118,9 @@ meaning any number is allowed.
 If this attribute is set true then the element will not be available
 for use within the UI.  However, it will still function if used by
 existing stories or categories.  Defaults to 0.
+
+If set as a subroutine reference, then it will be called and the value
+returned will be used.
 
 =item bulk_edit
 
@@ -1366,7 +1369,7 @@ sub init {
     $args{before_bulk_save} = undef unless exists $args{before_bulk_save};
     $args{required}         = 0     unless exists $args{required};
     $args{children}         = []    unless exists $args{children};
-    $args{hidden}           = 0     unless exists $args{hidden};
+    $args{_hidden}          = 0     unless exists $args{hidden};
     $args{reorderable}      = 1     unless exists $args{reorderable};
     $args{allow_delete}     = 1     unless exists $args{allow_delete};
     $args{default}          = undef unless exists $args{default};
@@ -1377,6 +1380,22 @@ sub init {
     $self->hash_init(%args);
 
     return $self;
+}
+
+sub hidden {
+    my ($self, $val) = @_;
+
+    if( defined $val ) {
+        $self->_hidden($val);
+    } else {
+        $val = $self->_hidden;
+    }
+
+    if( ref $val && ref $val eq 'CODE' ) {
+        return $val->();
+    } else {
+        return $val;
+    }
 }
 
 =item C<< $class->clone_hook(element => $element) >>
