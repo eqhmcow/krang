@@ -1303,6 +1303,9 @@ sub make_dynamic_columns {
             push(@js_args, $args_callback->($fobj));
         }
 
+        # escape single quotes since we're using them to quote js_args.
+        map { $_ =~ s/'/\\'/g } @js_args;
+
         # Build HTML for commands
         my @commands_html = ();
         foreach my $command (@command_column_commands) {
