@@ -1303,8 +1303,8 @@ sub make_dynamic_columns {
             push(@js_args, $args_callback->($fobj));
         }
 
-        # escape single quotes since we're using them to quote js_args.
-        map { $_ =~ s/'/\\'/g } @js_args;
+        # escape javascript special characters.
+        map { $_ = _js_escape($_) } @js_args;
 
         # Build HTML for commands
         my @commands_html = ();
@@ -1518,6 +1518,20 @@ sub _commify {
     my $val = reverse $_[0];
     $val =~ s/(\d\d\d)(?=\d)/$1,/g;
     return scalar reverse $val;
+}
+
+sub _js_escape {
+    my $text = shift;
+    my $ref = ref $text ? $text : \$text;
+    return $text unless $$ref;
+
+    $$ref =~ s!\\!\\\\!g;
+    $$ref =~ s!'!\\'!g;
+    $$ref =~ s!"!\\"!g;
+    $$ref =~ s!\n!\\n!g;
+    $$ref =~ s!\r!\\r!g;
+
+    return ref $text ? $ref : $$ref;
 }
 
 sub _get_cache_key {
