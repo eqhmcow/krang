@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where you couldn't uncheck the "Search full text?" checkbox
+on the "Find Templates" screen. [Michael Peters]
+
+=item *
+
 C<hidden> parameters of elements can now be a subroutine reference which
 will be executed at runtime and that value used. [Michael Peters]
 

@@ -842,6 +842,8 @@ sub _do_simple_search {
         $search_filter_check_full_text = $q->param('search_filter_check_full_text');
         $session{KRANG_PERSIST}{pkg('Template')}{search_filter_check_full_text} =
           $search_filter_check_full_text;
+    } elsif ($q->param('searched')) {
+        $search_filter_check_full_text = 0;
     } else {
         $search_filter_check_full_text =
           $session{KRANG_PERSIST}{pkg('Template')}{search_filter_check_full_text};
