@@ -1789,9 +1789,9 @@ sub _do_find {
     }
 
     # get it from the query or the session
-    my $show_type_and_version = $q->param('show_type_and_version') ? 1 : 0;
-    if (defined $q->param('show_type_and_version') ) {
-        $show_type_and_version = $q->param('show_type_and_version');
+    my $show_type_and_version;
+    if($q->param('searched')) {
+        $show_type_and_version = $q->param('show_type_and_version') ? 1 : 0;
         $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version} = $show_type_and_version;
     } else {
         $show_type_and_version = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version};
@@ -1945,7 +1945,7 @@ sub _do_find {
         $template->param(search_filter => $search_filter);
 
         my $check_full_text =
-          defined($q->param('search_filter'))
+          $q->param('searched')
           ? $q->param('search_filter_check_full_text')
           : $session{KRANG_PERSIST}{pkg('Story')}{search_filter_check_full_text};
         $find_params{simple_search_check_full_text}  = $check_full_text;

@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where you couldn't uncheck the "Show Story Type and Version"
+checkbox on the "Find Stories" screen. [Michael Peters]
+
+=item *
+
 Fixed bug where you couldn't uncheck the "Search full text?" checkbox
 on the "Find Templates" screen. [Michael Peters]
 
