@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use warnings;
 use strict;
+use Sys::Hostname qw(hostname);
 
 # Path to pre-req binaries
 our $COPY_BIN;
@@ -267,6 +268,35 @@ sub check_prereqs {
     foreach my $dir (split(/\t/, $get_directives_output_line1)) {
         push(@old_valid_directives, $dir);
     }
+
+    # get the original config file into a variable so we can do some manipulation
+    my $orig_conf_file = $krang_conf;
+    open(my $IN, '<', $krang_conf) or die "Could not open file $krang_conf for reading: $!";
+    my $content = do { local $/; <$IN> };
+    close($IN);
+
+    # now expand any "host-name dictionaries"
+    while ($content =~ /(([\s#]*)(\S+)\s+{([^}]*)}\n?)/s) {
+        my ($orig, $indent, $directive, $lines, %dict) = ($1, $2, $3, $4);
+        foreach my $line (split("\n", $lines)) {
+            if ($line =~ /[\s#]*(\S+)\s+["']?([^\s"']+)["']?\s*/) {
+                $dict{$1} = $2;
+            }
+        }
+
+        my $hostname = hostname();
+        my $real_val = $dict{$hostname};
+        $real_val = $dict{default} unless defined $real_val;
+        die "No default configured for Hostname $hostname at $directive\n" unless defined $real_val;
+        $content =~ s/\Q$orig\E/$indent$directive "$real_val"\n/g if defined $real_val;
+    }
+
+    # write it out to the new file
+    my $new_conf_file = catfile($ENV{KRANG_ROOT}, 'tmp', 'krang.conf.upgrade.expanded');
+    open(my $OUT, '>', $new_conf_file) or die "Could not open $new_conf_file for writing: $!";
+    print $OUT $content;
+    close($OUT);
+    $krang_conf = $new_conf_file;
 
     eval {
         $OLD_CONF = Config::ApacheFormat->new(
