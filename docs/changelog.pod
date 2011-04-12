@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed display issue of time selector in Krang::ElementClass::DateTime
+(thanks to Mike Lampson for this patch). [Bodo Schulze]
+
+=item *
+
 Fixed bug where you couldn't uncheck the "Show Story Type and Version"
 checkbox on the "Find Stories" screen. [Michael Peters]
 

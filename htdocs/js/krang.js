@@ -1562,10 +1562,11 @@ Krang.Widget.time_chooser = function(inputName, use_ampm_time) {
     // we need to find the associated clock and make the trigger display it
     var trigger = $(inputName + '_trigger');
     var clock   = $(inputName + '_clock');
-    var hour    = clock.down('select', 0);
-    var minute  = clock.down('select', 1);
+    var children = clock.childElements();
+    var hour    = children[0];
+    var minute  = children[1]; 
     var ampm    = null;
-    if (use_ampm_time) { ampm = clock.down('select', 2); }
+    if (use_ampm_time) { ampm = children[2]; } 
 
     var hide_clock = function() {
         clock.hide();
