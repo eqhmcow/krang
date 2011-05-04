@@ -135,12 +135,9 @@ List of actions to add to story/media scheduler screen
 
 use version;
 use Carp qw(croak);
-use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catdir catfile canonpath splitdir);
 use File::Path qw(mkpath rmtree);
-
 use File::Copy qw(copy);
-
 use File::Temp qw(tempdir tempfile);
 use Archive::Tar;
 use Config::ApacheFormat;
@@ -148,9 +145,7 @@ use File::Find ();
 use Krang;
 use File::Copy qw(copy);
 use Cwd qw(fastcwd);
-
 use Krang::ClassLoader 'File';
-
 use Krang::ClassLoader MethodMaker => new_with_init => 'new',
   new_hash_init                    => 'hash_init',
   get_set => [qw(name version conf EnableAdminSchedulerActions EnableObjectSchedulerActions)];
@@ -209,12 +204,11 @@ sub uninstall {
         warn $@ . "(continueing anyway due to --force)\n";
     }
 
-    my $dir = catdir(KrangRoot, 'addons', $self->name);
+    my $dir = catdir($ENV{KRANG_ROOT}, 'addons', $self->name);
 
     # run the uninstall script if one is set
     if ($self->conf->get('uninstallscript')) {
-        system( "KRANG_ROOT="
-              . KrangRoot . " $^X "
+        system( "KRANG_ROOT=$ENV{KRANG_ROOT}  $^X "
               . catfile($dir, $self->conf->get('uninstallscript')))
           and die "\n\nUninstall script failed, won't uninstall!\n";
     }
@@ -230,7 +224,7 @@ our $PERL_BIN = $^X;
 
 sub find {
     my ($pkg, %arg) = @_;
-    my $dir = catdir(KrangRoot, 'addons');
+    my $dir = catdir($ENV{KRANG_ROOT}, 'addons');
 
     unless (@ADDONS) {
         opendir(my $dh, $dir) or die "Unable to open dir $dir: $!";
@@ -282,7 +276,7 @@ sub install {
     $args{conf} = $conf;
 
     # run the pre install script if required
-    system("KRANG_ROOT=" . KrangRoot . " $^X " . $conf->get('preinstallscript'))
+    system("KRANG_ROOT=$ENV{KRANG_ROOT} $^X " . $conf->get('preinstallscript'))
       if $conf->get('preinstallscript');
 
     # make sure that this is a positive upgrade, if the addon is already
@@ -331,7 +325,7 @@ sub install {
     $pkg->_copy_files(%args, files => \@files);
 
     # run krang_addon_build to build src/ files
-    system(catfile(KrangRoot, 'bin', 'krang_addon_build') . " " . $conf->get('name'))
+    system(catfile($ENV{KRANG_ROOT}, 'bin', 'krang_addon_build') . " " . $conf->get('name'))
       and die "Unable to build with krang_addon_build: $!";
 
     # installing a new addon means that @INC needs updating, reload
@@ -346,7 +340,7 @@ sub install {
     $pkg->upgrade(%args, old_version => $old->version) if $old && !$no_upgrade;
 
     # run the post install script if required
-    system("KRANG_ROOT=" . KrangRoot . " $^X " . $conf->get('postinstallscript'))
+    system("KRANG_ROOT=$ENV{KRANG_ROOT} $^X " . $conf->get('postinstallscript'))
       if $conf->get('postinstallscript');
 
     # all done, return home if possible
@@ -422,7 +416,7 @@ sub _copy_files {
     my ($source, $verbose, $force, $conf, $files, $clean) =
       @args{qw(src verbose force conf files clean)};
 
-    my $root      = KrangRoot;
+    my $root      = $ENV{KRANG_ROOT};
     my $name      = $conf->get('name');
     my $addon_dir = catdir($root, 'addons', $name);
 
@@ -542,7 +536,7 @@ sub _open_addon {
 
     # extract in temp dir
     my $dir = tempdir(
-        DIR     => catdir(KrangRoot, 'tmp'),
+        DIR     => catdir($ENV{KRANG_ROOT}, 'tmp'),
         CLEANUP => 1
     );
     chdir($dir) or die "Unable to chdir to $dir: $!";

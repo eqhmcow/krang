@@ -55,7 +55,7 @@ BEGIN {
       : "${lib}";
     unshift @INC, $lib, "$lib/" . $Config{archname};
 
-    eval { require Krang::Conf };
+    eval { require Krang };
     warn << "END" and exit(1) if $@;
 ######################################################################
 
@@ -75,9 +75,7 @@ use File::Temp qw(tempdir);
 # use first instance if one isn't set.  AddOns are installation wide
 # anyway.
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Conf => qw(KrangRoot);
-BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
-use Krang::ClassLoader 'Script';
+BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0] }
 use Krang::ClassLoader 'AddOn';
 
 # options
@@ -105,8 +103,8 @@ die("Can't find addon named '$name'!  The following addons are installed:\n"
   unless $addon;
 
 # assemble info for tar
-my $dir  = catdir(KrangRoot, 'addons', $name);
-my $adir = catdir(KrangRoot, 'addons');
+my $dir  = catdir($ENV{KRANG_ROOT}, 'addons', $name);
+my $adir = catdir($ENV{KRANG_ROOT}, 'addons');
 my $conf = $addon->conf;
 my $version  = $conf->get('Version');
 my $filename = $name . '-' . $version . '.tar.gz';
@@ -114,7 +112,7 @@ my $filename = $name . '-' . $version . '.tar.gz';
 # create tarball
 print STDERR "Creating tarball $filename...\n" if $verbose;
 my $out =
-  `tar zvcf $filename -C $adir --exclude=CVS --exclude=.svn --exclude=*.swp --exclude=*.tdy --exclude=*~ --exclude=*bak --exclude=.#* $name/.`;
+  `tar zvcf $filename -C $adir --exclude=CVS --exclude=.svn --exclude='*.swp' --exclude='*.tdy' --exclude='*~' --exclude='*bak' --exclude='.#*' $name/.`;
 print STDERR $out if $verbose;
 
 print "Success.  Created addon distribution in $filename.\n";

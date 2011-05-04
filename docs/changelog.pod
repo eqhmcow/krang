@@ -2,6 +2,19 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.14 - In development
+
+=over
+
+=item *
+
+Removed the need for F<bin/krang_addon_dist> to have a valid F<krang.conf>
+since it doesn't actually use anything in that. This allows for
+automating the building of a package from a Krang svn checkout that is
+built. [Michael Peters]
+
+=back
+
 =head2 3.13 - Apr, 5 2011
 
 =over

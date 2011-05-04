@@ -2,10 +2,7 @@ package Krang::File;
 use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-
 use Krang::ClassLoader 'AddOn';
-use Krang::ClassLoader Conf => qw(KrangRoot);
-
 use File::Spec::Functions qw(catfile);
 
 =head1 NAME
@@ -62,7 +59,7 @@ sub find {
     return $CACHE{$_[1]} if exists $CACHE{$_[1]};
 
     my ($pkg, $file) = @_;
-    my $root = KrangRoot;
+    my $root = $ENV{KRANG_ROOT};
 
     -e $_ and return $CACHE{$file} = $_
       for ((map { catfile($root, 'addons', $_->name, $file) } pkg('AddOn')->find()),
@@ -75,7 +72,7 @@ sub flush_cache { %CACHE = (); }
 
 sub find_all {
     my ($pkg, $file) = @_;
-    my $root = KrangRoot;
+    my $root = $ENV{KRANG_ROOT};
 
     return grep { -e $_ } (
         (map { catfile($root, 'addons', $_->name, $file) } pkg('AddOn')->find()),
@@ -85,7 +82,7 @@ sub find_all {
 
 sub find_glob {
     my ($pkg, $file) = @_;
-    my $root = KrangRoot;
+    my $root = $ENV{KRANG_ROOT};
 
     my @files = glob(catfile($root, $file));
     foreach my $addon (pkg('AddOn')->find) {
