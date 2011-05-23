@@ -20,7 +20,7 @@ See usage in Krang::FTP::FileHandle
 =head1 DESCRIPTION
 
 This class provides a filehandle interface to a media/template object, is based 
-on IO::Handle and is used interbnally by L<Krang::FTP::FileHandle>.
+on IO::Handle and is used internally by L<Krang::FTP::FileHandle>.
 
 =head1 INTERFACE
 
