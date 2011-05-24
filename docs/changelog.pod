@@ -13,6 +13,10 @@ since it doesn't actually use anything in that. This allows for
 automating the building of a package from a Krang svn checkout that is
 built. [Michael Peters]
 
+=item *
+
+Fixed FTP download of templates with UTF8 characters in binary mode.  [Brad Oaks]
+
 =back
 
 =head2 3.13 - Apr, 5 2011

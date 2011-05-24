@@ -171,6 +171,44 @@ sub post_accept_hook {
     }
 }
 
+=item transfer_hook($mode, $file, $sock, \$buffer);
+
+  $mode     -  Open mode on the File object (Either reading or writing)
+  $file     -  File object as returned from DirHandle::open
+  $sock     -  Data IO::Socket object used for transfering
+  \$buffer  -  Reference to current buffer about to be written
+
+The \$buffer is passed by reference to minimize the stack overhead
+for efficiency purposes only.  It is B<not> meant to be modified by
+the transfer_hook subroutine.  (It can cause corruption if the
+length of $buffer is modified.)
+
+Hook: This hook is called after reading $buffer and before writing
+$buffer to its destination.  If arg1 is "r", $buffer was read
+from the File object and written to the Data socket.  If arg1 is
+"w", $buffer will be written to the File object because it was
+read from the Data Socket.  The return value is the error for not
+being able to perform the write.  Return undef to avoid aborting
+the transfer process.
+
+Status: optional.
+
+=cut
+
+sub transfer_hook {
+    my $self         = shift;
+    my $mode         = shift;
+    my $file         = shift;
+    my $sock         = shift;
+    my $buffer_ref   = shift;
+
+    # prevent "Wide character in syswrite" error when downloading template with utf8 characters.
+    binmode($sock, ":utf8")
+        if $mode eq 'r';
+
+    return undef;
+}
+
 =item authenticaton_hook($user, $pass, $user_is_anon)
 
 When a user logs in authentication_hook() is called to check their
