@@ -727,13 +727,57 @@ sub execute_copy {
 ####  PRIVATE METHODS  ####
 ###########################
 
-# Encapculate category save (in case we need to handle permissions)
+# Encapsulate category save (in case we need to handle permissions)
 sub category_save {
     my $self = shift;
 
     # save category to the database
     my $category = $session{category};
-    $category->save();
+
+    # try saving
+    eval { $category->save(); };
+
+    # it was an exception
+    if ($@ and ref($@)) {
+        # is there an existing category or story with our URL?
+        if ($@->isa('Krang::Category::DuplicateURL')) {
+            if ($@->category_id) {
+                # there's an existing category...
+                # Where was the category duplication check happening before?
+                add_alert(
+                    'duplicate_url',
+                    url         => $@->url,
+                    category_id => $@->category_id
+                );
+                return $self->new_category(bad => ['parent_id', 'dir']);
+            } elsif ($@->story_id) {
+                # there's an existing story; turn it into a category cover
+                # (after making sure we can edit it!)
+                my ($story) = pkg('Story')->find(story_id => $@->story_id);
+
+                unless ($story->turn_into_category_index(category => $category, steal => 1)) {
+                    add_alert('uneditable_story_has_url', id => $story->story_id);
+                    return $self->new_category(bad => ['parent_id', 'dir']);
+                }
+                add_message(
+                    'story_had_category_url',
+                    id     => $story->story_id,
+                    cat_id => $category->{category_id}
+                );
+            } else {
+                croak("DuplicateURL didn't include category_id OR story_id!");
+            }
+        } elsif ($@->isa('Krang::Category::ReservedURL')) {
+            add_alert('reserved_url', reserved => $@->reserved);
+            return $self->new_category(bad => ['parent_id', 'dir']);
+        } else {
+            # rethrow
+            die($@);
+        }
+    } elsif ($@) {
+        # rethrow
+        die($@);
+    }
 }
 
 sub autocomplete {

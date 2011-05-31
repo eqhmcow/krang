@@ -17,6 +17,12 @@ built. [Michael Peters]
 
 Fixed FTP download of templates with UTF8 characters in binary mode.  [Brad Oaks]
 
+=item *
+
+Editing and saving an existing category will now convert a story with a duplicate
+url into a category index. This check already happens when creating a new category.
+[Brad Oaks]
+
 =back
 
 =head2 3.13 - Apr, 5 2011
