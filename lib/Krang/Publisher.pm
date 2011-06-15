@@ -1783,7 +1783,6 @@ sub _undeploy_testing_templates {
 # @paths = _build_story_all_categories(story => $story);
 #
 # Handles the process for publishing a story out over all its various categories.
-# Used only in the publish process, not the preview process.
 #
 # Returns a list of file-system paths where the story was written
 
