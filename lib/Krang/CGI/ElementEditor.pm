@@ -1229,6 +1229,8 @@ sub element_save {
         if ($clean) {
             my ($valid, $msg) = $element->validate_children(query => $query);
             if (not $valid) {
+                croak("No validation failure message provided by validate_children()!")
+                  unless defined $msg && length $msg;
                 add_alert('invalid_element_data', msg => $msg);
                 $clean = 0;
             }
