@@ -106,7 +106,7 @@ use File::Path;
 use File::Temp qw(tempdir);
 use Time::Piece;
 
-use Krang::ClassLoader Conf => qw(KrangRoot instance PreviewSSL EnablePreviewEditor);
+use Krang::ClassLoader Conf => qw(KrangRoot instance PreviewSSL EnablePreviewEditor IgnorePreviewRelatedStoryAssets IgnorePreviewRelatedMediaAssets);
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Template';
@@ -2028,8 +2028,10 @@ sub _build_asset_list {
         );
         push @asset_list, $o if ($publish_ok);
         if ($check_links) {
-            push @check_list, $o->linked_stories(publisher => $self);
-            push @check_list, $o->linked_media;
+            my $check_stories = !($self->is_preview && IgnorePreviewRelatedStoryAssets);
+            my $check_media   = !($self->is_preview && IgnorePreviewRelatedMediaAssets);
+            push @check_list, $o->linked_stories(publisher => $self) if $check_stories;
+            push @check_list, $o->linked_media if $check_media;
         }
     }
 

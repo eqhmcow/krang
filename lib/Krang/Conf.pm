@@ -57,6 +57,8 @@ our @VALID_DIRECTIVES;
   InstanceSSLCACertificateFile
   InstanceSSLCARevocationFile
   InstanceSSLPort
+  IgnorePreviewRelatedStoryAssets
+  IgnorePreviewRelatedMediaAssets
   KrangGroup
   KrangRoot
   KrangUser
