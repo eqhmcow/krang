@@ -1,0 +1,246 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+
+use File::Spec::Functions qw(catdir splitdir canonpath);
+use FindBin qw($RealBin);
+use Getopt::Long;
+use Pod::Usage;
+use Config;
+
+=head1 NAME
+
+krang_storable_freezethaw - convert element data between Storable and FreezeThaw strings
+
+=head1 SYNOPSIS
+
+  # use database 'svconline' adn convert data of element classes
+  # 'from_date' and 'to_date' from Storable to FreezeThaw
+  krang_storable_freezethaw -db test_db --stf --class from_date,to_date [ --table element_copy ]
+
+  # use database 'svconline' adn convert data of element classes
+  # 'from_date' and 'to_date' from FreezeThaw to Storable
+  krang_storable_freezethaw -db test_db --fts --class from_date,to_date [ --table element_copy ]
+
+=head1 DESCRIPTION
+
+This script helps migrating between 32bit and 64bit machines.
+
+It converts element data holding serialized strings from
+Storable-strings to FreezeThaw-strings and vice versa. It operates
+directly on the database configured in conf/krang.conf.
+
+Storable strings are not portable between 32bit and 64bit
+architectures, while FreezeThaw strings are. As Krang uses Storable,
+migrating between 32bit and 64bit machines requires to temporarily
+replace Storable strings with FreezeThaw strings. Here's the
+workflow:
+
+1. On the source machine, run the script with the --stf
+(storable-to-freezethaw) switch.
+
+2. Copy the database to the target machine
+
+3. On the target machine, run the script with the --fts
+(freezethaw-to-storable) switch.
+
+=head1 OPTIONS
+
+=over
+
+=item --db
+
+The database to act upon.
+
+=item --table
+
+The table to act upon. Defaults to 'element'.
+
+=item --stf
+
+Convert from Storable to FreezeThaw strings.
+
+=item --fts
+
+Convert from FreezeThaw to Storable strings.
+
+=item --class
+
+A comma-separated list of element class names to operate upon.
+
+=item --list
+
+Print all table rows holding Storable/FreezeThaw strings for the
+element classes specified with the --class option.
+
+=item --verbose
+
+Increases the level of output to STDOUT to give a more in-depth
+explanation of what is going on.
+
+=back
+
+=cut
+
+BEGIN {
+
+    # Find a KRANG_ROOT based on path to bin
+    unless ($ENV{KRANG_ROOT}) {
+        my @dir = splitdir(canonpath($RealBin));
+        $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+    }
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+# Krang Libs
+use Krang::Conf qw(KrangRoot DBUser DBPass DBHost);
+use DBI;
+
+# then process options
+my ($help, $man, $class, $stf, $fts, $list, $db, $no_prompt);
+my $verbose = 0;
+my $table = 'element';
+GetOptions(
+    'help'                => \$help,
+    'man'                 => \$man,
+    'verbose+'            => \$verbose,
+    'class=s'             => \$class,
+    'stf'                 => \$stf,
+    'fts'                 => \$fts,
+    'list'                => \$list,
+    'db=s'                => \$db,
+    'table=s'             => \$table,
+    'no-prompt'           => \$no_prompt,
+) || pod2usage(2);
+
+pod2usage(1) if $help;
+pod2usage(-verbose => 2) if $man;
+pod2usage(-verbose => 2) unless $class && ($stf || $fts || $list);
+
+die "Options --stf and --fts are mutually exclusive\n"
+  if $stf and $fts;
+
+# set up vars
+my $classes = join(',', map { "'$_'" } split(/\s*,\s*/, $class));
+my $offset  = 0;
+my $limit   = 1000;
+
+# the conversion callbacks
+my ($callback, $from_to_msg);
+if ($stf) {
+  $callback = sub { MyFreezeThaw::f_freeze(MyStorable::s_thaw(+shift)) };
+  $from_to_msg = "from Storable to FreezeThaw";
+} else {
+  $callback = sub { MyStorable::s_freeze(MyFreezeThaw::f_thaw(+shift)) };
+  $from_to_msg = "from FreezeThaw to Storable";
+}
+
+unless ($no_prompt or $list) {
+    print "Are your sure you want to replace $from_to_msg in db '$db' table '$table'? [y/N] ";
+    my $answer = <STDIN>;
+    $answer =~ /y(es)?/i or (print "Cancelled.\n" and exit);
+}
+
+list_elements() if $list;
+convert($callback, $from_to_msg) if $stf or $fts;
+
+#   --- End Main ---
+
+sub list_elements {
+    my $cmd = get_mysql_cmd();
+    $cmd   .= qq{ -e "SELECT * FROM $table WHERE class IN ($classes)"};
+    system($cmd) and die "Can't system($cmd): $?";
+}
+
+sub convert {
+    my ($callback, $from_to_msg) = @_;
+    my $dbh = get_dbh();
+
+    print "Converting $from_to_msg\n";
+
+    my $sql = "SELECT element_id, data FROM $table WHERE class IN ($classes)";
+
+    while(1) {
+        if (my @sets = @{ $dbh->selectall_arrayref(qq{$sql limit $offset,$limit})}) {
+            info("Converting elements " . ($offset + 1) . " - " . ($offset + $limit));
+            for my $set (@sets) {
+                my ($eid, $data) = @$set;
+
+                next unless defined $data;
+
+                # THE CONVERSION
+                my $converted;
+                eval { $converted = $callback->($data) };
+                next if $@;
+
+                # set in db
+                $dbh->do(qq{UPDATE $table SET data = ? WHERE element_id = ?},
+                         undef, $converted, $eid)
+                  or warn "Couldn't convert element $eid $from_to_msg: " . $dbh->errstr;
+            }
+            $offset += $limit;
+        } else {
+            last;
+        }
+    }
+}
+
+sub get_mysql_cmd {
+    my $cmd = 'mysql';
+    $cmd   .= ' -u' . DBUser;
+    $cmd   .= ' -p' . DBPass if DBPass;
+    $cmd   .= ' -h' . DBHost if DBHost;
+    $cmd   .= ' ' . $db;
+    return $cmd;
+}
+
+sub get_dbh {
+    # check for MySQL hostname
+    my $dsn = "DBI:mysql:database=$db";
+    $dsn .= ";host=" . DBHost if DBHost;
+
+    my %connect_options = (
+        RaiseError           => 1,
+        AutoCommit           => 1,
+        mysql_auto_reconnect => 1,
+    );
+
+    # connect to the defined database
+    return DBI->connect($dsn, DBUser, DBPass, \%connect_options);
+}
+
+sub info  { print @_, "\n" if $verbose }
+sub debug { print @_, "\n" if $verbose > 1 }
+
+package MyStorable;
+use Storable qw(thaw nfreeze);
+use MIME::Base64 qw(decode_base64 encode_base64);
+sub s_thaw   { my $s = thaw(decode_base64(+shift));    main::debug("Storable thawed: " ,$s); return $s  }
+sub s_freeze { my $s = encode_base64(nfreeze(+shift)); main::debug("Storable frozen: ", $s); return $s  }
+
+package MyFreezeThaw;
+use FreezeThaw qw(freeze thaw);
+sub f_thaw   { my ($s) = thaw(+shift);   main::debug("FreezeThaw thawed: ", $s); return $s   }
+sub f_freeze { my ($s) = freeze(+shift); main::debug("FreezeThaw frozen: ", $s); return $s }
