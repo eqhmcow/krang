@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Reset environment variables set by L<ExtUtils::MakeMaker> and
+L<Module::Build> to get a clean start. [Bodo Schulze]
+
+=item *
+
 Added script F<bin/krang_storable_freezethaw> to help migrating
 between 32bit and 64bit architectures. [Bodo Schulze]
 

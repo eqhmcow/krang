@@ -157,6 +157,15 @@ pod2usage(-verbose => 2) if $man;
 $ENV{LD_LIBRARY_PATH} = catdir($MM_BIN, 'lib');
 $ENV{SSL_BASE} = $ssl_base;
 
+# reset a couple of ExtUtils::MakeMaker env vars
+$ENV{PERL_MM_OPT}         = '';
+$ENV{PERL_MM_USE_DEFAULT} = '';
+$ENV{PERL_CORE}           = '';
+
+# rest a couple of Module::Build env vars
+$ENV{MODULEBUILDRC} = '';
+$ENV{PERL_MB_OPT}   = '';
+
 # get platform arg
 pod2usage("Wrong number of arguments.\n") if @ARGV > 1;
 my $platform;
