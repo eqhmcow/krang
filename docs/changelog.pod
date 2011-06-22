@@ -18,7 +18,10 @@ between 32bit and 64bit architectures. [Bodo Schulze]
 
 =item *
 
-Added C<IgnorePreviewRelatedStoryAssets> and C<IgnorePreviewRelatedMediaAssets> configuration directives so that instances can choose to ignore publishing related assets during preview. [Michael Peters]
+Added C<IgnorePreviewRelatedStoryAssets> and
+C<IgnorePreviewRelatedMediaAssets> configuration directives so that
+instances can choose to ignore publishing related assets during
+preview. [Michael Peters]
 
 =item *
 
