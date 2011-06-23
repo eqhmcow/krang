@@ -13,8 +13,8 @@ L<Module::Build> to get a clean start. [Bodo Schulze]
 
 =item *
 
-Added script F<bin/krang_storable_freezethaw> to help migrating
-between 32bit and 64bit architectures. [Bodo Schulze]
+Added script F<bin/krang_storable_freezethaw> to help migrating between
+32bit and 64bit architectures. [Bodo Schulze]
 
 =item *
 
@@ -32,18 +32,19 @@ built. [Michael Peters]
 
 =item *
 
-Fixed FTP download of templates with UTF8 characters in binary mode.  [Brad Oaks]
-
-=item *
-
-Editing and saving an existing category will now convert a story with a duplicate
-url into a category index. This check already happens when creating a new category.
+Fixed FTP download of templates with UTF8 characters in binary mode.
 [Brad Oaks]
 
 =item *
 
-The Find Story button for a Lead In element of a story now works in the Chrome browser.
-[Brad Oaks]
+Editing and saving an existing category will now convert a story with
+a duplicate url into a category index. This check already happens when
+creating a new category.  [Brad Oaks]
+
+=item *
+
+The Find Story button for a Lead In element of a story now works in the
+Chrome browser.  [Brad Oaks]
 
 =item * 
 
