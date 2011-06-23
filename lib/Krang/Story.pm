@@ -1767,6 +1767,8 @@ or actions where the resulting data is not shown to the end user.
         }
 
         # execute an object search
+warn "SQL: $query\n";
+warn "Binds: " . join(', ', @param) . "\n";
         my $sth = $dbh->prepare($query);
         $sth->execute(@param);
 

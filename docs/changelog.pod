@@ -58,6 +58,13 @@ When someone steals a story or template from a user, give a more
 descriptive error message including the name of the person who stole
 it. [Michael Peters]
 
+=item *
+
+Advanced "Find Story" screen will now find stories that are in the
+category the user specifies even if it isn't the story's primary
+category. Otherwise it can be impossible to find the story you're looking
+for. [Michael Peters]
+
 =back
 
 =head2 3.13 - Apr, 5 2011
