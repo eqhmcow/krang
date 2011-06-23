@@ -52,6 +52,12 @@ When Bulk Editting something with a C<< <p> >> tag as a separator,
 we now strip off any remaining stray closing C<< </p> >> tags as
 well. [Michael Peters]
 
+=item *
+
+When someone steals a story or template from a user, give a more
+descriptive error message including the name of the person who stole
+it. [Michael Peters]
+
 =back
 
 =head2 3.13 - Apr, 5 2011
