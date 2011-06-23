@@ -206,11 +206,10 @@ sub checkout_checked {
         if (my $e = $@) {
             if (ref $e && $e->isa('Krang::Story::CheckedOut')) {
                 my ($thief) = pkg('User')->find(user_id => $e->user_id);
-                my $thief_name = CGI->escapeHTML($thief->first_name . ' ' . $thief->last_name);
                 add_alert(
                     'story_stolen_before_checkout',
                     id    => $obj->story_id,
-                    thief => $thief_name,
+                    thief => CGI->escapeHTML($thief->display_name),
                 );
             } else {
                 die $e;    # just rethrow

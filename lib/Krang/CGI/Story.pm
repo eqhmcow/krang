@@ -470,8 +470,11 @@ sub checkout_and_edit {
     eval { $story->checkout };
     if( $@ && ref $@ && $@->isa('Krang::Story::CheckedOut')) {
         my ($thief) = pkg('User')->find(user_id => $@->user_id);
-        my $thief_name = CGI->escapeHTML($thief->first_name . ' ' . $thief->last_name);
-        add_alert('story_stolen_before_checkout', id => $story->story_id, thief => $thief_name);
+        add_alert(
+            'story_stolen_before_checkout',
+            id    => $story->story_id,
+            thief => CGI->escapeHTML($thief->display_name),
+        );
         return $self->goto_workspace();
     } elsif( $@ ) {
         die $@;
@@ -2152,9 +2155,10 @@ sub checkout_selected {
         if ($s->checked_out) {
             $was_checked_out = 1;
             if ($s->checked_out_by != $ENV{REMOTE_USER}) {
+                my ($thief) = pkg('User')->find(user_id => $s->checked_out_by);
                 add_alert(
                     'story_stolen_before_checkout',
-                    thief => $s->checked_out_by,
+                    thief => CGI->escapeHTML($thief->display_name),
                     id    => $s->story_id
                 );
             }
@@ -2164,9 +2168,10 @@ sub checkout_selected {
             if( my $e = $@ ) {
                 if( ref $e && $e->isa('Krang::Story::CheckedOut') ) {
                     $was_checked_out = 1;
+                    my ($thief) = pkg('User')->find(user_id => $e->user_id);
                     add_alert(
                         'story_stolen_before_checkout',
-                        thief => $e->user_id,
+                        thief => CGI->escapeHTML($thief->display_name),
                         id    => $s->story_id,
                     );
                 } else {
@@ -2756,10 +2761,13 @@ sub make_sure_story_is_still_ours {
             add_alert('story_checked_in_during_edit', id => $story_id);
         } elsif ($story->checked_out_by ne $ENV{REMOTE_USER}) {
             my ($thief) = pkg('User')->find(user_id => $story->checked_out_by);
-            my $thief_name = CGI->escapeHTML($thief->first_name . ' ' . $thief->last_name);
             clear_messages();
             clear_alerts();
-            add_alert('story_stolen_during_edit', id => $story_id, thief => $thief_name);
+            add_alert(
+                'story_stolen_during_edit',
+                id    => $story_id,
+                thief => CGI->escapeHTML($thief->display_name),
+            );
         } elsif ($story->version > $session{story}->version) {
             clear_messages;
             clear_alerts();

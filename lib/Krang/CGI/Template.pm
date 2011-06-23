@@ -308,11 +308,10 @@ sub checkout_and_edit {
     if( my $e = $@ ) {
         if( ref $e && $e->isa('Krang::Template::Checkout')) {
             my ($thief) = pkg('User')->find(user_id => $e->user_id);
-            my $thief_name = CGI->escapeHTML($thief->first_name . ' ' . $thief->last_name);
             add_alert(
                 'template_stolen_before_checkout',
                 id    => $t->template_id,
-                thief => $thief_name,
+                thief => CGI->escapeHTML($thief->display_name),
             );
             return $self->redirect_to_workspace();
         } elsif( ref $e && $e->isa('Krang::Template::NoEditAccess')) {

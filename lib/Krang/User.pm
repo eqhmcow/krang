@@ -1127,6 +1127,29 @@ sub current_user_group_ids {
     return (pkg('User')->find(user_id => $user_id))[0]->group_ids;
 }
 
+=item * C<< $user->display_name >>
+
+Show's a user friendly display name for this person. This consists
+of their first and last name (if they have it) else falling back to
+their username.
+
+=cut
+
+sub display_name {
+    my $self = shift;
+    my $first = $self->first_name;
+    my $last = $self->last_name;
+    if( $first && $last ) {
+        return "$first $last";
+    } elsif( $first ) {
+        return $first;
+    } elsif( $last ) {
+        return $last;
+    } else {
+        return $self->login;
+    }
+}
+
 =back
 
 =head1 TO DO
