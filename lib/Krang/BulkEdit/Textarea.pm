@@ -128,6 +128,12 @@ sub save {
     my @children = grep { $_->name eq $name } $element->children;
     my @data     = split(/$sep/, $data);
 
+    # if the separator is <p> then strip off any closing </p> tags
+    @data = map { $_ =~ s|\s*<\s*/\s*p\s*>\s*$||; $_; } @data;
+
+    # don't create empty elements, so make sure there is more than just empty space
+    @data = grep { $_ =~ /\S/ } @data;
+
     # filter data through class's bulk_edit_filter
     @data = $element->class->child($name)->bulk_edit_filter(data => \@data);
 
