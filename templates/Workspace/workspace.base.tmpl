@@ -235,8 +235,9 @@ Krang.onload( function() {
     </tmpl_unless>
     <tmpl_if is_template>
       <li>
-        <input name="testing_<tmpl_var escape=html id>" value="1" type="checkbox" onclick="update_testing('<tmpl_var escape=html id>')"<tmpl_if testing> checked</tmpl_if>>
-        <a href="javascript:link_toggle_checkbox('krang_pager_form','testing_<tmpl_var escape=html id>','<tmpl_var escape=html id>')"><tmpl_lang Test></a>
+        <input name="testing_<tmpl_var escape=html id>" value="1" type="checkbox" class="checkbox" 
+        onclick="update_testing('<tmpl_var escape=html id>')"<tmpl_if testing> checked</tmpl_if>>
+        <a href="javascript:link_toggle_checkbox('krang_pager_form','testing_<tmpl_var escape=html id>','<tmpl_var escape=html id>')"><tmpl_lang Use this version in Preview?></a>
       </li>
     </tmpl_if>
     </ul>
