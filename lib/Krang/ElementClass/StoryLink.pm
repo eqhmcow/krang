@@ -51,7 +51,7 @@ sub input_form {
     $html .= scalar $query->button(
         -name    => "find_story_$param",
         -value   => localize("Find Story"),
-        -onClick => "find_story('$param')",
+        -onClick => "find_story_link('$param')",
         -class   => "button",
     );
 

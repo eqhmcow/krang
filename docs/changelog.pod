@@ -40,6 +40,11 @@ Editing and saving an existing category will now convert a story with a duplicat
 url into a category index. This check already happens when creating a new category.
 [Brad Oaks]
 
+=item *
+
+The Find Story button for a Lead In element of a story now works in the Chrome browser.
+[Brad Oaks]
+
 =back
 
 =head2 3.13 - Apr, 5 2011
