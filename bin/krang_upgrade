@@ -124,6 +124,10 @@ Output results of upgrade to console.
                        is mainly used if you have multiple machines running Krang
                        which share a common database.
 
+ --keep-sessions     - By default Krang clears out any existing sessions so that
+                       it doesn't have to worry about incompatible data sitting in
+                       in a user's sessions. But you can elect to skip this step.
+
  --help              - Show usage
 
  --man               - Show full man page
@@ -212,7 +216,7 @@ sub do_upgrade {
     apply_upgrades();
     update_version();
     update_db_version() unless $options{'no-db'};
-    clear_sessions()    unless $options{'no-db'};
+    clear_sessions()    unless $options{'no-db'} || $options{'keep-sessions'};
 
     start_krang() unless $options{'no-start'};
     output_report();
@@ -716,12 +720,13 @@ sub setup_getopts {
 
     pod2usage(2)
       unless GetOptions(
-        'help'      => \$help,
-        'man'       => \$man,
-        'no-backup' => \$options{'no-backup'},
-        'no-start'  => \$options{'no-start'},
-        'no-chown'  => \$options{'no-chown'},
-        'no-db'     => \$options{'no-db'},
+        'help'          => \$help,
+        'man'           => \$man,
+        'no-backup'     => \$options{'no-backup'},
+        'no-start'      => \$options{'no-start'},
+        'no-chown'      => \$options{'no-chown'},
+        'no-db'         => \$options{'no-db'},
+        'keep-sessions' => \$options{'keep-sessions'},
         (map { $_ . "=s" => \$options{$_} } @opt_params)
       );
 

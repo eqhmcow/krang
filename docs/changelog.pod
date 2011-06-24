@@ -2,6 +2,16 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.15 - In development
+
+=over
+
+=item *
+
+Added C<--keep-sessions> option to F<bin/krang_upgrade>. [Michael Peters]
+
+=back
+
 =head2 3.14 - June, 23 2011
 
 =over
