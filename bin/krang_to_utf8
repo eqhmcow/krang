@@ -131,7 +131,7 @@ unless ($no_prompt) {
 }
 
 # assume latin-1 means windows-1252 so we fix special curly-quotes and the like
-$old_charset = 'windows-1252' unless ($old_charset && ($old_charset != 'latin1'));
+$old_charset = 'windows-1252' unless ($old_charset && ($old_charset ne 'latin1'));
 
 # set krang_instance var so other scripts don't die (instance doesn't matter since we use --all-instances)
 my @instances = pkg('Conf')->instances;
