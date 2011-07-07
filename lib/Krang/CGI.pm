@@ -357,7 +357,7 @@ BEGIN {
                   if $ENV{KRANG_WINDOW_ID};
 
                 unless (pkg('Charset')->is_utf8()) {
-                    $uri .= '&is_non_utf8_redirect=1';
+                    $self->add_to_query(\$uri, 'is_non_utf8_redirect=1');
                 }
 
                 # and allow non-AJAXy redirects
