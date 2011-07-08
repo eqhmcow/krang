@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added exception handling for edge cases to
+F<bin/krang_charset_convert_data>. [Bodo Schulze]
+
+=item *
+
 Added C<--keep-sessions> option to F<bin/krang_upgrade>. [Michael Peters]
 
 =back

@@ -375,11 +375,21 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
             if ($data =~ /^[A-Za-z0-9\+\/\=\n]+$/) {
 
                 # and thawing its decoded value returns an object reference...
-                if (ref(my $thawed = thaw(decode_base64($data)))) {
+                if (my $ref = ref(my $thawed = thaw(decode_base64($data)))) {
 
-                    # then this eval will succeed and we can assume object was frozen
-                    $data   = $thawed;
-                    $frozen = 1;
+                    # then this eval will succeed and we can assume
+                    # object was frozen. However there are
+                    # exceptions. The string 'BRANCHING' for instance
+                    # yields a ref type of 'SCALAR'. Check if $thawed
+                    # can be deferenced to be sure it's really a ref.
+                    # If it is not, the error message is: 'Can't call
+                    # method "FETCH" without a package or object
+                    # reference at ...'.
+                    eval { my $bogus = $$thawed } if $ref eq 'SCALAR';
+                    unless ($@) {
+                        $data   = $thawed;
+                        $frozen = 1;
+                    }
                 }
             }
         };
@@ -406,6 +416,7 @@ pkg('Conf')->instance($ENV{KRANG_INSTANCE}) if $ENV{KRANG_INSTANCE};
 
 sub convert_element_data {
     my $data = shift;
+    return '' unless defined $data;
     my $ref  = ref $data;
     if (!$ref) {
         return convert_scalar($data);
@@ -465,7 +476,7 @@ sub cp1252_string_to_html_entity {
 
 sub convert_scalar {
     my $data = shift;
-    return unless defined $data;
+    return '' unless defined $data;
 
 # convert manually-entered Windows-CP1252 strings (e.g. &#151;) to HTML-entity equivalents (e.g. &mdash;)
     $data =~
@@ -474,5 +485,5 @@ sub convert_scalar {
 
     # now perform actual charset conversion
     from_to($data, $from, $to);
-    return $data;
+    return defined $data ? data : '';
 }
