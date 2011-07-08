@@ -8,8 +8,8 @@ This document contains a list of changes for each release of Krang.
 
 =item * 
 
-Fixed ISE (regression) that occurs when you try to search retired
-stories. [Michael Peters]
+Fixed ISE (regression) that occurs when you try an advanced search for
+retired stories. [Michael Peters]
 
 =item *
 
