@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item * 
+
+Fixed ISE (regression) that occurs when you try to search retired
+stories. [Michael Peters]
+
 =item *
 
 Added exception handling for edge cases to
