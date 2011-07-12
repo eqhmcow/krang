@@ -660,7 +660,17 @@ Krang.Form = {
     },
     get : function(form, input) {
         var field = Krang.Form.get_field(form, input);
-        return field.value;
+        var field_count = field.length;
+        if( field_count == undefined) {
+            return field.value;
+        } else {
+            // we're looking at radio buttons, so get the one thats checked
+            for(var i = 0; i < field_count; i++) {
+                if(field[i].checked) {
+                    return field[i].value;
+                }
+            }
+        }
     },
     submit : function(form, inputs, options) {
         form = Krang.Form.get_form(form);
