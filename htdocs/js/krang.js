@@ -664,9 +664,9 @@ Krang.Form = {
         if( field_count == undefined) {
             return field.value;
         } else {
-            // we're looking at radio buttons, so get the one thats checked
+            // we're looking at radio buttons or a select field, so get the one thats checked/selected
             for(var i = 0; i < field_count; i++) {
-                if(field[i].checked) {
+                if(field[i].checked || field[i].selected) {
                     return field[i].value;
                 }
             }
