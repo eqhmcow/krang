@@ -744,6 +744,7 @@ Krang.Form = {
                 if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) return;
                 form.action = Krang.Window.pass_id(form.action);
                 form.submit();
+                Krang.hide_indicator();
             }
         }
     },
