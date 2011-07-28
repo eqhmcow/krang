@@ -185,7 +185,17 @@ Krang.Window = {
     },
 
     pass_id : function(url) {
-        url += /\?/.test(url) ? '&' : '?';
+        // do we already have a query string?
+        if( url.match(/\?/) ) {
+            // is the query using an ampersand or a semi-colon
+            if( url.match(/;/) ) {
+                url += ';';
+            } else {
+                url += '&';
+            }
+        } else {
+            url += '?';
+        }
         url += 'window_id=';
         url += Krang.Window.get_id();
         return url;
