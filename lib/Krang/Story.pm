@@ -963,7 +963,7 @@ sub _verify_unique {
     if ($self->{slug}) {
         my $query =
           'SELECT category_id, url FROM category WHERE (' . join(' OR ', ('url = ?') x @urls) . ')';
-        my $result = $dbh->selectall_arrayref($query, undef, map { $_ . '/' } $self->urls);
+        my $result = $dbh->selectall_arrayref($query, undef, @urls);
         if ($result && @$result) {
             my @dupes = map { {id => $_->[0], url => $_->[1]} } @$result;
             Krang::Story::DuplicateURL->throw(
