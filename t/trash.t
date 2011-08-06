@@ -205,8 +205,7 @@ SQL
         $dupe_cat->save;
         my $cid = $dupe_cat->category_id;
 
-        (my $cat_url = $dupe_cat->url) =~ s{/$}{};
-        is($cat_url, $story->url, "Created category $cid with same URL as Story $sid");
+        is($dupe_cat->url, $story->url, "Created category $cid with same URL as Story $sid");
 
         note("Try to restore the story - should throw a Krang::Story::DuplicateURL exception");
         eval { pkg('Trash')->restore(object => $story) };
