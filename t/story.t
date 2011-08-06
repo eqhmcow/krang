@@ -232,7 +232,7 @@ like($urls[2], qr/^$cat_url/);
 my $old = $story->url;
 $story->slug("foobar");
 ok($old ne $story->url);
-like($story->url, qr/foobar$/);
+like($story->url, qr/foobar\/$/);
 
 # test save
 $story->save();
@@ -803,7 +803,7 @@ SKIP: {
     my $cover = pkg('Story')->new(
         categories => [$cat[0]],
         title      => "Test Cover",
-        slug       => "test cover",
+        slug       => "test_cover",
         class      => "cover"
     );
     END { $cover->delete if $cover and $DELETE }
@@ -941,7 +941,7 @@ my $change = pkg('Story')->new(
 $change->save();
 END { $change->delete if $change and $DELETE }
 
-is($change->url, $cat[0]->url . 'change');
+is($change->url, $cat[0]->url . 'change/');
 
 # change the site url
 my $url = $site->url;
@@ -952,7 +952,7 @@ $site->save();
 
 # did the story URL change?
 ($change) = pkg('Story')->find(story_id => $change->story_id);
-is($change->url, 'storyzest.com/test_0/change');
+is($change->url, 'storyzest.com/test_0/change/');
 
 # permissions tests
 {
