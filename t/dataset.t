@@ -379,14 +379,14 @@ my $lmedia = pkg('Media')->new(
     title         => 'test media object',
     category_id   => $category->category_id,
     media_type_id => 1,
-    filename      => 'lazarus lives.jpg',
+    filename      => 'lazarus_lives.jpg',
     filehandle    => $fh
 );
 $lmedia->save();
 $lset->add(object => $lmedia);
 
 # it lives, yes?
-($found) = pkg('Media')->find(url_like => '%lazarus lives.jpg', count => 1);
+($found) = pkg('Media')->find(url_like => '%lazarus_lives.jpg', count => 1);
 ok($found);
 
 # this should fail
@@ -395,16 +395,16 @@ ok($@);
 
 # it dies
 $lmedia->delete();
-($found) = pkg('Media')->find(url_like => '%lazarus lives.jpg', count => 1);
+($found) = pkg('Media')->find(url_like => '%lazarus_lives.jpg', count => 1);
 ok(not $found);
 
 # the resurection
 $lset->import_all();
-($found) = pkg('Media')->find(url_like => '%lazarus lives.jpg', count => 1);
+($found) = pkg('Media')->find(url_like => '%lazarus_lives.jpg', count => 1);
 ok($found);
 
 END {
-    (pkg('Media')->find(url_like => '%lazarus lives.jpg'))[0]->delete()
+    (pkg('Media')->find(url_like => '%lazarus_lives.jpg'))[0]->delete()
       if $STORY_DELETE;
 }
 
