@@ -960,7 +960,7 @@ sub _verify_unique {
     return unless @urls;
 
     # first - unless we're a category index - make sure no categories have one of our URLs
-    if ($self->{slug}) {
+    if (!$self->is_category_index) {
         my $query =
           'SELECT category_id, url FROM category WHERE (' . join(' OR ', ('url = ?') x @urls) . ')';
         my $result = $dbh->selectall_arrayref($query, undef, @urls);
@@ -3253,6 +3253,11 @@ sub turn_into_category_index {
     $self->checkin;
 
     return 1;
+}
+
+sub is_category_index {
+    my $self = shift;
+    return $self->category->url eq $self->url ? 1 : 0;
 }
 
 =back
