@@ -656,6 +656,8 @@ SKIP: {
     isa_ok($imported_jill, 'Krang::Story');
 
     # do they point to each other?
+    isa_ok($imported_jack->element->child('leadin')->data, 'Krang::Story');
+    isa_ok($imported_jill->element->child('leadin')->data, 'Krang::Story');
     is($imported_jack->element->child('leadin')->data->story_id, $imported_jill->story_id);
     is($imported_jill->element->child('leadin')->data->story_id, $imported_jack->story_id);
 
