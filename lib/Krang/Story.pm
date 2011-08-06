@@ -2803,7 +2803,6 @@ sub deserialize_xml {
             non_primary_url     => $data->{url}[0],
             ids_only            => 1,
             ignore_permissions  => 1,
-            exclude_story_uuids => [$story->story_uuid],
         );
         Krang::DataSet::DeserializationFailed->throw(
             message => "A story object with a non-primary url "
