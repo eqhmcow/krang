@@ -20,6 +20,11 @@ F<bin/krang_charset_convert_data>. [Bodo Schulze]
 
 Added C<--keep-sessions> option to F<bin/krang_upgrade>. [Michael Peters]
 
+=item * 
+
+Fixed an ISE where stories with duplicate URLs as categories were not
+caught and shown to the user. [Michael Peters]
+
 =back
 
 =head2 3.14 - June, 23 2011
