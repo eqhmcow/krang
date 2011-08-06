@@ -1624,13 +1624,10 @@ sub can_copy_test {
             }
         }
 
-        # chop trailing slash for comparison with story URLs
-        $dst_child_cat_url =~ s!/$!!;
-
-        debug(__PACKAGE__ . "::can_copy_test() destination category URL: " . $dst_child_cat_url);
-
         # remember it
         $dst_cat_urls{$dst_child_cat_url} = 1;
+
+        debug(__PACKAGE__ . "::can_copy_test() destination category URL: $dst_child_cat_url");
     }
 
     # collect stories living below our destination category
