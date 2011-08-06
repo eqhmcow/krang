@@ -117,7 +117,8 @@ sub thaw_data {
     my ($self,    %arg)  = @_;
     my ($element, $data) = @arg{qw(element data)};
     return $element->data(undef) unless $data;
-    my ($story) = pkg('Story')->find(story_id => $data);
+    my ($story) = pkg('Story')->find(story_id => $data, ignore_permissions => 1);
+
     return $element->data($story);
 }
 
@@ -137,9 +138,9 @@ sub freeze_data_xml {
 sub thaw_data_xml {
     my ($self, %arg) = @_;
     my ($element, $data, $set) = @arg{qw(element data set)};
-
     my $import_id = $data->[0];
     return unless $import_id;
+
     my $story_id = $set->map_id(
         class => pkg('Story'),
         id    => $import_id
