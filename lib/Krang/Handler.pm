@@ -371,110 +371,12 @@ sub authen_handler ($$) {
         return OK;
     }
 
-    # This section needs some clarification. A Krang user can have multiple windows open at
-    # the same time. Each window has it's own session so that we don't stomp over what's going
-    # on in another window. So we store the window-id/session-id mapping in the instance cookie.
-    # But since a cookie can only hold 4096 bytes we need to make sure we never get bigger than
-    # that or strange things can happen. To do this we need to do a Least-Recently-Used (LRU) list.
-    # So we store the timestamp (in epoch seconds) for each window/session pair as well.
-    # Here's the math we're using:
-    # 4000 bytes total (minus 96 to deal with the original session_id, user_id and instance name)
-    # 42 bytes for each window/session mapping (32 bytes for the session_id and 10 for the label)
-    # 20 bytes for each window/timestamp mapping (10 bytes for the timestamp and 10 for the label)
-    # 62 bytes per window
-    # 64 active windows max
-    my $max_active_windows = 64;
-
     # Get query
     my %args = $r->args();
 
-    # Change POST into GET when window_id is passed as a form input
-    if ($args{posted_window_id}) {
-        debug("Krang::Handler:  posted_window_id, so get args from POST");
-        $r->args(scalar $r->content);
-        $r->method('GET');
-        $r->method_number(M_GET);
-        $r->headers_in->unset('Content-length');
-        %args = $r->args();
-    }
-
-    # Get window_id from query
-    my $window_id = $args{window_id} || '';
-    if( $window_id ) {
-        debug("Krang::Handler:  Got window_id $window_id from request");
-    } else {
-        debug("Krang::Handler:  No window_id from request");
-    }
-
-    # User opened a new window manually, typed or copied URL or
-    # accessed it via History: make sure we create a new id for this
-    # new window
-    if ($window_id && not ($r->header_in("Referer") || $args{posted_window_id})) {
-        undef $window_id;
-        debug("Krang::Handler:  No referer header; Unsetting window_id");
-    } elsif( $cookies{window_id} ) {
-        $window_id = $cookies{window_id}->value;
-        debug("Krang::Handler:  Got window_id $window_id from cookie");
-    }
-
-    # Get session_id for window_id
-    if ($window_id) {
-        # existing window
-        debug("Krang::Handler:  Retrieving session from wid_$window_id cookie");
-        $session_id = $cookie{"wid_$window_id"};
-
-        # if there's no $session_id for this window, logout happened in other window
-        if (!$session_id) {
-            undef $window_id;
-            debug("Krang::Handler:  No session found; Unsetting window_id");
-        }
-    }
-
-    # No window ID means no session for this window: create a new one
-    unless ($window_id) {
-        # new window ID
-        $window_id = $cookie{next_wid}++;
-
-        # new session
-        $session_id = pkg('Session')->create();
-        debug("Krang::Handler:  Creating new session $session_id, for user $cookie{user_id}, new window_id $window_id");
-
-        # store mapping between new window ID and new session ID in cookie
-        $cookie{"wid_$window_id"} = $session_id;
-
-        # put language pref in new session
-        $session{language} =
-             pkg('MyPref')->get('language', $cookie{user_id})
-          || DefaultLanguage
-          || 'en';
-
-        # if there are more than $max_active_windows windows then we need to get rid
-        # of the LRU
-        if (keys %cookie > $max_active_windows) {
-            info("Too many window/session combinations.");
-            my @ids = grep { $_ =~ /^wid_/ } keys %cookie;
-            @ids = map { $_ =~ /^wid_(\d+)/; $1; } @ids;
-            @ids = sort { ($cookie{"wts_$a"} || 0) <=> ($cookie{"wts_$b"} || 0) } @ids;
-            my $lru = $ids[0];
-
-            # remove the session and the data about it in the cookie
-            my $lru_session_id = delete $cookie{"wid_$lru"};
-            pkg('Session')->delete($lru_session_id);
-            delete $cookie{"wts_$lru"};
-            info("Deleted LRU window #$lru");
-        }
-    }
-
-    # update the timestamp on the window/session combo
-    $cookie{"wts_$window_id"} = time;
-
-    # the window/session mapping cookie has changed, so update the client
-    $cookies{$instance}->value([%cookie]);
-    Apache::Cookie->new($r, -name => $instance, -value => \%cookie, -path => '/')->bake;
-
     # Check for invalid session
     unless (pkg('Session')->validate($session_id)) {
-        debug("Krang::Handler:  Invalid session '$session_id' for window $window_id. Wiping its cookie.");
+        debug("Krang::Handler:  Invalid session '$session_id'. Wiping its cookie.");
         return OK;
     }
 
@@ -483,15 +385,14 @@ sub authen_handler ($$) {
 
     # Propagate user & window to CGI-land via the environment
     $r->subprocess_env('KRANG_SESSION_ID' => $session_id);
-    $r->subprocess_env('KRANG_WINDOW_ID'  => $window_id);
 
-    # We are authenticated, we've got a window_id and a valid session:
+    # We are authenticated, we've got a valid session:
     # Redirect to workspace if user typed a login URI in a new window
     my $login_uri = $self->login_uri;
-    if ($uri =~ m!$login_uri!) {
+    if ($uri =~ /\Q$login_uri\E/) {
         if (!$args{rm} || ($args{rm} && $args{rm} ne 'logout')) {
-            debug("Krang::Handler:  Already logged in, redirecting to workspace");
-            return $self->_redirect_to_workspace($r, $instance, $window_id);
+            debug("Krang::Handler: Already logged in, redirecting to workspace");
+            return $self->_redirect_to_workspace($r, $instance);
         }
     }
     pkg('Session')->unload();
@@ -807,9 +708,9 @@ sub _redirect_to_login {
 }
 
 sub _redirect_to_workspace {
-    my ($self, $r, $instance, $window_id) = @_;
+    my ($self, $r, $instance) = @_;
 
-    my $app = "workspace.pl?window_id=$window_id";
+    my $app = "workspace.pl";
     my $new_uri = $r->dir_config('flavor') eq 'instance' ? "/$app" : "/$instance/$app";
 
     return $self->_do_redirect($r, $new_uri);

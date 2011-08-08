@@ -76,7 +76,7 @@ it will do the right thing with krang urls.
 
 For instance, given a url of 'my_pref.pl' it will look at which ever
 instance is active and change that url to 
-'http://hostname.org/instance_name/my_pref.pl?window_id=1'
+'http://hostname.org/instance_name/my_pref.pl'
 
 =cut
 
@@ -86,29 +86,7 @@ sub get {
         $url = $self->script_url($url);
     }
 
-    $url = $self->_set_window_id($url);
-
     return $self->SUPER::get($url, @other_args);
-}
-
-sub _make_request {
-    my ($self, $request, @other_args) = @_;
-
-    # change the request to have the window_id
-    my $uri = $request->uri;
-    eval { $uri = $uri->as_string };    # turn it into a string if it's an object
-    $request->uri($self->_set_window_id($uri));
-    return $self->SUPER::_make_request($request, @other_args);
-}
-
-# add the window_id of 1 to the urls
-sub _set_window_id {
-    my ($self, $url) = @_;
-    if ($url !~ /window_id=\d/) {
-        $url .= $url =~ /\?/ ? '&' : '?';
-        $url .= "window_id=1";
-    }
-    return $url;
 }
 
 =item C<< contains_message($key, $class [, %args ]) >>

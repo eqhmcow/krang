@@ -170,7 +170,7 @@ Object.extend(PopupTreeSelect.prototype, {
 
             new Ajax.Updater(
                 this.name + "-desc-" + id, 
-                Krang.Window.pass_id(this.dynamic_url),
+                this.dynamic_url,
                 { method: 'get', parameters: params, evalScripts: true }
             );
         } else {
@@ -208,7 +208,7 @@ Object.extend(PopupTreeSelect.prototype, {
 
         new Ajax.Updater(
             this.name + '-inner', 
-            Krang.Window.pass_id(this.dynamic_url),
+            this.dynamic_url,
             { method: 'get', parameters: this.dynamic_params, evalScripts: true  }
         );
 

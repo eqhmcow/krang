@@ -136,8 +136,7 @@ sub login {
     if( $ENV{REMOTE_USER} ) {
         my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
         if( $user->login eq $username ) {
-            # go without a window_id so that you get a new one
-            return $self->_redirect_to_window(0);
+            return $self->_redirect_to_root;
         }
     }
 
@@ -200,7 +199,6 @@ sub _do_login {
         session_id => $session_id,
         instance   => $instance,
         next_wid   => 2,
-        wid_1      => $session_id,
         hash       => md5_hex($user_id . $instance . $session_id . Secret())
     );
 
@@ -209,9 +207,6 @@ sub _do_login {
 
     # Put language pref in session
     $session{language} = pkg('MyPref')->get('language') || DefaultLanguage || 'en';
-
-    # the login window is our first window: pass its id around
-    $ENV{KRANG_WINDOW_ID} = 1;
 
     # Unload the session
     pkg('Session')->unload();
@@ -256,15 +251,15 @@ sub _do_login {
         -cookie => [$authen_cookie->as_string, $pref_cookie->as_string, $conf_cookie->as_string, $preview_cookie->as_string]);
 
     # now we're ready to redirect
-    return $self->_redirect_to_window(1);
+    return $self->_redirect_to_root();
 }
 
-sub _redirect_to_window {
-    my ($self, $window_id) = @_;
+sub _redirect_to_root {
+    my ($self) = @_;
     my $target = './';
     $self->header_add(-uri => $target);
     $self->header_type('redirect');
-    return "Redirect: <a href=\"$target?window_id=$window_id\">$target</a>";
+    return "Redirect: <a href=\"$target\">$target</a>";
 }
 
 # handle a logout
@@ -281,7 +276,6 @@ sub logout {
 
     # delete the session & window ID
     pkg('Session')->delete($ENV{KRANG_SESSION_ID});
-    delete $ENV{KRANG_WINDOW_ID};
 
     # redirect to login
     $self->header_props(

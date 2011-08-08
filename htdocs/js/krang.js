@@ -149,70 +149,15 @@ document.onunload = function() {
 }
 
 /*
-    // Initialize the name and title of current window
-    Krang.Window.init();
-
-    // Get the ID of current window
-    Krang.Window.get_id();
-
-    // Pass handler a cookie with the ID of current window. (This should be invoked
-    // by all page requests, forms, etc: anything that communicates with the server!)
-    Krang.Window.pass_id();
-
     // Log out the current window
     Krang.Window.log_out();
 
 */
 Krang.Window = {
-    init : function(id) {
-        // set name and title of our window
-        if (id) {
-            var needs_new_name = true;
-            if( window.name ) {
-                var results = window.name.match(/^krang_window_(\d+)_/);
-                if( results && results[1] == id ) {
-                    needs_new_name = false;
-                }
-            }
-            var new_name = 'krang_window_' + id;
-            if( needs_new_name && window.name != new_name) {
-                window.name = new_name;
-                if( id > 1 ) {
-                    document.title += ' ('+id+')';
-                }
-            }
-        }
-    },
-
-    pass_id : function(url) {
-        // do we already have a query string?
-        if( url.match(/\?/) ) {
-            // is the query using an ampersand or a semi-colon
-            if( url.match(/;/) ) {
-                url += ';';
-            } else {
-                url += '&';
-            }
-        } else {
-            url += '?';
-        }
-        url += 'window_id=';
-        url += Krang.Window.get_id();
-        return url;
-    },
     log_out : function() {
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
             window.location = 'login.pl?rm=logout';
             window.name = '';
-        }
-    },
-
-    get_id : function() {
-        var matches = window.name.match(/^krang_window_(\d+)/);
-        if(matches == null ) {
-            return '';
-        } else {
-            return matches[1];
         }
     }
 };
@@ -249,7 +194,6 @@ Krang.popup = function(url, options) {
     if( ! options ) options = {};
     var height = options.height || 600;
     var width  = options.width  || 800;
-    url = Krang.Window.pass_id(url);
 
     if (Prototype.Browser.IE) {
         // we need the referer to be sent
@@ -431,9 +375,6 @@ Krang.Ajax.request = function(args) {
     // add the ajax=1 flag to the existing query params
     params['ajax'] = 1;
 
-    // pass window ID to handler
-    url = Krang.Window.pass_id(url);
-
     new Ajax.Request(
         url,
         {
@@ -531,9 +472,6 @@ Krang.Ajax.update = function(args) {
 
     // add the ajax=1 flag to the existing query params
     params['ajax'] = 1;
-
-    // pass window ID to handler
-    url = Krang.Window.pass_id(url);
 
     // the default target
     if( target == null || target == '' ) target = 'C';
@@ -699,9 +637,6 @@ Krang.Form = {
             var old_action = form.action;
             if( options.new_session ) {
                 form.target = '_blank';
-            } else {
-                form.target = 'krang_window_' + Krang.Window.get_id() + '_b';
-                form.action = Krang.Window.pass_id(form.action);
             }
             form.submit();
             form.target = old_target;
@@ -752,7 +687,6 @@ Krang.Form = {
                 }
             } else {
                 if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) return;
-                form.action = Krang.Window.pass_id(form.action);
                 form.submit();
                 Krang.hide_indicator();
             }
@@ -905,11 +839,11 @@ Krang.Nav = {
                 if (Prototype.Browser.IE) {
                     // we need the referer to be sent
                     // see http://webbugtrack.blogspot.com/search/label/HTTP%20Referer
-                    var a = new Element('a', {href : Krang.Window.pass_id(url)});
+                    var a = new Element('a', {href : url});
                     document.body.appendChild(a);
                     a.click();
                 } else {
-                    window.location = Krang.Window.pass_id(url);
+                    window.location = url;
                 }
             }
             if(! ignore_edit_flag ) Krang.Nav.edit_mode_flag = false;
@@ -1266,24 +1200,28 @@ Krang.update_order = function( select, prefix ) {
 }
 
 /*
-    Krang.preview(type, id)
+    Krang.preview(type, id, edit_uuid)
 
     Opens up a new window to preview an element of a certain type
-    (either 'story' or 'media') with a certain id (if no id is present
-    it will preview the one currently in the session)
-*/
-Krang.preview = function(type, id) {
-    var url = 'publisher.pl?rm=preview_' + type
-    + '&' + ( ( id == null ) ? ( 'session=' + type ) : ( type + '_id=' + id ) );
+    (either 'story' or 'media') with a certain id or the edit_uuid
+    for the object being editted.
 
-    // attach the preview window to our session
-    url = Krang.Window.pass_id(url);
+    You must provide either an id or an edit_uuid.
+*/
+Krang.preview = function(type, id, edit_uuid) {
+    if(!id && !edit_uuid ) {
+        alert('Krang.preview() requires either an id or an edit_uuid!');
+        return;
+    }
+    
+    var url = 'publisher.pl?rm=preview_' + type
+    + '&' + ( id ? type + '_id=' + id : 'edit_uuid=' + edit_uuid);
 
     var instance = Krang.instance;
     // remove problematic characters for use as window name (IE may otherwise choke)
     instance = instance.toLowerCase().replace( new RegExp( '[^a-z]' , 'g' ), '' );
+    var new_window_name = instance + '_preview'; 
 
-    var new_window_name = 'krang_window_' + Krang.Window.get_id() + '_preview_' + instance;
     if (Prototype.Browser.IE) {
         // we need the referer to be sent
         // see http://webbugtrack.blogspot.com/search/label/HTTP%20Referer
@@ -1952,7 +1890,7 @@ var rules = {
             new Ajax.Autocompleter(
                 el,
                 div,
-                Krang.Window.pass_id(request_url),
+                request_url,
                 {
                     paramName: 'phrase',
                     tokens   : el.hasClassName('single_phrase') ? [] : [' '],
@@ -2000,8 +1938,12 @@ var rules = {
             if (!name) return;
             var story_data = name.split(/_/);
             var story_id = story_data[1];
-            if( story_id == 'null' ) story_id = null;
-            Krang.preview('story', story_id);
+            // if it's just a number it's an id, else it's an edit_uuid
+            if( story_id.match(/^\d+$/) ) {
+                Krang.preview('story', story_id);
+            } else {
+                Krang.preview('story', null, story_id);
+            }
             Event.stop(event);
         }.bindAsEventListener(el));
     },
@@ -2011,8 +1953,12 @@ var rules = {
             var name = elm.readAttribute('name');
             if (!name) return;
             var media_id = name.split(/_/)[1];
-            if( media_id == 'null' ) media_id = null;
-            Krang.preview('media', media_id);
+            // if it's just a number it's an id, else it's an edit_uuid
+            if( media_id.match(/^\d+$/) ) {
+                Krang.preview('media', media_id);
+            } else {
+                Krang.preview('media', null, media_id);
+            }
             Event.stop(event);
         }.bindAsEventListener(el));
     }
