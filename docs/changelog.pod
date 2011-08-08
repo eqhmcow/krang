@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item * 
 
+Changed multi-window feature to use a single session per-login instead
+of using a different session for each window. [Michael Peters]
+
+=item * 
+
 Fixed ISE (regression) that occurs when you try an advanced search for
 retired stories. [Michael Peters]
 
