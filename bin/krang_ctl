@@ -77,7 +77,7 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Conf => qw(KrangRoot EnableSiteServer);
+use Krang::ClassLoader Conf => qw(KrangRoot EnableSiteServer EnableFTPServer);
 
 # check for args
 usage() unless @ARGV;
@@ -90,11 +90,11 @@ usage()
 
 my @ctl = (
     {name => 'krang_apachectl',   port => 'ApachePort'},
-    {name => 'krang_ftpctl',      port => 'FTPPort'},
     {name => 'krang_schedulectl'},
 );
-push(@ctl, {name => 'krang_siteserverctl', port => 'SiteServerPort'})
-  if EnableSiteServer;
+
+push(@ctl, {name => 'krang_ftpctl',        port => 'FTPPort'})        if EnableFTPServer;
+push(@ctl, {name => 'krang_siteserverctl', port => 'SiteServerPort'}) if EnableSiteServer;
 
 # call ctl scripts
 foreach my $service (@ctl) {
