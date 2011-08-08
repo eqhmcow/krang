@@ -670,8 +670,10 @@ sub find_story_link {
     $find_params{may_see} = 1;
 
     # when editing a story, exclude it from story search
-    if ($self->isa('Krang::CGI::Story') and $session{story}->story_id) {
-        $find_params{exclude_story_ids} = [$session{story}->story_id];
+    if ($self->isa('Krang::CGI::Story')) {
+        if( my $story = $self->_get_edit_object ) {
+            $find_params{exclude_story_ids} = [$story->story_id];
+        }
     }
 
     # Apply hard find params
@@ -848,8 +850,10 @@ sub find_media_link {
     $find{may_see} = 1;
 
     # when editing a media object, exclude it from media search
-    if ($self->isa('Krang::CGI::Media') and $session{media}->media_id) {
-        $find{exclude_media_ids} = [$session{media}->media_id];
+    if ($self->isa('Krang::CGI::Media')) {
+        if (my $media = $self->_get_edit_object) {
+            $find{exclude_media_ids} = [$media->media_id];
+        }
     }
 
     # Apply hard find params

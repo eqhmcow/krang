@@ -1,4 +1,26 @@
 package Krang::CGI::Template;
+use strict;
+use warnings;
+use Krang::ClassLoader base => qw/CGI/;
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'History';
+use Krang::ClassLoader 'HTMLPager';
+use Krang::ClassLoader Log     => qw/critical debug info/;
+use Krang::ClassLoader Message => qw/add_message add_alert/;
+use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader Session => qw/%session/;
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'UUID';
+use Krang::ClassLoader Widget => qw/
+  format_url
+  category_chooser
+  template_chooser
+  template_chooser_object
+  autocomplete_values
+  /;
+use Krang::ClassLoader 'Publisher';
+use Krang::ClassLoader Localization => qw(localize);
+use Carp qw(verbose croak);
 
 =head1 NAME
 
@@ -18,30 +40,6 @@ may search for, view, edit, and create templates.
 
 =cut
 
-use Krang::ClassFactory qw(pkg);
-use strict;
-use warnings;
-use Krang::ClassLoader base => qw/CGI/;
-
-use Carp qw(verbose croak);
-
-use Krang::ClassLoader 'History';
-use Krang::ClassLoader 'HTMLPager';
-use Krang::ClassLoader Log     => qw/critical debug info/;
-use Krang::ClassLoader Message => qw/add_message add_alert/;
-use Krang::ClassLoader 'Pref';
-use Krang::ClassLoader Session => qw/%session/;
-use Krang::ClassLoader 'Template';
-use Krang::ClassLoader Widget => qw/
-  format_url
-  category_chooser
-  template_chooser
-  template_chooser_object
-  autocomplete_values
-  /;
-use Krang::ClassLoader 'Publisher';
-use Krang::ClassLoader Localization => qw(localize);
-
 # Persist data for return from view in "history_return_params"
 our @history_param_list = (
     'rm',                          'krang_pager_curr_page_num',
@@ -51,10 +49,6 @@ our @history_param_list = (
     'search_filter',               'search_template_id',
     'search_url',
 );
-
-##############################
-#####  OVERRIDE METHODS  #####
-##############################
 
 sub setup {
     my $self = shift;
@@ -129,13 +123,11 @@ sub add {
     $q->param('add_mode', 1);
 
     if ($q->param('errors')) {
-        $template = $session{template};
+        $template = $self->_template();
     } else {
         $template = pkg('Template')->new();
+        $self->_set_template($template);
     }
-
-    # add template to session
-    $session{template} = $template;
 
     my $t = $self->load_tmpl(
         'edit.tmpl',
@@ -162,8 +154,7 @@ screen if it fails.
 sub add_checkin {
     my $self     = shift;
     my $q        = $self->query();
-    my $template = $session{template};
-    croak("No object in session") unless ref $template;
+    my $template = $self->_template();
 
     # update template with CGI values
     $self->update_template($template) || return $self->redirect_to_workspace;
@@ -179,7 +170,7 @@ sub add_checkin {
     $template->checkin;
 
     # clear template object from session
-    delete $session{template};
+    $self->_clear_template();
 
     # return to workspace with message
     add_message('checkin_template', id => $template->template_id);
@@ -197,8 +188,7 @@ screen if it fails.
 sub add_save {
     my $self     = shift;
     my $q        = $self->query();
-    my $template = $session{template};
-    croak("No object in session") unless ref $template;
+    my $template = $self->_template();
 
     # update template with CGI values
     $self->update_template($template) || return $self->redirect_to_workspace;
@@ -215,7 +205,7 @@ sub add_save {
     $template->checkout;
 
     # clear template object from session
-    delete $session{template};
+    $self->_clear_template();
 
     # return to workspace with message
     add_message('message_saved');
@@ -230,10 +220,10 @@ object to the database, and redirects to the 'Edit' screen.
 =cut
 
 sub add_save_stay {
-    my $self     = shift;
-    my $q        = $self->query();
-    my $template = $session{template};
-    croak("No object in session") unless ref $template;
+    my $self      = shift;
+    my $q         = $self->query();
+    my $template  = $self->_template();
+    my $edit_uuid = $self->edit_uuid;
 
     # update template with CGI values
     $self->update_template($template) || return $self->redirect_to_workspace;
@@ -256,7 +246,7 @@ sub add_save_stay {
 
     # Redirect to edit
     my $url = $q->url(-relative => 1);
-    $url .= "?rm=edit&template_id=" . $template->template_id();
+    $url .= "?rm=edit&edit_uuid=$edit_uuid";
     $self->header_props(-uri => $url);
     $self->header_type('redirect');
     return "Redirect: <a href=\"$url\">$url</a>";
@@ -330,24 +320,23 @@ sub checkout_and_edit {
 Trashes a template object from the 'Edit' screen.  The user is sent back to the
 'search' mode afterwards.
 
-The mode expects the query parameter 'template_id'.
-
 =cut
 
 sub delete {
-    my $self        = shift;
-    my $q           = $self->query();
-    my $template_id = $q->param('template_id');
+    my $self     = shift;
+    my $q        = $self->query();
+    my $template = $self->_template;
 
-    eval { pkg('Template')->trash(template_id => $template_id) };
+    eval { $template->trash() };
     if ($@) {
         if (ref $@ && $@->isa('Krang::Template::Checkout')) {
-            critical("Unable to delete template id '$template_id': $@");
+            critical("Unable to delete template id '" . $template->template_id . "': $@");
             add_alert('error_deletion_failure', template_id => 'template_id');
         } else {
             croak($@);
         }
     } else {
+        $self->_clear_template;
         add_message('message_deleted');
     }
 
@@ -367,9 +356,8 @@ the 'search' screen.
 =cut
 
 sub delete_selected {
-    my $self = shift;
-    my $q    = $self->query();
-
+    my $self         = shift;
+    my $q            = $self->query();
     my @template_ids = $q->param('krang_pager_rows_checked');
 
     return $self->search unless @template_ids;
@@ -447,9 +435,7 @@ Saves, deploys and checks in template.  Redirects to My Workspace.
 sub deploy {
     my $self  = shift;
     my $query = $self->query;
-
-    my $obj = $session{template};
-    croak("No object in session") unless ref $obj;
+    my $obj   = $self->_template();
 
     # update template with CGI values
     $self->update_template($obj) || return $self->redirect_to_workspace;
@@ -468,7 +454,7 @@ sub deploy {
     $obj->checkin;
 
     # clear template object from session
-    delete $session{template};
+    $self->_clear_template();
 
     # Redirect to workspace with message
     add_message('deployed', id => $obj->template_id);
@@ -509,20 +495,16 @@ This runmode expects the query parameter 'template_id'.
 =cut
 
 sub edit {
-    my $self        = shift;
-    my %args        = @_;
-    my $q           = $self->query();
-    my $template_id = $q->param('template_id');
-    my $template    = $session{template};
-
-    if ($template_id) {
-        ($template) = pkg('Template')->find(template_id => $template_id);
-        $session{template} = $template;
-    }
-    croak("No template object.") unless ref $template;
+    my ($self, %args) = @_;
+    my $q        = $self->query();
+    my $template = $self->_template();
     croak("Can't edit read-only template.") if $template->read_only;
 
-    my $t = $self->load_tmpl("edit.tmpl", associate => $q,);
+    # we can get here from lots of other run modes, but once here
+    # we need other things (like history_return_params) to know where we are
+    $q->param(rm => 'edit');
+
+    my $t = $self->load_tmpl("edit.tmpl", associate => $q);
 
     $t->param(%args) if %args;
 
@@ -542,8 +524,7 @@ to the 'Edit' screen if it fails.
 sub edit_checkin {
     my $self     = shift;
     my $q        = $self->query();
-    my $template = $session{template};
-    croak("No object in session") unless ref $template;
+    my $template = $self->_template();
     croak("Can't edit read-only template.") if $template->read_only;
 
     # update template with CGI values
@@ -560,7 +541,7 @@ sub edit_checkin {
     $template->checkin;
 
     # clear template object from session
-    delete $session{template};
+    $self->_clear_template();
 
     # Redirect to workspace with message
     add_message('checkin_template', id => $template->template_id);
@@ -578,9 +559,7 @@ screen if it fails.
 sub edit_save {
     my $self     = shift;
     my $q        = $self->query();
-    my $template = $session{template};
-
-    croak("No object in session") unless ref $template;
+    my $template = $self->_template();
     croak("Can't edit read-only template.") if $template->read_only;
 
     # update template with CGI values
@@ -595,7 +574,7 @@ sub edit_save {
     return $self->edit(%errors) if %errors;
 
     # clear template object from session
-    delete $session{template};
+    $self->_clear_template();
 
     # Redirect to workspace with message
     add_message('message_saved');
@@ -612,8 +591,7 @@ object to the database, and redirects to the 'Edit' screen.
 sub edit_save_stay {
     my $self     = shift;
     my $q        = $self->query();
-    my $template = $session{template};
-    croak("No object in session") unless ref $template;
+    my $template = $self->_template();
     croak("Can't edit read-only template.") if $template->read_only;
 
     # update template with CGI values
@@ -648,6 +626,8 @@ sub revert_version {
     my $self             = shift;
     my $q                = $self->query();
     my $selected_version = $q->param('selected_version');
+    my $template         = $self->_template();
+    croak("Can't edit read-only template.") if $template->read_only;
 
     croak("Invalid selected version '$selected_version'")
       unless ($selected_version and $selected_version =~ /^\d+$/);
@@ -657,9 +637,6 @@ sub revert_version {
     $q->param(reverted_to_version => $selected_version);
 
     # get the template
-    my $template = $session{template};
-    croak("Can't edit read-only template.") if $template->read_only;
-
     # Perform revert & display result
     my $pre_revert_version = $template->version;
     my $result             = $template->revert($selected_version);
@@ -689,12 +666,10 @@ history.pl.
 =cut
 
 sub save_and_view_log {
-    my $self = shift;
-
-    my $q = $self->query();
-
-    # Update template object
-    my $template = $session{template};
+    my $self     = shift;
+    my $q        = $self->query();
+    my $template = $self->_template();
+    my $edit_uuid = $self->_edit_uuid;
     croak("Can't edit read-only template.") if $template->read_only;
 
     $self->update_template($template) || return $self->redirect_to_workspace;
@@ -704,6 +679,7 @@ sub save_and_view_log {
     my $url =
         "history.pl?history_return_script=template.pl"
       . "&history_return_params=rm&history_return_params=edit"
+      . "&history_return_params=edit_uuid&history_return_params=$edit_uuid"
       . "&id=$id&class=Template&id_meth=template_id";
     $self->header_props(-uri => $url);
     $self->header_type('redirect');
@@ -1039,11 +1015,8 @@ sub view {
     my $version     = shift;
     my $q           = $self->query();
     my $t           = $self->load_tmpl('view.tmpl', die_on_bad_params => 0);
-    my $template_id = $q->param('template_id')
-      || croak("No 'template_id' specified.");
-    my %find;
-
-    $find{template_id} = $template_id;
+    my $template_id = $self->_template_id;
+    my %find        = (template_id => $template_id);
 
     if ($version) {
         $find{version} = $version;
@@ -1068,12 +1041,12 @@ sub view_version {
     my $self             = shift;
     my $q                = $self->query();
     my $selected_version = $q->param('selected_version');
+    my $template         = $self->_template();
 
     die("Invalid selected version '$selected_version'")
       unless ($selected_version and $selected_version =~ /^\d+$/);
 
     # Update template object
-    my $template = $session{template};
     $self->update_template($template) || return $self->redirect_to_workspace;
 
     # Return view mode with version
@@ -1430,9 +1403,8 @@ sub search_row_handler {
 
 # Updates object with CGI param values
 sub update_template {
-    my $self     = shift;
-    my $template = shift;
-    my $q        = $self->query();
+    my ($self, $template) = @_;
+    my $q = $self->query();
 
     # make sure template is still checked out to us (and hasn't been saved in another window)
     if (my $id = $template->template_id) {
@@ -1442,12 +1414,12 @@ sub update_template {
                 || $template_in_db->version > $template->version)
             {
                 add_alert('template_modified_elsewhere', id => $id);
-                delete $session{template};
+                $self->_clear_template();
                 return 0;
             }
         } else {
             add_alert('template_deleted_elsewhere', id => $id);
-            delete $session{template};
+            $self->_clear_template();
             return 0;
         }
     }
@@ -1678,5 +1650,110 @@ sub unretire {
 =back
 
 =cut
+
+sub _get_edit_object   { shift->_template() }
+sub _clear_edit_object { shift->_clear_template() }
+
+# overload load_tmpl so that the edit_uuid is set
+sub load_tmpl {
+    my $self = shift;
+    my $tmpl = $self->SUPER::load_tmpl(@_);
+    if( my $edit_uuid = $self->_edit_uuid ) {
+        $tmpl->param(edit_uuid => $edit_uuid) if $tmpl->query(name => 'edit_uuid');
+    }
+    return $tmpl;
+}
+
+
+sub _template {
+    my ($self, %options) = @_;
+
+    # is the request asking for a specific template by id? If not, get whats in the session
+    if( (my $template_id = $self->query->param('template_id')) && !$options{force_session}) {
+        debug("Pulling template from query template_id $template_id");
+        my ($template) = pkg('Template')->find(template_id => $template_id);
+        if( $template ) {
+            unless($options{no_save}) {
+                # now save this template to the session
+                my $new_edit_uuid = pkg('UUID')->new();
+                $self->_edit_uuid($new_edit_uuid);
+                $session{templates}{$new_edit_uuid} = $template;
+            }
+            return $template;
+        } else {
+            croak("No template found in DB with template_id $template_id!");
+        }
+    } else {
+        # we just want something from the query, not the session
+        return if $options{force_query};
+        if (my $edit_uuid = $self->_edit_uuid) {
+            debug("Pulling template from session edit_uuid $edit_uuid");
+            my $template = $session{templates}{$edit_uuid};
+            if( $template ) {
+                return $template;
+            } else {
+                croak("Could not load template with edit_uuid $edit_uuid from session!");
+            }
+        } else {
+            croak("No edit_uuid provided!");
+        }
+    }
+}
+
+sub _template_id {
+    my $self = shift;
+    # If the query has a template_id use that first
+    if( my $template_id = $self->query->param('template_id') ) {
+        return $template_id;
+    } else {
+        if (my $edit_uuid = $self->_edit_uuid) {
+            my $template = $session{templates}{$edit_uuid};
+            if( $template ) {
+                return $template->template_id;
+            } else {
+                croak("Could not load template with edit_uuid $edit_uuid from session!");
+            }
+        } else {
+            croak("No edit_uuid provided!");
+        }
+    }
+}
+
+sub _set_template {
+    my ($self, $template, %args) = @_;
+    my $edit_uuid =
+      $args{keep_edit_uuid} ? ($self->_edit_uuid || pkg('UUID')->new) : pkg('UUID')->new;
+    $self->_edit_uuid($edit_uuid);
+    $session{templates}{$edit_uuid} = $template;
+}
+
+sub _clear_template {
+    my $self = shift;
+
+    # remove it from the session
+    if( my $edit_uuid = $self->_edit_uuid ) {
+        delete $session{templates}{$edit_uuid};
+    }
+
+    # and the query object
+    $self->query->delete('template_id');
+}
+
+sub _edit_uuid {
+    my $self = shift;
+    if ($_[0]) {
+        # we are setting the edit_uuid
+        $self->param(__edit_uuid => $_[0]);
+        return $_[0];
+    } else {
+        if ($self->param('__edit_uuid')) {
+            return $self->param('__edit_uuid');
+        } else {
+            my $edit_uuid = $self->query->param('edit_uuid');
+            $self->param(__edit_uuid => $edit_uuid);
+            return $edit_uuid;
+        }
+    }
+}
 
 1;

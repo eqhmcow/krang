@@ -352,10 +352,6 @@ BEGIN {
                 $self->add_to_query(\$uri, "ajax=$ajax")
                   if $ajax;
 
-                # add window_id
-                $self->add_to_query(\$uri, "window_id=$ENV{KRANG_WINDOW_ID}")
-                  if $ENV{KRANG_WINDOW_ID};
-
                 unless (pkg('Charset')->is_utf8()) {
                     $self->add_to_query(\$uri, 'is_non_utf8_redirect=1');
                 }
@@ -480,7 +476,6 @@ sub redirect_to_login {
 
 sub _redirect_to_url_with_msg {
     my ($self, $url, $msg) = @_;
-    $url .= "?window_id=$ENV{KRANG_WINDOW_ID}";
     $url .= "&message=" . uri_escape($msg) if $msg;
 
     if ($self->param('ajax')) {
@@ -512,16 +507,11 @@ version may have been written to disk via Save & Stay)
 =cut
 
 sub cancel_edit {
-    my $self = shift;
-    my $q    = $self->query;
-    my $user = $ENV{REMOTE_USER};
-    my ($type) = $q->url(-relative => 1) =~ /(.*)\.pl$/;
-    my $object = delete $session{$type};
-
-    die('cancel_edit did not recognize URL: ' . $q->url)
-      unless ($type eq 'story' || $type eq 'template' || $type eq 'media');
-    die("cancel_edit did not find a $type in session")
-      unless ($object);
+    my $self   = shift;
+    my $q      = $self->query;
+    my $user   = $ENV{REMOTE_USER};
+    my $object = $self->_get_edit_object()
+      || die("No object returned from _get_edit_object()");
 
     # if it's a new object that hasn't yet been saved, delete it
     if ($self->_cancel_edit_deletes($object)) {
@@ -554,6 +544,9 @@ sub cancel_edit {
             $ENV{REMOTE_USER} = $user;
         }
     }
+
+    # clear it from our session
+    $self->_clear_edit_object();
 
     # finally, return to pre-edit URL
     $self->header_props(uri => $pre_edit_url);

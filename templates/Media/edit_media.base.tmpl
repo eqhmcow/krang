@@ -167,9 +167,8 @@ Krang.onload( function() {
 </script>
 
 <form name="edit" method="post" enctype="multipart/form-data" action="media.pl">
-
 <input name="rm" value="<tmpl_if add_mode>save_stay_add<tmpl_else>save_edit</tmpl_if>" type="hidden">
-<input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
+<input name="edit_uuid" value="<tmpl_var edit_uuid escape=html>" type="hidden">
 <input name="reverted_to_version" value="<tmpl_var reverted_to_version>" type="hidden">
 <tmpl_unless add_mode>
   <input name="return_script" value="media.pl" type="hidden">
@@ -180,7 +179,7 @@ Krang.onload( function() {
 
 <span class="east">
   <tmpl_if thumbnail_path>
-    <tmpl_if media_id><a href="" title="<tmpl_lang Preview> <tmpl_var escape=html title>" class="media-preview-link" name="media_null"></tmpl_if>
+    <tmpl_if media_id><a href="" title="<tmpl_lang Preview> <tmpl_var escape=html title>" class="media-preview-link" name="media_<tmpl_var edit_uuid escape=html>"></tmpl_if>
     <img alt="" src="<tmpl_var escape=html thumbnail_path>">
     <tmpl_if media_id></a></tmpl_if>
   </tmpl_if>
@@ -237,7 +236,7 @@ Krang.onload( function() {
     <td>
     <tmpl_if filename>
       <tmpl_lang Current File>
-      <tmpl_if media_id><a href="" class="media-preview-link" name="media_null"></tmpl_if><tmpl_var escape=html filename><tmpl_if media_id></a></tmpl_if>
+      <tmpl_if media_id><a href="" class="media-preview-link" name="media_<tmpl_var edit_uuid escape=html>"></tmpl_if><tmpl_var escape=html filename><tmpl_if media_id></a></tmpl_if>
       <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
       <i>&mdash; <tmpl_lang or> &mdash;</i>
       <br>
@@ -322,7 +321,7 @@ Krang.onload( function() {
       <tmpl_if filename>
         <tmpl_lang Current File>
         <tmpl_if media_id>
-          <a href="" class="media-preview-link" name="media_null"><tmpl_var escape=html filename></a>
+          <a href="" class="media-preview-link" name="media_<tmpl_var edit_uuid escape=html>"><tmpl_var escape=html filename></a>
         <tmpl_else>
           <tmpl_var escape=html filename>
         </tmpl_if>
@@ -456,7 +455,7 @@ Krang.onload( function() {
 <tmpl_unless add_mode>
   <form name="delete_media_form" method="post" action="media.pl">
   <input name="rm" value="delete" type="hidden">
-  <input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
+  <input name="edit_uuid" value="<tmpl_var edit_uuid escape=html>" type="hidden">
   </form>
 </tmpl_unless>
 

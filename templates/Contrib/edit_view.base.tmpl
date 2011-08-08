@@ -40,8 +40,8 @@ find_media = function() {
 </h2>
 
 <form id="edit_contrib_form" name="edit_contrib_form" method="post" enctype="multipart/form-data" action="contributor.pl">
-
 <input name="rm" value="save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>" type="hidden">
+<input name="edit_uuid" value="<tmpl_var escape=html edit_uuid>" type="hidden">
 <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
 <input name="associate_mode" value="<tmpl_var escape=html associate_mode>" type="hidden">
 <tmpl_unless add_mode>

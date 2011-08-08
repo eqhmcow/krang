@@ -2,27 +2,22 @@ package Krang::CGI::Story;
 use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader History => qw(add_history);
 use Krang::ClassLoader Log     => qw(debug info assert ASSERT);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Message => qw(add_message add_alert clear_messages clear_alerts);
-use Krang::ClassLoader Widget =>
-  qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
+use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
 use Krang::ClassLoader 'CGI::Workspace';
-use Carp qw(croak);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Group';
 use Krang::ClassLoader Conf         => qw(Charset);
 use Krang::ClassLoader Localization => qw(localize);
-
 use Krang::ClassLoader base => 'CGI::ElementEditor';
-
-sub _get_element     { $session{story}->element; }
-sub _get_script_name { "story.pl"; }
+use Krang::ClassLoader 'UUID';
+use Carp qw(croak);
 
 =head1 NAME
 
@@ -339,8 +334,8 @@ sub create {
     # save it
     $story->save();
 
-    # store in session for edit
-    $session{story} = $story;
+    # store in session for editting
+    $self->_set_story($story);
 
     # toss to edit
     $self->_cancel_edit_goes_to('story.pl?rm=new_story', $ENV{REMOTE_USER});
@@ -355,7 +350,6 @@ Save, Check-In story to a particular desk and redirects to that desk.
 
 sub check_in_and_save {
     my $self = shift;
-
     my $query   = $self->query;
     my $desk_id = $query->param('checkin_to');
 
@@ -367,22 +361,8 @@ sub check_in_and_save {
     my $output = $self->_save();
     return $output if length $output;
 
-    my $story;
-    if ($query->param('story_id')) {
-
-        # load story from DB
-        ($story) = pkg('Story')->find(story_id => $query->param('story_id'));
-        croak("Unable to load story '" . $query->param('story_id') . "'.")
-          unless $story;
-
-        $query->delete('story_id');
-        $session{story} = $story;
-    } else {
-        $story = $session{story};
-        croak("Unable to load story from session!")
-          unless $story;
-    }
-
+    my $story = $self->_story;
+    $query->delete('story_id');
     eval { $story->save() };
 
     # handle exception
@@ -424,7 +404,7 @@ sub check_in_and_save {
     }
 
     # remove story from session
-    delete $session{story};
+    $self->_clear_story();
 
     add_message(
         "moved_story",
@@ -448,23 +428,12 @@ sub checkout_and_edit {
     my $self  = shift;
     my $query = $self->query;
 
-    my $story;
-    if ($query->param('story_id')) {
+    my $story = $self->_story();
 
-        # load story from DB
-        ($story) = pkg('Story')->find(story_id => $query->param('story_id'));
-        croak("Unable to load story '" . $query->param('story_id') . "'.")
-          unless $story;
-
+    # make Cancel button return story to original user and bring up Find screen
+    if ( $query->param('story_id')) {
         $query->delete('story_id');
-        $session{story} = $story;
-
-        # make Cancel button return story to original user and bring up Find screen
         $self->_cancel_edit_goes_to('story.pl?rm=find', $story->checked_out_by);
-    } else {
-        $story = $session{story};
-        croak("Unable to load story from session!")
-          unless $story;
     }
 
     eval { $story->checkout };
@@ -491,27 +460,20 @@ The story editing interface.
 
 sub edit {
     my $self     = shift;
+    my %args     = @_;
     my $query    = $self->query;
+    my $story    = $self->_story();
     my $template = $self->load_tmpl(
         'edit.tmpl',
         associate         => $query,
         die_on_bad_params => 0,
         loop_context_vars => 1
     );
-    my %args = @_;
 
-    my $story;
-    if ($query->param('story_id')) {
-        ($story) = pkg('Story')->find(story_id => $query->param('story_id'));
-        croak("Unable to load story '" . $query->param('story_id') . "'.")
-          unless $story;
+    $query->delete('story_id');
 
-        $query->delete('story_id');
-        $session{story} = $story;
-    } else {
-        $self->make_sure_story_is_still_ours() || $self->goto_workspace;
-        $story = $session{story};
-    }
+    # make sure no on has stolen our story in the meantime
+    $self->make_sure_story_is_still_ours() || $self->goto_workspace;
 
     # run the element editor edit
     $self->element_edit(
@@ -581,7 +543,8 @@ sub edit {
         }
         $template->param(contribs_loop => \@contribs_loop);
 
-# figure out where to position 'replace' radio-button (use primary cat unless user selected something else)
+        # figure out where to position 'replace' radio-button 
+        # (use primary cat unless user selected something else)
         my @categories = $story->categories;
         my $selected_for_replace_id =
           ($query->param('category_to_replace_id') || (@categories && $categories[0]->category_id));
@@ -712,14 +675,8 @@ sub view {
     );
     my %args = @_;
 
-    # get story_id from params or from the story in the session
-    my $story_id =
-        $query->param('story_id')
-      ? $query->param('story_id')
-      : $session{story}->story_id;
-    croak("Unable to get story_id!") unless $story_id;
-
     # load story from DB
+    my $story_id = $self->_story_id;
     my ($story) = pkg('Story')->find(story_id => $story_id);
 
     croak("Unable to load latest version of story $story_id")
@@ -819,13 +776,10 @@ after C<< $story->revert() >>.
 =cut
 
 sub revert {
-    my $self = shift;
-
+    my $self             = shift;
     my $query            = $self->query;
     my $selected_version = $query->param('version');
-    my $story            = $session{story};
-    croak("Unable to load story from session!")
-      unless $story;
+    my $story            = $self->_story();
 
     # clean query
     $query->delete_all();
@@ -863,16 +817,11 @@ and redirects to edit mode.  The story is not saved.
 
 sub copy {
     my $self  = shift;
-    my $query = $self->query;
-
-    # load story from DB
-    my ($story) = pkg('Story')->find(story_id => $query->param('story_id'));
-
-    croak("Unable to load story '" . $query->param('story_id') . "'.")
-      unless $story;
+    my $story = $self->_story(no_save => 1);
 
     # make a copy and store it in the session
-    my $clone = $session{story} = $story->clone();
+    my $clone = $story->clone();
+    $self->_set_story($clone);
 
     # make sure it's checked out in case we want to save it later
     $clone->{checked_out}    = 1;
@@ -895,7 +844,7 @@ sub copy {
     }
 
     # delete query...
-    $query->delete_all;
+    $self->query->delete_all;
 
     # go edit the copy
     $self->_cancel_edit_goes_to('workspace.pl');
@@ -913,7 +862,7 @@ locations conflict - deletes them entirely.
 sub replace_dupes {
     my $self  = shift;
     my $query = $self->query;
-    my $story = $session{story};
+    my $story = $self->_story();
 
     # grab list of dupes from session
     my @dupes = @{$session{KRANG_PERSIST}{DUPE_STORIES}->{DUPES}};
@@ -1039,7 +988,7 @@ sub db_save {
     return $output if length $output;
 
     # save story to the database
-    my $story = $session{story};
+    my $story = $self->_story();
     eval { $story->save() };
     if ($@) {
         $self->add_save_alert($story, $@);
@@ -1054,7 +1003,7 @@ sub db_save {
     );
 
     # remove story from session
-    delete $session{story};
+    $self->_clear_story();
 
     # return to workspace
     $self->redirect_to_workspace;
@@ -1074,7 +1023,7 @@ sub db_save_and_stay {
     return $output if length $output;
 
     # save story to the database
-    my $story = $session{story};
+    my $story = $self->_story();
     eval { $story->save() };
     if ($@) {
         $self->add_save_alert($story, $@);
@@ -1117,7 +1066,8 @@ sub preview_and_stay {
 
     # re-load edit window and have it launch new window for preview
     my $edit_window = $self->edit || '';
-    my $js_for_preview = qq|<script type="text/javascript">Krang.preview('story', null);</script>|;
+    my $edit_uuid = $self->_edit_uuid;
+    my $js_for_preview = qq|<script type="text/javascript">Krang.preview('story', null, '$edit_uuid');</script>|;
     return ($edit_window . $js_for_preview);
 }
 
@@ -1161,7 +1111,7 @@ sub save_and_publish {
     return $output if length $output;
 
     # save story to the database
-    my $story = $session{story};
+    my $story = $self->_story();
     eval { $story->save() };
 
     # handle exception
@@ -1178,7 +1128,7 @@ sub save_and_publish {
     );
 
     # remove story from session
-    delete $session{story};
+    $self->_clear_story();
 
     # redirect to publish
     $self->header_props(-uri => 'publisher.pl?rm=publish_story&story_id=' . $story->story_id);
@@ -1202,7 +1152,7 @@ sub save_and_view {
 
     my $query = $self->query;
     $query->param('return_script' => 'story.pl');
-    $query->param('return_params' => rm => 'edit');
+    $query->param('return_params' => (rm => 'edit', edit_uuid => $self->_edit_uuid));
     return $self->view();
 }
 
@@ -1214,19 +1164,20 @@ view to view a version of the story.
 =cut
 
 sub save_and_view_log {
-    my $self = shift;
+    my $self      = shift;
+    my $edit_uuid = $self->_edit_uuid;
+    my $id        = $self->_story_id;
 
     # call internal _save and return output from it on error
     my $output = $self->_save();
     return $output if length $output;
-    my $id = $session{story}->story_id;
 
     my $url = "history.pl?history_return_script=story.pl&history_return_params=rm"
-      . "&history_return_params=edit&id=$id&id_meth=story_id&class=Story";
-
+      . "&history_return_params=edit&history_return_params=edit_uuid&history_return_params=$edit_uuid"
+      . "&id=$id&id_meth=story_id&class=Story&edit_uuid=$edit_uuid";
     $self->header_props(-uri => $url);
     $self->header_type('redirect');
-    return "Redirect: <a href=\"$url\">$url</a>";
+    return qq(Redirect: <a href=\"$url\">$url</a>);
 }
 
 =item save_and_edit_schedule
@@ -1237,15 +1188,17 @@ edit schedule for story.
 =cut
 
 sub save_and_edit_schedule {
-    my $self = shift;
+    my $self      = shift;
+    my $edit_uuid = $self->_edit_uuid;
 
     # call internal _save and return output from it on error
     my $output = $self->_save();
     return $output if length $output;
 
-    $self->header_props(-uri => 'schedule.pl?rm=edit&object_type=story');
+    my $url = "schedule.pl?rm=edit&object_type=story&edit_uuid=$edit_uuid";
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
-    return "";
+    return qq(Redirect: <a href=\"$url\">$url</a>);
 }
 
 =item save_and_edit_contribs
@@ -1256,15 +1209,18 @@ Krang::CGI::Contrib to edit contributors
 =cut
 
 sub save_and_edit_contribs {
-    my $self = shift;
+    my $self      = shift;
+    my $edit_uuid = $self->_edit_uuid;
 
     # call internal _save and return output from it on error
     my $output = $self->_save();
     return $output if length $output;
 
     # send to contrib editor
-    $self->header_props(-uri => 'contributor.pl?rm=associate_story');
+    my $url = "contributor.pl?rm=associate_story&edit_uuid=$edit_uuid";
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
+    return qq(Redirect: <a href=\"$url\">$url</a>);
     return "";
 }
 
@@ -1358,14 +1314,13 @@ sub save_and_go_up {
 sub _save {
     my ($self, %args) = @_;
     my $query = $self->query;
-
-    my $story = $session{story};
-    croak("Unable to load story from session!")
-      unless $story;
+    my $story = $self->_story();
 
     # run element editor save and return to edit mode if errors were found.
-    my $elements_ok =
-      $self->element_save(element => $story->element, previewing_story => $args{previewing_story});
+    my $elements_ok = $self->element_save(
+        element          => $story->element,
+        previewing_story => $args{previewing_story},
+    );
     return $self->edit() unless $elements_ok;
 
     # if we're saving in the root then save the story data
@@ -1420,10 +1375,7 @@ error message.
 sub add_category {
     my $self  = shift;
     my $query = $self->query;
-
-    my $story = $session{story};
-    croak("Unable to load story from session!")
-      unless $story;
+    my $story = $self->_story();
 
     my $category_id = $query->param('add_category_id');
     unless ($category_id) {
@@ -1485,10 +1437,7 @@ an error message.
 sub set_primary_category {
     my $self  = shift;
     my $query = $self->query;
-
-    my $story = $session{story};
-    croak("Unable to load story from session!")
-      unless $story;
+    my $story = $self->_story();
 
     my $category_id = $query->param('primary_category_id');
     return $self->edit() unless $category_id;
@@ -1531,10 +1480,7 @@ Returns to edit mode on success and on failure with an error message.
 sub replace_category {
     my $self  = shift;
     my $query = $self->query;
-
-    my $story = $session{story};
-    croak("Unable to load story from session!")
-      unless $story;
+    my $story = $self->_story();
 
     my $old_category_id = $query->param('category_to_replace_id');
     my $new_category_id = $query->param('category_replacement_id');
@@ -1641,10 +1587,7 @@ failure with an error message.
 sub delete_categories {
     my $self  = shift;
     my $query = $self->query;
-
-    my $story = $session{story};
-    croak("Unable to load story from session!")
-      unless $story;
+    my $story = $self->_story();
 
     my %delete_ids = map { s/cat_remove_//; ($_, 1) }
       grep { /^cat_remove/ } $query->param();
@@ -1694,11 +1637,8 @@ Moves a story into the trash. Expects a story in the session.
 
 sub delete {
     my $self = shift;
-
     my $query = $self->query();
-    my $story = $session{story};
-    croak("Unable to load story from session!")
-      unless $story;
+    my $story = $self->_story();
 
     add_message(
         'story_delete',
@@ -1712,8 +1652,7 @@ sub delete {
         $story->trash();
     }
 
-    delete $session{story};
-
+    $self->_clear_story();
     $self->redirect_to_workspace;
 }
 
@@ -2188,7 +2127,8 @@ sub checkout_selected {
         # Redirect to Workplace
         return $self->redirect_to_workspace;
     } else {
-        ($session{story}) = pkg('Story')->find(story_id => $story_checkout_list[0]);
+        my ($story) = pkg('Story')->find(story_id => $story_checkout_list[0]);
+        $self->_set_story($story);
         add_message('selected_stories_checkout_one');
 
         # Redirect to Edit
@@ -2292,14 +2232,14 @@ sub steal_selected {
 
     # if user selected one story, and it's editable....
     if ((@story_ids == 1) && ($single_story->may_edit)) {
-
         # open it (after storing cancel info)
-        ($session{story}) = $single_story;
+        my ($story) = $single_story;
+        $self->_set_story($story);
         $self->_cancel_edit_goes_to('story.pl?rm=list_active',
             %victims ? (values %victims)[0] : $ENV{REMOTE_USER});
         return $self->edit;
-    } else {    # otherwise send user to Workspace
-                # otherwise go to Workspace
+    } else {
+        # otherwise go to Workspace
         return $self->redirect_to_workspace;
     }
 }
@@ -2740,43 +2680,40 @@ sub alert_duplicate_url {
 }
 
 sub make_sure_story_is_still_ours {
-    my $self = shift;
+    my $self     = shift;
+    my $story_id = $self->_story_id;
 
-    # grab story from session hash
-    if (!$session{story}) {
-        croak("Unable to load story from session!");
+    # we have the story in our session, but it hasn't been save to the db yet
+    return 1 unless $story_id;
+
+    # look up actual story in database to make sure it's still ours
+    my ($story) = pkg('Story')->find(story_id => $story_id);
+
+    if (!$story) {
+        clear_messages();
+        clear_alerts();
+        add_alert('story_deleted_during_edit', id => $story_id);
+    } elsif (!$story->checked_out) {
+        clear_messages();
+        clear_alerts();
+        add_alert('story_checked_in_during_edit', id => $story_id);
+    } elsif ($story->checked_out_by ne $ENV{REMOTE_USER}) {
+        my ($thief) = pkg('User')->find(user_id => $story->checked_out_by);
+        clear_messages();
+        clear_alerts();
+        add_alert(
+            'story_stolen_during_edit',
+            id    => $story_id,
+            thief => CGI->escapeHTML($thief->display_name),
+        );
+    } elsif ($story->version > $self->_story()->version) {
+        clear_messages;
+        clear_alerts();
+        add_alert('story_saved_in_other_window', id => $story_id);
     } else {
-        my $story_id = $session{story}->story_id;
-        return 1 unless $story_id;
 
-        # look up actual story in database to make sure it's still ours
-        my ($story) = pkg('Story')->find(story_id => $story_id);
-        if (!$story) {
-            clear_messages();
-            clear_alerts();
-            add_alert('story_deleted_during_edit', id => $story_id);
-        } elsif (!$story->checked_out) {
-            clear_messages();
-            clear_alerts();
-            add_alert('story_checked_in_during_edit', id => $story_id);
-        } elsif ($story->checked_out_by ne $ENV{REMOTE_USER}) {
-            my ($thief) = pkg('User')->find(user_id => $story->checked_out_by);
-            clear_messages();
-            clear_alerts();
-            add_alert(
-                'story_stolen_during_edit',
-                id    => $story_id,
-                thief => CGI->escapeHTML($thief->display_name),
-            );
-        } elsif ($story->version > $session{story}->version) {
-            clear_messages;
-            clear_alerts();
-            add_alert('story_saved_in_other_window', id => $story_id);
-        } else {
-
-            # story is still ours
-            return 1;
-        }
+        # story is still ours
+        return 1;
     }
     return 0;
 }
@@ -2793,19 +2730,14 @@ Returns:    Find Story screen.
 =cut
 
 sub retire {
-    my $self = shift;
-    my $q    = $self->query;
-
+    my $self     = shift;
+    my $q        = $self->query;
     my $story_id = $q->param('story_id');
-
-    croak("No story_id found in CGI params when archiving story.")
-      unless $story_id;
+    croak("No story_id found in CGI params when retiring story.") unless $story_id;
 
     # load story from DB and retire it
     my ($story) = pkg('Story')->find(story_id => $story_id);
-
-    croak("Unable to load story '" . $story_id . "'.")
-      unless $story;
+    croak("Unable to load story '$story_id'.") unless $story;
 
     $story->retire();
 
@@ -2921,7 +2853,7 @@ sub unretire {
 
         # goto Edit screen
         $q->delete('story_id');
-        $session{story} = $story;
+        $self->_set_story($story);
 
         return $self->edit;
     } elsif ($@ && ref($@) && $@->isa('Krang::Story::ReservedURL')) {
@@ -2952,12 +2884,8 @@ the user asset permission for templates.
 sub pe_get_status {
     my ($self) = @_;
     my $query  = $self->query;
-
-    my $story_id = $query->param('story_id');
-    return '' unless $story_id;
-
-    # get story
-    my ($story) = pkg('Story')->find(story_id => $story_id);
+    my $story = $self->_story(force_query => 1);
+    return '' unless $story;
 
     # checked out status
     my $checked_out = $story->checked_out;
@@ -2976,7 +2904,8 @@ sub pe_get_status {
     my $may_steal = pkg('Group')->user_admin_permissions('may_checkin_all');
 
     # is there are different story in the session
-    my $story_in_session = $session{story} ? $session{story}->story_id : '';
+    my $story_in_session = $self->_story(force_session => 1);
+    $story_in_session = $story_in_session ? $story_in_session->story_id : '';
 
     # do we have at least read permission for templates?
     my $tmpl_perm = pkg('Group')->user_asset_permissions('template');
@@ -3016,6 +2945,112 @@ sub pe_checkout_and_edit {
         croak(__PACKAGE__ . "::pe_checkout_and_edit(): Missing story ID in checkout");
     }
 }
+
+# overload load_tmpl so that the edit_uuid is set
+sub load_tmpl {
+    my $self = shift;
+    my $tmpl = $self->SUPER::load_tmpl(@_);
+    if( my $edit_uuid = $self->_edit_uuid ) {
+        $tmpl->param(edit_uuid => $edit_uuid) if $tmpl->query(name => 'edit_uuid');
+    }
+    return $tmpl;
+}
+
+sub _set_story {
+    my ($self, $story) = @_;
+    my $edit_uuid = pkg('UUID')->new;
+    $self->_edit_uuid($edit_uuid);
+    $session{stories}{$edit_uuid} = $story;
+}
+
+sub _story {
+    my ($self, %options) = @_;
+
+    # is the request asking for a specific story by id? If not, get whats in the session
+    if( (my $story_id = $self->query->param('story_id')) && !$options{force_session}) {
+        debug("Pulling story from query story_id $story_id");
+        my ($story) = pkg('Story')->find(story_id => $story_id);
+        if( $story ) {
+            unless($options{no_save}) {
+                # now save this story to the session
+                my $new_edit_uuid = pkg('UUID')->new();
+                $self->_edit_uuid($new_edit_uuid);
+                $session{stories}{$new_edit_uuid} = $story;
+            }
+            return $story;
+        } else {
+            croak("No story found in DB with story_id $story_id!");
+        }
+    } else { 
+        # we just want something from the query, not the session
+        return if $options{force_query};
+        if (my $edit_uuid = $self->_edit_uuid) {
+            debug("Pulling story from session edit_uuid $edit_uuid");
+            my $story = $session{stories}{$edit_uuid};
+            if( $story ) {
+                return $story;
+            } else {
+                croak("Could not load story with edit_uuid $edit_uuid from session!");
+            }
+        } else {
+            croak("No edit_uuid provided!");
+        }
+    }
+}
+
+sub _story_id {
+    my $self = shift;
+    # If the query has a story_id use that first
+    if( my $story_id = $self->query->param('story_id') ) {
+        return $story_id;
+    } else { 
+        if (my $edit_uuid = $self->_edit_uuid) {
+            my $story = $session{stories}{$edit_uuid};
+            if( $story ) {
+                return $story->story_id;
+            } else {
+                croak("Could not load story with edit_uuid $edit_uuid from session!");
+            }
+        } else {
+            croak("No edit_uuid provided!");
+        }
+    }
+}
+
+sub _clear_story {
+    my $self = shift;
+
+    # remove it from the session
+    if( my $edit_uuid = $self->_edit_uuid ) {
+        delete $session{stories}{$edit_uuid};
+    }
+
+    # and the query object
+    $self->query->delete('story_id');
+}
+
+sub _edit_uuid {
+    my $self = shift;
+    if ($_[0]) {
+        # we are setting the edit_uuid
+        $self->param(__edit_uuid => $_[0]);
+        return $_[0];
+    } else {
+        if ($self->param('__edit_uuid')) {
+            return $self->param('__edit_uuid');
+        } else {
+            my $edit_uuid = $self->query->param('edit_uuid');
+            $self->param(__edit_uuid => $edit_uuid);
+            return $edit_uuid;
+        }
+    }
+}
+
+sub _get_element       { shift->_story()->element }
+sub _get_script_name   { "story.pl" }
+sub _get_edit_object   { shift->_story() }
+sub _clear_edit_object { shift->_clear_story() }
+
 
 1;
 

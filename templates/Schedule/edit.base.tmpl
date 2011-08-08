@@ -112,9 +112,9 @@ do_return = function()
 <tmpl_else>
 
   <form name="current_schedule_form" id="current_schedule_form" method="post" action="schedule.pl">
-
   <input name="rm" value="delete" type="hidden">
-  <input name="object_type" value="<tmpl_var escape=html object_type>" type="hidden">
+  <input name="object_type" value="<tmpl_var object_type escape=html>" type="hidden">
+  <input name="edit_uuid" value="<tmpl_var edit_uuid escape=html>" type="hidden">
   <tmpl_if advanced>
     <input name="advanced_schedule" value="1" type="hidden">
   </tmpl_if>
@@ -168,17 +168,17 @@ do_return = function()
 </tmpl_unless>
 
 <form name="add_schedule_form" id="add_schedule_form" method="post" action="schedule.pl">
-
 <input name="rm" value="add<tmpl_if simple>_simple</tmpl_if>" type="hidden">
-<input name="object_type" value="<tmpl_var escape=html object_type>" type="hidden">
+<input name="object_type" value="<tmpl_var object_type escape=html>" type="hidden">
+<input name="edit_uuid" value="<tmpl_var edit_uuid escape=html>" type="hidden">
 <tmpl_unless simple>
   <input name="advanced_schedule" value="1" type="hidden">
 </tmpl_unless>
 
 <div class="tabset finder">
 <ul class="tabs">
-<li><tmpl_if simple><b><tmpl_else><a href="javascript:Krang.Nav.goto_url('schedule.pl?rm=edit&amp;object_type=<tmpl_var escape=url object_type>')"></tmpl_if><span><tmpl_lang Simple Scheduler></span><tmpl_if simple></b><tmpl_else></a></tmpl_if></li>
-<li><tmpl_if simple><a href="javascript:Krang.Nav.goto_url('schedule.pl?rm=edit&amp;object_type=<tmpl_var escape=url object_type>&amp;advanced_schedule=1')"><tmpl_else><b></tmpl_if><span><tmpl_lang Advanced Scheduler></span><tmpl_if simple></a><tmpl_else></b></tmpl_if></li>
+<li><tmpl_if simple><b><tmpl_else><a href="javascript:Krang.Nav.goto_url('schedule.pl?rm=edit&amp;object_type=<tmpl_var escape=url object_type>&amp;edit_uuid=<tmpl_var edit_uuid escape=url>')"></tmpl_if><span><tmpl_lang Simple Scheduler></span><tmpl_if simple></b><tmpl_else></a></tmpl_if></li>
+<li><tmpl_if simple><a href="javascript:Krang.Nav.goto_url('schedule.pl?rm=edit&amp;object_type=<tmpl_var escape=url object_type>&amp;edit_uuid=<tmpl_var edit_uuid escape=url>&amp;advanced_schedule=1')"><tmpl_else><b></tmpl_if><span><tmpl_lang Advanced Scheduler></span><tmpl_if simple></a><tmpl_else></b></tmpl_if></li>
 </ul>
 
 <div class="tabbed">
@@ -274,7 +274,8 @@ do_return = function()
 </form>
 
 <form name="return_form" id="return_form" action="<tmpl_if is_story>story<tmpl_else>media</tmpl_if>.pl" method="post">
-<input name="rm" value="edit" type="hidden">
+<input type="hidden" name="rm" value="edit">
+<input type="hidden" name="edit_uuid" value="<tmpl_var edit_uuid>">
 
 <div class="panel">
 <input value="<tmpl_lang &#9664; Back>" onclick="do_return()" type="button" class="west">

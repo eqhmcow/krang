@@ -40,9 +40,12 @@ Krang.onload( function() {
 </h2>
 
 <form name="return_form" action="<tmpl_var escape=html return_script default='template.pl'>" method="post">
-
 <tmpl_var history_return_params>
-<input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
+<tmpl_if edit_uuid>
+  <input name="edit_uuid" value="<tmpl_var escape=html edit_uuid>" type="hidden">
+<tmpl_else>
+  <input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
+</tmpl_if>
 <input name="retired" value="<tmpl_var escape=html retired>" type="hidden">
 
 <div class="table-container">

@@ -374,12 +374,19 @@ sub list_all_row_handler {
 
 # Get the media or story object from session or die() trying
 sub get_object {
-    my $self        = shift;
-    my $object_type = shift;
+    my ($self, $object_type) = @_;
+    my $edit_uuid = $self->query->param('edit_uuid');
 
     # Get media or story object from session -- or die() trying
-    my $object = $session{$object_type};
-    die("No story or media object available for schedule edit") unless (ref($object));
+    my $object;
+    if( $object_type eq 'story' ) {
+        $object = $session{stories}{$edit_uuid};
+    } elsif( $object_type eq 'media' ) {
+        $object = $session{medias}{$edit_uuid};
+    } else {
+        $object = $session{$object_type};
+    }
+    die("No object available for schedule edit") unless $object && ref $object;
 
     return $object;
 }

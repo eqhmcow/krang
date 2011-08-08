@@ -318,16 +318,15 @@ session key containing the story to preview.
 =cut
 
 sub preview_story {
-    my $self  = shift;
-    my $query = $self->query;
-
-    my $session_key = $query->param('session');
-    my $story_id    = $query->param('story_id');
+    my $self      = shift;
+    my $query     = $self->query;
+    my $story_id  = $query->param('story_id');
+    my $edit_uuid = $query->param('edit_uuid');
 
     # if they didn't give us enough to find the story
     # take them back to the workspace
-    unless ($story_id or $session_key) {
-        info("Missing required story_id or session parameter. Redirecting to workspace.");
+    unless ($story_id || $edit_uuid) {
+        info("Missing required story_id or edit_uuid parameter. Redirecting to workspace.");
         return $self->redirect_to_workspace;
     }
 
@@ -336,18 +335,15 @@ sub preview_story {
     print $query->header(-expires => '-1d');
 
     my $story;
-
     my $unsaved = 0;
 
-    unless ($session_key) {
+    if ($story_id) {
         ($story) = pkg('Story')->find(story_id => $story_id);
-        croak("Unable to find story '$story_id'")
-          unless $story;
+        croak("Unable to find story '$story_id'") unless $story;
     } else {
-        $story = $session{$session_key};
-        croak("Unable to load story from session '$session_key'")
-          unless $story;
-        $unsaved = 1 if ($session_key eq 'story');
+        $story = $session{stories}{$edit_uuid};
+        croak("Unable to load story from session for edit_uuid $edit_uuid") unless $story;
+        $unsaved = 1;
     }
 
     # output the progress header
@@ -485,10 +481,7 @@ sub preview_editor {
 
     $t->param(
         story_preview_url => ($query->param('story_preview_url') || ''),
-        json => JSON::Any->new->encode({
-            winID  => ($query->param('window_id') || ''),
-            cmsURL => pkg('Conf')->cms_root(),
-        }),
+        json => JSON::Any->new->encode({cmsURL => pkg('Conf')->cms_root()}),
     );
     return $t->output;
 }
@@ -518,26 +511,22 @@ session key containing the media object.
 =cut
 
 sub preview_media {
-    my $self  = shift;
-    my $query = $self->query;
-
-    my $session_key = $query->param('session');
-    my $media_id    = $query->param('media_id');
-    croak("Missing required media_id or session parameter.")
-      unless $media_id or $session_key;
+    my $self      = shift;
+    my $query     = $self->query;
+    my $edit_uuid = $query->param('edit_uuid');
+    my $media_id  = $query->param('media_id');
+    croak("Missing required media_id or edit_uuid parameter.") unless $media_id or $edit_uuid;
 
     # if this is set, don't redirect to preview server
     my $no_view = $query->param('no_view');
 
     my $media;
-    unless ($session_key) {
+    if($media_id) {
         ($media) = pkg('Media')->find(media_id => $media_id);
-        croak("Unable to find media '$media_id'")
-          unless $media;
+        croak("Unable to find media '$media_id'") unless $media;
     } else {
-        $media = $session{$session_key};
-        croak("Unable to load media from sesssion '$session_key'")
-          unless $media;
+        $media = $session{medias}{$edit_uuid};
+        croak("Unable to load media from sesssion for edit_uuid '$edit_uuid'") unless $media;
     }
 
     my $publisher = pkg('Publisher')->new();
@@ -848,12 +837,8 @@ sub _publish_assets_now {
     # itself
     print qq|
     <script type="text/javascript">
-        setTimeout(
-            function() { location.replace("workspace.pl?window_id=$ENV{KRANG_WINDOW_ID}") },
-            10
-        )
-    </script>
-    |;
+        setTimeout(function() { location.replace('workspace.pl') }, 10)
+    </script>|;
 
     return;
 }

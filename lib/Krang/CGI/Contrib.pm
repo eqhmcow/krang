@@ -1141,20 +1141,23 @@ sub list_view_contrib_row_handler {
 
 # Get the media or story object from session or die() trying
 sub get_ass_obj {
-    my $self = shift;
+    my $self      = shift;
+    my $q         = $self->query();
+    my $mode      = $q->param('associate_mode') || '';
+    my $edit_uuid = $q->param('edit_uuid');
 
-    my $q = $self->query();
-
-    # Check for "associate_mode".
-    my $associate_mode = $q->param('associate_mode') || '';
-    die("Invalid associate_mode '$associate_mode'")
-      unless (grep { $associate_mode eq $_ } qw( story media ));
+    # validate for "associate_mode".
+    die("Invalid associate_mode '$mode'") unless (grep { $mode eq $_ } qw( story media ));
 
     # Get media or story object from session -- or die() trying
-    my $ass_obj = $session{$associate_mode};
-    die("No story or media object available for contributor association") unless (ref($ass_obj));
-
-    return $ass_obj;
+    my $obj;
+    if ($mode eq 'story') {
+        $obj = $session{stories}{$edit_uuid};
+    } elsif ($mode eq 'media') {
+        $obj = $session{medias}{$edit_uuid};
+    }
+    die("No story or media object available for contributor association") unless $obj;
+    return $obj;
 }
 
 # Updated the provided Contrib object with data

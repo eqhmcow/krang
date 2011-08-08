@@ -32,8 +32,8 @@ add_contrib = function()
 </h2>
 
 <form name="search_form" id="search_form" action="contributor.pl" method="post">
-
 <input name="rm" value="search" type="hidden">
+<input name="edit_uuid" value="<tmpl_var escape=html edit_uuid>" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
 <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
@@ -84,6 +84,7 @@ add_contrib = function()
 
 <form name="add_contrib_form" id="add_contrib_form" action="contributor.pl" method="post">
 <input name="rm" value="add" type="hidden">
+<input name="edit_uuid" value="<tmpl_var escape=html edit_uuid>" type="hidden">
 <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
 <input name="krang_pager_curr_page_num" value="<tmpl_var escape=html krang_pager_curr_page_num>" type="hidden">
 <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
@@ -94,6 +95,7 @@ add_contrib = function()
 <tmpl_if row_count>
   <form name="edit_contrib_form" id="edit_contrib_form" action="contributor.pl" method="post">
   <input name="rm" value="edit" type="hidden">
+  <input name="edit_uuid" value="<tmpl_var escape=html edit_uuid>" type="hidden">
   <input name="contrib_id" value="" type="hidden">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
   <input name="krang_pager_curr_page_num" value="<tmpl_var escape=html krang_pager_curr_page_num>" type="hidden">

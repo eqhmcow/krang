@@ -57,8 +57,8 @@ add_contrib = function()
 <tmpl_else>
 
   <form name="current_contributors_form" id="current_contributors_form" action="contributor.pl" method="post">
-
   <input name="rm" value="reorder_contribs" type="hidden">
+  <input name="edit_uuid" value="<tmpl_var escape=html edit_uuid>" type="hidden">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
   <input name="associate_mode" value="<tmpl_var escape=html associate_mode>" type="hidden">
   <input name="krang_pager_curr_page_num" value="<tmpl_var escape=html krang_pager_curr_page_num>" type="hidden">
@@ -113,8 +113,8 @@ add_contrib = function()
 </tmpl_unless>
 
 <form name="search_form" id="search_form" action="contributor.pl" method="post">
-
 <input name="rm" value="search" type="hidden">
+<input name="edit_uuid" value="<tmpl_var edit_uuid escape=html>" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
 <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
@@ -155,6 +155,7 @@ add_contrib = function()
 <tmpl_else>
 
   <form name="krang_pager_form" id="krang_pager_form" action="contributor.pl" method="post">
+  <input type="hidden" name="edit_uuid" value="<tmpl_var edit_uuid escape=html>">
 
   <tmpl_include HTMLPager/<tmpl_lang en>/pager-internals.tmpl>
 
@@ -214,8 +215,8 @@ add_contrib = function()
 </tmpl_unless>
 
 <form name="do_return_form" action="<tmpl_if associate_story>story<tmpl_else>media</tmpl_if>.pl" method="post">
-
 <input name="rm" value="edit" type="hidden">
+<input name="edit_uuid" value="<tmpl_var edit_uuid escape=html>" type="hidden">
 
 <div class="panel capped">
 <input value="<tmpl_lang &#9664; Back>" type="submit" class="west">
@@ -228,6 +229,7 @@ add_contrib = function()
 
 <form name="add_contrib_form" action="contributor.pl" method="post">
 <input name="rm" value="add" type="hidden">
+<input name="edit_uuid" value="<tmpl_var edit_uuid escape=html>" type="hidden">
 <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
 <input name="associate_mode" value="<tmpl_var escape=html associate_mode>" type="hidden">
 <input name="krang_pager_curr_page_num" value="<tmpl_var escape=html krang_pager_curr_page_num>" type="hidden">

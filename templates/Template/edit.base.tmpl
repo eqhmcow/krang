@@ -39,17 +39,6 @@ do_save = function() {
   Krang.Form.submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save' });
 }
 
-//(db2)untied to UI; runmodes exist:
-//do_checkin = function()
-//{
-//  Krang.Form.submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_checkin' });
-//}
-//
-//do_cancel = function()
-//{
-//  Krang.Form.submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_cancel' });
-//}
-
 do_deploy = function() {
   save_editor_text();
   Krang.Form.submit('edit_template_form', { rm: 'deploy' });
@@ -61,8 +50,7 @@ save_and_view_log = function() {
 }
 
 <tmpl_if add_mode>
-  update_filename = function( el )
-  {
+  update_filename = function(el) {
     var isNil  = ( el.value == '' );
     var elFile = el.form[ 'filename' ];
 
@@ -70,15 +58,14 @@ save_and_view_log = function() {
     elFile.style.backgroundColor = isNil ? '#FFF' : '#DDD';
     elFile.readOnly              = !isNil;
   }
-  do_cancel_add = function()
-  {
+
+  do_cancel_add = function() {
     if (confirm(Krang.L10N.loc("Discard new Template?"))) {
       Krang.Form.submit( 'edit_template_form', { rm: 'search' });
     }
   }
 <tmpl_else>
-  do_cancel_edit = function()
-  {
+  do_cancel_edit = function() {
     if (confirm(<tmpl_if cancel_goes_to_workspace>Krang.L10N.loc("Discard any unsaved changes and go to Workspace?")
                 <tmpl_else><tmpl_if cancel_changes_owner>Krang.L10N.loc("Discard any changes and check the Template back in?")
                 <tmpl_else>Krang.L10N.loc("Discard any unsaved changes and go back to Find Template screen?")
@@ -86,8 +73,7 @@ save_and_view_log = function() {
        Krang.Form.submit( 'edit_template_form', {rm: 'cancel_edit'});
     }
   }
-  revert_version = function()
-  {
+  revert_version = function() {
     var f = document.forms['edit_template_form'];
     var v = f.selected_version.options[f.selected_version.selectedIndex].value;
 
@@ -98,21 +84,20 @@ save_and_view_log = function() {
     }
   }
 
-  view_version = function()
-  {
+  view_version = function() {
     var f = document.forms['edit_template_form'];
     var v = f.selected_version.options[f.selected_version.selectedIndex].value;
 
     if ( v == <tmpl_var version> ) {
-	if (!confirm(Krang.L10N.loc('You are currently editing that version. View its saved content?'))) {
+	  if (!confirm(Krang.L10N.loc('You are currently editing that version. View its saved content?'))) {
 	    return;
-        }
+      }
     }
+    save_editor_text();
     Krang.Form.submit('edit_template_form', { rm: 'view_version' });
   }
 
-  do_delete = function()
-  {
+  do_delete = function() {
     if ( confirm( Krang.L10N.loc('Are you SURE you want to delete this Template?') ) )
       Krang.Form.submit( 'delete_template_form'<tmpl_if add_mode>, { rm : 'add_cancel' }</tmpl_if> );
   }
@@ -126,9 +111,8 @@ Krang.onload( function() {
 </script>
 
 <form name="edit_template_form" action="template.pl" method="post" enctype="multipart/form-data">
-
 <input name="rm" value="<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save" type="hidden">
-<input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
+<input name="edit_uuid" value="<tmpl_var edit_uuid escape=html>" type="hidden">
 <tmpl_unless add_mode>
   <tmpl_var history_return_params>
 </tmpl_unless>
@@ -276,7 +260,7 @@ Krang.onload( function() {
 <tmpl_unless add_mode>
   <form name="delete_template_form" method="post" action="template.pl">
   <input name="rm" value="delete" type="hidden">
-  <input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
+  <input name="edit_uuid" value="<tmpl_var edit_uuid escape=html>" type="hidden">
   <input name="reverted_to_version" value="<tmpl_var reverted_to_version>" type="hidden">
   </form>
 </tmpl_unless>
