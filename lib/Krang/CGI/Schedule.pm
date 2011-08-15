@@ -380,9 +380,9 @@ sub get_object {
     # Get media or story object from session -- or die() trying
     my $object;
     if( $object_type eq 'story' ) {
-        $object = $session{stories}{$edit_uuid};
+        $object = $self->get_session_story_obj($edit_uuid);
     } elsif( $object_type eq 'media' ) {
-        $object = $session{medias}{$edit_uuid};
+        $object = $self->get_session_media_obj($edit_uuid);
     } else {
         $object = $session{$object_type};
     }

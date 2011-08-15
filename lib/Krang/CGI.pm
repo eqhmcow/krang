@@ -18,6 +18,7 @@ use MIME::Base64 qw(decode_base64);
 use Encode qw(decode_utf8);
 use Unicode::Normalize;
 use URI::Escape qw(uri_escape);
+use Carp qw(croak);
 
 =head1 NAME
 
@@ -506,12 +507,17 @@ version may have been written to disk via Save & Stay)
 
 =cut
 
+sub get_edit_object {
+    my $pkg = shift;
+    croak("You must implement get_edit_object in class $pkg!");
+}
+
 sub cancel_edit {
     my $self   = shift;
     my $q      = $self->query;
     my $user   = $ENV{REMOTE_USER};
-    my $object = $self->_get_edit_object()
-      || die("No object returned from _get_edit_object()");
+    my $object = $self->get_edit_object()
+      || die("No object returned from get_edit_object()");
 
     # if it's a new object that hasn't yet been saved, delete it
     if ($self->_cancel_edit_deletes($object)) {
@@ -546,7 +552,7 @@ sub cancel_edit {
     }
 
     # clear it from our session
-    $self->_clear_edit_object();
+    $self->clear_edit_object();
 
     # finally, return to pre-edit URL
     $self->header_props(uri => $pre_edit_url);
@@ -749,6 +755,24 @@ sub dump_html {
     $output .= "\n</b></pre>\n";
 
     return qq|<div style="text-align:left;margin-left:170px">\n$output\n</div>|;
+}
+
+sub get_session_media_obj {
+    my ($self, $edit_uuid) = @_;
+    $edit_uuid ||= $self->query->param('edit_uuid');
+    return $session{pkg('Media')}{$edit_uuid};
+}
+
+sub get_session_story_obj {
+    my ($self, $edit_uuid) = @_;
+    $edit_uuid ||= $self->query->param('edit_uuid');
+    return $session{pkg('Story')}{$edit_uuid};
+}
+
+sub get_session_template_obj {
+    my ($self, $edit_uuid) = @_;
+    $edit_uuid ||= $self->query->param('edit_uuid');
+    return $session{pkg('Story')}{$edit_uuid};
 }
 
 

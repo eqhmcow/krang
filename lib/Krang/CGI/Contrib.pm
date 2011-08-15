@@ -1152,9 +1152,9 @@ sub get_ass_obj {
     # Get media or story object from session -- or die() trying
     my $obj;
     if ($mode eq 'story') {
-        $obj = $session{stories}{$edit_uuid};
+        $obj = $self->get_session_story_obj($edit_uuid);
     } elsif ($mode eq 'media') {
-        $obj = $session{medias}{$edit_uuid};
+        $obj = $self->get_session_media_obj($edit_uuid);
     }
     die("No story or media object available for contributor association") unless $obj;
     return $obj;

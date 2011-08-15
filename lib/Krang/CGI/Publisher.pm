@@ -341,7 +341,7 @@ sub preview_story {
         ($story) = pkg('Story')->find(story_id => $story_id);
         croak("Unable to find story '$story_id'") unless $story;
     } else {
-        $story = $session{stories}{$edit_uuid};
+        $story = $self->get_session_story_obj($edit_uuid);
         croak("Unable to load story from session for edit_uuid $edit_uuid") unless $story;
         $unsaved = 1;
     }
@@ -525,7 +525,7 @@ sub preview_media {
         ($media) = pkg('Media')->find(media_id => $media_id);
         croak("Unable to find media '$media_id'") unless $media;
     } else {
-        $media = $session{medias}{$edit_uuid};
+        $media = $self->get_session_media_obj($edit_uuid);
         croak("Unable to load media from sesssion for edit_uuid '$edit_uuid'") unless $media;
     }
 

@@ -210,7 +210,7 @@ use Exception::Class;
 
 use File::Spec::Functions qw(catdir);
 
-use Krang::ClassLoader base => 'CGI';
+use Krang::ClassLoader base => 'CGI::SessionEditor';
 
 # For *Link hard find feature
 use Storable qw(thaw);
@@ -671,7 +671,7 @@ sub find_story_link {
 
     # when editing a story, exclude it from story search
     if ($self->isa('Krang::CGI::Story')) {
-        if( my $story = $self->_get_edit_object ) {
+        if( my $story = $self->get_edit_object ) {
             $find_params{exclude_story_ids} = [$story->story_id];
         }
     }
@@ -851,7 +851,7 @@ sub find_media_link {
 
     # when editing a media object, exclude it from media search
     if ($self->isa('Krang::CGI::Media')) {
-        if (my $media = $self->_get_edit_object) {
+        if (my $media = $self->get_edit_object) {
             $find{exclude_media_ids} = [$media->media_id];
         }
     }

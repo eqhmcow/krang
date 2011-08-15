@@ -639,7 +639,7 @@ sub add_media {
 
     # Create new temporary Media object to work on
     my $m = pkg('Media')->new();
-    $self->_set_media($m);
+    $self->set_edit_object($m);
 
     # Call and return the real add function
     return $self->_add(%args);
@@ -655,7 +655,7 @@ My Workspace afterwards, even tho the media object will not be there.
 sub checkin_add {
     my $self = shift;
     my $q    = $self->query();
-    my $m    = $self->_media;
+    my $m    = $self->get_edit_object;
 
     # Update object in session
     $self->update_media($m) || return $self->redirect_to_workspace;
@@ -675,7 +675,7 @@ sub checkin_add {
     add_message("new_media_saved");
 
     # Clear media object from session
-    $self->_clear_media();
+    $self->clear_edit_object();
 
     # Redirect to workspace.pl
     $self->redirect_to_workspace;
@@ -692,7 +692,7 @@ Saves the new object and redirects to edit screen
 sub save_stay_add {
     my $self = shift;
     my $q    = $self->query();
-    my $m    = $self->_media;
+    my $m    = $self->get_edit_object;
 
     # Update object in session
     $self->update_media($m) || return $self->redirect_to_workspace;
@@ -782,8 +782,8 @@ users may edit existing Media objects.
 sub edit {
     my ($self, %args) = @_;
     my $q        = $self->query();
-    my $media_id = $self->_media_id;
-    my $m        = $self->_media();
+    my $media_id = $self->edit_object_id;
+    my $m        = $self->get_edit_object();
 
     # we expect a media object with an ID, if we don't have it go to add mode
     if(!$m->media_id) {
@@ -795,7 +795,7 @@ sub edit {
     if ($q->param('force_reload')) {
         ($m) = pkg('Media')->find(media_id => $media_id);
         die("Can't find media object with media_id '$media_id'") unless $m;
-        $self->_set_media($m, keep_edit_uuid => 1);
+        $self->set_edit_object($m, keep_edit_uuid => 1);
     }
 
     my $t = $self->load_tmpl(
@@ -848,7 +848,7 @@ sub save_edit {
     return $output if $output;
 
     # Save object to database
-    my $m           = $self->_media;
+    my $m           = $self->get_edit_object;
     my %save_errors = ($self->do_save_media($m));
     return $self->edit(%save_errors) if (%save_errors);
 
@@ -873,7 +873,7 @@ sub save_edit {
     add_message("media_saved");
 
     # Clear media object from session
-    $self->_clear_media();
+    $self->clear_edit_object();
 
     # Redirect to workspace.pl
     $self->redirect_to_workspace;
@@ -895,7 +895,7 @@ sub checkin_edit {
     return $output if $output;
 
     # Save object to database
-    my $m           = $self->_media();
+    my $m           = $self->get_edit_object();
     my %save_errors = ($self->do_save_media($m));
     return $self->edit(%save_errors) if (%save_errors);
 
@@ -906,7 +906,7 @@ sub checkin_edit {
     add_message("media_saved");
 
     # Clear media object from session
-    $self->_clear_media();
+    $self->clear_edit_object();
 
     # Redirect to workspace.pl
     $self->redirect_to_workspace;
@@ -928,7 +928,7 @@ sub save_stay_edit {
     return $output if $output;
 
     # Save object to database
-    my $m           = $self->_media();
+    my $m           = $self->get_edit_object();
     my %save_errors = ($self->do_save_media($m));
     return $self->edit(%save_errors) if (%save_errors);
 
@@ -970,11 +970,11 @@ parameter 'media_id'.  Redirect user to Workspace.
 
 sub delete {
     my $self = shift;
-    my $m = $self->_media;
+    my $m = $self->get_edit_object;
 
     # Transfer to trash
     $m->trash();
-    $self->_clear_media();
+    $self->clear_edit_object();
 
     add_message('message_media_deleted');
 
@@ -1044,7 +1044,7 @@ edit schedule for media.
 
 sub save_and_edit_schedule {
     my $self      = shift;
-    my $edit_uuid = $self->_edit_uuid;
+    my $edit_uuid = $self->edit_uuid;
 
     # Update media object in session
     my $output = $self->_save();
@@ -1070,7 +1070,7 @@ it performs an HTTP redirect to:
 
 sub save_and_associate_media {
     my $self      = shift;
-    my $edit_uuid = $self->_edit_uuid;
+    my $edit_uuid = $self->edit_uuid;
 
     # Update media object in session
     my $output = $self->_save();
@@ -1099,7 +1099,7 @@ sub save_and_publish {
     return $output if $output;
 
     # Save object to database
-    my $m           = $self->_media();
+    my $m           = $self->get_edit_object();
     my %save_errors = ($self->do_save_media($m));
     return $self->edit(%save_errors) if (%save_errors);
 
@@ -1107,7 +1107,7 @@ sub save_and_publish {
     $m->preview;
 
     # Clear media object from session
-    $self->_clear_media();
+    $self->clear_edit_object();
 
     # Redirect to publish screen
     my $url = 'publisher.pl?rm=publish_media&media_id=' . $m->media_id;
@@ -1126,8 +1126,8 @@ then redirects to publisher.pl to preview the media object.
 
 sub save_and_preview {
     my $self      = shift;
-    my $media_id  = $self->_media_id;
-    my $edit_uuid = $self->_edit_uuid;
+    my $media_id  = $self->edit_object_id;
+    my $edit_uuid = $self->edit_uuid;
 
     # Validate and save object in session
     my $output = $self->_save();
@@ -1152,8 +1152,8 @@ history.pl.
 
 sub save_and_view_log {
     my $self      = shift;
-    my $id        = $self->_media_id;
-    my $edit_uuid = $self->_edit_uuid;
+    my $id        = $self->edit_object_id;
+    my $edit_uuid = $self->edit_uuid;
 
     # Update media in session
     my $output = $self->_save();
@@ -1183,11 +1183,11 @@ sub view_log {
     my $self     = shift;
     my $q        = $self->query();
     my %return   = $q->param('return_params');
-    my $media_id = $self->_media_id;
+    my $media_id = $self->edit_object_id;
 
     # default return vars
     $return{rm} ||= 'view';
-    $return{edit_uuid} ||= $self->_edit_uuid;
+    $return{edit_uuid} ||= $self->edit_uuid;
 
     # Redirect to history screen
     my $url = "history.pl?history_return_script=media.pl&" . join(
@@ -1221,7 +1221,7 @@ sub view {
     $version ||= $q->param('version');
 
     # get media_id from params or from the media in the session
-    my $media_id = $self->_media_id;
+    my $media_id = $self->edit_object_id;
     die("No media_id specified") unless ($media_id);
 
     # Load media object into session, or die trying
@@ -1294,7 +1294,7 @@ sub revert_version {
     $q->param(reverted_to_version => $selected_version);
 
     # Perform revert & display result
-    my $m                  = $self->_media();
+    my $m                  = $self->get_edit_object();
     my $pre_revert_version = $m->version;
     my $result             = $m->revert($selected_version);
     if ($result->isa('Krang::Media')) {
@@ -1477,7 +1477,7 @@ sub _save {
     my $query = $self->query;
 
     # run element editor save and return to edit on errors
-    my $m = $self->_media();
+    my $m = $self->get_edit_object();
     $self->element_save(element => $m->element) || return $self->edit;
 
     # if we're saving in the root then save the media data
@@ -1601,7 +1601,7 @@ sub _add {
     my ($self, %args) = @_;
     my $q = $self->query();
     my $t = $self->load_tmpl('edit_media.tmpl', associate => $q, loop_context_vars => 1);
-    my $m = $self->_media();
+    my $m = $self->get_edit_object();
 
     $t->param(add_mode => 1);
 
@@ -1632,12 +1632,12 @@ sub update_media {
                 || $media_in_db->version > $m->version)
             {
                 add_alert('media_modified_elsewhere', id => $id);
-                $self->_clear_media();
+                $self->clear_edit_object();
                 return 0;
             }
         } else {
             add_alert('media_deleted_elsewhere', id => $id);
-            $self->_clear_media();
+            $self->clear_edit_object();
             return 0;
         }
     }
@@ -2329,7 +2329,7 @@ sub save_and_transform_image {
 sub transform_image {
     my $self        = shift;
     my $q           = $self->query();
-    my $m           = $self->_media();
+    my $m           = $self->get_edit_object();
     my $apply_trans = $q->param('apply_transform');
     my ($imager, $url);
 
@@ -2416,7 +2416,7 @@ sub _do_apply_transform {
 
 sub save_image_transform {
     my $self   = shift;
-    my $m      = $self->_media();
+    my $m      = $self->get_edit_object();
     my $imager = $self->_do_apply_transform($m, $self->query);
 
     # save changes
@@ -2458,7 +2458,7 @@ sub _clear_image_transform_session {
 sub _media_types_popup_menu {
     my ($self, %args) = @_;
     my $q = $self->query();
-    my $m = $self->_media();
+    my $m = $self->get_edit_object();
 
     # Build type drop-down
     my %media_types = pkg('Pref')->get('media_type');
@@ -2483,108 +2483,15 @@ sub _media_types_popup_menu {
 sub load_tmpl {
     my $self = shift;
     my $tmpl = $self->SUPER::load_tmpl(@_);
-    if( my $edit_uuid = $self->_edit_uuid ) {
+    if( my $edit_uuid = $self->edit_uuid ) {
         $tmpl->param(edit_uuid => $edit_uuid) if $tmpl->query(name => 'edit_uuid');
     }
     return $tmpl;
 }
 
-sub _get_element       { shift->_media->element }
-sub _get_edit_object   { shift->_media }
-sub _clear_edit_object { shift->_clear_media }
-sub _get_script_name   { "media.pl" }
-
-sub _media {
-    my ($self, %options) = @_;
-
-    # is the request asking for a specific media by id? If not, get whats in the session
-    if( (my $media_id = $self->query->param('media_id')) && !$options{force_session}) {
-        debug("Pulling media from query media_id $media_id");
-        my ($media) = pkg('Media')->find(media_id => $media_id);
-        if( $media ) {
-            unless($options{no_save}) {
-                # now save this media to the session
-                my $new_edit_uuid = pkg('UUID')->new();
-                $self->_edit_uuid($new_edit_uuid);
-                $session{medias}{$new_edit_uuid} = $media;
-            }
-            return $media;
-        } else {
-            croak("No media found in DB with media_id $media_id!");
-        }
-    } else {
-        # we just want something from the query, not the session
-        return if $options{force_query};
-        if (my $edit_uuid = $self->_edit_uuid) {
-            debug("Pulling media from session edit_uuid $edit_uuid");
-            my $media = $session{medias}{$edit_uuid};
-            if( $media ) {
-                return $media;
-            } else {
-                croak("Could not load media with edit_uuid $edit_uuid from session!");
-            }
-        } else {
-            croak("No edit_uuid provided!");
-        }
-    }
-}
-
-sub _media_id {
-    my $self = shift;
-    # If the query has a media_id use that first
-    if( my $media_id = $self->query->param('media_id') ) {
-        return $media_id;
-    } else {
-        if (my $edit_uuid = $self->_edit_uuid) {
-            my $media = $session{medias}{$edit_uuid};
-            if( $media ) {
-                return $media->media_id;
-            } else {
-                croak("Could not load media with edit_uuid $edit_uuid from session!");
-            }
-        } else {
-            croak("No edit_uuid provided!");
-        }
-    }
-}
-
-sub _set_media {
-    my ($self, $media, %args) = @_;
-    my $edit_uuid =
-      $args{keep_edit_uuid} ? ($self->_edit_uuid || pkg('UUID')->new) : pkg('UUID')->new;
-    $self->_edit_uuid($edit_uuid);
-    $session{medias}{$edit_uuid} = $media;
-}
-
-sub _clear_media {
-    my $self = shift;
-
-    # remove it from the session
-    if( my $edit_uuid = $self->_edit_uuid ) {
-        delete $session{medias}{$edit_uuid};
-    }
-
-    # and the query object
-    $self->query->delete('media_id');
-}
-
-sub _edit_uuid {
-    my $self = shift;
-    if ($_[0]) {
-        # we are setting the edit_uuid
-        $self->param(__edit_uuid => $_[0]);
-        return $_[0];
-    } else {
-        if ($self->param('__edit_uuid')) {
-            return $self->param('__edit_uuid');
-        } else {
-            my $edit_uuid = $self->query->param('edit_uuid');
-            $self->param(__edit_uuid => $edit_uuid);
-            return $edit_uuid;
-        }
-    }
-}
-
+sub _get_element        { shift->get_edit_object->element }
+sub _get_script_name    { "media.pl" }
+sub edit_object_package { pkg('Media') }
 
 1;
 
