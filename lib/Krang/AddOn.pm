@@ -138,7 +138,7 @@ use Carp qw(croak);
 use File::Spec::Functions qw(catdir catfile canonpath splitdir);
 use File::Path qw(mkpath rmtree);
 use File::Copy qw(copy);
-use File::Temp qw(tempdir tempfile);
+use File::Temp qw(tempdir);
 use Archive::Tar;
 use Config::ApacheFormat;
 use File::Find ();
