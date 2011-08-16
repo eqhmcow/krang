@@ -48,6 +48,13 @@ sub setup {
     $self->start_mode('edit');
     $self->run_modes([qw( edit commit)]);
     $self->tmpl_path('Bugzilla/');
+
+    # some ISEs can come from POST requests. In those cases we need to look at the URL's query 
+    # string instead of the POST params or we won't know what's happening. The "ise" param is
+    # always set if it's a redirect (an Apache ErrorDocument subrequest request)
+    if( $self->query->url_param('ise') ) {
+        $self->query->delete_all();
+    }
 }
 
 =over 
