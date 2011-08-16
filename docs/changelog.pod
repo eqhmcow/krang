@@ -6,6 +6,12 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Fixed problem with ISEs resulting from POST requests causing problems with
+the ErrorHandler and not giving the same response as GET ISEs. [Michael
+Peters]
+
 =item * 
 
 Changed multi-window feature to use a single session per-login instead
