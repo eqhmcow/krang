@@ -4,10 +4,16 @@ use warnings;
 use Krang::ClassLoader base => 'CGI';
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Log     => qw(critical info debug);
-use Krang::ClassLoader Session => qw/%session/;
+use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'UUID';
+use Krang::ClassLoader Conf => 'KrangRoot';
 use Carp qw(croak);
 use File::Spec::Functions qw(catdir rel2abs);
+use File::Temp qw(tempfile);
+use Storable qw(lock_nstore retrieve);
+use List::Util qw(reduce);
+
+my $MAX_SESSION_OBJECTS = 3;
 
 =head1 NAME
 
@@ -83,20 +89,19 @@ the session just return the object.
 
 sub get_edit_object {
     my ($self, %options) = @_;
+
+    # short circuit if we stored in the request's params
+    return $self->param('__krang_session_edit_object') if $self->param('__krang_session_edit_object');
+
     my $pkg     = $self->edit_object_package;
     my $id_meth = $pkg->id_meth;
 
     # is the request asking for a specific object by id? If not, get whats in the session
     if ((my $id = $self->query->param($id_meth)) && !$options{force_session}) {
-        debug("Pulling object from query $id_meth $id");
+        debug("Pulling $pkg object from query $id_meth $id");
         my ($obj) = $pkg->find($id_meth => $id);
         if ($obj) {
-            unless ($options{no_save}) {
-                # now save this obj to the session
-                my $new_edit_uuid = pkg('UUID')->new();
-                $self->edit_uuid($new_edit_uuid);
-                $session{$pkg}{$new_edit_uuid} = $obj;
-            }
+            $self->set_edit_object($obj) unless $options{no_save};
             return $obj;
         } else {
             croak("No $pkg object found in DB with $id_meth $id!");
@@ -106,9 +111,27 @@ sub get_edit_object {
         return if $options{force_query};
         if (my $edit_uuid = $self->edit_uuid) {
             debug("Pulling $pkg obj from session edit_uuid $edit_uuid");
-            my $obj = $session{$pkg}{$edit_uuid};
+            my $obj = $session{SessionEditor}{$pkg}{$edit_uuid};
             if ($obj) {
-                return $obj;
+                # a reference is the object in question, a scalar is a file with the object in it
+                if (!ref $obj) {
+                    if (-e $obj) {
+                        debug("Pulling $pkg object for edit_uuid $edit_uuid from file $obj");
+                        my $file_name = $obj;
+                        eval { $obj = retrieve($file_name) };
+                        croak("Could not retrieve $pkg object from file $obj: $@") if $@;
+                        $self->set_edit_object($obj, $edit_uuid);
+                        unlink $file_name;
+                        return $obj;
+                    } else {
+                        croak(
+                            "File $obj for $pkg object with edit_uuid $edit_uuid does not exist!");
+                    }
+                } else {
+                    $self->_record_access_time();
+                    $self->param(__krang_session_edit_object => $obj);
+                    return $obj;
+                }
             } else {
                 croak("Could not load $pkg obj with edit_uuid $edit_uuid from session!");
             }
@@ -118,16 +141,56 @@ sub get_edit_object {
     }
 }
 
+sub _record_access_time {
+    my $self      = shift;
+    my $pkg       = $self->edit_object_package;
+    my $edit_uuid = $self->edit_uuid;
+    my $now       = time();
+    debug("Setting access time for $pkg object with edit_uuid $edit_uuid to $now");
+    $session{SessionEditor}{times}{$pkg}{$edit_uuid} = $now;
+}
+
 =head3 set_edit_object
 
 =cut
 
 sub set_edit_object {
-    my ($self, $obj) = @_;
+    my ($self, $obj, $edit_uuid) = @_;
     my $pkg       = $self->edit_object_package;
-    my $edit_uuid = pkg('UUID')->new;
+    my $now       = time();
+    $edit_uuid ||= pkg('UUID')->new;
+
+    # do we have too many items in the session?
+    # we maintain the last few items in the session and put the rest on the
+    # filesystem. So the session becomes an LRU cache for the editable objects
+    while ((scalar keys %{$session{SessionEditor}{times}{$pkg}}) >= $MAX_SESSION_OBJECTS) {
+        # expire the oldest one to the filesystem
+        my $times  = $session{SessionEditor}{times}{$pkg};
+        my $oldest = reduce { $times->{$a} < $times->{$b} ? $a : $b } keys %$times;
+        my ($tmp_fh, $tmp_file) =
+          tempfile("session_editor.$oldest.XXXXXX", DIR => catdir(KrangRoot, 'tmp'));
+        debug("Expiring $pkg object for edit_uuid $oldest from session to file $tmp_file");
+        if( my $old_obj = $session{SessionEditor}{$pkg}{$oldest} ) {
+            # if it's still an object
+            if( ref $old_obj ) {
+                lock_nstore($session{SessionEditor}{$pkg}{$oldest}, $tmp_file);
+                $session{SessionEditor}{$pkg}{$oldest} = $tmp_file;
+            }
+        } else {
+            debug("Expired $pkg object with edit_uuid $edit_uuid not actually in session anymore");
+            delete $session{SessionEditor}{$pkg}{$oldest};
+        }
+        delete $session{SessionEditor}{times}{$pkg}{$oldest};
+    }
+
+    # put it into the session
     $self->edit_uuid($edit_uuid);
-    $session{$pkg}{$edit_uuid} = $obj;
+    debug("Putting $pkg object for edit_uuid $edit_uuid into the session");
+    $session{SessionEditor}{$pkg}{$edit_uuid} = $obj;
+    $session{SessionEditor}{times}{$pkg}{$edit_uuid} = $now;
+
+    # put it into the params to make it easier to get for the duration of this request 
+    $self->param(__krang_session_edit_object => $obj);
 }
 
 =head3 clear_edit_object
@@ -141,7 +204,9 @@ sub clear_edit_object {
 
     # remove it from the session
     if (my $edit_uuid = $self->edit_uuid) {
-        delete $session{$pkg}{$edit_uuid};
+        debug("Removing $pkg object with edit_uuid $edit_uuid from the session");
+        delete $session{SessionEditor}{$pkg}{$edit_uuid};
+        delete $session{SessionEditor}{times}{$pkg}{$edit_uuid};
     }
 
     # and the query object
@@ -165,7 +230,7 @@ sub edit_object_id {
         return $id;
     } else {
         if (my $edit_uuid = $self->edit_uuid) {
-            my $obj = $session{$pkg}{$edit_uuid};
+            my $obj = $self->get_edit_object(force_session => 1);
             if ($obj) {
                 return $obj->$id_meth;
             } else {

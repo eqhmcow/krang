@@ -760,19 +760,19 @@ sub dump_html {
 sub get_session_media_obj {
     my ($self, $edit_uuid) = @_;
     $edit_uuid ||= $self->query->param('edit_uuid');
-    return $session{pkg('Media')}{$edit_uuid};
+    return $session{SessionEditor}{pkg('Media')}{$edit_uuid};
 }
 
 sub get_session_story_obj {
     my ($self, $edit_uuid) = @_;
     $edit_uuid ||= $self->query->param('edit_uuid');
-    return $session{pkg('Story')}{$edit_uuid};
+    return $session{SessionEditor}{pkg('Story')}{$edit_uuid};
 }
 
 sub get_session_template_obj {
     my ($self, $edit_uuid) = @_;
     $edit_uuid ||= $self->query->param('edit_uuid');
-    return $session{pkg('Story')}{$edit_uuid};
+    return $session{SessionEditor}{pkg('Story')}{$edit_uuid};
 }
 
 
