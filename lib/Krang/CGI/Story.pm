@@ -335,7 +335,7 @@ sub create {
     $story->save();
 
     # store in session for editting
-    $self->_set_edit_object($story);
+    $self->set_edit_object($story);
 
     # toss to edit
     $self->_cancel_edit_goes_to('story.pl?rm=new_story', $ENV{REMOTE_USER});
@@ -820,7 +820,7 @@ sub copy {
 
     # make a copy and store it in the session
     my $clone = $story->clone();
-    $self->_set_edit_object($clone);
+    $self->set_edit_object($clone);
 
     # make sure it's checked out in case we want to save it later
     $clone->{checked_out}    = 1;
@@ -2127,7 +2127,7 @@ sub checkout_selected {
         return $self->redirect_to_workspace;
     } else {
         my ($story) = pkg('Story')->find(story_id => $story_checkout_list[0]);
-        $self->_set_edit_object($story);
+        $self->set_edit_object($story);
         add_message('selected_stories_checkout_one');
 
         # Redirect to Edit
@@ -2233,7 +2233,7 @@ sub steal_selected {
     if ((@story_ids == 1) && ($single_story->may_edit)) {
         # open it (after storing cancel info)
         my ($story) = $single_story;
-        $self->_set_edit_object($story);
+        $self->set_edit_object($story);
         $self->_cancel_edit_goes_to('story.pl?rm=list_active',
             %victims ? (values %victims)[0] : $ENV{REMOTE_USER});
         return $self->edit;
@@ -2852,7 +2852,7 @@ sub unretire {
 
         # goto Edit screen
         $q->delete('story_id');
-        $self->_set_edit_object($story);
+        $self->set_edit_object($story);
 
         return $self->edit;
     } elsif ($@ && ref($@) && $@->isa('Krang::Story::ReservedURL')) {
