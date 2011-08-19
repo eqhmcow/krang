@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed problem with F<bin/krang_apachectl> not stopping an running Krang
+in Offline Mode [Michael Peters]
+
+=item *
+
 Fixed problem with ISEs resulting from POST requests causing problems with
 the ErrorHandler and not giving the same response as GET ISEs. [Michael
 Peters]
