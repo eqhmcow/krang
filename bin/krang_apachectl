@@ -170,14 +170,25 @@ if ($command eq 'start') {
 }
 
 if ($command eq 'stop') {
-    unless ($running) {
+    unless ($running || $offline_running) {
         die "krang_apachectl $command: httpd not running\n";
     }
-    if (kill 15, $running) {
-        print "krang_apachectl $command: httpd stopped\n";
-        exit;
-    } else {
-        die "krang_apachectl $command: httpd could not be stopped\n";
+
+    if( $running ) {
+        if (kill 15, $running) {
+            print "krang_apachectl $command: httpd stopped\n";
+            exit;
+        } else {
+            die "krang_apachectl $command: httpd could not be stopped\n";
+        }
+    }
+    if( $offline_running ) {
+        if (kill 15, $offline_running) {
+            print "krang_apachectl $command: httpd stopped\n";
+            exit;
+        } else {
+            die "krang_apachectl $command: httpd could not be stopped\n";
+        }
     }
 }
 
