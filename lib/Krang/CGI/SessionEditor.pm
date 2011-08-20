@@ -165,14 +165,13 @@ sub set_edit_object {
     # filesystem. So the session becomes an LRU cache for the editable objects
     while ((scalar keys %{$session{SessionEditor}{times}{$pkg}}) >= $MAX_SESSION_OBJECTS) {
         # expire the oldest one to the filesystem
-        my $times  = $session{SessionEditor}{times}{$pkg};
-        my $oldest = reduce { $times->{$a} < $times->{$b} ? $a : $b } keys %$times;
-        my ($tmp_fh, $tmp_file) =
-          tempfile("session_editor.$oldest.XXXXXX", DIR => catdir(KrangRoot, 'tmp'));
+        my $times    = $session{SessionEditor}{times}{$pkg};
+        my $oldest   = reduce { $times->{$a} < $times->{$b} ? $a : $b } keys %$times;
+        my $tmp_file = $self->_tmp_file($oldest);
         debug("Expiring $pkg object for edit_uuid $oldest from session to file $tmp_file");
-        if( my $old_obj = $session{SessionEditor}{$pkg}{$oldest} ) {
+        if (my $old_obj = $session{SessionEditor}{$pkg}{$oldest}) {
             # if it's still an object
-            if( ref $old_obj ) {
+            if (ref $old_obj) {
                 lock_nstore($session{SessionEditor}{$pkg}{$oldest}, $tmp_file);
                 $session{SessionEditor}{$pkg}{$oldest} = $tmp_file;
             }
@@ -191,6 +190,12 @@ sub set_edit_object {
 
     # put it into the params to make it easier to get for the duration of this request 
     $self->param(__krang_session_edit_object => $obj);
+}
+
+sub _tmp_file {
+    my ($self, $key) = @_;
+    my (undef, $tmp_file) = tempfile("session_editor.$key.XXXXXX", DIR => catdir(KrangRoot, 'tmp'));
+    return $tmp_file;
 }
 
 =head3 clear_edit_object
