@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed upgrade module V3_10 in tags 3.10 - 3.14 and on the trunk. [Bodo
+Schulze]
+
+=item *
+
 Fixed problem with F<bin/krang_apachectl> not stopping an running Krang
 in Offline Mode [Michael Peters]
 
