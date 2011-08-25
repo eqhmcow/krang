@@ -13,7 +13,7 @@ sub per_instance {
     my ($self, %args) = @_;
     return if $args{no_db};
     my $dbh = dbh();
-    $dbh->do('UPDATE story_category set url = concat(url, "/")');
+    $dbh->do('UPDATE story_category SET url = concat(url, "/") WHERE url not like "%/"');
 }
 
 sub per_installation {
