@@ -369,6 +369,7 @@ Krang.Ajax.request = function(args) {
     var params    = args['params'] || {};
     var indicator = args['indicator'];
     var complete  = args['onComplete']  || Prototype.emptyFunction;
+    var success   = args['onSuccess']   || Prototype.emptyFunction;
     var failure   = args['onFailure']   || Prototype.emptyFunction;
     var exception = args['onException'] || Prototype.emptyFunction;
     var method    = args['method'] || 'get';
@@ -392,8 +393,19 @@ Krang.Ajax.request = function(args) {
             method      : method,
             evalScripts : true,
             asynchronous: true,
-            // if we're successful we're not in edit mode (can be reset by the request)
-            onSuccess   : function() { Krang.Nav.edit_mode(false) },
+            onSuccess   : function(transport, json) { 
+                // not in edit mode (can be reset by the request)
+                Krang.Nav.edit_mode(false);
+                // wait 12 ms so we know that the JS in our request has been evaled
+                // since Prototype will wait 10 gives for the Browser to update
+                // it's DOM
+                setTimeout(function() {
+                    // hide the indicator
+                    Krang.hide_indicator(indicator);
+                    // do whatever else the user wants
+                    success(args, transport, json);
+                }, 12);
+            },
             onComplete  : function(transport, json) {
                 // wait 12 ms so we know that the JS in our request has been evaled
                 // since Prototype will wait 10 gives for the Browser to update
@@ -687,7 +699,7 @@ Krang.Form = {
                         target     : options.target,
                         to_top     : options.to_top,
                         onComplete : options['onComplete'],
-                        onSuccess  : options['onSuccess '],
+                        onSuccess  : options['onSuccess'],
                         onFailure  : options['onFailure']
                     });
                 } else {
