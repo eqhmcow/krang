@@ -691,7 +691,10 @@ Krang.Form = {
                     });
                 }
             } else {
-                if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) return;
+                if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) {
+                    Krang.hide_indicator();
+                    return;
+                }
                 form.submit();
                 Krang.hide_indicator();
             }
