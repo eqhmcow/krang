@@ -572,6 +572,9 @@ Krang.Ajax.update = function(args) {
         target       : the id of an element for which the content is intended
                        for
         onComplete   : a callback to be executed when the request is finished
+                       regardless of whether it succeeded or not
+                       (only works with AJAX requests)
+        onSuccess    : a callback to be executed when the request succeeds
                        (only works with AJAX requests)
         onFailure    : a callback to be executed when the request fails
                        (only works with AJAX requests)
@@ -684,6 +687,7 @@ Krang.Form = {
                         target     : options.target,
                         to_top     : options.to_top,
                         onComplete : options['onComplete'],
+                        onSuccess  : options['onSuccess '],
                         onFailure  : options['onFailure']
                     });
                 } else {
@@ -692,6 +696,7 @@ Krang.Form = {
                         params     : Form.serialize(form, true),
                         method     : form.method,
                         onComplete : options['onComplete'],
+                        onSuccess  : options['onSuccess'],
                         onFailure  : options['onFailure']
                     });
                 }
