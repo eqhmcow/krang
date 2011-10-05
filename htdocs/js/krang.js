@@ -167,6 +167,11 @@ Krang.Window.pass_id = function(url) {
     return url;
 }
 
+Krang.Window.init = function(url) {
+    if (console) console.log("warning Krang.Window.init is deprecated");
+    return url;
+}
+
 /*
     // Set Krang instance (returns the argument)
     Krang.Instance.set('Default');
