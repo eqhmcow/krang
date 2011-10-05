@@ -8,6 +8,14 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+The second argument to the SQL 'limit' clause must no be a negative
+number.  Instead use a very high positive number in the find() method
+of backend modules. See
+http://http://dev.mysql.com/doc/refman/5.5/en/select.html. [Bodo
+Schulze]
+
+=item *
+
 Added 'contribs' param to create_story() and create_media() in
 L<Krang::Test::Content>. [Bodo Schulze]
 

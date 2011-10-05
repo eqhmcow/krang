@@ -187,7 +187,7 @@ sub _load {
 
     croak(<<CROAK) unless -e $conf_file and -r _;
 
-Unable to find krang.conf!
+Unable to find $conf_file!
 
 Krang scripts must be run from within an installed copy of Krang,
 which will have a conf/krang.conf file.  You might be trying to run a

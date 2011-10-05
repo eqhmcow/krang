@@ -399,7 +399,7 @@ sub find {
     if ($limit) {
         $sql .= " limit $offset, $limit";
     } elsif ($offset) {
-        $sql .= " limit $offset, -1";
+        $sql .= " limit $offset, 18446744073709551615";
     }
 
     debug(__PACKAGE__ . "->find() SQL: " . $sql);

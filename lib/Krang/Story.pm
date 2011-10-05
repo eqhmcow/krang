@@ -1748,7 +1748,7 @@ or actions where the resulting data is not shown to the end user.
         if ($limit) {
             $query .= $offset ? " LIMIT $offset, $limit" : " LIMIT $limit";
         } elsif ($offset) {
-            $query .= " LIMIT $offset, -1";
+            $query .= " LIMIT $offset, 18446744073709551615";
         }
 
         debug(__PACKAGE__ . "::find() SQL: " . $query);

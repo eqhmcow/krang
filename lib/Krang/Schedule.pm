@@ -988,7 +988,7 @@ sub find {
     if ($limit) {
         $query .= $offset ? " LIMIT $offset, $limit" : " LIMIT $limit";
     } elsif ($offset) {
-        $query .= " LIMIT $offset, -1";
+        $query .= " LIMIT $offset, 18446744073709551615";
     }
 
     my $dbh = dbh(no_cache => 1);

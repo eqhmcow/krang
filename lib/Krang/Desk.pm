@@ -275,7 +275,7 @@ sub find {
           ? " LIMIT $args{offset}, $args{limit}"
           : " LIMIT $args{limit}";
     } elsif ($args{offset}) {
-        $query .= " LIMIT $args{offset}, -1";
+        $query .= " LIMIT $args{offset}, 18446744073709551615";
     }
 
     my $dbh = dbh();
