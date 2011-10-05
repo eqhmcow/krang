@@ -163,14 +163,14 @@ Krang.Window = {
 };
 
 Krang.Window.pass_id = function(url) {
-    if (console) console.log("warning Krang.Window.pass_id is deprecated");
+    if (console) console.warn("Krang.Window.pass_id is deprecated");
     return url;
-}
+};
 
 Krang.Window.init = function() {
-    if (console) console.log("warning Krang.Window.init is deprecated");
+    if (console) console.warn("Krang.Window.init is deprecated");
     return;
-}
+};
 
 /*
     // Set Krang instance (returns the argument)
