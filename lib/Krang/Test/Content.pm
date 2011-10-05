@@ -362,6 +362,10 @@ An integer specifying how tall the image will be.  By default, the image will be
 
 Must be one of (I<jpg, png, gif>).  Determines the format of the image.  If not specified, it will randomly choose one of the three formats.
 
+=item contribs
+
+An array reference containing Krang::Contrib objects.  Each Contrib
+object in the array will be associated with the new story.
 
 =back
 
@@ -432,6 +436,12 @@ sub create_media {
         category_id   => $category->category_id,
         media_type_id => $media_type_id,
     );
+
+    # add contrib if it exists
+    if ($args{contribs}) {
+        $media->contribs(@{$args{contribs}});
+    }
+
     $media->save;
 
     unlink(catfile(KrangRoot, "tmp", "tmp.$fmt"));
@@ -478,6 +488,11 @@ in the array will be linked to in the new story.
 
 An array reference containing Krang::Media objects.  Each Media object
 in the array will be linked to in the new story.
+
+=item contribs
+
+An array reference containing Krang::Contrib objects.  Each Contrib
+object in the array will be associated with the new story.
 
 =item pages
 
@@ -594,6 +609,11 @@ sub create_story {
         }
     }
 
+    # add contrib if it exists
+    if ($args{contribs}) {
+        $story->contribs(@{$args{contribs}});
+    }
+
     $story->save();
 
     $story->checkin();
@@ -695,6 +715,9 @@ sub create_contrib {
 
     # add contrib types - let's make them all 3.
     $contrib->contrib_type_ids(keys %contrib_types);
+
+    # select the first one - must be set when associating with a story
+    $contrib->selected_contrib_type((values(%contrib_types))[0]);
 
     $contrib->save();
 

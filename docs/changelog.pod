@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added 'contribs' param to create_story() and create_media() in
+L<Krang::Test::Content>. [Bodo Schulze]
+
+=item *
+
 Fixed upgrade module V3_10 in tags 3.10 - 3.14 and on the trunk. [Bodo
 Schulze]
 
