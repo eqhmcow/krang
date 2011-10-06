@@ -609,10 +609,13 @@ Krang.Ajax.update = function(args) {
 Krang.Form = {
     get_form : function(form) {
         form = typeof form == 'object' ? form : document.forms[form];
-        form = $(form);
-        if(!form) alert('Krang.Form.get_form(): form "' + form.name + '" does not exist!');
+        if(!form) {
+            alert('Krang.Form.get_form(): form "' + form + '" does not exist!');
+            if( console ) console.trace();
+            return null;
+        }
 
-        return form;
+        return $(form);
     },
     set : function(form, inputs) {
         form = Krang.Form.get_form(form);
