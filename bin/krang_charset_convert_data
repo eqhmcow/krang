@@ -135,6 +135,7 @@ use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Charset';
+use Krang::ClassLoader 'User';
 use Krang::ClassLoader DB => qw(dbh forget_dbh);
 use Encode qw(from_to);
 use Storable qw(nfreeze thaw);
@@ -179,6 +180,9 @@ print "* * * TEST MODE - NO ACTUAL CHANGES WILL BE WRITTEN TO THE DATABASE * * *
 # figure out which instances we're going to use, and loop through them
 foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE})) {
     pkg('Conf')->instance($instance);
+
+    # set remote user (might differ across instances)
+    set_remote_user();
 
     # get a clean (un-cached) DB handle
     forget_dbh();
@@ -485,5 +489,22 @@ sub convert_scalar {
 
     # now perform actual charset conversion
     from_to($data, $from, $to);
-    return defined $data ? data : '';
+    return defined $data ? $data : '';
+}
+
+sub set_remote_user {
+    my @user = (
+                pkg('User')->find(
+                                  ids_only => 1,
+	                          login    => 'system'
+                                 )
+               );
+    if (@user) {
+        $ENV{REMOTE_USER} = $user[0];
+    } else {
+        warn(
+             "Unable to find 'system' user.  All Krang instances must contain the special 'system' account.  Falling back to using special user_id 1.\n"
+	    );
+        $ENV{REMOTE_USER} = 1;
+    }
 }
