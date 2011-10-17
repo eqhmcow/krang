@@ -343,10 +343,10 @@ Krang.Ajax = {
     params    : a hash of params for the request
     indicator : the id of the image to use as an indicator (optional defaults to 'indicator')
     onComplete: a callback function to be executed after the normal processing (optional)
-                Receives as arguments, the same args passed into Ajax.update() the AJAX transport
+                Receives as arguments, the same args passed into Ajax.update() the AJAX response
                 object, and any JSON object returned in the X-JSON HTTP header.
     onFailure : a callback function to be executed in case of an error. Receives as arguments
-                the AJAX transport object and the exception thrown. This is in addition to the
+                the AJAX response object and the exception thrown. This is in addition to the
                 normal error message the Krang will show to in the UI.
 
     Krang.Ajax.request({
@@ -356,10 +356,10 @@ Krang.Ajax = {
             bar : '123'
         },
         indicator  : 'add_indicator',
-        onComplete : function(args, transport, json) {
+        onComplete : function(args, response, json) {
             // do something
         },
-        onFailure  : function(transport, exception) {
+        onFailure  : function(response, exception) {
             // do something
         }
     });
@@ -393,7 +393,7 @@ Krang.Ajax.request = function(args) {
             method      : method,
             evalScripts : true,
             asynchronous: true,
-            onSuccess   : function(transport, json) { 
+            onSuccess   : function(response, json) { 
                 // not in edit mode (can be reset by the request)
                 Krang.Nav.edit_mode(false);
                 // wait 12 ms so we know that the JS in our request has been evaled
@@ -403,10 +403,10 @@ Krang.Ajax.request = function(args) {
                     // hide the indicator
                     Krang.hide_indicator(indicator);
                     // do whatever else the user wants
-                    success(args, transport, json);
+                    success(args, response, json);
                 }, 12);
             },
-            onComplete  : function(transport, json) {
+            onComplete  : function(response, json) {
                 // wait 12 ms so we know that the JS in our request has been evaled
                 // since Prototype will wait 10 gives for the Browser to update
                 // it's DOM
@@ -414,16 +414,22 @@ Krang.Ajax.request = function(args) {
                     // hide the indicator
                     Krang.hide_indicator(indicator);
                     // do whatever else the user wants
-                    complete(args, transport, json);
+                    complete(args, response, json);
                 }, 12);
             },
-            onFailure   : function(transport, e) {
-                failure(transport, e);
+            onFailure   : function(response, e) {
+                failure(response, e);
                 Krang.Error.show();
+                if( console && console.error ) {
+                    console.error(e);
+                }
             },
-            onException : function(transport, e) {
-                exception(transport, e);
+            onException : function(response, e) {
+                exception(response, e);
                 Krang.Error.show();
+                if( console && console.error ) {
+                    console.error(e);
+                }
             }
         }
     );
@@ -446,13 +452,13 @@ Krang.Ajax.request = function(args) {
     to_top    : whether or not the page should scroll back up to the top after the update.
                 Defaults to true.
     onComplete: a callback function to be executed after the normal processing (optional)
-                Receives as arguments, the same args passed into Ajax.update() the AJAX transport
+                Receives as arguments, the same args passed into Ajax.update() the AJAX response
                 object, and any JSON object returned in the X-JSON HTTP header.
     onSuccess : a callback function to be executed only after a successful request (optional)
-                Receives as arguments, the same args passed into Ajax.update() the AJAX transport
+                Receives as arguments, the same args passed into Ajax.update() the AJAX response
                 object, and any JSON object returned in the X-JSON HTTP header.
     onFailure : a callback function to be executed in case of an error. Receives as arguments
-                the AJAX transport object and the exception thrown. This is in addition to the
+                the AJAX response object and the exception thrown. This is in addition to the
                 normal error message the Krang will show to in the UI.
 
     Krang.Ajax.update({
@@ -463,13 +469,13 @@ Krang.Ajax.request = function(args) {
         },
         target     : 'target_name',
         indicator  : 'add_indicator',
-        onComplete : function(args, transport, json) {
+        onComplete : function(args, response, json) {
           // do something
         },
-        onSuccess  : function(args, transport, json) {
+        onSuccess  : function(args, response, json) {
           // do something
         },
-        onFailure  : function(transport, exception) {
+        onFailure  : function(response, exception) {
           // do something
         }
     });
@@ -512,12 +518,12 @@ Krang.Ajax.update = function(args) {
             evalScripts : true,
             asynchronous: true,
             // if we're successful we're not in edit mode (can be reset by the request)
-            onSuccess   : function(transport, json) {
+            onSuccess   : function(response, json) {
                 // update the target. This is what Ajax.Updater does behind the scenes, but
                 // we need to control it ourselves so we can have target be a function 
-                var receiver = (typeof target) == 'function' ? target(transport, json) : target;
+                var receiver = (typeof target) == 'function' ? target(response, json) : target;
                 receiver = $(receiver);
-                receiver.update(transport.responseText);
+                receiver.update(response.responseText);
 
                 Krang.Nav.edit_mode(false);
                 if(to_top) Krang.to_top();
@@ -526,7 +532,7 @@ Krang.Ajax.update = function(args) {
                 // it's DOM
                 setTimeout(function() {
                     // user callback
-                    success(args, transport, json);
+                    success(args, response, json);
                 }, 12);
 
                 // update the navigation if we need to
@@ -534,7 +540,7 @@ Krang.Ajax.update = function(args) {
                     Krang.Ajax.update({ url: 'nav.pl', target: 'S', to_top: false });
                 }
             },
-            onComplete  : function(transport, json) {
+            onComplete  : function(response, json) {
                 // wait 12 ms so we know that the JS in our request has been evaled
                 // since Prototype will wait 10ms to give the browser time to update
                 // it's DOM. Why it's not immediate beats me.
@@ -542,22 +548,22 @@ Krang.Ajax.update = function(args) {
                     // reapply any dynamic bits to the target that was updated
                     Krang.load(target);
                     // user callback
-                    complete(args, transport, json);
+                    complete(args, response, json);
                     // hide the indicator
                     Krang.hide_indicator(indicator);
                 }, 12);
             },
-            onFailure   : function(transport, e) {
+            onFailure   : function(response, e) {
                 // user callback
-                failure(transport, e);
+                failure(response, e);
                 Krang.Error.show();
                 if( console && console.error ) {
                     console.error(e);
                 }
             },
-            onException : function(transport, e) {
+            onException : function(response, e) {
                 // user callback
-                exception(transport, e);
+                exception(response, e);
                 Krang.Error.show();
                 if( console && console.error ) {
                     console.error(e);
