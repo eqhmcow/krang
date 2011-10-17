@@ -451,6 +451,9 @@ Krang.Ajax.request = function(args) {
     indicator : the id of the image to use as an indicator (optional defaults to 'indicator')
     to_top    : whether or not the page should scroll back up to the top after the update.
                 Defaults to true.
+                This can also be a function which will be executed (with the same arguments
+                as the onComplete callback) after the request is done to determine what the
+                value is. This is useful if you don't know what's appropriate ahead of time.
     onComplete: a callback function to be executed after the normal processing (optional)
                 Receives as arguments, the same args passed into Ajax.update() the AJAX response
                 object, and any JSON object returned in the X-JSON HTTP header.
@@ -492,6 +495,14 @@ Krang.Ajax.update = function(args) {
     var exception = args['onException'] || Prototype.emptyFunction;
     var to_top    = args.to_top == false ? false : true; // defaults to true
 
+    if( typeof args.to_top == 'function' ) {
+        to_top = args.to_top;
+    } else if( args.to_top == false ) {
+        to_top = false;
+    } else {
+        to_top = true;
+    }
+
     // stop double clicks
     if(Krang.Ajax.is_double_click(url, params)) return;
 
@@ -526,7 +537,15 @@ Krang.Ajax.update = function(args) {
                 receiver.update(response.responseText);
 
                 Krang.Nav.edit_mode(false);
-                if(to_top) Krang.to_top();
+                if(to_top) {
+                    if( typeof to_top == 'function' ) {
+                        if( to_top(response, json) ) {
+                            Krang.to_top();
+                        }
+                    } else {
+                        Krang.to_top();
+                    }
+                }
                 // wait 12 ms so we know that the JS in our request has been evaled
                 // since Prototype will wait 10 gives for the Browser to update
                 // it's DOM

@@ -8,9 +8,9 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-C<Krang.Ajax.update()> javascript function can now take a function
-as the value of C<target> to be executed on-demand after the actual
-request is done. [Michael Peters]
+C<Krang.Ajax.update()> javascript function can now take a function as
+the value of C<target> or C<to_top> to be executed on-demand after the
+actual request is done. [Michael Peters]
 
 =item *
 
