@@ -664,8 +664,7 @@ Krang.Form = {
         if( options.new_window ) {
             if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) return;
 
-            // save the old target of the form so we can restore it after
-            // submission
+            // save the old target of the form so we can restore it after submission
             var old_target = form.target;
             var old_action = form.action;
             if( options.new_session ) {
