@@ -551,11 +551,17 @@ Krang.Ajax.update = function(args) {
                 // user callback
                 failure(transport, e);
                 Krang.Error.show();
+                if( console && console.error ) {
+                    console.error(e);
+                }
             },
             onException : function(transport, e) {
                 // user callback
                 exception(transport, e);
                 Krang.Error.show();
+                if( console && console.error ) {
+                    console.error(e);
+                }
             }
         }
     );
