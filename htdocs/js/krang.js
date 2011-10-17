@@ -546,7 +546,8 @@ Krang.Ajax.update = function(args) {
                 // it's DOM. Why it's not immediate beats me.
                 setTimeout(function() {
                     // reapply any dynamic bits to the target that was updated
-                    Krang.load(target);
+                    var receiver = (typeof target) == 'function' ? target(response, json) : target;
+                    Krang.load(receiver);
                     // user callback
                     complete(args, response, json);
                     // hide the indicator
