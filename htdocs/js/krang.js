@@ -573,6 +573,10 @@ Krang.Ajax.update = function(args) {
     itself) optionally sets the values of those elements and then submits
     the form.
 
+    Krang.Form.has_file_field(form_name)
+    Returns true if the given form has a file field that has a value (and
+    needs a "multipart/form-data" submission thus can't use AJAX)
+
     You can also specify a third parameter which contains other optional
     flags that can be passed to dictate the behaviour.
     These flags include:
@@ -675,15 +679,7 @@ Krang.Form = {
 
             // we don't use AJAX if the form specifically disallows it
             // or it has a file input
-            var use_ajax = !form.hasClassName('non_ajax');
-            var inputs = form.elements;
-            for(var i=0; i < inputs.length; i++) {
-                var field = inputs[i];
-                if( field.type == 'file' && field.value ) {
-                    use_ajax = false;
-                    break;
-                }
-            }
+            var use_ajax = !form.hasClassName('non_ajax') && !Krang.Form.has_file_field(form);
 
             if( use_ajax ) {
                 var url;
@@ -747,6 +743,17 @@ Krang.Form = {
                     if (ca) ca.checked = false;
                 }
             })});
+    },
+    has_file_field : function(form) {
+        form = Krang.Form.get_form(form);
+        var inputs = form.elements;
+        for(var i=0; i < inputs.length; i++) {
+            var field = inputs[i];
+            if( field.type == 'file' && field.value ) {
+                return true;
+            }
+        }
+        return false;
     }
 };
 
