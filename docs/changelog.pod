@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+C<Krang.Ajax.update()> javascript function can now take a function
+as the value of C<target> to be executed on-demand after the actual
+request is done. [Michael Peters]
+
+=item *
+
 The second argument to the SQL 'limit' clause must no be a negative
 number.  Instead use a very high positive number in the find() method
 of backend modules. See

@@ -438,7 +438,10 @@ Krang.Ajax.request = function(args) {
     url       : the url of the request (required)
     method    : the HTTP method to use (optional defaults to 'get')
     params    : a hash of params for the request
-    target    : the id of the target element receiving the contents (optional defaults to 'C')
+    target    : the id of the target element receiving the contents (optional defaults to 'C').
+                this can also be a function which will be executed (with the same arguments
+                as the onComplete callback) after the request is done to determine what the
+                target is. This is useful if you don't know the target ahead of time.
     indicator : the id of the image to use as an indicator (optional defaults to 'indicator')
     to_top    : whether or not the page should scroll back up to the top after the update.
                 Defaults to true.
@@ -501,8 +504,7 @@ Krang.Ajax.update = function(args) {
     // run the unloader if we are targetting C
     if( target == 'C' ) Krang.unload();
 
-    new Ajax.Updater(
-        { success : target },
+    new Ajax.Request(
         url,
         {
             parameters  : params,
@@ -511,6 +513,12 @@ Krang.Ajax.update = function(args) {
             asynchronous: true,
             // if we're successful we're not in edit mode (can be reset by the request)
             onSuccess   : function(transport, json) {
+                // update the target. This is what Ajax.Updater does behind the scenes, but
+                // we need to control it ourselves so we can have target be a function 
+                var receiver = (typeof target) == 'function' ? target(transport, json) : target;
+                receiver = $(receiver);
+                receiver.update(transport.responseText);
+
                 Krang.Nav.edit_mode(false);
                 if(to_top) Krang.to_top();
                 // wait 12 ms so we know that the JS in our request has been evaled
