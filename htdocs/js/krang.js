@@ -612,6 +612,15 @@ Krang.Ajax.update = function(args) {
     Returns true if the given form has a file field that has a value (and
     needs a "multipart/form-data" submission thus can't use AJAX)
 
+    Krang.Form.study(form_name)
+    This method will look at a form and make note of it's state. This combined
+    with Krang.Form.has_form_changed() will let you know if a form was changed
+    by the user.
+
+    Krang.Form.has_form_changed(form_name)
+    This method will return true if the a form has been changed, false otherwise
+    as long as the form was first studied by Krang.Form.study_form.
+
     Krang.Form.submit(form, { input: 'value' }, { new_window: true })
     Select a form (can either be the name of the form, or the form object
     itself) optionally sets the values of those elements and then submits
@@ -693,6 +702,21 @@ Krang.Form = {
             }
         }
     },
+    // "studying" a form means serializing it as a query string and keeping that around for comparisons later
+    studied_forms : { },
+    study : function(form) {
+        form = Krang.Form.get_form(form);
+        Krang.Form.studied_forms[form.name] = Form.serialize(form);
+    },
+    has_form_changed : function(form) {
+        form = Krang.Form.get_form(form);
+        var old_value = Krang.Form.studied_forms[form.name];
+        if(!old_value && console && console.warn) {
+            console.warn('Calling Krang.Form.has_form_changed() before Krang.Form.study()');
+        }
+        var new_value = Form.serialize(form);
+        return old_value != new_value;
+    },
     submit : function(form, inputs, options) {
         form = Krang.Form.get_form(form);
         if( inputs ) Krang.Form.set(form, inputs);
@@ -730,6 +754,7 @@ Krang.Form = {
                     url = url.replace(/\?.*/, '');
                 }
 
+                var complete  = options['onComplete']  || Prototype.emptyFunction;
                 if( options.update ) {
                     Krang.Ajax.update({
                         url        : url,
@@ -737,7 +762,10 @@ Krang.Form = {
                         method     : form.method,
                         target     : options.target,
                         to_top     : options.to_top,
-                        onComplete : options['onComplete'],
+                        onComplete : function(args, response, json) {
+                            complete(args, response, json);
+                            Krang.Form.study(form);
+                        },
                         onSuccess  : options['onSuccess'],
                         onFailure  : options['onFailure']
                     });
@@ -746,7 +774,10 @@ Krang.Form = {
                         url        : url,
                         params     : Form.serialize(form, true),
                         method     : form.method,
-                        onComplete : options['onComplete'],
+                        onComplete : function(args, response, json) {
+                            complete(args, response, json);
+                            Krang.Form.study(form);
+                        },
                         onSuccess  : options['onSuccess'],
                         onFailure  : options['onFailure']
                     });
