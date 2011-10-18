@@ -324,7 +324,9 @@ Krang.Ajax = {
             Krang.Ajax._last_submitted[hash_key] = now;
             return false;
         } else {
-            //console.log("It's a double click!");
+            if( console && console.log ) {
+                console.log("Preventing double click submission");
+            }
             return true;
         }
     },
