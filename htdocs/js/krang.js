@@ -608,14 +608,14 @@ Krang.Ajax.update = function(args) {
     Krang.Form.get_form(form_name);
     Returns the HTML Form object given a form's name.
 
+    Krang.Form.has_file_field(form_name)
+    Returns true if the given form has a file field that has a value (and
+    needs a "multipart/form-data" submission thus can't use AJAX)
+
     Krang.Form.submit(form, { input: 'value' }, { new_window: true })
     Select a form (can either be the name of the form, or the form object
     itself) optionally sets the values of those elements and then submits
     the form.
-
-    Krang.Form.has_file_field(form_name)
-    Returns true if the given form has a file field that has a value (and
-    needs a "multipart/form-data" submission thus can't use AJAX)
 
     You can also specify a third parameter which contains other optional
     flags that can be passed to dictate the behaviour.
