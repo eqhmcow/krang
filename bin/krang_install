@@ -98,12 +98,7 @@ Following is a list of the tasks the installer script will perform.
 
 =item Output settings and URL of Krang installation to console.
 
-
-
 =back
-
-
-
 
 =head1 OPTIONS
 
@@ -441,7 +436,7 @@ sub check_prereqs {
         }
     }
 
-    unless( $options{NoDB} ) {
+    unless ($options{NoDB}) {
         # MySQLRootPassword must be valid, and MySQL should be running
         my $MySQLRootPassword = $options{'MySQLRootPassword'};
         my $DBHost            = $options{'DBHost'};
@@ -462,40 +457,40 @@ sub check_prereqs {
                 exit_error("Unable to verify MySQLRootPassword.");
             }
         }
-    }
 
-    # Charset should be supported if it's given
-    if ($options{Charset}) {
-        my $charset = $options{Charset};
-        require Encode;
+        # Charset should be supported if it's given
+        if ($options{Charset}) {
+            my $charset = $options{Charset};
+            require Encode;
 
-        # see if Perl supports it
-        eval { Encode::encode($charset, 'abc') };
-        if ($@) {
-            exit_error("Charset $charset is not supported by your version of Perl.")
-              if $@ =~ /Unknown encoding/i;
-            die $@;    # nothing more we can do
+            # see if Perl supports it
+            eval { Encode::encode($charset, 'abc') };
+            if ($@) {
+                exit_error("Charset $charset is not supported by your version of Perl.")
+                  if $@ =~ /Unknown encoding/i;
+                die $@;    # nothing more we can do
+            }
+
+            my $mysql_charset = mysql_charset($charset);
+            $test_sql          = qq/SHOW CHARACTER SET LIKE "$mysql_charset"/;
+            $mysql_test_output = `$ECHO_BIN '$test_sql' | $mysql_cmd`;
+            unless ($mysql_test_output =~ /\Q$mysql_charset\E/) {
+                exit_error("Charset $charset is not supported by your version of MySQL.");
+            }
         }
 
-        my $mysql_charset = mysql_charset($charset);
-        $test_sql          = qq/SHOW CHARACTER SET LIKE "$mysql_charset"/;
-        $mysql_test_output = `$ECHO_BIN '$test_sql' | $mysql_cmd`;
-        unless ($mysql_test_output =~ /\Q$mysql_charset\E/) {
-            exit_error("Charset $charset is not supported by your version of MySQL.");
+        # InstanceDBName should NOT exist in MySQL
+        my $InstanceDBName = $options{InstanceDBName};
+        $test_sql          = 'SELECT 1';
+        $mysql_test_output = `$ECHO_BIN '$test_sql' | $mysql_cmd $InstanceDBName`;
+
+        unless (
+            $mysql_test_output =~ /ERROR 1049[^:]*: Unknown database/ or    # for MySQL 4.*
+            $mysql_test_output =~ /ERROR 1102[^:]*: Incorrect database name/    # for MySQL 5.*
+          )
+        {
+            exit_error("Database '$InstanceDBName' already exists.  Cannot continue.");
         }
-    }
-
-    # InstanceDBName should NOT exist in MySQL
-    my $InstanceDBName = $options{InstanceDBName};
-    $test_sql          = 'SELECT 1';
-    $mysql_test_output = `$ECHO_BIN '$test_sql' | $mysql_cmd $InstanceDBName`;
-
-    unless (
-        $mysql_test_output =~ /ERROR 1049[^:]*: Unknown database/ or    # for MySQL 4.*
-        $mysql_test_output =~ /ERROR 1102[^:]*: Incorrect database name/
-      )
-    {                                                                   # for MySQL 5.*
-        exit_error("Database '$InstanceDBName' already exists.  Cannot continue.");
     }
 }
 
