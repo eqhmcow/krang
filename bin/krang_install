@@ -195,13 +195,13 @@ my @opt_params = qw(
   FTPHostName
   InstanceDisplayName
   InstanceElementSet
-  EnableSSL
   SSLApachePort
   Charset
 );
 my @opt_params_bool = qw(
   NoDB
   NoStart
+  EnableSSL
 );
 
 my %options = (map { $_ => undef } @req_params, @req_params_db, @opt_params, @opt_params_bool);
