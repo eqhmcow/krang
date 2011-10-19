@@ -171,20 +171,16 @@ must choose different HostNames for each.
 IP address used for the Krang Apache server and FTP server.  You'll
 need to arrange DNS to point this IPAddress at HostName.
 
-
 =item AdminPassword
 
 Password assigned to the "admin" Krang user (e.g., "whale").  This
 is the password you'll provide when you first log-in to the Krang
 system.
 
-
 =item DBUser
 
 Name of MySQL user which is used by this CMS installation (e.g.,
 "krangdb").  This user will be created if it does not exist.
-
-
 
 =item DBPass
 
@@ -192,14 +188,11 @@ MySQL user password which is used by this Krang installation (e.g.,
 "xyzzy").  If the MySQL user already exists this must be the correct
 password for the user.
 
-
-
 =item InstanceDBName
 
 Krang can contain multiple instances, but just one is setup by
 C<krang_install>.  This parameter names that database.  Typically this
 will be the name of your first site, eg. "coolmagazine1".
-
 
 =item InstanceHostName
 
@@ -208,7 +201,6 @@ powered by InstanceDBName, typically something like
 "cms.coolmagazine1.com".  You'll need to arrange DNS to point
 IPAddress at InstanceHostName.
 
-
 =item InstanceElementSet
 
 Name of element set used by this instance.  Possible values are
@@ -216,9 +208,6 @@ directories under the F<element_lib> directory.  If you're not ready
 to choose an element set yet, just use "Default".
 
 =back
-
-
-
 
 =head2 Optional Variables
 
@@ -233,12 +222,10 @@ assumed to exist, and to have full access to MySQL.  If the "root"
 user doesn't exist or has restricted access you must change your MySQL
 configuration before installing Krang.
 
-
 =item InstallPath
 
 Defaults to "/usr/local/krang".  Directory into which Krang should be
 installed.
-
 
 =item KrangUser
 
@@ -246,31 +233,24 @@ Defaults to "krang".  UNIX user for process ownership (Apache, etc.),
 file ownership and install location.  This user will be created if it
 does not exist.
 
-
 =item KrangGroup
 
 Defaults to "krang".  UNIX group for process ownership (Apache, etc.),
 file ownership and install location.  This group will be created if it
 does not exist.
 
-
-
 =item FTPPort
 
 Defaults to 21.  Port on which FTP server should run.
 
-
 =item ApachePort
 
-
 Defaults to 80.  Port on which the Apache server should run.
-
 
 =item SMTPServer
 
 Defaults to localhost (127.0.0.1).  Address of SMTP mail server used
 by Krang for sending email alerts.
-
 
 =item InstanceDisplayName
 
@@ -312,7 +292,6 @@ If your F<server.key> is encrypted, then you should look at setting the
 C<SSLPassPhraseDialog> in your F<krang.conf> (see L<http://www.modssl.org/docs/2.8/ssl_reference.html>
 for more details).
 
-
 =item SSLApachePort
 
 Defaults to 443. Port on which the Apache server will listen for SSL requests.
@@ -337,8 +316,6 @@ C<lang/bin/krang_lang_installer>.
 
 =back
 
-
-
 =head2 Some definitions
 
 =over 4
@@ -350,13 +327,11 @@ server may have multiple installations, but this would be rare
 outside of development.  A single installation may have multiple
 "Instances".
 
-
 =item Instance
 
 A particular database, host name and element set within Krang.
 Multiple instances may exist within a particular Krang installation.
 A single instance may have multiple "Sites".
-
 
 =item Site
 
