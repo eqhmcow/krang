@@ -260,6 +260,7 @@ sub edit_uuid {
     if ($_[0]) {
         # we are setting the edit_uuid
         $self->param(__edit_uuid => $_[0]);
+        $self->query->param(edit_uuid => $_[0]);
         return $_[0];
     } else {
         if ($self->param('__edit_uuid')) {
