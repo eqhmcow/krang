@@ -650,8 +650,6 @@ Krang.Ajax.update = function(args) {
                        if the server is returning JSON instead of HTML
         new_window   : open the request into a new window.
                        Defaults to false.
-        new_session  : Used in conjunction with new_window, if you want the new
-                       window to have a completely different session
 
     *NOTE* - This should not be used by the onclick handler of
     an input of type 'button' if the form is not of the 'non_ajax'
@@ -728,14 +726,12 @@ Krang.Form = {
         if(options.update == null) options.update = true; // defaults to true
 
         if( options.new_window ) {
-            if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) return;
+            if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) return false;
 
             // save the old target of the form so we can restore it after submission
             var old_target = form.target;
             var old_action = form.action;
-            if( options.new_session ) {
-                form.target = '_blank';
-            }
+            form.target = '_blank';
             form.submit();
             form.target = old_target;
             form.action = old_action;
