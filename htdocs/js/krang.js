@@ -4,6 +4,7 @@ Maybe create the Krang namespace.
 var Krang;
 if (typeof Krang == 'undefined') {
     Krang = {};
+    
 }
 
 /**
@@ -159,17 +160,20 @@ Krang.Window = {
             window.location = 'login.pl?rm=logout';
             window.name = '';
         }
+    },
+    pass_id : function(url) {
+        if (console) console.warn("Krang.Window.pass_id is deprecated");
+        return url;
+    },
+    init : function() {
+        // give the document window a random name. This allows
+        // someone to re-use an existing window that might have been
+        // a preview window to open Krang again without having a new preview
+        // call erase their Krang window.
+        var now = new Date();
+        window.name = 'krang_' + Math.random().toString().replace(/^0\./, '') + '_' + now.valueOf();
+        console.log('new window name: ' + window.name);
     }
-};
-
-Krang.Window.pass_id = function(url) {
-    if (console) console.warn("Krang.Window.pass_id is deprecated");
-    return url;
-};
-
-Krang.Window.init = function() {
-    if (console) console.warn("Krang.Window.init is deprecated");
-    return;
 };
 
 /*
