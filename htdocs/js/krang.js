@@ -172,7 +172,6 @@ Krang.Window = {
         // call erase their Krang window.
         var now = new Date();
         window.name = 'krang_' + Math.random().toString().replace(/^0\./, '') + '_' + now.valueOf();
-        console.log('new window name: ' + window.name);
     }
 };
 
