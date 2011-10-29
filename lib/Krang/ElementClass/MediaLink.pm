@@ -177,6 +177,9 @@ sub load_query_data {
         }
     } else {
 
+        # preview the image so it's available on the story that's being worked on
+        $media->preview();
+
         # the save worked
         $element->data($media);
     }

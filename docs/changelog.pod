@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Auto-preview media objects that are directly uploaded to a story so
+that they will already be ready when the story itself is previewed.
+[Michael Peters]
+
+=item *
+
 C<Krang.Ajax.update()> javascript function can now take a function as
 the value of C<target> or C<to_top> to be executed on-demand after the
 actual request is done. [Michael Peters]
