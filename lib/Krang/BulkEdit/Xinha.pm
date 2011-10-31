@@ -323,14 +323,6 @@ sub add_element {
     }
 }
 
-### sanitize incoming HTML
-##sub scrub {
-##    my ($self, %arg) = @_;
-##
-##    # scrub disallowed HTML tags and attribs
-##    return pkg('BulkEdit::Xinha::Config')->html_scrubber(%arg);
-##}
-
 # all possible block elements
 sub block_re {
     my ($self, %arg) = @_;
