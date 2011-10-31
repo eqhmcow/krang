@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Allow IFRAME tags in Xinha. [Bodo Schulze]
+
+=item *
+
 Auto-preview media objects that are directly uploaded to a story so
 that they will already be ready when the story itself is previewed.
 [Michael Peters]

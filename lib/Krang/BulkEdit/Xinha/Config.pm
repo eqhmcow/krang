@@ -204,6 +204,7 @@ sub html_scrubber {
                 '*'   => 0,        # deny all attribs on ACRONYM tags
                 title => 1,
             },
+            iframe => { '*' => 1}, # allow all attribs on IFRAME tags
 ##
 ## To allow tables, you might consider
 ##

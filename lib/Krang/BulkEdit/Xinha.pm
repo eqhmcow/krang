@@ -335,7 +335,7 @@ sub add_element {
 sub block_re {
     my ($self, %arg) = @_;
 
-    return qr[^(?:p|ul|ol|h1|h2|h3|h4|h5|h6|hr|table|address|blockquote|pre)$];
+    return qr[^(?:p|ul|ol|h1|h2|h3|h4|h5|h6|hr|table|address|blockquote|pre|iframe)$];
 }
 
 # workaround HTML::Element::as_HTML()
@@ -488,7 +488,7 @@ sub is_empty_tag {
 }
 
 sub get_empty_tags {
-    return {hr => 1,};
+    return {hr => 1, iframe => 1};
 }
 
 # store subclassable config object
