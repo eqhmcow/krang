@@ -1281,10 +1281,10 @@ specified version of itself.
 =cut
 
 sub revert_version {
-    my $self = shift;
-
+    my $self             = shift;
     my $q                = $self->query();
     my $selected_version = $q->param('selected_version');
+    my $m                = $self->get_edit_object();
 
     die("Invalid selected version '$selected_version'")
       unless ($selected_version and $selected_version =~ /^\d+$/);
@@ -1294,7 +1294,6 @@ sub revert_version {
     $q->param(reverted_to_version => $selected_version);
 
     # Perform revert & display result
-    my $m                  = $self->get_edit_object();
     my $pre_revert_version = $m->version;
     my $result             = $m->revert($selected_version);
     if ($result->isa('Krang::Media')) {
@@ -1832,7 +1831,7 @@ sub make_media_tmpl_data {
     }
 
     # Persist data for return from view in "return_params"
-    $tmpl_data{return_params} = $self->make_return_params('rm');
+    $tmpl_data{return_params} = $self->make_return_params('rm', 'edit_uuid');
 
     # Send data back to caller for inclusion in template
     return \%tmpl_data;
@@ -2454,29 +2453,33 @@ sub _clear_image_transform_session {
 
 # The "_media_types_popup_menu" method creates the popup menu for
 # the 'media_type_id' of Media objects.
-
 sub _media_types_popup_menu {
     my ($self, %args) = @_;
+    my $search = $args{search} ? 1 : 0;
     my $q = $self->query();
-    my $m = $self->get_edit_object();
+
+    # is there a certain type that is selected?
+    my $type_id;
+    if ($search) {
+        $type_id = $session{KRANG_PERSIST}{pkg('Media')}{search_media_type_id};
+    } else {
+        if (my $current_media = eval { $self->get_edit_object }) {
+            $type_id = $current_media->media_type_id;
+        }
+        $type_id ||= $session{KRANG_PERSIST}{pkg('Media')}{media_type_id};
+    }
 
     # Build type drop-down
     my %media_types = pkg('Pref')->get('media_type');
     %media_types = map { $_ => localize($media_types{$_}) } keys %media_types;
     my @media_type_ids = ("", sort { $media_types{$a} cmp $media_types{$b} } keys(%media_types));
 
-    my $search = $args{search} ? 1 : 0;
-    my $media_types_popup_menu = $q->popup_menu(
-        -name    => ($search ? 'search_media_type_id' : 'media_type_id'),
+    return $q->popup_menu(
+        -name => ($search ? 'search_media_type_id' : 'media_type_id'),
         -values  => \@media_type_ids,
         -labels  => \%media_types,
-        -default => (
-              $search
-            ? $session{KRANG_PERSIST}{pkg('Media')}{search_media_type_id}
-            : ($m->media_type_id() || $session{KRANG_PERSIST}{pkg('Media')}{media_type_id})
-        ),
+        -default => $type_id,
     );
-    return $media_types_popup_menu;
 }
 
 # overload load_tmpl so that the edit_uuid is set

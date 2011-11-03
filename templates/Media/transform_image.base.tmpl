@@ -3,6 +3,7 @@
 <form name="view_log_form" method="post" action="media.pl">
 <input type="hidden" name="rm" value="save_and_view_log">
 <input type="hidden" name="media_id" value="<tmpl_var escape=html media_id>">
+<input type="hidden" name="edit_uuid" value="<tmpl_var escape=html edit_uuid>">
 <input type="hidden" name="return_to_transform" value="1">
 </form>
 
@@ -202,10 +203,12 @@ change_height = function(new_height) {
 
 <form name="cancel_form" action="media.pl" method="post">
 <input type="hidden" name="rm" value="cancel_image_transform">
+<input type="hidden" name="edit_uuid" value="<tmpl_var escape=html edit_uuid>">
 </form>
 
 <form name="transform_form" action="media.pl" method="post">
 <input type="hidden" name="rm" value="">
+<input type="hidden" name="edit_uuid" value="<tmpl_var escape=html edit_uuid>">
 <input type="hidden" name="apply_transform" value="1">
 <input type="hidden" id="crop_x" name="crop_x" value="">
 <input type="hidden" id="crop_y" name="crop_y" value="">

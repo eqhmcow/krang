@@ -170,10 +170,8 @@ Krang.onload( function() {
 <input name="rm" value="<tmpl_if add_mode>save_stay_add<tmpl_else>save_edit</tmpl_if>" type="hidden">
 <input name="edit_uuid" value="<tmpl_var edit_uuid escape=html>" type="hidden">
 <input name="reverted_to_version" value="<tmpl_var reverted_to_version>" type="hidden">
-<tmpl_unless add_mode>
-  <input name="return_script" value="media.pl" type="hidden">
-  <tmpl_var return_params>
-</tmpl_unless>
+<input name="return_script" value="media.pl" type="hidden">
+<tmpl_var return_params>
 
 <tmpl_unless add_mode>
 
@@ -186,8 +184,6 @@ Krang.onload( function() {
 </span>
 
 <p class="cram east">
-  <input name="return_script" value="media.pl" type="hidden">
-  <tmpl_var return_params>
   <tmpl_if is_root>
     <input value="<tmpl_lang View Log>" onclick="save_and_view_log()" type="button" class="button">
     <tmpl_if may_edit_schedule>
