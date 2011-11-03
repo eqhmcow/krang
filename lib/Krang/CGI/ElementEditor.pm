@@ -865,7 +865,8 @@ sub find_media_link {
         cgi_query    => $query,
         persist_vars => {
             rm                => 'find_media_link',
-            path              => $query->param('path'),
+            path              => scalar $query->param('path'),
+            edit_uuid         => scalar $query->param('edit_uuid'),
             advanced          => ($query->param('advanced') || 0),
             "hard_find_$path" => $hard_find_froz,
             %persist,
