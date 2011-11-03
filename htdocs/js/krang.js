@@ -635,24 +635,26 @@ Krang.Ajax.update = function(args) {
     flags that can be passed to dictate the behaviour.
     These flags include:
 
-        to_top       : if the request will be performed using AJAX sometimes
-                       you don't want to force the user to go back to the top
-                       of the page. Setting this to false will do just that.
-                       Defaults to true.
-        target       : the id of an element for which the content is intended
-                       for
-        onComplete   : a callback to be executed when the request is finished
-                       regardless of whether it succeeded or not
-                       (only works with AJAX requests)
-        onSuccess    : a callback to be executed when the request succeeds
-                       (only works with AJAX requests)
-        onFailure    : a callback to be executed when the request fails
-                       (only works with AJAX requests)
-        update       : If false, then no update of the current page will be
-                       done with the response from the server. This is useful
-                       if the server is returning JSON instead of HTML
-        new_window   : open the request into a new window.
-                       Defaults to false.
+        to_top          : if the request will be performed using AJAX sometimes
+                          you don't want to force the user to go back to the top
+                          of the page. Setting this to false will do just that.
+                          Defaults to true.
+        target          : the id of an element for which the content is intended
+                          for
+        onComplete      : a callback to be executed when the request is finished
+                          regardless of whether it succeeded or not
+                          (only works with AJAX requests)
+        onSuccess       : a callback to be executed when the request succeeds
+                          (only works with AJAX requests)
+        onFailure       : a callback to be executed when the request fails
+                          (only works with AJAX requests)
+        update          : If false, then no update of the current page will be
+                          done with the response from the server. This is useful
+                          if the server is returning JSON instead of HTML
+        new_window      : open the request into a new window.
+                          Defaults to false.
+        new_window_name : The name of the new window if new_window is true.
+                          Defaults to "_blank".
 
     *NOTE* - This should not be used by the onclick handler of
     an input of type 'button' if the form is not of the 'non_ajax'
@@ -734,7 +736,7 @@ Krang.Form = {
             // save the old target of the form so we can restore it after submission
             var old_target = form.target;
             var old_action = form.action;
-            form.target = '_blank';
+            form.target = options.new_window_name ? options.new_window_name : '_blank';
             form.submit();
             form.target = old_target;
             form.action = old_action;
