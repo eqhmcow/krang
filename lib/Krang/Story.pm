@@ -1582,18 +1582,20 @@ or actions where the resulting data is not shown to the end user.
 
             # handle exclude_story_ids => [1, 2, 3]
             if ($key eq 'exclude_story_ids') {
-                if (@$value) {
-                    push(@where, ('s.story_id != ?') x @$value);
-                    push(@param, @$value);
+                my @exclude = grep { $_ } @$value;
+                if (@exclude) {
+                    push(@where, ('s.story_id != ?') x @exclude);
+                    push(@param, @exclude);
                 }
                 next;
             }
 
             # handle exclude_story_uuids => [1, 2, 3]
             if ($key eq 'exclude_story_uuids') {
-                if (@$value) {
-                    push(@where, ('s.story_uuid != ?') x @$value);
-                    push(@param, @$value);
+                my @exclude = grep { $_ } @$value;
+                if (@exclude) {
+                    push(@where, ('s.story_uuid != ?') x @exclude);
+                    push(@param, @exclude);
                 }
                 next;
             }
