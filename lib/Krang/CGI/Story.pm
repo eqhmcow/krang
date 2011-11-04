@@ -859,16 +859,15 @@ locations conflict - deletes them entirely.
 =cut
 
 sub replace_dupes {
-    my $self  = shift;
-    my $query = $self->query;
-    my $story = $self->get_edit_object();
+    my $self      = shift;
+    my $query     = $self->query;
+    my $edit_uuid = $self->edit_uuid || 'new';
 
-    # grab list of dupes from session
-    my @dupes = @{$session{KRANG_PERSIST}{DUPE_STORIES}->{DUPES}};
-
-    # turn them into a hash of arrayrefs like ( ID1 => [url1, url2, ..] )
+    # get a hash or arrayrefs for the duplicate stories
     my %dupes;
-    foreach (@dupes) { push @{$dupes{$_->{id}}}, $_->{url}; }
+    foreach my $d (@{$session{KRANG_PERSIST}{DUPE_STORIES}{$edit_uuid}{DUPES}}) {
+        push @{$dupes{$d->{id}}}, $d->{url};
+    }
 
     # build array of actual story objects, and hash of original locations
     my @dupe_stories;
@@ -879,25 +878,21 @@ sub replace_dupes {
     foreach my $id (keys %dupes) {
         my ($dupe_story) = pkg('Story')->find(story_id => $id);
         if ($dupe_story->checked_out) {
-
             # if story is checked out to us, do nothing; otherwise...
             if ($dupe_story->checked_out_by ne $ENV{REMOTE_USER}) {
                 if ($may_checkin_all && $dupe_story->may_edit) {
-
                     # if we can, force-check-in and take ownership
                     $dupe_stories_original_home{$id} = $dupe_story->desk_id || -1;
                     $dupe_story->checkin;
                     $dupe_story->checkout;
                 } else {
-
                     # we hit a roadblack... undo our changes and alert the user
                     foreach (@dupe_stories) {
-
                         # stories we hashed in original_home were not previously checked out to us
                         if (my $orig_home = $dupe_stories_original_home{$_->story_id}) {
                             $_->checkin;
 
-                       # if we checked out this story from a desk and it's no longer on that desk...
+                            # if we checked out this story from a desk, move it back
                             if (   $orig_home != -1
                                 && $_->desk_id != $orig_home
                                 && scalar(pkg('Desk')->find(desk_id => $orig_home)))
@@ -915,7 +910,6 @@ sub replace_dupes {
                 }
             }
         } else {
-
             # story is currently checked in
             $dupe_stories_original_home{$id} = $dupe_story->desk_id || -1;
             $dupe_story->checkout;
@@ -930,18 +924,16 @@ sub replace_dupes {
 
         # if every one of the dupe story's URLs is a dupe....
         if (@all_cats == @dupe_urls) {
-
             # delete it entirely
             add_message('dupe_story_deleted', id => $dupe_story->story_id);
             $dupe_story->checkin;
             $dupe_story->trash;
         } else {
-
             # otherwise, replace full list of cats with list of non-dupe cats
             my %dupe_cats;
             my $dupe_slug = $dupe_story->slug || '';
             foreach my $dupe_url (@dupe_urls) {
-                my ($cat_url, $slug) = ($dupe_url =~ /^(.*)$dupe_slug$/);
+                my ($cat_url, $slug) = ($dupe_url =~ /^(.*)$dupe_slug\/?$/);
                 $dupe_cats{$cat_url} = 1;
             }
             my @safe_cats = grep { !$dupe_cats{$_->url} } @all_cats;
@@ -963,12 +955,13 @@ sub replace_dupes {
     }
 
     # at this point we're finished, so re-submit user's failed query
-    my $last_query = $session{KRANG_PERSIST}{DUPE_STORIES}->{QUERY};
+    my $last_query = $session{KRANG_PERSIST}{DUPE_STORIES}{$edit_uuid}{QUERY};
     foreach (keys %$last_query) { $self->query->param($_ => $last_query->{$_}) }
-    delete $session{KRANG_PERSIST}{DUPE_STORIES};
-    my %run_modes = $self->run_modes;    # get full hash of runmodes => method_names
-    my $rm_method =
-      $run_modes{$self->query->param('rm')};    # get method name for runmode of last query
+    delete $session{KRANG_PERSIST}{DUPE_STORIES}{$edit_uuid};
+
+    # get the new run mode based on the list of run modes and the old rm param
+    my %run_modes = $self->run_modes;
+    my $rm_method = $run_modes{$self->query->param('rm')};
     $self->$rm_method;
 }
 
@@ -2608,6 +2601,7 @@ sub alert_duplicate_url {
     my $class      = $args{class};
     my $error      = $args{error};
     my $added_cats = $args{added_cats};
+    my $edit_uuid  = $self->edit_uuid || 'new';
 
     # if we're adding a category, get its URL
     # (currently GUI only allows one add at a time)
@@ -2642,17 +2636,16 @@ sub alert_duplicate_url {
         # and we throw (using $s for plural messages, $q for quotes, $f for form)...
         my $s = @{$error->stories} > 1 ? 's' : '';
         my $f = $self->query->param('returning_from_root') ? 'edit' : 'new_story';
-        add_alert('duplicate_url_table', dupe_rows => $dupes, q => '"', form => $f);
+        add_alert('duplicate_url_table', dupe_rows => $dupes, form => $f, edit_uuid => $edit_uuid);
 
         # message differs slightly when dupe is caused by adding a new category
         $new_cat
           ? add_alert('duplicate_url_on_add_cat', cat        => $new_cat)
           : add_alert("duplicate_url$s",          attributes => $url_attributes);
 
-      # finally, store dupes & query in session hash in case a subsequent replace_dupes() needs them
-        $session{KRANG_PERSIST}{DUPE_STORIES}->{DUPES} = $error->stories;
-        $session{KRANG_PERSIST}{DUPE_STORIES}->{QUERY} =
-          {map { $_ => $self->query->param($_) } $self->query->param};
+        # store dupes & query in session hash in case a subsequent replace_dupes() needs them
+        $session{KRANG_PERSIST}{DUPE_STORIES}{$edit_uuid}{DUPES} = $error->stories;
+        $session{KRANG_PERSIST}{DUPE_STORIES}{$edit_uuid}{QUERY} = $self->query->Vars;
 
     } elsif ($error->categories) {
 
