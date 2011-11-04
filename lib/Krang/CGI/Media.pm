@@ -1715,9 +1715,7 @@ sub update_media {
 # Given a media object, $m, return a hashref with all the data needed
 # for the edit template.
 sub make_media_tmpl_data {
-    my $self = shift;
-    my $m    = shift;
-
+    my ($self, $m) = @_;
     my $q         = $self->query();
     my %tmpl_data = ();
 
@@ -1728,7 +1726,7 @@ sub make_media_tmpl_data {
         $tmpl_data{url}            = format_url(
             url    => $m->url(),
             class  => 'media-preview-link',
-            name   => 'media_null',
+            name   => 'media_' . $self->edit_uuid,
             length => 50
         );
         $tmpl_data{published_version} = $m->published_version();

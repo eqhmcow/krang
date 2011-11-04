@@ -40,7 +40,7 @@ Krang.onload( function() {
 
 <span style="float: right">
   <tmpl_if thumbnail_path>
-    <tmpl_if media_id><a href="" title="<tmpl_lang Preview> <tmpl_var escape=html title>" class="media-preview-link" name="media_null"></tmpl_if><img alt="" src="<tmpl_var escape=html thumbnail_path>"><tmpl_if media_id></a></tmpl_if>
+    <tmpl_if media_id><a href="" title="<tmpl_lang Preview> <tmpl_var escape=html title>" class="media-preview-link" name="media_<tmpl_var media_id>"></tmpl_if><img alt="" src="<tmpl_var escape=html thumbnail_path>"><tmpl_if media_id></a></tmpl_if>
   </tmpl_if>
 </span>
 
