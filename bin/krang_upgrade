@@ -128,6 +128,10 @@ Output results of upgrade to console.
                        it doesn't have to worry about incompatible data sitting in
                        in a user's sessions. But you can elect to skip this step.
 
+ --no-ssl-certs      - By default Krang will make your SSL certs using the Apache
+                       provided Makefile. This is necessary when Krang's Apache has
+                       some big changes, but can be slow.
+
  --help              - Show usage
 
  --man               - Show full man page
@@ -448,7 +452,7 @@ sub install_new_krang {
       or die "Unable to rename ./lib/Krang.pm to ./lib/Krang.new: $!\n";
 
     # if we were built with SSL
-    if ($build_params{SSL}) {
+    if ($build_params{SSL} && !$options{'no-ssl-certs'}) {
 
         # make sure we don't over-write existing ssl certs
         if (-e catfile($install_path, 'conf', 'ssl.crt', 'server.crt')) {
