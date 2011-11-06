@@ -133,7 +133,7 @@ sub get_edit_object {
                     return $obj;
                 }
             } else {
-                croak("Could not load $pkg obj with edit_uuid $edit_uuid from session!");
+                croak("Could not find $pkg obj with edit_uuid $edit_uuid in session!");
             }
         } else {
             croak("No edit_uuid provided!");
