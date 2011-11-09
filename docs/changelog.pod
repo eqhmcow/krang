@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Put back session locking because without it there are race conditions
+when we deal with multiple windows and nested data structures in the
+sessions. [Michael Peters]
+
+=item *
+
 Allow IFRAME tags in Xinha. [Bodo Schulze]
 
 =item *

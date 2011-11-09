@@ -76,12 +76,14 @@ new session.
 sub create {
     my $pkg = shift;
     my $dbh = dbh();
-    tie %session, 'Apache::Session::Flex', undef, {
-        Store     => 'MySQL',
-        Generate  => 'MD5',
-        Serialize => 'Storable',
-        Lock      => 'Null',
-        Handle    => $dbh,
+    tie %session, 'Apache::Session::Flex', undef,
+      {
+        Store      => 'MySQL',
+        Generate   => 'MD5',
+        Serialize  => 'Storable',
+        Handle     => $dbh,
+        Lock       => 'MySQL',
+        LockHandle => $dbh,
       }
       or croak("Unable to create new session.");
     $tied = 1;
@@ -112,12 +114,14 @@ sub load {
 
     # try to tie the session
     eval {
-        tie %session, 'Apache::Session::Flex', $session_id, {
-            Store     => 'MySQL',
-            Generate  => 'MD5',
-            Serialize => 'Storable',
-            Lock      => 'Null',
-            Handle    => $dbh,
+        tie %session, 'Apache::Session::Flex', $session_id,
+          {
+            Store      => 'MySQL',
+            Generate   => 'MD5',
+            Serialize  => 'Storable',
+            Handle     => $dbh,
+            Lock       => 'MySQL',
+            LockHandle => $dbh,
           }
           or croak("Unable to create new session.");
         $tied = 1;
@@ -189,11 +193,12 @@ sub delete {
     if ($session_id) {
         tie my %doomed, 'Apache::Session::Flex', $session_id,
           {
-            Store     => 'MySQL',
-            Generate  => 'MD5',
-            Serialize => 'Storable',
-            Lock      => 'Null',
-            Handle    => $dbh,
+            Store      => 'MySQL',
+            Generate   => 'MD5',
+            Serialize  => 'Storable',
+            Handle     => $dbh,
+            Lock       => 'MySQL',
+            LockHandle => $dbh,
           }
           or croak("Unable to create new session.");
         tied(%doomed)->delete();
