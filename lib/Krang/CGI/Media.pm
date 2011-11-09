@@ -1722,15 +1722,18 @@ sub make_media_tmpl_data {
     # Set up details only found on edit (not add) view
     if ($tmpl_data{media_id} = $m->media_id()) {
         my $thumbnail_path = $m->thumbnail_path(relative => 1) || '';
-        $tmpl_data{thumbnail_path} = $thumbnail_path;
-        $tmpl_data{url}            = format_url(
-            url    => $m->url(),
-            class  => 'media-preview-link',
-            name   => 'media_' . $self->edit_uuid,
-            length => 50
-        );
+        $tmpl_data{thumbnail_path}    = $thumbnail_path;
         $tmpl_data{published_version} = $m->published_version();
         $tmpl_data{version}           = $m->version();
+
+        if (my $url = $m->url) {
+            $tmpl_data{url} = format_url(
+                url    => $url,
+                class  => 'media-preview-link',
+                name   => 'media_' . $self->edit_uuid,
+                length => 50
+            );
+        }
 
         # Display creation_date
         my $creation_date = $m->creation_date();
