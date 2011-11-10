@@ -1,0 +1,148 @@
+=head1 FEATURE HISTORY
+
+This document lists the features added since version 2.20.
+
+=head2 Version 3.00
+
+This is the first version requiring the story data to be UTF-8
+encoded.
+
+=over 4
+
+=item New configuration directives
+
+  * CustomCSS    - allows each instance to change the CSS of the CMS.
+  * ContactEmail - used in the footer
+  * ContactURL   - used in the footer
+  * Secret       - used for encryption and encoding
+  * EnableFTP    - whether Krang's FTP server should be started
+
+=item AJAX-powered redesign
+
+The UI has been completely redesigned with AJAX-powered dynamics.
+
+=item Save button in element editor
+
+The 'Save' buttons in the element editor now save to disk even when
+editing a container element. The old non-disk save has been replaced
+with a 'Done' button.
+
+=item Story slug
+
+When creating a new story, the slug is automatically generated based
+on title and story.
+
+Slugs are now optional for all story types.
+
+=item Steal Story
+
+On the "Active Stories" screen, users having the administrative
+permission "May Check In All" may "steal" stories checked-out by
+another user.
+
+=back
+
+=head2 Version 3.01
+
+=over 4
+
+=item Replace Story
+
+If the modification of a story's category and/or slug would result in
+an already existing URL, a dialog is displayed allowing to replace the
+conflicting story with the current one.
+
+=item Multiple Windows
+
+You may now open multiple Krang windows in the same browser.  Just
+click on the "New Window" link in the top navigation.
+
+=back
+
+=head2 Version 3.02
+
+=over
+
+=item Trash Assets
+
+Deleting a story/media/template moves it to the Trash from where they
+can be restored or definitely deleted.
+
+=item Retire Assets
+
+A story/media/template can be retired and unretired. Retiring an asset
+means to remove it from the published site without deleting it from
+the database.
+
+=item Copy Categories (admin)
+
+Categories (and optionally the assets living in them) can now be
+copied.
+
+=item Multiple Windows
+
+You can now Control-click on any item in the left navigation to open a
+new window and immediately go to the corresponding screen. This may or
+may not work with your browser.
+
+=item Media Images
+
+An Image Transformation UI has been added to allow basic image editing
+(scaling, rotating and flipping).
+
+=back
+
+=head2 Version 3.04
+
+=over 4
+
+=item Added fulltext search for stories and templates
+
+=item Added an inline editor for text media
+
+=item Added a localization API and a German lexicon.
+
+=item Publishing a media now also publishes it to preview
+
+=item Media may have elements like stories
+
+=back
+
+=head2 Version 3.05
+
+=over 4
+
+=item New Configuration Directive 'ErrorNotificationEmail'
+
+This directive can contain an optional comma-separated list of email
+addresses that will be sent an email with details about any Internal
+Server Errors that occur.
+
+=back
+
+=head2 Version 3.09
+
+=over
+
+=item Added ability to search Media by 'type'
+
+=item New directive 'ReservedURLs'
+
+This URL list prevents Krang users from creating stories or categories
+with certain URLs.  This is useful when you have another application
+serving the Krang published content and it needs certain URLs reserved
+for it's functionality.  It can be set per-instance or globally.
+
+=back
+
+=head2 Version 3.14
+
+=over
+
+=item New configuration directives
+
+The following two configuration directives allow instances to ignore
+publishing related assets during preview.
+
+  * IgnorePreviewRelatedStoryAssets
+  * IgnorePreviewRelatedMediaAssets
