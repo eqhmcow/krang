@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed story_find help text. [Bodo Schulze]
+
+=item *
+
 Added F<docs/feature_history> to document new features and functional
 enhancements from a user perspective. [Bodo Schulze]
 
