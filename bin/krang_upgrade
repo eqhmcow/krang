@@ -128,9 +128,9 @@ Output results of upgrade to console.
                        it doesn't have to worry about incompatible data sitting in
                        in a user's sessions. But you can elect to skip this step.
 
- --no-ssl-certs      - By default Krang will make your SSL certs using the Apache
+ --no-ssl-symlinks   - By default Krang will re-make your SSL symlinks using the Apache
                        provided Makefile. This is necessary when Krang's Apache has
-                       some big changes, but can be slow.
+                       some big changes, but can be slow when there are a lot of certs.
 
  --help              - Show usage
 
@@ -452,8 +452,7 @@ sub install_new_krang {
       or die "Unable to rename ./lib/Krang.pm to ./lib/Krang.new: $!\n";
 
     # if we were built with SSL
-    if ($build_params{SSL} && !$options{'no-ssl-certs'}) {
-
+    if ($build_params{SSL}) {
         # make sure we don't over-write existing ssl certs
         if (-e catfile($install_path, 'conf', 'ssl.crt', 'server.crt')) {
             my $src_crt = catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.crt', 'server.crt');
@@ -478,8 +477,7 @@ sub install_new_krang {
     die $err if $err;
 
     # if we were built with SSL
-    if ($build_params{SSL} && !$options{'no-ssl-certs'}) {
-
+    if ($build_params{SSL} && !$options{'no-ssl-symlinks'}) {
         # redo the symlinks for SSL conf
         print "  Fixing SSL symlinks\n";
 
@@ -724,14 +722,14 @@ sub setup_getopts {
 
     pod2usage(2)
       unless GetOptions(
-        'help'          => \$help,
-        'man'           => \$man,
-        'no-backup'     => \$options{'no-backup'},
-        'no-start'      => \$options{'no-start'},
-        'no-chown'      => \$options{'no-chown'},
-        'no-db'         => \$options{'no-db'},
-        'keep-sessions' => \$options{'keep-sessions'},
-        'no-ssl-certs'  => \$options{'no-ssl-certs'},
+        'help'            => \$help,
+        'man'             => \$man,
+        'no-backup'       => \$options{'no-backup'},
+        'no-start'        => \$options{'no-start'},
+        'no-chown'        => \$options{'no-chown'},
+        'no-db'           => \$options{'no-db'},
+        'keep-sessions'   => \$options{'keep-sessions'},
+        'no-ssl-symlinks' => \$options{'no-ssl-symlinks'},
         (map { $_ . "=s" => \$options{$_} } @opt_params)
       );
 

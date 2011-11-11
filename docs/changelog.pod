@@ -8,8 +8,8 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-Adding C<--no-ssl-certs> option to Krang upgrade to skip rebuilding
-the SSL certs. [Michael Peters]
+Adding C<--no-ssl-symlinks> option to Krang upgrade to skip rebuilding
+the SSL cert symlinks. [Michael Peters]
 
 =item *
 
