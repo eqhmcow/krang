@@ -478,7 +478,7 @@ sub install_new_krang {
     die $err if $err;
 
     # if we were built with SSL
-    if ($build_params{SSL}) {
+    if ($build_params{SSL} && !$options{'no-ssl-certs'}) {
 
         # redo the symlinks for SSL conf
         print "  Fixing SSL symlinks\n";
