@@ -731,6 +731,7 @@ sub setup_getopts {
         'no-chown'      => \$options{'no-chown'},
         'no-db'         => \$options{'no-db'},
         'keep-sessions' => \$options{'keep-sessions'},
+        'no-ssl-certs'  => \$options{'no-ssl-certs'},
         (map { $_ . "=s" => \$options{$_} } @opt_params)
       );
 
