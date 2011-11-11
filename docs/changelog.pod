@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added a new C<session_id> method to L<Krang::Session> to make it really
+easy to determine the current session's ID. [Michael Peters]
+
+=item *
+
 Fixed story_find help text. [Bodo Schulze]
 
 =item *

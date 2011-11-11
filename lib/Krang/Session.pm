@@ -181,8 +181,6 @@ sub unload {
 Deletes a session from the store, permanently.  A session id can be
 specified, or the current session will be deleted.
 
-=back
-
 =cut
 
 sub delete {
@@ -208,6 +206,19 @@ sub delete {
         untie(%session);
         $tied = 0;
     }
+}
+
+=item C<< Krang::Session->session_id >>
+
+Returns the id of the current session.
+
+=back
+
+=cut
+
+sub session_id {
+    my $pkg = shift;
+    return $session{_session_id};
 }
 
 sub persist_to_mypref {
