@@ -62,6 +62,7 @@ our $tied = 0;
 require Exporter;
 our @ISA       = ('Exporter');
 our @EXPORT_OK = ('%session');
+my $LAST_SESSION_ID;
 
 =over 4
 
@@ -103,9 +104,9 @@ will croak().
 =cut
 
 sub load {
-    my $pkg        = shift;
-    my $session_id = shift;
-    my $dbh        = dbh();
+    my ($pkg, $session_id) = @_;
+    $session_id ||= $LAST_SESSION_ID;    # use the last id if none was provided.
+    my $dbh = dbh();
 
     # check if the session even exists
     my ($exists) = $dbh->selectrow_array('SELECT 1 FROM sessions WHERE id = ?', undef, $session_id);
@@ -164,14 +165,28 @@ routine is not called then the session will be saved the next time a
 session is loaded or when the process ends.
 
 After this call, C<%session> will be unavailable until the next call to
-C<load()>.
+C<load()>. This method does remember the last session id, so your next
+call to C<load()> doesn't need to provide that ID.
 
 =cut
 
 sub unload {
-    $_[0]->persist_to_mypref();
+    my $pkg = shift;
+    $pkg->persist_to_mypref();
+    $LAST_SESSION_ID = $pkg->session_id;
     untie %session if $tied;
     $tied = 0;
+}
+
+=item C<< Krang::Session->unlock() >>
+
+Unlocks the current session. Currently, this just calls C<unload()>.
+
+=cut
+
+sub unlock {
+    my $pkg = shift;
+    return $pkg->unload;
 }
 
 =item C<< Krang::Session->delete() >>
@@ -220,6 +235,20 @@ sub session_id {
     my $pkg = shift;
     return $session{_session_id};
 }
+
+=item C<< Krang::Session->unlock >>
+
+Unlock the current session. This is paired with 
+
+By default Krang locks all session activity so that if activity is happening
+in multiple windows the session isn't corrupted by multiple windows trying to
+make changes at the same time.
+
+But this has 
+
+=cut
+
+
 
 sub persist_to_mypref {
     my $self = shift;
