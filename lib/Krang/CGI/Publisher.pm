@@ -23,7 +23,7 @@ This application provides a frontend to Krang::Publisher
 
 =cut
 
-use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader 'Session';
 use Krang::ClassLoader 'Publisher';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'User';
@@ -688,6 +688,9 @@ sub _publish_assets_now {
     my ($story_list, $media_list) = @_;
     my $query = $self->query;
 
+    # unlock the session
+    pkg('Session')->unlock();
+
     # this is a no-parse header script
     $self->header_type('none');
     print $query->header;
@@ -839,6 +842,9 @@ sub _publish_assets_now {
     <script type="text/javascript">
         setTimeout(function() { location.replace('workspace.pl') }, 10)
     </script>|;
+
+    # re-load the session
+    pkg('Session')->load();
 
     return;
 }

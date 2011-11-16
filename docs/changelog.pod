@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Publishing through the UI no longer locks the session while the publishing
+is happening. [Michael Peters]
+
+=item *
+
 Adding C<--no-ssl-symlinks> option to Krang upgrade to skip rebuilding
 the SSL cert symlinks. [Michael Peters]
 
