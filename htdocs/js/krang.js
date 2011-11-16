@@ -767,7 +767,7 @@ Krang.Form = {
                         to_top     : options.to_top,
                         onComplete : function(args, response, json) {
                             complete(args, response, json);
-                            Krang.Form.study(form);
+                            if(document.forms[form.name]) Krang.Form.study(form.name);
                         },
                         onSuccess  : options['onSuccess'],
                         onFailure  : options['onFailure']
@@ -779,7 +779,7 @@ Krang.Form = {
                         method     : form.method,
                         onComplete : function(args, response, json) {
                             complete(args, response, json);
-                            Krang.Form.study(form);
+                            if(document.forms[form.name]) Krang.Form.study(form.name);
                         },
                         onSuccess  : options['onSuccess'],
                         onFailure  : options['onFailure']
