@@ -9,8 +9,11 @@ use Krang::ClassLoader Conf         => qw(PreviewSSL);
 use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'URL';
 
-#use Krang::MethodMaker
-#  get_set => [ qw( ) ];
+use Krang::MethodMaker
+  get_set => [ qw(publish_if_modified_story_in_cat
+                  publish_if_modified_story_below_cat
+                  publish_if_modified_media_in_cat
+                  publish_if_modified_media_below_cat) ];
 
 sub new {
     my $pkg  = shift;

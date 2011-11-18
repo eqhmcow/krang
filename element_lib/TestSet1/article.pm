@@ -112,6 +112,26 @@ sub new {
             'page',
 
             'poortext_xinha',
+
+             pkg('ElementClass::CategoryLink')->new(
+                 name => "story_in_cat",
+                 publish_if_modified_story_in_cat => 1
+             ),
+
+             pkg('ElementClass::CategoryLink')->new(
+                 name => "story_below_cat",
+                 publish_if_modified_story_below_cat => 1
+             ),
+
+             pkg('ElementClass::CategoryLink')->new(
+                 name => "media_in_cat",
+                 publish_if_modified_media_in_cat => 1
+             ),
+
+             pkg('ElementClass::CategoryLink')->new(
+                 name => "media_below_cat",
+                 publish_if_modified_media_below_cat => 1
+             ),
         ],
         @_
     );

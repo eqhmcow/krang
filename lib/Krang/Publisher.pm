@@ -113,7 +113,7 @@ use Krang::ClassLoader 'Template';
 use Krang::ClassLoader 'IO';
 use Krang::ClassLoader History => qw(add_history);
 use Krang::ClassLoader DB      => qw(dbh);
-
+use Krang::ClassLoader Element => qw(foreach_element);
 use Krang::ClassLoader Log => qw(debug info critical);
 
 use constant PUBLISHER_RO       => qw(is_publish is_preview story category);
@@ -510,7 +510,7 @@ sub publish_story {
         callback            => $callback,
         user_id             => $user_id,
         remember_asset_list => $keep_asset_list
-    );
+    ) if scalar(@$publish_list);
 
     $self->_clear_asset_lists() unless ($keep_asset_list);
 }
@@ -949,6 +949,13 @@ sub asset_list {
             croak "Publish mode unknown.  Set the 'mode' argument'";
         }
     }
+
+    # consider story-specific logic to determine whether the story
+    # should really be published
+    if ($mode eq 'publish' and not $ENV{KRANG_TEST}) {
+        return () unless $self->_do_publish_story($story);
+    }
+
     my $maintain_versions = (($mode eq 'publish') && $args{maintain_versions}) ? 1 : 0;
 
     my @publish_list = $self->_build_asset_list(
@@ -2026,6 +2033,7 @@ sub _build_asset_list {
             version_check  => $version_check,
             initial_assets => $initial_assets
         );
+
         push @asset_list, $o if ($publish_ok);
         if ($check_links) {
             my $check_stories = !($self->is_preview && IgnorePreviewRelatedStoryAssets);
@@ -2492,6 +2500,74 @@ sub _determine_output_path {
     }
 
     return $output_path;
+}
+
+# Returns true if the story must be published
+sub _do_publish_story {
+    my ($self, $story) = @_;
+
+    # a couple of flags
+    my ($do_publish, $has_category_link, $conditional_publishing) = (0,0,0);
+
+    # check story for CategoryLink elements
+    foreach_element {
+        return unless $_;
+        my $element = $_;
+
+        # get CategoryLink element
+        if ($element->class->isa('Krang::ElementClass::CategoryLink')) {
+
+            # Remember that we have at least one CategoryLink
+            $has_category_link++;
+            my $category = $element->data;
+
+            # no category: return immediately
+            return unless $category && ref($category) && $category->isa('Krang::Category');
+
+            # check if stories or media IN or BELOW category have been modified
+            my $class = $element->class;
+            for my $asset (qw(story media)) {
+                my %find_params = ();
+                if ($class->{"publish_if_modified_".$asset."_in_cat"}) {
+                    $find_params{category_id} = $category->category_id;
+                }
+                if ($class->{"publish_if_modified_".$asset."_below_cat"}) {
+                    $find_params{below_category_id} = $category->category_id;
+                }
+
+                if (keys %find_params) {
+
+                    # Remember that we are in 'conditional publishing mode'
+                    $conditional_publishing++;
+
+                    for my $asset (pkg(ucfirst($asset))->find(%find_params)) {
+                        if ($asset->is_modified()) {
+                            # at least one asset is modified
+                            $do_publish++;
+                            return 1;
+                        }
+                    }
+                }
+            }
+        }
+    } $story->element;
+
+    # no categorylink: publish the story
+    return 1 unless $has_category_link;
+
+    # we are in 'conditional publishing mode' and at least one asset
+    # has been modified since its last publishing
+    return 1 if $do_publish;
+
+    # we have a categorylink without being in 'conditional publishing
+    # mode' which can mean either that none of the 'conditional
+    # publishing flags' have been set or that there is a categorylink
+    # without a category being set.
+    return 1 unless $conditional_publishing;
+
+    # we are in 'conditional publishing mode' and none of the
+    # category's assets have been modified
+    return;
 }
 
 ############################################################

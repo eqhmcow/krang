@@ -122,6 +122,8 @@ pod2usage(2)
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
+$ENV{KRANG_TEST} = 1;
+
 my $root = pkg('Conf')->get('KrangRoot');
 $files ||= join(
     " ", map { s!^$root/!!; $_ }
