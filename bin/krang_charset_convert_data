@@ -131,7 +131,7 @@ use Pod::Usage;
 use Getopt::Long;
 
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Script' => qw(set_remote_user);
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Charset';
@@ -492,19 +492,3 @@ sub convert_scalar {
     return defined $data ? $data : '';
 }
 
-sub set_remote_user {
-    my @user = (
-                pkg('User')->find(
-                                  ids_only => 1,
-	                          login    => 'system'
-                                 )
-               );
-    if (@user) {
-        $ENV{REMOTE_USER} = $user[0];
-    } else {
-        warn(
-             "Unable to find 'system' user.  All Krang instances must contain the special 'system' account.  Falling back to using special user_id 1.\n"
-	    );
-        $ENV{REMOTE_USER} = 1;
-    }
-}
