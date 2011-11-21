@@ -4,6 +4,8 @@ This document contains a list of changes for each release of Krang.
 
 =head2 3.16 (in development)
 
+=over
+
 =item *
 
 At the request of Michael Peters, added 4 flags to
@@ -13,6 +15,8 @@ behavior is set via any 4 flags, the story will be
 published if and only if a story/media living in/below the category
 that has been set in the CategoryLink has has been modified since it's
 last publishing. [Bodo Schulze]
+
+=back
 
 =head2 3.15 - November, 16 2011
 

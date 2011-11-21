@@ -227,8 +227,6 @@ sub delete {
 
 Returns the id of the current session.
 
-=back
-
 =cut
 
 sub session_id {
@@ -258,6 +256,10 @@ sub persist_to_mypref {
 
     pkg('MyPref')->set(config => nfreeze($persist)) if $persist;
 }
+
+=back
+
+=cut
 
 1;
 
