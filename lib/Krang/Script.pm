@@ -32,22 +32,26 @@ then you'll need to be root in order to change into KrangUser.
 
 Next the module sets REMOTE_USER to the user ID of the special hidden
 'system' user.  This user has global admin access to all Krang
-instances.
+instances. However, as the 'system' user ID may differ across
+instances, this module exports the function set_remote_user() to set
+the $ENV{REMOTE_USER} variable explicitly to the 'system' user. This
+function must be called after setting the instance.
 
 This module will exit with an error if your F<krang.conf> has multiple
 instances but you didn't set the KRANG_INSTANCE environment variable.
 
 If your script is instance-agnostic and you just need to become
-KrangUser and KrangGroup , you may pass the 'instance_agnostic'
+KrangUser and KrangGroup, you may pass the 'instance_agnostic'
 option.
 
 If you set KRANG_PROFILE to 1 then L<Krang::Profiler> will be used.
 
 =head1 INTERFACE
 
-None.
-
 =cut
+
+use base 'Exporter';
+our @EXPORT_OK = qw(set_remote_user);
 
 # activate profiling if requested
 BEGIN {
@@ -139,8 +143,28 @@ sub import {
     debug("Krang.pm:  Setting instance to '$instance'");
     pkg('Conf')->instance($instance);
 
+    set_remote_user(1);
+}
+
+=over 4
+
+=item C<< set_remove_user() >>
+
+=item C<< set_remove_user(1) >>
+
+This function is exported. It must be called after setting the instance.
+
+It sets the environment variable REMOTE_USER to the 'system' user
+unless the latter is already set and a true argument is passed in.
+
+Returns the remote user's ID or undef.
+
+=cut
+
+sub set_remote_user {
+    my $unset = shift;
     # set REMOTE_USER to the user_id for the 'system' user
-    unless ($ENV{REMOTE_USER}) {
+    unless ($ENV{REMOTE_USER} && $unset) {
         my @user = (
             pkg('User')->find(
                 ids_only => 1,
@@ -155,7 +179,13 @@ sub import {
             );
             $ENV{REMOTE_USER} = 1;
         }
+        return $ENV{REMOTE_USER};
     }
+    return;
 }
+
+=back
+
+=cut
 
 1;
