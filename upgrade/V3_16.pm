@@ -9,8 +9,8 @@ sub per_instance {
     my ($self, %args) = @_;
     return if $args{no_db};
     my $dbh = dbh();
-    $dbh->do('ALTER table story add column last_modified_date datetime');
-    $dbh->do('ALTER table media add column last_modified_date datetime');
+    $dbh->do('ALTER table story add column last_modified_date datetime not null');
+    $dbh->do('ALTER table media add column last_modified_date datetime not null');
 }
 
 sub per_installation {
