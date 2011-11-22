@@ -952,14 +952,19 @@ sub asset_list {
 
     # consider story-specific logic to determine whether the story
     # should really be published
+    my @to_publish = ();
     if ($mode eq 'publish' and not $ENV{KRANG_TEST}) {
-        return () unless $self->_do_publish_story($story);
+        for my $s (ref($story) eq 'ARRAY' ? @$story : ($story)) {
+            push @to_publish, $s if $self->_do_publish_story($s);
+        }
     }
+
+    return () unless @to_publish;
 
     my $maintain_versions = (($mode eq 'publish') && $args{maintain_versions}) ? 1 : 0;
 
     my @publish_list = $self->_build_asset_list(
-        object            => $story,
+        object            => \@to_publish,
         version_check     => $version_check,
         maintain_versions => $maintain_versions,
         initial_assets    => 1
