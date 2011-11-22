@@ -44,8 +44,9 @@ use Krang::ClassLoader 'Charset';
 Returns a DBI handle for the database for the active instance.  The
 default options are:
 
-  RaiseError         => 1
-  AutoCommit         => 1
+  RaiseError           => 1
+  AutoCommit           => 1
+  mysql_auto_reconnect => 1
 
 This call is guaranteed to return the same database handle on
 subsequent calls within the same instance and process.  (Until a call
@@ -66,6 +67,9 @@ specifically tell it:
 
   my $dbh = dbh(no_cache => 1);
 
+Other parameters are passed as connection params to DBI->connect(),
+overriding the default options.
+
 =cut
 
 our %DBH;
@@ -78,8 +82,12 @@ sub dbh {
           . "Maybe you forgot to call pkg('Conf')->instance()?")
       unless defined $name;
 
+    # get args
+    my $no_cache       = delete $args{no_cache};
+    my $ignore_version = delete $args{ignore_option};
+
     # check cache
-    return $DBH{$name} if !$args{no_cache} && $DBH{$name} && $DBH{$name}->ping;
+    return $DBH{$name} if !$no_cache && $DBH{$name} && $DBH{$name}->ping;
 
     # check for MySQL hostname
     my $dsn = "DBI:mysql:database=$name";
@@ -97,11 +105,14 @@ sub dbh {
     my $is_utf8 = pkg('Charset')->is_utf8;
     $connect_options{mysql_enable_utf8} = 1 if $is_utf8;
 
+    # merge in options from args
+    $connect_options{$_} = $args{$_} for keys %args;
+
     # connect to the defined database
     $DBH{$name} = DBI->connect($dsn, DBUser, DBPass, \%connect_options);
 
     # Check version, unless specifically asked not to
-    unless ($args{ignore_version} || DBIgnoreVersion) {
+    unless ($ignore_version || DBIgnoreVersion) {
         my ($db_version) = $DBH{$name}->selectrow_array("select db_version from db_version");
         my $krang_version = $Krang::VERSION;
         die(

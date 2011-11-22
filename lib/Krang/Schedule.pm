@@ -182,6 +182,7 @@ use constant SCHEDULE_RW => qw(
   failure_delay_sec
   failure_notify_id
   success_notify_id
+  daemon_uuid
 );
 
 # certain fields, when updated, require recalculation of
@@ -317,6 +318,12 @@ priority if a scheduled task is running late.
 =item C<inactive>
 
 If set to 1, the schedule will not be executed. Defaults to 0.
+
+=item C<daemon_uuid>
+
+The Krang::UUID of the daemon processing the schedule. Used internally
+to allow multiple schedule daemons to run without interfering with
+each other or process the same schedule.
 
 =back
 
@@ -886,6 +893,10 @@ Output field to sort by.  Defaults to 'schedule_id'.
 Results will be in sorted in ascending order unless this is set to 1
 (making them descending).
 
+=item select_for_update
+
+Lock the found rows for update.
+
 =back
 
 =cut
@@ -907,6 +918,9 @@ sub find {
 
     # find only active schedules per default
     $args{inactive} = 0 unless defined($args{inactive});
+
+    # select for update
+    my $select_for_update = delete($args{select_for_update});
 
     # set bool to determine whether to use $row or %row for binding below
     my $single_column = $ids_only || $count ? 1 : 0;
@@ -959,7 +973,6 @@ sub find {
                 $where_clause .= '?';
                 push @params, $args{$arg};
             }
-
         } else {
             if (not defined $args{$arg}) {
                 $where_clause .= "$and `$lookup_field` IS NULL";
@@ -991,7 +1004,16 @@ sub find {
         $query .= " LIMIT $offset, 18446744073709551615";
     }
 
-    my $dbh = dbh(no_cache => 1);
+    # select for update
+    if ($select_for_update) {
+        $query .= ' for update';
+    }
+
+    # dbh connect options
+    my @dbh_options = (no_cache => 1);
+    push @dbh_options, (AutoCommit => 0) if $select_for_update;
+
+    my $dbh = dbh(@dbh_options);
     my $sth = $dbh->prepare($query);
 
     debug(__PACKAGE__ . "->find() SQL: $query");

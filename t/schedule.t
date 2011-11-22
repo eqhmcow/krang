@@ -765,6 +765,19 @@ is($story->trashed, 0, "Story scheduled for publishing moved back to Live");
 ($sched) = $sched->find(schedule_id => $sched->schedule_id);
 is($sched->inactive, 0, "Schedule for Story $story_id is again active");
 
+############################
+# test 'daemon_uuid'
+my ($found) = pkg('Schedule')->find(schedule_id => $sched->schedule_id, daemon_uuid => undef);
+isa_ok($found, 'Krang::Schedule', 'select_for_update found, object');
+$sched->daemon_uuid(`hostname` . '_' . $$);
+$sched->save;
+($found) = pkg('Schedule')->find(schedule_id => $sched->schedule_id, daemon_uuid => undef);
+ok(!$found, "daemon_uuid is set: not found");
+$sched->daemon_uuid(undef);
+$sched->save;
+($found) = pkg('Schedule')->find(schedule_id => $sched->schedule_id, daemon_uuid => undef);
+isa_ok($found, 'Krang::Schedule', 'daemon_uuid unset, object');
+
 ##############################
 # configurable failure
 
@@ -912,10 +925,9 @@ $q = "DELETE FROM sessions WHERE id=?";
 
 $dbh->do($q, undef, $sess_id);
 
-##################################################
-##################################################
+################################################
+################################################
 # Support subs
-#
 
 # given a Krang::Schedule object, and times for both 'now' and the publish date, figure
 # out if Krang::Schedule->_calc_next_run() is returning the proper time.

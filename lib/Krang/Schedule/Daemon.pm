@@ -44,6 +44,9 @@ $SIG{'TERM'} = sub {
     exit(0);
 };
 
+my $daemon_uuid;
+BEGIN { $daemon_uuid = `hostname` . '_' . $$ }
+
 =head1 NAME
 
 Krang::Schedule::Daemon - Module to handle scheduled tasks in Krang.
@@ -349,6 +352,7 @@ sub _child_work {
                             # this job hasn't yet reached its maximum # of failures
                             $t->{failure_max_tries}--;
                             $t->{next_run} = (Time::Piece->new + $delay_btw_tries)->mysql_datetime;
+                            $t->{daemon_uuid} = undef;
                             $t->save;
                             critical(
                                 sprintf(
@@ -386,6 +390,7 @@ sub _child_work {
 
   # this job has no maximum # of failures set, so we don't notify user; we're going to keep trying..
                         $t->{next_run} = (Time::Piece->new + $delay_btw_tries)->mysql_datetime;
+                        $t->{daemon_uuid} = undef;
                         $t->save;
                         critical(
                             sprintf(
@@ -397,6 +402,8 @@ sub _child_work {
                     }
                 }
             } elsif ($t->success_notify_id) {
+                $t->{daemon_uuid} = undef;
+                $t->save;
                 _notify_user($t->success_notify_id, $t->success_subject, $t->success_message);
             }
         }
@@ -609,8 +616,16 @@ sub _query_for_jobs {
 
     @schedules = pkg('Schedule')->find(
         next_run_less_than_or_equal => $now->mysql_datetime,
-        order_by                    => 'priority'
+        order_by                    => 'priority',
+        select_for_update           => 1,
+        daemon_uuid                 => undef,
     );
+
+    # update the schedules with the daemon's uuid
+    for my $schedule (@schedules) {
+        $schedule->daemon_uuid($daemon_uuid);
+        $schedule->save;
+    }
 
     return _cull_running_jobs(\@schedules);
 
