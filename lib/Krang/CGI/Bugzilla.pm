@@ -44,16 +44,21 @@ Krang::CGI::Bugzilla.
 # setup runmodes
 sub setup {
     my $self = shift;
+    my $q    = $self->query;
 
     $self->start_mode('edit');
     $self->run_modes([qw( edit commit)]);
     $self->tmpl_path('Bugzilla/');
 
-    # some ISEs can come from POST requests. In those cases we need to look at the URL's query 
+    # some ISEs can come from POST requests. In those cases we need to look at the URL's query
     # string instead of the POST params or we won't know what's happening. The "ise" param is
     # always set if it's a redirect (an Apache ErrorDocument subrequest request)
-    if( $self->query->url_param('ise') ) {
-        $self->query->delete_all();
+    if ($q->url_param('ise')) {
+        # preserve the progress_screen parameter
+        my $progress_screen = $q->param('progress_screen')
+          || $q->url_param('progress_screen') ? 1 : 0;
+        $q->delete_all();
+        $q->param(progress_screen => $progress_screen);
     }
 }
 
@@ -84,7 +89,7 @@ sub edit {
 sub is_progress_screen {
     my $self = shift;
     my $query = $self->query;
-    return 1 if $query->param('progress_screen');
+    return 1 if $query->param('progress_screen') || $query->url_param('progress_screen');
     return 0 unless $ENV{REDIRECT_SCRIPT_NAME};
     my %progress_screens = (
         'publisher.pl' => [qw(publish_assets publish_media preview_story preview_media)],
