@@ -247,7 +247,16 @@ But this has
 
 =cut
 
+=item C<< Krang::Session->clear_session_id() >>
 
+Clears the LAST_SESSION_ID variable.
+
+=cut
+
+sub clear_last_session_id {
+    my $pkg = shift;
+    $LAST_SESSION_ID = undef;
+}
 
 sub persist_to_mypref {
     my $self = shift;
