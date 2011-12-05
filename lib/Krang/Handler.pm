@@ -564,6 +564,8 @@ sub cleanup_handler ($$) {
             }
         );
     }
+    $r->subprocess_env('LAST_SESSION_ID' => undef);
+    $r->subprocess_env('KRANG_SESSION_ID' => undef);
     Apache::SizeLimit->handler($r);
 }
 

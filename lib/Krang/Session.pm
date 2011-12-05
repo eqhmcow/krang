@@ -105,6 +105,7 @@ will croak().
 
 sub load {
     my ($pkg, $session_id) = @_;
+    $LAST_SESSION_ID = $session_id if $session_id;
     $session_id ||= $LAST_SESSION_ID;    # use the last id if none was provided.
     my $dbh = dbh();
 
