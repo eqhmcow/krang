@@ -8,20 +8,22 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-Fixing bug where messages during publish were getting lost [Michael Peters]
+Fixing bug where messages during publish were getting lost [Michael
+Peters]
 
-=item * At the request of Michael Peters, allowed multiple schedulers
-to run without processing the same schedules. [Bodo Schulze]
+=item * 
+
+Allowed multiple schedulers to run without processing the same
+schedules. [Bodo Schulze]
 
 =item *
 
-At the request of Michael Peters, added 4 flags to
-L<Krang::ElementClass::CategoryLink> implementing a 'conditional
-publishing behavor' for stories having CategoryLinks.  If this
-behavior is set via any 4 flags, the story will be
-published if and only if a story/media living in/below the category
-that has been set in the CategoryLink has has been modified since it's
-last publishing. [Bodo Schulze]
+Added 4 flags to L<Krang::ElementClass::CategoryLink> implementing a
+'conditional publishing behavor' for stories having CategoryLinks.
+If this behavior is set via any 4 flags, the story will be published
+if and only if a story/media living in/below the category that has
+been set in the CategoryLink has has been modified since it's last
+publishing. [Bodo Schulze]
 
 =back
 
