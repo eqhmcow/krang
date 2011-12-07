@@ -957,6 +957,8 @@ sub asset_list {
         for my $s (ref($story) eq 'ARRAY' ? @$story : ($story)) {
             push @to_publish, $s if $self->_do_publish_story($s);
         }
+    } else {
+        @to_publish = ref $story eq 'ARRAY' ? @$story : ($story);
     }
 
     return () unless @to_publish;
