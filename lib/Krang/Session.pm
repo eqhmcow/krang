@@ -77,6 +77,8 @@ new session.
 sub create {
     my $pkg = shift;
     my $dbh = dbh();
+    %session = (); # clear it out just in case
+
     tie %session, 'Apache::Session::Flex', undef,
       {
         Store      => 'MySQL',
@@ -115,6 +117,7 @@ sub load {
       unless $exists;
 
     # try to tie the session
+    %session = ();
     eval {
         tie %session, 'Apache::Session::Flex', $session_id,
           {
@@ -176,6 +179,7 @@ sub unload {
     $pkg->persist_to_mypref();
     $LAST_SESSION_ID = $pkg->session_id;
     untie %session if $tied;
+    %session = ();
     $tied = 0;
 }
 
@@ -220,6 +224,7 @@ sub delete {
     } elsif ($tied) {
         tied(%session)->delete();
         untie(%session);
+        %session = ();
         $tied = 0;
     }
 }
