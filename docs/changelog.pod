@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+C<Krang::ElementClass::TopLevel::publish_frontend_app_template()> now has
+an additional (optional) C<template> parameter that can be used in place
+of C<filename> if you already have a template to pass. [Michael Peters]
+
+=item *
+
 Fixing bug where messages during publish were getting lost [Michael
 Peters]
 

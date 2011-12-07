@@ -461,16 +461,19 @@ those needed by the Krang publishing process.
 sub publish_frontend_app_template {
     my $self = shift;
     my %args = @_;
-
     my $publisher         = $args{publisher}         || croak("No publisher specified");
-    my $filename          = $args{filename}          || croak("No filename specified");
+    my $filename          = $args{filename};
+    my $tmpl              = $args{template};
     my $use_category      = $args{use_category}      || 0;
     my $tmpl_data         = $args{tmpl_data}         || 0;
     my $fill_with_element = $args{fill_with_element} || 0;
     my $output_filename   = $args{output_filename}   || $filename;
 
+    # must have a filename or a template
+    croak("No filename or template specified") unless $filename || $tmpl;
+
     # Find template or die trying
-    my $tmpl = $self->find_template(
+    $tmpl ||= $self->find_template(
         filename  => $filename,
         publisher => $publisher
     );
@@ -487,7 +490,7 @@ sub publish_frontend_app_template {
     $tmpl->param(%$tmpl_data) if ($tmpl_data);
 
     # Publish the template
-    debug("Publishing template '$filename'");
+    debug($filename ? "Publishing App template '$filename'" : 'Publishing App template');
     $publisher->additional_content_block(
         filename           => $output_filename,
         content            => $tmpl->output(),
