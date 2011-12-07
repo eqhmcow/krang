@@ -358,9 +358,7 @@ sub preview_story {
     pkg('Cache')->start();
     my ($url);
     eval {
-
         my $publisher = pkg('Publisher')->new();
-
         eval {
             $url = $publisher->preview_story(
                 story    => $story,
@@ -368,6 +366,7 @@ sub preview_story {
                 unsaved  => $unsaved
             );
         };
+
         if (my $error = $@) {
             # if there is an error, figure out what it is, create the
             # appropriate message and return an error page.
@@ -438,29 +437,30 @@ sub preview_story {
     croak($err) if $err;
 
     # this should always be true
-    assert($url eq $story->preview_url) if ASSERT;
+    assert($url eq $story->preview_url) if $url && ASSERT;
 
     # dynamic redirect to preview if we've got a url to redirect to
     my $scheme = PreviewSSL ? 'https' : 'http';
 
-    # w/o preview editor
-    if (pkg('MyPref')->get('use_preview_editor') && !$query->param('exit_preview_editor')) {
-        # display the previewed story in a frame within the main window
-        my $qstring = "rm=preview_editor&story_preview_url="
-          . uri_escape("$scheme://$url");
+    if ($url) {
+        # w/o preview editor
+        if (pkg('MyPref')->get('use_preview_editor') && !$query->param('exit_preview_editor')) {
+            # display the previewed story in a frame within the main window
+            my $qstring = "rm=preview_editor&story_preview_url=" . uri_escape("$scheme://$url");
 
-        print qq|
-            <script type="text/javascript">
-                setTimeout(
-                    function() { Krang.Nav.goto_url("publisher.pl?$qstring") },
-                    10
-                )
-            </script>
-        |;
-        return;
-    } else {
-        # display the previewed story in the main window
-        print qq(<script type="text/javascript">Krang.Nav.goto_url('$scheme://$url')</script>);
+            print qq|
+                <script type="text/javascript">
+                    setTimeout(
+                        function() { Krang.Nav.goto_url("publisher.pl?$qstring") },
+                        10
+                    )
+                </script>
+            |;
+            return;
+        } else {
+            # display the previewed story in the main window
+            print qq(<script type="text/javascript">Krang.Nav.goto_url('$scheme://$url')</script>);
+        }
     }
 }
 
