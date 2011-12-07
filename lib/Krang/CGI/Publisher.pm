@@ -688,9 +688,6 @@ sub _publish_assets_now {
     my ($story_list, $media_list) = @_;
     my $query = $self->query;
 
-    # unlock the session
-    pkg('Session')->unlock();
-
     # this is a no-parse header script
     $self->header_type('none');
     print $query->header;
@@ -709,17 +706,17 @@ sub _publish_assets_now {
         # run things to the publisher
         my $publisher = pkg('Publisher')->new();
         if (@$story_list) {
-
-            # publish!
+            # publish (without locking the session)
+            pkg('Session')->unlock();
             eval {
                 $publisher->publish_story(
                     story    => $story_list,
                     callback => \&_progress_callback
                 );
             };
+            pkg('Session')->load();
 
             if (my $err = $@) {
-
                 # if there is an error, figure out what it is, create the
                 # appropriate message and return.
                 if (ref $err
@@ -812,9 +809,11 @@ sub _publish_assets_now {
         }
 
         if (@$media_list) {
-
-            # publish!
+            # publish (without locking the session)
+            pkg('Session')->unlock();
             $publisher->publish_media(media => $media_list);
+            pkg('Session')->load();
+
             foreach my $media (@$media_list) {
 
                 # add a publish message for the UI
@@ -842,9 +841,6 @@ sub _publish_assets_now {
     <script type="text/javascript">
         setTimeout(function() { location.replace('workspace.pl') }, 10)
     </script>|;
-
-    # re-load the session
-    pkg('Session')->load();
 
     return;
 }

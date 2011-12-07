@@ -6,6 +6,10 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Fixing bug where messages during publish were getting lost [Michael Peters]
+
 =item * At the request of Michael Peters, allowed multiple schedulers
 to run without processing the same schedules. [Bodo Schulze]
 
