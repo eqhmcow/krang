@@ -16,7 +16,15 @@ sub per_instance {
 }
 
 sub per_installation {
-    # nothing yet
+    my ($self, %args) = @_;
+    # remove old files
+    $self->remove_files(
+        qw(
+          src/Module-Build-0.30.tar.gz
+          src/Params-Validate-0.88.tar.gz
+          )
+    );
+
 }
 
 1;
