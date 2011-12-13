@@ -774,92 +774,28 @@ sub publish_media {
     my $maintain_versions = $args{maintain_versions}   || 0;
     my $keep_asset_list   = $args{remember_asset_list} || 0;
 
-    my $publish_list;
-
-    my $user_id = $ENV{REMOTE_USER};
-    my @urls;
-
     croak(__PACKAGE__ . ": Missing argument 'media'!\n") unless (exists($args{media}));
 
+    my $publish_list;
     if (ref $args{media} eq 'ARRAY') {
         $publish_list = $args{media};
     } else {
         push @$publish_list, $args{media};
     }
 
-    my $total   = @$publish_list;
-    my $counter = 0;
+    $self->_maybe_add_index_story($publish_list);
 
-    foreach my $media_object (@$publish_list) {
-
-        # make a note in the asset list.
-        my $ok = $self->_mark_asset(object => $media_object);
-
-        # cannot publish assets checked out by other users.
-        if ($media_object->checked_out) {
-            if ($user_id != $media_object->checked_out_by) {
-                debug(  __PACKAGE__
-                      . ": skipping publish on checked out media object id="
-                      . $media_object->media_id);
-                $skip_callback->(object => $media_object, error => 'checked_out') if $skip_callback;
-                next;
-            }
-        }
-
-        # if requested, re-publish last-published (instead of latest) version
-        if ($maintain_versions) {
-            my $v = $media_object->published_version;
-            next unless $v;
-            if ($v != $media_object->version) {
-                my ($media_object) =
-                  pkg('Media')->find(media_id => $media_object->media_id, version => $v);
-            }
-        }
-
-        eval {
-            push @urls, $self->_write_media(media => $media_object);
-
-            # log event
-            add_history(object => $media_object, action => 'publish');
-
-            $media_object->mark_as_published();
-
-            $callback->(
-                object  => $media_object,
-                total   => $total,
-                counter => $counter++
-            ) if $callback;
-        };
-
-        if ($@) {
-            if ($skip_callback) {
-                if (ref $@ && $@->isa('Krang::Publisher::FileWriteError')) {
-                    $skip_callback->(
-                        object    => $media_object,
-                        error     => 'output_error',
-                        path      => $@->destination,
-                        error_msg => $@->system_error
-                    );
-                } else {
-
-                    # call generic skip_callback.
-                    $skip_callback->(object => $media_object, error => ref $@ ? $@->isa : $@);
-                }
-            }
-
-            # the skip_callback is not used by the CGIs - re-propegate the error so the UI
-            # can handle it.
-            else {
-                die($@);
-            }
-        }
-
-    }
+    my @urls = $self->_process_assets(
+        publish_list        => $publish_list,
+        skip_callback       => $skip_callback,
+        callback            => $callback,
+        user_id             => $ENV{REMOTE_USER},
+        remember_asset_list => $keep_asset_list
+    ) if scalar(@$publish_list);
 
     $self->_clear_asset_lists() unless ($keep_asset_list);
 
     return @urls;
-
 }
 
 =item C<< $asset_list = $publisher->asset_list(story => $story) >>
@@ -950,27 +886,16 @@ sub asset_list {
         }
     }
 
-    # consider story-specific logic to determine whether the story
-    # should really be published
-    my @to_publish = ();
-    if ($mode eq 'publish' and not $ENV{KRANG_TEST}) {
-        for my $s (ref($story) eq 'ARRAY' ? @$story : ($story)) {
-            push @to_publish, $s if $self->_do_publish_story($s);
-        }
-    } else {
-        @to_publish = ref $story eq 'ARRAY' ? @$story : ($story);
-    }
-
-    return () unless @to_publish;
-
     my $maintain_versions = (($mode eq 'publish') && $args{maintain_versions}) ? 1 : 0;
 
     my @publish_list = $self->_build_asset_list(
-        object            => \@to_publish,
+        object            => $story,
         version_check     => $version_check,
         maintain_versions => $maintain_versions,
         initial_assets    => 1
     );
+
+    $self->_maybe_add_index_story(\@publish_list);
 
     #     unless ($keep_list) {
     #         $self->_clear_asset_lists();
@@ -1022,14 +947,20 @@ sub _process_assets {
 
     my $total   = @{$args{publish_list}};
     my $counter = 0;
+    my $user_id = $ENV{REMOTE_USER};
+    my $callback          = $args{callback};
+    my $skip_callback     = $args{skip_callback};
+    my $maintain_versions = $args{maintain_versions}   || 0;
+
+    my @media_urls;
 
     foreach my $object (@{$args{publish_list}}) {
         if ($object->isa('Krang::Story')) {
             if ($object->checked_out) {
-                if ($args{user_id} != $object->checked_out_by) {
+                if ($user_id != $object->checked_out_by) {
                     debug(__PACKAGE__ . ": skipping checked out story id=" . $object->story_id);
-                    $args{skip_callback}->(object => $object, error => 'checked_out')
-                      if $args{skip_callback};
+                    $skip_callback->(object => $object, error => 'checked_out')
+                      if $skip_callback;
                     next;
                 }
             }
@@ -1048,20 +979,20 @@ sub _process_assets {
                 $object->mark_as_published();
 
                 # don't make callbacks on media, that's handled in publish_media().
-                $args{callback}->(
+                $callback->(
                     object  => $object,
                     total   => $total,
                     counter => $counter++
-                ) if $args{callback};
+                ) if $callback;
 
             };
 
             if (my $err = $@) {
-                if ($args{skip_callback}) {
+                if ($skip_callback) {
 
                     # call skip_callback, hopefully with a real error
                     # object
-                    $args{skip_callback}->(object => $object, error => $err);
+                    $skip_callback->(object => $object, error => $err);
                 } else {
 
                     # the skip_callback is not used by the CGIs,
@@ -1076,15 +1007,68 @@ sub _process_assets {
 
         } elsif ($object->isa('Krang::Media')) {
 
-            # publish_media() will mark the media object as published.
-            $self->publish_media(
-                media               => $object,
-                callback            => $args{callback},
-                skip_callback       => $args{skip_callback},
-                remember_asset_list => $args{remember_asset_list}
-            );
+            # cannot publish assets checked out by other users.
+            if ($object->checked_out) {
+                if ($user_id != $object->checked_out_by) {
+                    debug(  __PACKAGE__
+                            . ": skipping publish on checked out media object id="
+                            . $object->media_id);
+                    $skip_callback->(object => $object, error => 'checked_out') if $skip_callback;
+                    next;
+                }
+            }
+
+            # if requested, re-publish last-published (instead of latest) version
+            if ($maintain_versions) {
+                my $v = $object->published_version;
+                next unless $v;
+                if ($v != $object->version) {
+                    my ($object) =
+                      pkg('Media')->find(media_id => $object->media_id, version => $v);
+                }
+            }
+
+            eval {
+                push @media_urls, $self->_write_media(media => $object);
+
+                # log event
+                add_history(object => $object, action => 'publish');
+
+                $object->mark_as_published();
+
+                $callback->(
+                            object  => $object,
+                            total   => $total,
+                            counter => $counter++
+                           ) if $callback;
+            };
+
+            if ($@) {
+                if ($skip_callback) {
+                    if (ref $@ && $@->isa('Krang::Publisher::FileWriteError')) {
+                        $skip_callback->(
+                                         object    => $object,
+                                         error     => 'output_error',
+                                         path      => $@->destination,
+                                         error_msg => $@->system_error
+                                        );
+                    } else {
+
+                        # call generic skip_callback.
+                        $skip_callback->(object => $object, error => ref $@ ? $@->isa : $@);
+                    }
+                }
+
+                # the skip_callback is not used by the CGIs - re-propegate the error so the UI
+                # can handle it.
+                else {
+                    die($@);
+                }
+            }
         }
     }
+
+    return @media_urls;
 }
 
 =item C<< $publisher->_process_preview_assets(%args) >>
@@ -2509,73 +2493,69 @@ sub _determine_output_path {
     return $output_path;
 }
 
-# Returns true if the story must be published
-sub _do_publish_story {
-    my ($self, $story) = @_;
+sub _maybe_add_index_story {
+    my ($self, $publish_list) = @_;
 
-    # a couple of flags
-    my ($do_publish, $has_category_link, $conditional_publishing) = (0,0,0);
+    my $all_index_stories     = $self->_get_conditional_index_stories();
+    my %publish_index_stories = ();
 
-    # check story for CategoryLink elements
-    foreach_element {
-        return unless $_;
-        my $element = $_;
+    for my $object (@$publish_list) {
+        next unless $object->is_modified;
+        my $cat   = $object->category;
+        my $type  = $object->isa('Krang::Story') ? 'story' : $object->isa('Krang::Media') ? 'media' : undef;
+        next unless $type;
 
-        # get CategoryLink element
-        if ($element->class->isa('Krang::ElementClass::CategoryLink')) {
+        if (my $index_story = $all_index_stories->{$type}{$cat->category_id}) {
+            $publish_index_stories{$index_story->story_id} = $index_story;
+        }
+    }
 
-            # Remember that we have at least one CategoryLink
-            $has_category_link++;
-            my $category = $element->data;
+    push @$publish_list, values(%publish_index_stories);
+}
 
-            # no category: return immediately
-            return unless $category && ref($category) && $category->isa('Krang::Category');
+sub _get_conditional_index_stories {
+    my ($self) = shift;
 
-            # check if stories or media IN or BELOW category have been modified
-            my $class = $element->class;
-            for my $asset (qw(story media)) {
-                my %find_params = ();
-                if ($class->{"publish_if_modified_".$asset."_in_cat"}) {
-                    $find_params{category_id} = $category->category_id;
-                }
-                if ($class->{"publish_if_modified_".$asset."_below_cat"}) {
-                    $find_params{below_category_id} = $category->category_id;
-                }
+    my %all_index_stories = ();
 
-                if (keys %find_params) {
+    for my $story (pkg('Story')->find()) {
 
-                    # Remember that we are in 'conditional publishing mode'
-                    $conditional_publishing++;
+        # look down for CategoryLink
+        foreach_element {
+            return unless $_;
+            my $element = $_;
+            if ($element->class->isa('Krang::ElementClass::CategoryLink')) {
+                my $category = $element->data;
 
-                    for my $asset (pkg(ucfirst($asset))->find(%find_params)) {
-                        if ($asset->is_modified()) {
-                            # at least one asset is modified
-                            $do_publish++;
-                            return 1;
-                        }
-                    }
+                return unless $category && $category->isa('Krang::Category');
+
+                # build story/media-specific tables mapping category id to index story
+                if ($element->class->publish_if_modified_story_in_cat) {
+                    $all_index_stories{story}{$category->category_id} = $story;
+                } elsif ($element->class->publish_if_modified_story_below_cat) {
+                    $self->_add_conditional_index_stories($story, $category, 'story', \%all_index_stories);
+                } elsif ($element->class->publish_if_modified_media_in_cat) {
+                    $all_index_stories{media}{$category->category_id} = $story;
+                } elsif ($element->class->publish_if_modified_media_below_cat) {
+                    $self->_add_conditional_index_stories($story, $category, 'media', \%all_index_stories);
+                } else {
+                    return;
                 }
             }
-        }
-    } $story->element;
+        } $story->element;
+    }
 
-    # no categorylink: publish the story
-    return 1 unless $has_category_link;
-
-    # we are in 'conditional publishing mode' and at least one asset
-    # has been modified since its last publishing
-    return 1 if $do_publish;
-
-    # we have a categorylink without being in 'conditional publishing
-    # mode' which can mean either that none of the 'conditional
-    # publishing flags' have been set or that there is a categorylink
-    # without a category being set.
-    return 1 unless $conditional_publishing;
-
-    # we are in 'conditional publishing mode' and none of the
-    # category's assets have been modified
-    return;
+    return \%all_index_stories;
 }
+
+sub _add_conditional_index_stories {
+    my ($self, $story, $category, $type, $all_index_stories) = @_;
+    $all_index_stories->{$type}{$category->category_id} = $story;
+    for my $cat ($category->descendants) {
+        $all_index_stories->{$type}{$cat->category_id} = $story;
+    }
+}
+
 
 ############################################################
 #

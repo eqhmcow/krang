@@ -2102,6 +2102,10 @@ sub test_publish_if_modified_in_category {
         parent => $cat_color->category_id,
     );
 
+    #
+    # Story
+    #
+
     # add stories to these categories
     my $story_color = $creator->create_story(category => [$cat_color], title => 'story_color');
     my $story_red   = $creator->create_story(category => [$cat_red], title => 'story_red');
@@ -2110,97 +2114,161 @@ sub test_publish_if_modified_in_category {
     my $index = $creator->create_story(title => 'story_index');
     $index->checkout;
 
-    # newly created without CategoryLink: index should publish
-    published_index($index, "no catlink");
+    # newly created without CategoryLink: index should NOT publish
+    not_published_index($story_color, $index, "no catlink");
 
-    # add CategoryLink: index should still publish
-    my $catlink_story = $index->element->add_child(class => 'story_in_cat');
-    published_index($index, "added catlink: publish catlink story");
+    # add CategoryLink: index should still NOT publish
+    my $catlink_story_in = $index->element->add_child(class => 'story_in_cat');
+    $index->save;
+    not_published_index($story_color, $index, "added catlink: don't publish indexstory");
 
-    # set CategoryLink to category cat_color: index should still publish
+    # set CategoryLink to category cat_color: index should now publish
     $index->element->child('story_in_cat')->data($cat_color);
-    published_index($index, "set category in catlink: publish catlink story");
+    $index->save;
+    published_index($story_color, $index, "set category 'color' in catlink: publish index story");
 
-    # publish story_color: index should not publish
+    # publish story in category 'red': index should NOT publish
+    not_published_index($story_red, $index, "published story in 'red' cat: don't publish index");
+
+    # add CategoryLink : index should NOT publish
+    my $catlink_story_below = $index->element->add_child(class => 'story_below_cat');
+    $index->save;
+
+    # publish story in category 'red': index should NOT publish
+    not_published_index($story_red, $index, "published story in 'red' cat with unset index 'below': don't publish index");
+
+    # set CategoryLink to category cat_color: index should now publish
+    $index->element->child('story_below_cat')->data($cat_color);
+    $index->save;
+    published_index($story_color, $index, "set category 'color' in catlink 'below': publish index story");
+
+    # remove 'in_cat' CatLink
+    $index->element->remove_children($catlink_story_in);
+    $index->save;
+
+    # color story should trigger the index to be published
+    published_index($story_color, $index, "set category 'color' below catlink: publish index story");
+
+    # publish 'color' story: index should NOT be published
     $publisher->publish_story(story => $story_color);
-    not_published_index($index, "catstory published => don't republish catlink story");
+    not_published_index($story_color, $index, "publish color story: don't publish index story");
 
-    # save story_color: index should publish
-    sleep 2;
-    $story_color->checkout;
-    $story_color->save;
-    $story_color->checkin;
-    published_index($index,"publish catlink story: catlink exists, but catstory newly created");
-
-    # publish story_color: index should NOT publish
-    $publisher->publish_story(story => $story_color);
-    not_published_index($index, "catstory published: don't republish catlink story");
-
-    # add media to cat_color: index should NOT publish
-    my $media_color = $creator->create_media(category => $cat_color, title => 'media_color');
-    not_published_index($index, "added media: don't republish catlink story");
-
-    # change CategoryLink to check stories BELOW cat_color: index should publish
-    $index->element->remove_children($catlink_story);
-    $catlink_story = $index->element->add_child(class => 'story_below_cat', data => $cat_color);
-    published_index($index, "catlink exists, but catstory newly created (below)");
-
-    # publish story_red: index should NOT publish
+    # publish 'red' story: index should NOT be published
+    published_index($story_red, $index, "set category 'red' below catlink: publish index story");
     $publisher->publish_story(story => $story_red);
-    not_published_index($index, "catstory published => don't republish catlink story");
+    not_published_index($story_red, $index, "published red story: don't publish index story");
 
-    # add CategoryLink to check media IN cat_Color: index should publish
-    my $catlink_media = $index->element->add_child(class => 'media_in_cat', data => $cat_color);
-    published_index($index, "catlink exists, media newly created");
-
-    # publish media_color: index should NOT publish
-    $publisher->publish_media(media => $media_color);
-    not_published_index($index, "catlink exists, media published");
-
-    # save media_color: index should publish
+    # save them again: index should be published
     sleep 2;
-    $media_color->checkout;
-    $media_color->save;
-    $media_color->checkin;
-    published_index($index, "catlink exists, media saved");
+    $story_color->checkout; $story_color->save;
+    $story_red->checkout; $story_red->save;
+    published_index($story_color, $index, "saved color story: publish index story");
+    published_index($story_red, $index, "saved red story: publish index story");
 
-    # publish media_color: index should NOT publish
+    # remove catlink and test again
+    $index->element->remove_children($catlink_story_below);
+    $index->save;
+    not_published_index($story_color, $index, "deleted catlink: don't publish index story");
+    not_published_index($story_red, $index, "deleted catlink: don't publish index story");
+
+    #
+    # Media
+    #
+    # add media to these categories
+    my $media_color = $creator->create_media(category => $cat_color, title => 'media_color');
+    my $media_red   = $creator->create_media(category => $cat_red, title => 'media_red');
+
+##    # create an index story (has no CategoryLink yet)
+##    my $index = $creator->create_story(title => 'story_index');
+##    $index->checkout;
+
+    # newly created without CategoryLink: index should NOT publish
+    not_published_index($media_color, $index, "no catlink");
+
+    # add CategoryLink: index should still NOT publish
+    my $catlink_media_in = $index->element->add_child(class => 'media_in_cat');
+    $index->save;
+    not_published_index($media_color, $index, "added catlink: don't publish index media");
+
+    # set CategoryLink to category cat_color: index should now publish
+    $index->element->child('media_in_cat')->data($cat_color);
+    $index->save;
+    published_index($media_color, $index, "set category 'color' in catlink: publish index media");
+
+    # publish media in category 'red': index should NOT publish
+    not_published_index($media_red, $index, "published media in 'red' cat: don't publish index");
+
+    # add CategoryLink : index should NOT publish
+    my $catlink_media_below = $index->element->add_child(class => 'media_below_cat');
+    $index->save;
+
+    # publish media in category 'red': index should NOT publish
+    not_published_index($media_red, $index, "published media in 'red' cat with unset index 'below': don't publish index");
+
+    # set CategoryLink to category cat_color: index should now publish
+    $index->element->child('media_below_cat')->data($cat_color);
+    $index->save;
+    published_index($media_color, $index, "set category 'color' in catlink 'below': publish index media");
+
+    # remove 'in_cat' CatLink
+    $index->element->remove_children($catlink_media_in);
+    $index->save;
+
+    # color media should trigger the index to be published
+    published_index($media_color, $index, "set category 'color' below catlink: publish index media");
+
+    # publish 'color' media: index should NOT be published
     $publisher->publish_media(media => $media_color);
-    not_published_index($index, "catmedia published => don't republish catlink story");
+    not_published_index($media_color, $index, "publish color media: don't publish index media");
 
-    # add media in cat_red: index should NOT publish
-    my $media_red = $creator->create_media(category => $cat_red, title => 'media_red');
-    not_published_index($index, "catmedia added to cat_red: don't publish catlink story");
-
-    # change CategoryLink to include media BELOW cat_color: index should publish
-    $index->element->remove_children($catlink_media);
-    $catlink_media = $index->element->add_child(class => 'media_below_cat', data => $cat_color);
-    published_index($index, "catlink checks media BELOW media_color: publish catlink story");
-
-    # publish media_red: index should NOT publish
+    # publish 'red' media: index should NOT be published
+    published_index($media_red, $index, "set category 'red' below catlink: publish index media");
     $publisher->publish_media(media => $media_red);
-    not_published_index($index, "published media_red: don't publish catlink story");
+    not_published_index($media_red, $index, "published red media: don't publish index media");
 
-    # add another story to cat_red: index should publish
-    my $story_red_2 = $creator->create_story(category => [$cat_red], title => 'story_red_2');
-    published_index($index, "added another story to cat_red: publish catlink story");
+    # save them again: index should be published
+    sleep 2;
+    $media_color->checkout; $media_color->save;
+    $media_red->checkout; $media_red->save;
+    published_index($media_color, $index, "saved color media: publish index media");
+    published_index($media_red, $index, "saved red media: publish index media");
 
-    # change story catlink to exclude stories in cat_red: index should NOT publish
-    $index->element->remove_children($catlink_story);
-    $catlink_story = $index->element->add_child(class => 'story_in_cat', data => $cat_color);
-    not_published_index($index, "exlude stories in cat_red: don't publish catlink story");
+    # stories again: index should still not be published
+    not_published_index($story_color, $index, "publish story: don't publish index story");
+    not_published_index($story_red, $index, "publish story: don't publish index story");
+
+    # remove catlink and test again
+    $index->element->remove_children($catlink_media_below);
+    $index->save;
+    not_published_index($media_color, $index, "deleted catlink: don't publish index media");
+    not_published_index($media_red, $index, "deleted catlink: don't publish index media");
 }
 
+
 sub published_index {
-    my ($index, $msg) = @_;
-    my $to_publish = $publisher->asset_list(story => $index);
-    is($to_publish->[0]->story_id, $index->story_id, "publish catlink story: $msg");
+    my ($object, $index, $msg) = @_;
+    my $key = $object->isa('Krang::Story') ? 'story' : 'media';
+    my $to_publish;
+    if ($key eq 'story') {
+        $to_publish = $publisher->asset_list($key => $object);
+    } else {
+        $to_publish = [$object];
+        $publisher->_maybe_add_index_story($to_publish);
+    }
+    is($to_publish->[-1]->title, $index->title, "publish catlink $key: $msg");
     $publisher->_clear_asset_lists;
 }
 
 sub not_published_index {
-    my ($index, $msg) = @_;
-    my $to_publish = $publisher->asset_list(story => $index);
-    ok(!$to_publish, "publish catlink story: $msg");
+    my ($object, $index, $msg) = @_;
+    my $key = $object->isa('Krang::Story') ? 'story' : 'media';
+    my $to_publish;
+    if ($key eq 'story') {
+        $to_publish = $publisher->asset_list($key => $object);
+    } else {
+        $to_publish = [$object];
+        $publisher->_maybe_add_index_story($to_publish);
+    }
+    isnt($to_publish->[-1]->title, $index->title, "publish catlink $key: $msg");
     $publisher->_clear_asset_lists;
 }
