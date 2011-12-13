@@ -2,6 +2,7 @@ use Krang::ClassFactory qw(pkg);
 use Test::More tests => 6;
 use strict;
 use warnings;
+no warnings 'deprecated';
 
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Conf';
