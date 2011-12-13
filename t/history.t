@@ -1,6 +1,5 @@
 use Krang::ClassFactory qw(pkg);
 use Test::More qw(no_plan);
-
 use strict;
 use warnings;
 use Krang::ClassLoader 'Script';
@@ -8,9 +7,19 @@ use Krang::ClassLoader 'History';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Media';
-use Krang::ClassLoader Conf => qw (KrangRoot);
+use Krang::ClassLoader Conf => qw (KrangRoot InstanceElementSet);
 use File::Spec::Functions qw(catdir catfile splitpath);
 use FileHandle;
+
+BEGIN {
+    my $found;
+    foreach my $instance (pkg('Conf')->instances) {
+        pkg('Conf')->instance($instance);
+        if (InstanceElementSet eq 'TestSet1') {
+            last;
+        }
+    }
+}
 
 # set up site and category
 my $site = pkg('Site')->new(

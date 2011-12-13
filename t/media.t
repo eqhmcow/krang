@@ -3,12 +3,22 @@ use Test::More qw(no_plan);
 use strict;
 use warnings;
 use Krang::ClassLoader 'Script';
-use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceElementSet);
 use Krang::ClassLoader 'Contrib';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Category';
 use File::Spec::Functions qw(catdir catfile splitpath canonpath);
 use FileHandle;
+
+BEGIN {
+    my $found;
+    foreach my $instance (pkg('Conf')->instances) {
+        pkg('Conf')->instance($instance);
+        if (InstanceElementSet eq 'TestSet1') {
+            last;
+        }
+    }
+}
 
 BEGIN { use_ok(pkg('Media')) }
 

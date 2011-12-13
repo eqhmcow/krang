@@ -6,7 +6,7 @@ use warnings;
 use Test::More tests => 16;
 
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceElementSet);
 use Krang::ClassLoader 'Element';
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader 'Media';
@@ -14,6 +14,16 @@ use Krang::ClassLoader 'Script';
 
 use File::Spec::Functions qw(catdir catfile splitdir canonpath);
 use FindBin qw($RealBin);
+
+BEGIN {
+    my $found;
+    foreach my $instance (pkg('Conf')->instances) {
+        pkg('Conf')->instance($instance);
+        if (InstanceElementSet eq 'TestSet1') {
+            last;
+        }
+    }
+}
 
 # set up site/category
 my $site = pkg('Site')->new(
