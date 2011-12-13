@@ -84,7 +84,7 @@ sub dbh {
 
     # get args
     my $no_cache       = delete $args{no_cache};
-    my $ignore_version = delete $args{ignore_option};
+    my $ignore_version = delete $args{ignore_version};
 
     # check cache
     return $DBH{$name} if !$no_cache && $DBH{$name} && $DBH{$name}->ping;
@@ -115,6 +115,7 @@ sub dbh {
     unless ($ignore_version || DBIgnoreVersion) {
         my ($db_version) = $DBH{$name}->selectrow_array("select db_version from db_version");
         my $krang_version = $Krang::VERSION;
+
         die(
             "Database <-> Krang version mismatch! (Krang v$krang_version, DB v$db_version).\n\n Unable to continue.\n"
         ) unless ($db_version == $krang_version);
