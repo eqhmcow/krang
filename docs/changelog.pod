@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed element editor bug where re-ordering and adding elements at
+the same time could result in weirdness depending on the element's
+classes. [Michael Peters]
+
+=item *
+
 Modified conditional publish code first implemented in
 r6655,6661,6673. The story having the category link will now be
 published as a dependency of stories/media living in the configured

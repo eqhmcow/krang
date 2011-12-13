@@ -1082,8 +1082,9 @@ sub add {
     my $root    = $self->_get_element;
     my $element = $self->_find_element($root, $path);
 
-    # change any child classes that need changing
-    $self->_make_child_class_changes($root, $path);
+    # change any child classes that need changing (this has already been run in save_and_add)
+    $self->_make_child_class_changes($root, $path)
+      unless $self->get_current_runmode eq 'save_and_add';
 
     # add the child element and save the element tree
     my $kid = $element->add_child(class => $child);
