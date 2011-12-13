@@ -14,13 +14,6 @@ classes. [Michael Peters]
 
 =item *
 
-Modified conditional publish code first implemented in
-r6655,6661,6673. The story having the category link will now be
-published as a dependency of stories/media living in the configured
-category.
-
-=item *
-
 C<Krang::ElementClass::TopLevel::publish_frontend_app_template()> now has
 an additional (optional) C<template> parameter that can be used in place
 of C<filename> if you already have a template to pass. [Michael Peters]
@@ -39,10 +32,9 @@ schedules. [Bodo Schulze]
 
 Added 4 flags to L<Krang::ElementClass::CategoryLink> implementing a
 'conditional publishing behavor' for stories having CategoryLinks.
-If this behavior is set via any 4 flags, the story will be published
-if and only if a story/media living in/below the category that has
-been set in the CategoryLink has has been modified since it's last
-publishing. [Bodo Schulze]
+If this behavior is set via any 4 flags, then this story can become a
+publish dependency of other stories/media in those linked categories.
+[Bodo Schulze]
 
 =back
 
