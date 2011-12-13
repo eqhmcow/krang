@@ -339,7 +339,7 @@ is moved via krang_export and krang_import.
 
 =item $media->category()
 
-Returns to category object matching category_id.
+Returns the category object matching category_id.
 
 =cut
 
