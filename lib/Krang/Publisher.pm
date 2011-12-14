@@ -895,7 +895,7 @@ sub asset_list {
         initial_assets    => 1
     );
 
-    $self->_maybe_add_index_story(\@publish_list);
+    $self->_maybe_add_index_story(\@publish_list) if $mode eq 'publish';
 
     #     unless ($keep_list) {
     #         $self->_clear_asset_lists();
@@ -2532,14 +2532,15 @@ sub _get_conditional_index_stories {
                 # build story/media-specific tables mapping category id to index story
                 if ($element->class->publish_if_modified_story_in_cat) {
                     $all_index_stories{story}{$category->category_id} = $story;
-                } elsif ($element->class->publish_if_modified_story_below_cat) {
+                }
+                if ($element->class->publish_if_modified_story_below_cat) {
                     $self->_add_conditional_index_stories($story, $category, 'story', \%all_index_stories);
-                } elsif ($element->class->publish_if_modified_media_in_cat) {
+                }
+                if ($element->class->publish_if_modified_media_in_cat) {
                     $all_index_stories{media}{$category->category_id} = $story;
-                } elsif ($element->class->publish_if_modified_media_below_cat) {
+                }
+                if ($element->class->publish_if_modified_media_below_cat) {
                     $self->_add_conditional_index_stories($story, $category, 'media', \%all_index_stories);
-                } else {
-                    return;
                 }
             }
         } $story->element;

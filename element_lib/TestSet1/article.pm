@@ -132,6 +132,12 @@ sub new {
                  name => "media_below_cat",
                  publish_if_modified_media_below_cat => 1
              ),
+
+             pkg('ElementClass::CategoryLink')->new(
+                 name => "story_and_media_in_cat",
+                 publish_if_modified_story_in_cat => 1,
+                 publish_if_modified_media_in_cat => 1
+             ),
         ],
         @_
     );

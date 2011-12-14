@@ -2242,6 +2242,13 @@ sub test_publish_if_modified_in_category {
     $index->save;
     not_published_index($media_color, $index, "deleted catlink: don't publish index media");
     not_published_index($media_red, $index, "deleted catlink: don't publish index media");
+
+    # combined story/media catlink
+    my $catlink_story_in = $index->element->add_child(class => 'story_and_media_in_cat');
+    $index->element->child('story_and_media_in_cat')->data($cat_color);
+    $index->save;
+    published_index($story_color, $index, "set category 'color' in catlink: publish index story");
+    published_index($media_color, $index, "set category 'color' in catlink: publish index story");
 }
 
 
