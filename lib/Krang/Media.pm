@@ -34,7 +34,7 @@ use FileHandle;
 use constant THUMBNAIL_SIZE     => 35;
 use constant MED_THUMBNAIL_SIZE => 200;
 use constant FIELDS =>
-  qw(media_id media_uuid element_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published published_version preview_version publish_date checked_out_by retired trashed read_only last_modified_date);
+  qw(media_id media_uuid element_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published published_version preview_version publish_date checked_out_by retired trashed read_only);
 
 # setup exceptions
 use Exception::Class (
@@ -241,7 +241,6 @@ use Krang::ClassLoader MethodMaker => new_with_init => 'new',
       notes
       mime_type
       media_type_id
-      last_modified_date
       )
   ],
   get_set_with_notify => [
@@ -299,7 +298,6 @@ sub init {
     $self->{preview_version}    = 0;
     $self->{checked_out_by}     = $ENV{REMOTE_USER};
     $self->{creation_date}      = localtime unless defined $self->{creation_date};
-    $self->{last_modified_date} = localtime;
     $self->{retired}            = 0;
     $self->{trashed}            = 0;
     $self->{read_only}          = 0;
@@ -852,13 +850,7 @@ sub save {
           'UPDATE media SET ' . join(', ', map { "$_ = ?" } @save_fields) . ' WHERE media_id = ?';
         my @data = ();
         for my $field (@save_fields) {
-            if ($field eq 'last_modified_date') {
-                my $date = localtime;
-                $self->last_modified_date($date);
-                push(@data, $date->mysql_datetime);
-            } else {
-                push(@data, $self->{$field});
-            }
+            push(@data, $self->{$field});
         }
         $dbh->do($sql, undef, @data, $media_id);
 
@@ -906,7 +898,6 @@ sub save {
         $self->{version} = 1;
         my $time = localtime();
         $self->{creation_date} = $time->mysql_datetime();
-        $self->{last_modified_date} = $self->{creation_date};
 
         $dbh->do(
             'INSERT INTO media ('
@@ -919,7 +910,6 @@ sub save {
 
         # make date readable
         $self->{creation_date} = $time;
-        $self->{last_modified_date} = $time;
 
         $self->{media_id} = $dbh->{mysql_insertid};
 
@@ -2879,8 +2869,8 @@ the last publish.
 =cut
 sub is_modified {
     my ($self) = shift;
-    return 1 unless $self->publish_date;
-    return 1 if $self->last_modified_date > $self->publish_date;
+    return 1 unless $self->published_version;
+    return 1 if $self->version > $self->published_version;
 }
 
 =back

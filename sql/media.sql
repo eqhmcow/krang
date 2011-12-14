@@ -19,7 +19,6 @@ CREATE TABLE media (
     mime_type               varchar(255),
     version                 SMALLINT unsigned NOT NULL,
     creation_date           datetime NOT NULL,
-    last_modified_date      datetime NOT NULL,
     media_type_id           mediumint unsigned default NULL,
     preview_version         INT UNSIGNED,
     published_version       mediumint unsigned default NULL,

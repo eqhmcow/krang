@@ -9,8 +9,6 @@ sub per_instance {
     my ($self, %args) = @_;
     return if $args{no_db};
     my $dbh = dbh();
-    $dbh->do('ALTER table story add column last_modified_date datetime not null');
-    $dbh->do('ALTER table media add column last_modified_date datetime not null');
     $dbh->do('ALTER table schedule ENGINE=InnoDB');
     $dbh->do('ALTER table schedule add column daemon_uuid varchar(128) default null');
 }

@@ -65,7 +65,6 @@ use Krang::ClassLoader MethodMaker => new_with_init => 'new',
               preview_version
               desk_id
               last_desk_id
-              last_modified_date
               )
         ]
     }
@@ -79,7 +78,6 @@ use constant STORY_FIELDS => qw( story_id
   slug
   cover_date
   publish_date
-  last_modified_date
   published_version
   preview_version
   notes
@@ -594,7 +592,6 @@ sub init {
     $self->{checked_out}        = 1;
     $self->{checked_out_by}     = $ENV{REMOTE_USER};
     $self->{cover_date}         = Time::Piece->new();
-    $self->{last_modified_date} = Time::Piece->new();
     $self->{story_uuid}         = pkg('UUID')->new;
     $self->{retired}            = 0;
     $self->{trashed}            = 0;
@@ -870,13 +867,7 @@ sub _save_core {
     my @data;
     foreach (STORY_FIELDS) {
         if (/_date$/) {
-            if (/last_modified/) {
-                my $date = localtime;
-                $self->last_modified_date($date);
-                push(@data, $date->mysql_datetime);
-            } else {
-                push(@data, $self->{$_} ? $self->{$_}->mysql_datetime : undef);
-            }
+            push(@data, $self->{$_} ? $self->{$_}->mysql_datetime : undef);
         } else {
             push(@data, $self->{$_});
         }
@@ -1793,7 +1784,7 @@ or actions where the resulting data is not shown to the end user.
             @{$obj}{(STORY_FIELDS, 'may_see', 'may_edit')} = @$row;
 
             # objectify dates
-            for (qw(cover_date publish_date last_modified_date)) {
+            for (qw(cover_date publish_date)) {
                 if ($obj->{$_} and $obj->{$_} ne '0000-00-00 00:00:00') {
                     $obj->{$_} = eval {Time::Piece->strptime($obj->{$_}, '%Y-%m-%d %H:%M:%S')};
                 } else {
@@ -3280,8 +3271,8 @@ the last publish.
 =cut
 sub is_modified {
     my ($self) = shift;
-    return 1 unless $self->publish_date;
-    return 1 if $self->last_modified_date > $self->publish_date;
+    return 1 unless $self->published_version;
+    return 1 if $self->version > $self->published_version;
 }
 
 =back
