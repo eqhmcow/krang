@@ -631,6 +631,9 @@ Krang.Ajax.update = function(args) {
     itself) optionally sets the values of those elements and then submits
     the form.
 
+    Krang.Form.is_submitting(form)
+    Returns true if a form is in the process of being submitted. False otherwise.
+
     You can also specify a third parameter which contains other optional
     flags that can be passed to dictate the behaviour.
     These flags include:
@@ -665,7 +668,8 @@ Krang.Ajax.update = function(args) {
     to set the values and let the form take care of the rest.
 */
 Krang.Form = {
-    get_form : function(form) {
+    _submitting : {},
+    get_form    : function(form) {
         var form_name = form;
         form = typeof form == 'object' ? form : document.forms[form];
         if(!form) {
@@ -724,6 +728,8 @@ Krang.Form = {
     },
     submit : function(form, inputs, options) {
         form = Krang.Form.get_form(form);
+        var form_name = form.name;
+        Krang.Form._submitting[form_name] = true;
         if( inputs ) Krang.Form.set(form, inputs);
 
         // take care of our default options
@@ -731,7 +737,10 @@ Krang.Form = {
         if(options.update == null) options.update = true; // defaults to true
 
         if( options.new_window ) {
-            if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) return false;
+            if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) {
+                Krang.Form._submitting[form_name] = false;
+                return false;
+            }
 
             // save the old target of the form so we can restore it after submission
             var old_target = form.target;
@@ -767,7 +776,8 @@ Krang.Form = {
                         to_top     : options.to_top,
                         onComplete : function(args, response, json) {
                             complete(args, response, json);
-                            if(document.forms[form.name]) Krang.Form.study(form.name);
+                            Krang.Form._submitting[form_name] = false;
+                            if(document.forms[form_name]) Krang.Form.study(form_name);
                         },
                         onSuccess  : options['onSuccess'],
                         onFailure  : options['onFailure']
@@ -779,6 +789,7 @@ Krang.Form = {
                         method     : form.method,
                         onComplete : function(args, response, json) {
                             complete(args, response, json);
+                            Krang.Form._submitting[form.name] = false;
                             if(document.forms[form.name]) Krang.Form.study(form.name);
                         },
                         onSuccess  : options['onSuccess'],
@@ -788,11 +799,20 @@ Krang.Form = {
             } else {
                 if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) {
                     Krang.hide_indicator();
+                    Krang.Form._submitting[form.name] = false;
                     return;
                 }
                 form.submit();
                 Krang.hide_indicator();
             }
+        }
+    },
+    is_submitting : function(form) {
+        form = Krang.Form.get_form(form);
+        if( form ) {
+            return Krang.Form._submitting[form.name] ? true : false;
+        } else {
+            return false;
         }
     },
     toggle_list_btn : function(form, ckbx) {
