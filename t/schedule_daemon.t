@@ -234,16 +234,36 @@ $sched = pkg('Schedule')->new(
     repeat            => 'never',
     date              => $now + 2,             # to leave time for initial is() below!
     failure_max_tries => 2,
-    failure_delay_sec => 3,
+    failure_delay_sec => 1,
 );
 $sched->save();
-($sched) = pkg('Schedule')->find(schedule_id => $sched->schedule_id);
-is($sched->failure_max_tries, 2, "scheduled publish successfully saved with max_tries = 2");
-sleep 5;
-($sched) = pkg('Schedule')->find(schedule_id => $sched->schedule_id);
-is($sched->failure_max_tries, 1,
+my $found_sched;
+my $cnt = 0;
+
+# the scheduler might block find(), so try 3 times
+while (1) {
+    last if $cnt++ > 3;
+    ($found_sched) = pkg('Schedule')->find(schedule_id => $sched->schedule_id);
+    last if $found_sched;
+    sleep 1;
+}
+is($found_sched->failure_max_tries, 2, "scheduled publish successfully saved with max_tries = 2");
+
+sleep 1;
+
+undef $found_sched;
+$cnt = 0;
+while (1) {
+    last if $cnt++ > 3;
+    ($found_sched) = pkg('Schedule')->find(schedule_id => $sched->schedule_id);
+    last if $found_sched;
+    sleep 1;
+}
+is($found_sched->failure_max_tries, 1,
     "scheduled publish fails due to checked-out story and decrements max_tries to 1");
-sleep 5;
-($sched) = pkg('Schedule')->find(schedule_id => $sched->schedule_id);
-is($sched, undef, "scheduled publish fails and gives up for good when max_tries = 1");
+
+sleep 2;
+
+($found_sched) = pkg('Schedule')->find(schedule_id => $sched->schedule_id);
+is($found_sched, undef, "scheduled publish fails and gives up for good when max_tries = 1");
 $story->checkin;

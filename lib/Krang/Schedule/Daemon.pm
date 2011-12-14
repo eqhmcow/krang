@@ -22,7 +22,7 @@ use Krang::ClassLoader 'Cache';
 my $pidfile = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
 
 use constant CHUNK_SIZE     => 5;
-use constant SLEEP_INTERVAL => 5;
+use constant SLEEP_INTERVAL => 1;
 
 my $CHILD_COUNT   = 0;
 my %child_pids    = ();
@@ -59,39 +59,80 @@ Krang::Schedule::Daemon - Module to handle scheduled tasks in Krang.
 
 =head1 DESCRIPTION
 
-This module is responsible for creating a daemon whose task is to run all scheduled tasks in Krang.
+This module is responsible for creating a daemon whose task is to run
+all scheduled tasks in Krang.
 
-When started (using the C<run()> method), Krang::Schedule::Daemon creates a persistant daemon (whose PID file can be found at KRANG_ROOT/tmp/schedule_daemon.pid).  Once started, the daemon will poll L<Krang::Scheduler> at a set interval (defaults to 5 seconds --- Is this something we want settable in KrangConf??), looking for jobs that need to be executed.  If none are found, the daemon will sleep for another interval, wake up, and repeat the process.
+When started (using the C<run()> method), Krang::Schedule::Daemon
+creates a persistant daemon (whose PID file can be found at
+KRANG_ROOT/tmp/schedule_daemon.pid).  Once started, the daemon will
+poll L<Krang::Scheduler> at a set interval (defaults to 1 second ---
+Is this something we want settable in KrangConf??), looking for jobs
+that need to be executed.  If none are found, the daemon will sleep
+for another interval, wake up, and repeat the process.
 
-If jobs are found, Krang::Schedule::Daemon will sort and group them based on priority, next_run time, and resource usage.  Once sorted and grouped, jobs will be handed off to child processes that will actually handle execution.
+If jobs are found, Krang::Schedule::Daemon will sort and group them
+based on priority, next_run time, and resource usage.  Once sorted and
+grouped, jobs will be handed off to child processes that will actually
+handle execution.
 
-When a child process exits (all tasks have been completed, or a fatal error occurred), the parent daemon will make a note of the child exiting and clear its entry from the internal table tracking all work being done.
+When a child process exits (all tasks have been completed, or a fatal
+error occurred), the parent daemon will make a note of the child
+exiting and clear its entry from the internal table tracking all work
+being done.
 
-There is a limit to the number of children that can run simultaneously, determined by the L<Krang::Conf> config file directive B<ScheduleParallel>.
+There is a limit to the number of children that can run
+simultaneously, determined by the L<Krang::Conf> config file directive
+B<ScheduleMaxChildren>.
 
-
+Multiple schedulers (on multiple machines) can be run without
+interfering with each other.
 
 =head2 Job Execution
 
-When a group of jobs is ready to be executed, a child process is spawned to handle the work.  The workload assigned to the child process is determined by the parent daemon, and the work is completed in order of priority.
+When a group of jobs is ready to be executed, a child process is
+spawned to handle the work.  The workload assigned to the child
+process is determined by the parent daemon, and the work is completed
+in order of priority.
 
-Once spawned, the parent daemon makes entries in the C<%active_children> and C<%assigned_jobs> hashes.  C<%active_children> is keyed by child PID, and each entry contains a list of L<Krang::Schedule> IDs currently being processed by that child.  C<%assigned_jobs> is the opposite hash, keyed by Krang::Schedule IDs, where each key points to the child PID of the child process handling the job.  These two hashes exist to keep Krang::Schedule::Daemon from assigning work-in-progress to new children.
+Once spawned, the parent daemon makes entries in the
+C<%active_children> and C<%assigned_jobs> hashes.  C<%active_children>
+is keyed by child PID, and each entry contains a list of
+L<Krang::Schedule> IDs currently being processed by that child.
+C<%assigned_jobs> is the opposite hash, keyed by Krang::Schedule IDs,
+where each key points to the child PID of the child process handling
+the job.  These two hashes exist to keep Krang::Schedule::Daemon from
+assigning work-in-progress to new children.
 
 
 =head2 Priority
 
-The Priority of a job entry determines when it will get executed in relation to all other pending jobs.  Priority is stored in the L<Krang::Schedule> object as an integer value.
+The Priority of a job entry determines when it will get executed in
+relation to all other pending jobs.  Priority is stored in the
+L<Krang::Schedule> object as an integer value.
 
-Priority will be adjusted by Krang::Schedule::Daemon, based on whether or not the next scheduled execution (next_run) of a job was met (e.g. if the value of job->next_run() < now(), the execution was missed).
+Priority will be adjusted by Krang::Schedule::Daemon, based on whether
+or not the next scheduled execution (next_run) of a job was met
+(e.g. if the value of job->next_run() < now(), the execution was
+missed).
 
-If scheduled execution was missed, the priority of the job will be bumped up by 1, unless it is more than 1 hour late, when it is bumped by 2.  This will not necessarily put the job at the front of the line, but it will get it executed sooner than it would have been.
+If scheduled execution was missed, the priority of the job will be
+bumped up by 1, unless it is more than 1 hour late, when it is bumped
+by 2.  This will not necessarily put the job at the front of the line,
+but it will get it executed sooner than it would have been.
 
 
 =head2 Cleanup
 
-When a child finishes an individual task, C<< Krang::Schedule->mark_as_completed($task_id) >> will be called, updating the entry in the database.  L<Krang::Schedule> will determine what the new entry in the database will look like, based on whether or not the job is a re-occuring one.
+When a child finishes an individual task, C<<
+Krang::Schedule->mark_as_completed($task_id) >> will be called,
+updating the entry in the database.  L<Krang::Schedule> will determine
+what the new entry in the database will look like, based on whether or
+not the job is a re-occuring one.
 
-Once a child has completed all tasks assigned to it, the child will exit.  The parent daemon will trap the SIG_CHLD signal sent by the exiting child, and remove that child PID and all L<Krang::Schedule> entries from the C<%active_children> and C<%assigned_jobs> hashes.
+Once a child has completed all tasks assigned to it, the child will
+exit.  The parent daemon will trap the SIG_CHLD signal sent by the
+exiting child, and remove that child PID and all L<Krang::Schedule>
+entries from the C<%active_children> and C<%assigned_jobs> hashes.
 
 
 =head1 INTERFACE
@@ -100,11 +141,14 @@ Once a child has completed all tasks assigned to it, the child will exit.  The p
 
 =item C<< run() >>
 
-Starts the L<Krang::Schedule::Daemon> daemon.  Once started, it periodically (5 seconds) polls the databases fore each instance, looking for 
+Starts the L<Krang::Schedule::Daemon> daemon.  Once started, it
+periodically (1 second) polls the databases fore each instance,
+looking for
 
 
 
-Creates a pid file at KRANG_ROOT/tmp/schedule_daemon.pid with the process ID of the daemon itself.
+Creates a pid file at KRANG_ROOT/tmp/schedule_daemon.pid with the
+process ID of the daemon itself.
 
 The daemon can be killed by sending a SIG_TERM (e.g. kill) signal.
 
@@ -177,22 +221,31 @@ sub run {
 
         sleep SLEEP_INTERVAL;
     }
-
 }
 
 =item C<< scheduler_pass() >>
 
-Polls the schedule database for a given L<Krang::Conf> instance, looking for jobs where next_run <= now.
+Polls the schedule database for a given L<Krang::Conf> instance,
+looking for jobs where next_run <= now.
 
-If work to be done is found, child processes are allocated to take care of the tasks at hand.
+If work to be done is found, a child process is allocated to take care
+of the tasks at hand.
 
-When a child process is spawned, it will C<execute()> all work in the order assigned.  When a task is completed, it is marked as complete, and updated if necessary.  Any jobs that fail will be trapped and skipped, and the work continues.  When a child is finished, it will exit.
+When a child process is spawned, it will C<execute()> all work in the
+order assigned.  When a task is completed, it is marked as complete,
+and updated if necessary.  Any jobs that fail will be trapped and
+skipped, and the work continues.  When a child is finished, it will
+exit.
 
-When a child exits, C<scheduler_pass()> will clean up, removing its entry from the tables tracking work being done.
+When a child exits, C<scheduler_pass()> will clean up, removing its
+entry from the tables tracking work being done.
 
-If there is more work to be done than available child processes, C<scheduler_pass()> will block until a child returns, complete cleanup, and then spawn new children to handle the pending work.
+If there is more work to be done than available child processes,
+C<scheduler_pass()> will block until a child returns, complete
+cleanup, and then spawn a new child to handle the pending work.
 
-Returns when all work has been assigned.  The first task on the next run will be to reap newly-dead (e.g. finished) children.
+Returns when all work has been assigned.  The first task on the next
+run will be to reap newly-dead (e.g. finished) children.
 
 =cut
 
@@ -213,70 +266,38 @@ sub scheduler_pass {
             __PACKAGE__, $instance, ($#jobs + 1)
         )
     );
-    while (@jobs) {
 
-        # allocate first CHUNK_SIZE jobs to be done.
-        my @tasks = ();
-        my $pid;
+    my $pid;
 
-        while ((@tasks < CHUNK_SIZE) && @jobs) {
-            push @tasks, shift @jobs;
-        }
-
-        debug(
-            sprintf(
-                "%s->scheduler_pass(): Allocating %i jobs, %i remaining.",
-                __PACKAGE__,
-                ($#tasks + 1),
-                ($#jobs + 1)
-            )
-        );
-
-        # wait for a child to return.
-        if ($CHILD_COUNT >= SchedulerMaxChildren) {
-            _reap_dead_children(1);
-        }
-
-        # fork a child to take care of the work.
-        if ($pid = fork) {
-            _parent_work($pid, \@tasks);
-        } elsif (defined($pid)) {
-
-            # change handling of SIGTERM -- don't act like your parents!
-            $SIG{'TERM'} = sub {
-                debug(__PACKAGE__ . ": Child caught SIGTERM.  Exiting.");
-                exit(0);
-            };
-            _child_work(\@tasks);
-
-        } else {
-            critical(__PACKAGE__ . "->run($instance): Cannot fork children: $!");
-        }
-
-        debug(
-            sprintf(
-                "%s STATUS: %i children running, %i jobs left to do.",
-                __PACKAGE__, $CHILD_COUNT, ($#jobs + 1)
-            )
-        );
+    # wait for a child to return.
+    if ($CHILD_COUNT >= SchedulerMaxChildren) {
+        _reap_dead_children(1);
     }
 
-    # all jobs assigned.  Reap dead children.
-    if ($CHILD_COUNT) {
-        _reap_dead_children();
-    }
+    # fork a child to take care of the work.
+    if ($pid = fork) {
+        _parent_work($pid, \@jobs);
+    } elsif (defined($pid)) {
 
-    if ($CHILD_COUNT) {
-        debug(
-            sprintf(
-                "%s: All jobs assigned, waiting on %i children to return.",
-                __PACKAGE__, $CHILD_COUNT
-            )
-        );
+        # change handling of SIGTERM -- don't act like your parents!
+        $SIG{'TERM'} = sub {
+            debug(__PACKAGE__ . ": Child caught SIGTERM.  Exiting.");
+            exit(0);
+        };
+        _child_work(\@jobs);
+
     } else {
-        debug(sprintf("%s: All jobs completed.", __PACKAGE__));
+        critical(__PACKAGE__ . "->run($instance): Cannot fork children: $!");
     }
 
+    if ($CHILD_COUNT) {
+        debug(
+              sprintf(
+                      "%s STATUS: %i children running.",
+                      __PACKAGE__, $CHILD_COUNT
+                     )
+             );
+    }
 }
 
 #
@@ -619,6 +640,7 @@ sub _query_for_jobs {
         order_by                    => 'priority',
         select_for_update           => 1,
         daemon_uuid                 => undef,
+        limit                       => CHUNK_SIZE,
     );
 
     # update the schedules with the daemon's uuid
