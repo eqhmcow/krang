@@ -6,6 +6,9 @@
 
 <tmpl_if crumbs>
   jump_to = function(p)  {
+    // don't resubmit if we are in the middle of a submission
+    if( Krang.Form.is_submitting('edit') )
+      return;
     Krang.ElementEditor.run_save_hooks();
     Krang.Form.submit('edit', { rm: 'save_and_jump', jump_to: p });
   }
@@ -109,38 +112,60 @@
 <tmpl_else>
 
   find_media = function(p) {
+    // don't resubmit if we are in the middle of a submission
+    if( Krang.Form.is_submitting('edit') )
+      return;
     Krang.ElementEditor.run_save_hooks();
     Krang.Form.submit('edit', { rm: 'save_and_find_media_link', jump_to: p });
   }
 
   find_story_link = function(p) {
+    // don't resubmit if we are in the middle of a submission
+    if( Krang.Form.is_submitting('edit') )
+      return;
     Krang.ElementEditor.run_save_hooks();
     Krang.Form.submit('edit', { rm: 'save_and_find_story_link', jump_to: p });
   }
 
   save_and_add = function() {
+    // don't resubmit if we are in the middle of a submission
+    if( Krang.Form.is_submitting('edit') )
+      return;
     Krang.ElementEditor.run_save_hooks();
     Krang.Form.submit('edit', { rm: 'save_and_add' });
   }
 
   save_and_jump = function() {
+    // don't resubmit if we are in the middle of a submission
+    if( Krang.Form.is_submitting('edit') )
+      return;
     Krang.ElementEditor.run_save_hooks();
     Krang.Form.submit('edit', { rm: 'save_and_jump' });
   }
 
   edit_children = function( p ) {
+    // don't resubmit if we are in the middle of a submission
+    if( Krang.Form.is_submitting('edit') )
+      return;
     Krang.ElementEditor.run_save_hooks();
     Krang.Form.submit('edit', { rm: 'save_and_jump', jump_to: p });
   }
 
   <tmpl_if bulk_edit_select>
     save_and_bulk_edit = function() {
+      // don't resubmit if we are in the middle of a submission
+      if( Krang.Form.is_submitting('edit') )
+        return;
       Krang.ElementEditor.run_save_hooks();
       Krang.Form.submit('edit', { rm: 'save_and_bulk_edit' });
     }
   </tmpl_if>
 
   remove_children = function() {
+    // don't resubmit if we are in the middle of a submission
+    if( Krang.Form.is_submitting('edit') )
+      return;
+
     if( confirm( Krang.L10N.loc('Are you SURE you want to delete these sub-elements?') ) ) {
       Krang.ElementEditor.run_save_hooks();
       Krang.Form.submit('edit', { rm: 'delete_children' }, { to_top: false });
@@ -161,6 +186,10 @@
       var rm     = 'save_and_add';
       var to_top = false;
 
+      // don't resubmit if we are in the middle of a submission
+      if( Krang.Form.is_submitting('edit') )
+        return;
+
       // container elements behave differently
       if ( containers[name] ) {
         to_top = true;
@@ -173,6 +202,10 @@
 
   <tmpl_unless no_reorder>
     reorder = function() {
+      // don't resubmit if we are in the middle of a submission
+      if( Krang.Form.is_submitting('edit') )
+        return;
+
       Krang.ElementEditor.run_save_hooks();
       Krang.Form.submit('edit', { rm: 'reorder' }, { to_top: false });
     }

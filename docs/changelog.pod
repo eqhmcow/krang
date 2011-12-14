@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Prevent users from submitting 2 different actions at the same time when
+editting elements (eg, Add Element + Reorder) before the 1st one has
+finished. [Michael Peters]
+
+=item *
+
 Fixed element editor bug where re-ordering and adding elements at
 the same time could result in weirdness depending on the element's
 classes. [Michael Peters]
