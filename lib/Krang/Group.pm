@@ -10,12 +10,12 @@ Krang::Group - Interface to manage Krang permissions
 
 =head1 SYNOPSIS
 
-  # Include the library
-  use Krang::ClassLoader 'Group';
+    # Include the library
+    use Krang::ClassLoader 'Group';
 
 
-  # Create a new group
-  my $group = pkg('Group')->new( name => 'Car Editors',
+    # Create a new group
+    my $group = pkg('Group')->new( name => 'Car Editors',
                                  categories => { 1 => 'read-only', 
                                                  2 => 'edit', 
                                                  23 => 'hide' },
@@ -41,80 +41,69 @@ Krang::Group - Interface to manage Krang permissions
                                  asset_media         => 'read-only',
                                  asset_template      => 'hide' );
 
+    # Retrieve an existing group by ID
+    my ($group) = pkg('Group')->find( group_id => 123 );
 
-  # Retrieve an existing group by ID
-  my ($group) = pkg('Group')->find( group_id => 123 );
+    # Retrieve multiple existing groups by ID
+    my @groups = pkg('Group')->find( group_ids => [1, 2, 3] );
 
+    # Find groups by exact name
+    my @groups = pkg('Group')->find( name => 'Boat Editors' );
 
-  # Retrieve multiple existing groups by ID
-  my @groups = pkg('Group')->find( group_ids => [1, 2, 3] );
+    # Find groups by name pattern
+    my @groups = pkg('Group')->find( name_like => '%editor%' );
 
+    # Save group
+    $group->save();
 
-  # Find groups by exact name
-  my @groups = pkg('Group')->find( name => 'Boat Editors' );
+    # Delete group
+    $group->delete();
 
+    # Get group ID
+    my $group_id = $self->group_id();
 
-  # Find groups by name pattern
-  my @groups = pkg('Group')->find( name_like => '%editor%' );
+    # Accessors/Mutators
+    my $name             = $group->name();
+    my $may_publish      = $group->may_publish();
+    my $may_checkin_all  = $group->may_checkin_all();
+    my $admin_users      = $group->admin_users();
+    my $admin_users_limited = $group->admin_users_limited();
+    my $admin_groups     = $group->admin_groups();
+    my $admin_contribs   = $group->admin_contribs();
+    my $admin_sites      = $group->admin_sites();
+    my $admin_categories = $group->admin_categories();
+    my $admin_categories_ftp = $group->admin_categories_ftp();
+    my $admin_jobs       = $group->admin_jobs();
+    my $admin_scheduler  = $group->admin_scheduler();
+    my $admin_desks      = $group->admin_desks();
+    my $admin_desks      = $group->admin_lists();
+    my $admin_delete     = $group->admin_delete();
+    my $may_view_trash   = $group->may_view_trash();
+    my $asset_story      = $group->asset_story();
+    my $asset_media      = $group->asset_media();
+    my $asset_template   = $group->asset_template();
+    my %categories       = $group->categories();
+    my %desks            = $group->desks();
 
+    # Category permissions cache management
+    pkg('Group')->add_category_permissions($category);
+    pkg('Group')->delete_category_permissions($category);
+    pkg('Group')->rebuild_category_cache();
 
-  # Save group
-  $group->save();
+    # Krang::Desk permission management
+    pkg('Group')->add_desk_permissions($desk);
+    pkg('Group')->delete_desk_permissions($desk);
 
-
-  # Delete group
-  $group->delete();
-
-
-  # Get group ID
-  my $group_id = $self->group_id();
-
-
-  # Accessors/Mutators
-  my $name             = $group->name();
-  my $may_publish      = $group->may_publish();
-  my $may_checkin_all  = $group->may_checkin_all();
-  my $admin_users      = $group->admin_users();
-  my $admin_users_limited = $group->admin_users_limited();
-  my $admin_groups     = $group->admin_groups();
-  my $admin_contribs   = $group->admin_contribs();
-  my $admin_sites      = $group->admin_sites();
-  my $admin_categories = $group->admin_categories();
-  my $admin_categories_ftp = $group->admin_categories_ftp();
-  my $admin_jobs       = $group->admin_jobs();
-  my $admin_scheduler  = $group->admin_scheduler();
-  my $admin_desks      = $group->admin_desks();
-  my $admin_desks      = $group->admin_lists();
-  my $admin_delete     = $group->admin_delete();
-  my $may_view_trash   = $group->may_view_trash();
-  my $asset_story      = $group->asset_story();
-  my $asset_media      = $group->asset_media();
-  my $asset_template   = $group->asset_template();
-  my %categories       = $group->categories();
-  my %desks            = $group->desks();
-
-
-  # Category permissions cache management
-  pkg('Group')->add_category_permissions($category);
-  pkg('Group')->delete_category_permissions($category);
-  pkg('Group')->rebuild_category_cache();
-
-  # Krang::Desk permission management
-  pkg('Group')->add_desk_permissions($desk);
-  pkg('Group')->delete_desk_permissions($desk);
-
-  # Evaluate permissions for the currently logged-in user
-  my %desk_perms = pkg('Group')->user_desk_permissions();
-  my %asset_perms = pkg('Group')->user_asset_permissions();
-  my %admin_perms = pkg('Group')->user_admin_permissions();
-
+    # Evaluate permissions for the currently logged-in user
+    my %desk_perms = pkg('Group')->user_desk_permissions();
+    my %asset_perms = pkg('Group')->user_asset_permissions();
+    my %admin_perms = pkg('Group')->user_admin_permissions();
 
 =head1 DESCRIPTION
 
 Krang::Group provides access to manipulate Krang's permission groups.
-These groups control authorization within Krang as documented in the file 
-F<krang/docs/permissions.pod>.
-
+These groups control authorization within Krang as documented in the
+file F<krang/docs/permissions.pod>.
 
 =head1 INTERFACE
 
@@ -179,37 +168,74 @@ sub uuid_meth { 'group_uuid' }
 
 =item new()
 
-  my $group = pkg('Group')->new();
+    my $group = pkg('Group')->new();
 
 This method returns a new Krang::Group object.  You may pass a hash
-into new() containing initial values for the object properties.  These
-properties are:
+into C<new()> containing initial values for the object properties.
+These properties are:
 
-  * name               - Name of this group
-  * asset_story        - Story asset security level
-  * asset_media        - Media asset security level
-  * asset_template     - Template asset security level
-  * categories (hash)  - Map category ID to security level
-  * desks (hash)       - Map desk ID to security level
+=over
+
+=item * name
+
+Name of this group
+
+=item * asset_story
+
+Story asset security level
+
+=item * asset_media
+
+Media asset security level
+
+=item * asset_template
+
+Template asset security level
+
+=item * categories (hash)
+
+Map category ID to security level
+
+=item * desks (hash)
+
+Map desk ID to security level
+
+=back
 
 Security levels may be "edit", "read-only", or "hide".
 
-In addition to these properties, the following properties may be
-specified using Boolean (1 or 0) values:
+In addition to these properties, the following properties may be specified
+using Boolean (1 or 0) values:
 
-  * may_publish
-  * may_checkin_all
-  * admin_users
-  * admin_users_limited
-  * admin_groups
-  * admin_contribs
-  * admin_sites
-  * admin_categories
-  * admin_categories_ftp
-  * admin_jobs
-  * admin_scheduler
-  * admin_desks
-  * admin_lists
+=over
+
+=item may_publish
+
+=item may_checkin_all
+
+=item admin_users
+
+=item admin_users_limited
+
+=item admin_groups
+
+=item admin_contribs
+
+=item admin_sites
+
+=item admin_categories
+
+=item admin_categories_ftp
+
+=item admin_jobs
+
+=item admin_scheduler
+
+=item admin_desks
+
+=item admin_lists
+
+=back
 
 =cut
 
@@ -261,47 +287,84 @@ sub init {
 
 =item find()
 
-  my @groups = pkg('Group')->find();
+    my @groups = pkg('Group')->find();
 
 Retrieve Krang::Group objects from database based on a search
-specification.  Searches are specified by passing a hash to find()
+specification.  Searches are specified by passing a hash to C<find()>
 with search fields as keys and search terms as the values of those keys.
-For example, the following would retrieve all groups with the 
-word "admin" in the group name:
+For example, the following would retrieve all groups with the word
+"admin" in the group name:
 
-  my @groups = pkg('Group')->find(name_like => '%admin%');
+    my @groups = pkg('Group')->find(name_like => '%admin%');
 
-Search terms may be combined to further narrow the result set.  For 
-example, the following will limit the above search to groups
-whose IDs are in an explicit list:
+Search terms may be combined to further narrow the result set.
+For example, the following will limit the above search to groups whose
+IDs are in an explicit list:
 
-  my @groups = pkg('Group')->find( name_like => '%admin%',
-                                   group_ids => [1, 5, 10, 34] );
+    my @groups = pkg('Group')->find( name_like => '%admin%',
+                                     group_ids => [1, 5, 10, 34] );
 
-The following search fields are recognized by Krang::Group->find():
+The following search fields are recognized by C<Krang::Group->find()>:
 
-  * simple_search  - A scalar string, matches to name
-  * group_id       - Retrieve a specific group by ID
-  * group_ids      - Array reference of group_ids which should be retrieved
-  * name           - Exactly match the group name
-  * name_like      - SQL LIKE-match the group name
+=over
 
+=item * simple_search
 
-The find() method provides meta terms to control how the data should 
+A scalar string, matches to name
+
+=item * group_id
+
+Retrieve a specific group by ID
+
+=item * group_ids
+
+Array reference of group_ids which should be retrieved
+
+=item * name
+
+Exactly match the group name
+
+=item * name_like
+
+SQL LIKE-match the group name
+
+=back
+
+The C<find()> method provides meta terms to control how the data should
 be returned:
 
-  * count          - Causes find() to return the number of matches instead of 
-                     the actual objects.
-  * ids_only       - Causes find() to return the IDs of the matching groups
-                     instead of the instantiated group objects.
-  * order_by       - The group field by which the found objects should be 
-                     sorted.  Defaults to "name".
-  * order_desc     - Results will be sorted in descending order if this is
-                     set to "1", ascending if "0".  Defaults to "0".
-  * limit          - The number of objects to be returned.  Defaults to all.
-  * offset         - The index into the result set at which objects should be
-                     returned.  Defaults to "0" -- the first record.
+=over
 
+=item * count
+
+Causes C<find()> to return the number of matches instead of the actual
+objects.
+
+=item * ids_only
+
+Causes C<find()> to return the IDs of the matching groups instead of
+the instantiated group objects.
+
+=item * order_by
+
+The group field by which the found objects should be sorted.  Defaults to
+"name".
+
+=item * order_desc
+
+Results will be sorted in descending order if this is set to "1",
+ascending if "0".  Defaults to "0".
+
+=item * limit
+
+The number of objects to be returned.  Defaults to all.
+
+=item * offset
+
+The index into the result set at which objects should be returned.
+Defaults to "0" -- the first record.
+
+=back
 
 =cut
 
@@ -480,27 +543,25 @@ sub find {
 
 =item save();
 
-  $group->save();
+    $group->save();
 
 Save the group object to the database.  If this is a new group object
 it will be inserted into the database and group_id will be defined.
 
 If another existing group has the same name as the group you're trying
-to save, an exception will be thrown:  Krang::Group::DuplicateName
+to save, a C<Krang::Group::DuplicateName> exception will be thrown.
 
-In all cases, the group object's configured category and desk 
-permissions will be checked for validity and sanitized if necessary.
+In all cases, the group object's configured category and desk permissions
+will be checked for validity and sanitized if necessary.
 
-For categories, this means that if a root category is not specified
-in the categories() hash, it will be silently created with "edit"
+For categories, this means that if a root category is not specified in the
+C<categories()> hash, it will be silently created with "edit" permissions.
+
+In the case of desks, missing desks will be created with "edit"
 permissions.
 
-In the case of desks, missing desks will be created 
-with "edit" permissions.
-
-If an invalid category or desk is specified, save() will croak()
+If an invalid category or desk is specified, C<save()> will C<croak()>
 with errors.
-
 
 =cut
 
@@ -565,7 +626,7 @@ sub save {
 
 =item delete()
 
-  $group->delete();
+    $group->delete();
 
 Remove a Krang::Group from the system.
 
@@ -596,7 +657,7 @@ sub delete {
 
 =item dependent_check()
     
-Check to see if any users are associated with this group.  If there are, 
+Check to see if any users are associated with this group.  If there are,
 this group should not be deleted- and an exception is thrown.
 
 =cut
@@ -631,7 +692,7 @@ sub dependent_check {
 
 =item $group->serialize_xml(writer => $writer, set => $set)
 
-Serialize as XML.  See Krang::DataSet for details.
+Serialize as XML. See L<Krang::DataSet> for details.
 
 =cut
 
@@ -696,13 +757,12 @@ sub serialize_xml {
 
 }
 
-=item C<< $group = Krang::Group->deserialize_xml(xml => $xml, set => $set,
-no_update => 0) >>
+=item C<< $group = Krang::Group->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
 
-Deserialize XML.  See Krang::DataSet for details.
+Deserialize XML. See L<Krang::DataSet> for details.
 
 If an incoming group has the same name as an existing group then an
-update will occur, unless no_update is set.
+update will occur, unless C<no_update> is set.
 
 =cut
 
@@ -795,19 +855,19 @@ sub deserialize_xml {
 
 =item add_category_permissions()
 
-  pkg('Group')->add_category_permissions($category);
+    pkg('Group')->add_category_permissions($category);
 
-This method is expected to be called by Krang::Category when a new 
-category is added to the system.  As the nature of categories are 
+This method is expected to be called by L<Krang::Category> when a
+new category is added to the system.  As the nature of categories are
 hierarchal, it is expected that new categories have no descendants.
 
-Given a particular category object, this method will update the 
-user_category_permission_cache table to add this category for all 
+Given a particular category object, this method will update the
+C<user_category_permission_cache> table to add this category for all
 users.
 
-In the case of a "root" category (no parent_id, associated with a 
-site), permissions will be added to the category_group_permission
-table for each group, defaulting to "edit".
+In the case of a "root" category (no parent_id, associated with a site),
+permissions will be added to the C<category_group_permission> table for
+each group, defaulting to "edit".
 
 =cut
 
@@ -925,9 +985,9 @@ sub add_category_permissions {
 
     pkg('Group')->add_user_permissions($user)
 
-This method is expected to be called upon Krang::User save.
-It will add an entry to user_category_permission_cache for each
-category in the system, based on the user's permissions there.
+This method is expected to be called upon L<Krang::User> save.  It will
+add an entry to C<user_category_permission_cache> for each category in
+the system, based on the user's permissions there.
 
 =cut 
 
@@ -1016,16 +1076,17 @@ sub add_user_permissions {
 
 =item delete_category_permissions()
 
-  pkg('Group')->delete_category_permissions($category);
+    pkg('Group')->delete_category_permissions($category);
 
-This method is expected to be called by Krang::Category when a  
-category is about to be removed from the system.  As the nature of categories are 
+This method is expected to be called by L<Krang::Category> when a category
+is about to be removed from the system. As the nature of categories are
 hierarchal, it is expected that deleted categories have no descendants.
 
-Given a particular category object, update the user_category_permission_cache
-table to delete this category for all groups.
+Given a particular category object, update the
+C<user_category_permission_cache> table to delete this category for
+all groups.
 
-Also, delete from category_group_permission all references to this 
+Also, delete from C<category_group_permission> all references to this
 category.
 
 =cut
@@ -1050,18 +1111,17 @@ sub delete_category_permissions {
 
 =item rebuild_category_cache()
 
-  pkg('Group')->rebuild_category_cache();
+    pkg('Group')->rebuild_category_cache();
 
-This class method will clear the table user_category_permission_cache 
-and rebuild it from the category_group_permission table.  This logically 
-iterates through each group and applying the permissions for each category 
+This class method will clear the table user_category_permission_cache and
+rebuild it from the C<category_group_permission> table.  This logically
+iterates through each group and applying the permissions for each category
 according to the configuration.
 
 Permissions for a particular category are applicable to all descendant
 categories.  In lieu of a specific disposition for a particular category
-(as is the case if a group does not specify access for a site), permissions
-will default to "edit". 
-
+(as is the case if a group does not specify access for a site),
+permissions will default to "edit".
 
 =cut
 
@@ -1082,14 +1142,13 @@ sub rebuild_category_cache {
 
 =item add_desk_permissions()
 
-  pkg('Group')->add_desk_permissions($desk);
+    pkg('Group')->add_desk_permissions($desk);
 
-This method is expected to be called by Krang::Desk when a new 
-desk is added to the system.
+This method is expected to be called by L<Krang::Desk> when a new desk
+is added to the system.
 
-Given a particular desk object, this method will update the 
-desk_group_permission table to add this desk for all 
-groups.
+Given a particular desk object, this method will update the
+C<desk_group_permission> table to add this desk for all groups.
 
 =cut
 
@@ -1122,12 +1181,12 @@ sub add_desk_permissions {
 
 =item delete_desk_permissions()
 
-  pkg('Group')->delete_desk_permissions($desk);
+    pkg('Group')->delete_desk_permissions($desk);
 
-This method is expected to be called by Krang::Desk when a  
-desk is about to be removed from the system.
+This method is expected to be called by L<Krang::Desk> when a desk is
+about to be removed from the system.
 
-Given a particular desk object, update the desk_group_permission
+Given a particular desk object, update the C<desk_group_permission>
 table to delete this desk for all groups.
 
 =cut
@@ -1149,36 +1208,35 @@ sub delete_desk_permissions {
 
 =item user_desk_permissions()
 
-  my %desk_perms = pkg('Group')->user_desk_permissions();
+    my %desk_perms = pkg('Group')->user_desk_permissions();
 
-This method is expected to be used by Krang::Story and any other 
-modules which need to know if the current user has access to a particular desk.
-This method returns a hash table which maps desk_id values to 
+This method is expected to be used by L<Krang::Story> and any other
+modules which need to know if the current user has access to a particular
+desk.  This method returns a hash table which maps desk_id values to
 security levels, "edit", "read-only", or "hide".
 
-This method combines the permissions of all the groups with which
-the user is affiliated.  Group permissions are combined using
-a "most privilege" algorithm.  In other words, if a user is 
-assigned to the following groups:
+This method combines the permissions of all the groups with which the user
+is affiliated.  Group permissions are combined using a "most privilege"
+algorithm.  In other words, if a user is assigned to the following groups:
 
-   Group A =>  Desk 1 => "edit"
-               Desk 2 => "read-only"
-               Desk 3 => "read-only"
+    Group A =>  Desk 1 => "edit"
+                Desk 2 => "read-only"
+                Desk 3 => "read-only"
 
-   Group B =>  Desk 1 => "read-only"
-               Desk 2 => "hide"
-               Desk 3 => "edit"
+    Group B =>  Desk 1 => "read-only"
+                Desk 2 => "hide"
+                Desk 3 => "edit"
 
 In this case, the resultant permissions for this user will be:
 
-   Desk 1 => "edit"
-   Desk 2 => "read-only"
-   Desk 3 => "edit"
+    Desk 1 => "edit"
+    Desk 2 => "read-only"
+    Desk 3 => "edit"
 
+You can also request permissions for a particular desk by specifying it
+by ID:
 
-You can also request permissions for a particular desk by specifying it by ID:
-
-  my $desk1_access = pkg('Group')->user_desk_permissions($desk_id);
+    my $desk1_access = pkg('Group')->user_desk_permissions($desk_id);
 
 =cut
 
@@ -1225,36 +1283,34 @@ sub user_desk_permissions {
 
 =item user_asset_permissions()
 
-  my %asset_perms = pkg('Group')->user_asset_permissions();
+    my %asset_perms = pkg('Group')->user_asset_permissions();
 
-This method is expected to be used by all modules which need to know 
-if the current user has access to a particular asset class.  This method returns 
-a hash table which maps asset types ("story", "media", and "template") 
-to security levels, "edit", "read-only", or "hide".
+This method is expected to be used by all modules which need to know if
+the current user has access to a particular asset class.  This method
+returns a hash table which maps asset types ("story", "media", and
+"template") to security levels, "edit", "read-only", or "hide".
 
-This method combines the permissions of all the groups with which
-the user is affiliated.  Group permissions are combined using
-a "most privilege" algorithm.  In other words, if a user is 
-assigned to the following groups:
+This method combines the permissions of all the groups with which the user
+is affiliated.  Group permissions are combined using a "most privilege"
+algorithm.  In other words, if a user is assigned to the following groups:
 
-   Group A =>  story    => "read-only"
-               media    => "edit"
-               template => "read-only"
+    Group A =>  story    => "read-only"
+                media    => "edit"
+                template => "read-only"
 
-   Group B =>  story    => "edit"
-               media    => "read-only"
-               template => "hide"
+    Group B =>  story    => "edit"
+                media    => "read-only"
+                template => "hide"
 
 In this case, the resultant permissions for this user will be:
 
-   story    => "edit"
-   media    => "edit"
-   template => "read-only"
-
+    story    => "edit"
+    media    => "edit"
+    template => "read-only"
 
 You can also request permissions for a particular asset by specifying it:
 
-  my $media_access = pkg('Group')->user_asset_permissions('media');
+    my $media_access = pkg('Group')->user_asset_permissions('media');
 
 =cut
 
@@ -1307,96 +1363,111 @@ sub user_asset_permissions {
 
 =item user_admin_permissions()
 
-  my %admin_perms = pkg('Group')->user_admin_permissions();
-  my $perms       = pkg('Group')->user_admin_permissions($permission);
+    my %admin_perms = pkg('Group')->user_admin_permissions();
+    my $perms       = pkg('Group')->user_admin_permissions($permission);
 
-This method is expected to be used by all modules which need to know 
-if the current user has access to a particular administrative function.
+This method is expected to be used by all modules which need to know if
+the current user has access to a particular administrative function.
 
-This method returns a hash table which maps admin functions
-to Boolean values (1 or 0) designating whether or not the user is 
-allowed to use that particular function.  Following is the list of 
-functions:
+This method returns a hash table which maps admin functions to Boolean
+values (1 or 0) designating whether or not the user is allowed to use
+that particular function.  Following is the list of functions:
 
-  may_publish
-  may_checkin_all
-  admin_users
-  admin_users_limited
-  admin_groups
-  admin_contribs
-  admin_sites
-  admin_categories
-  admin_categories_ftp
-  admin_jobs
-  admin_scheduler
-  admin_desks
-  admin_lists
-  admin_delete
-  may_view_trash
+=over
 
-This method combines the permissions of all the groups with which
-the user is affiliated.  Group permissions are combined using
-a "most privilege" algorithm.  In other words, if a user is 
-assigned to the following groups:
+=item may_publish
 
-   Group A => may_publish         => 1
-              may_checkin_all     => 0
-              admin_users         => 1
-              admin_users_limited => 1
-              admin_groups        => 0
-              admin_contribs      => 1
-              admin_sites         => 0
-              admin_categories    => 1
-              admin_categories_ftp    => 1
-              admin_jobs          => 1
-              admin_scheduler     => 1
-              admin_desks         => 0
-              admin_lists         => 0
-              admin_delete        => 0
-              may_view_trash      => 0
+=item may_checkin_all
 
-   Group B => may_publish         => 0
-              may_checkin_all     => 1
-              admin_users         => 1
-              admin_users_limited => 0
-              admin_groups        => 1
-              admin_contribs      => 0
-              admin_sites         => 0
-              admin_categories    => 0
-              admin_categories_ftp    => 0
-              admin_jobs          => 1
-              admin_scheduler     => 1
-              admin_desks         => 1
-              admin_lists         => 0
-              admin_delete        => 1
-              may_view_trash      => 1
+=item admin_users
+
+=item admin_users_limited
+
+=item admin_groups
+
+=item admin_contribs
+
+=item admin_sites
+
+=item admin_categories
+
+=item admin_categories_ftp
+
+=item admin_jobs
+
+=item admin_scheduler
+
+=item admin_desks
+
+=item admin_lists
+
+=item admin_delete
+
+=item may_view_trash
+
+=back
+
+This method combines the permissions of all the groups with which the user
+is affiliated.  Group permissions are combined using a "most privilege"
+algorithm.  In other words, if a user is assigned to the following groups:
+
+    Group A => may_publish         => 1
+               may_checkin_all     => 0
+               admin_users         => 1
+               admin_users_limited => 1
+               admin_groups        => 0
+               admin_contribs      => 1
+               admin_sites         => 0
+               admin_categories    => 1
+               admin_categories_ftp    => 1
+               admin_jobs          => 1
+               admin_scheduler     => 1
+               admin_desks         => 0
+               admin_lists         => 0
+               admin_delete        => 0
+               may_view_trash      => 0
+
+    Group B => may_publish         => 0
+               may_checkin_all     => 1
+               admin_users         => 1
+               admin_users_limited => 0
+               admin_groups        => 1
+               admin_contribs      => 0
+               admin_sites         => 0
+               admin_categories    => 0
+               admin_categories_ftp    => 0
+               admin_jobs          => 1
+               admin_scheduler     => 1
+               admin_desks         => 1
+               admin_lists         => 0
+               admin_delete        => 1
+               may_view_trash      => 1
 
 In this case, the resultant permissions for this user will be:
 
-   may_publish         => 1
-   may_checkin_all     => 1
-   admin_users         => 1
-   admin_users_limited => 0
-   admin_groups        => 1
-   admin_contribs      => 1
-   admin_sites         => 0
-   admin_categories    => 1
-   admin_categories_ftp    => 1
-   admin_jobs          => 1
-   admin_scheduler     => 1
-   admin_desks         => 1
-   admin_lists         => 0
-   admin_delete        => 1
-   may_view_trash      => 1
+    may_publish             => 1
+    may_checkin_all         => 1
+    admin_users             => 1
+    admin_users_limited     => 0
+    admin_groups            => 1
+    admin_contribs          => 1
+    admin_sites             => 0
+    admin_categories        => 1
+    admin_categories_ftp    => 1
+    admin_jobs              => 1
+    admin_scheduler         => 1
+    admin_desks             => 1
+    admin_lists             => 0
+    admin_delete            => 1
+    may_view_trash          => 1
 
-(N.B.:  The admin function "admin_users_limited" is deemed to be
-a high privilege when it is set to 0 -- not 1.)
+(N.B.:  The admin function "admin_users_limited" is deemed to be a high
+privilege when it is set to 0 -- not 1.)
 
+You can also request permissions for a particular admin function by
+specifying it:
 
-You can also request permissions for a particular admin function by specifying it:
-
-  my $may_publish = pkg('Group')->user_admin_permissions('may_publish');
-
+    my $may_publish = pkg('Group')->user_admin_permissions('may_publish');
 
 =cut
 
@@ -1633,9 +1704,8 @@ sub new_from_db {
 
 =item may_move_story_from_desk($desk_id)
 
-Convenience method for desk security checks.  If user has 'edit'
-(check in/out) permission for $desk_id returns true, otherwise returns
-false.
+Convenience method for desk security checks.  If user has 'edit' (check
+in/out) permission for C<$desk_id> returns true, otherwise returns false.
 
 =cut
 
@@ -1647,7 +1717,7 @@ sub may_move_story_from_desk {
 =item may_move_story_to_desk($desk_id)
 
 Convenience method for desk security checks. If user has 'read-only'
-(check in) or 'edit' (check in/out) permission for $desk_id, returns
+(check in) or 'edit' (check in/out) permission for C<$desk_id>, returns
 true, otherwise returns false.
 
 =cut
