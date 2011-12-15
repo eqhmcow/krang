@@ -423,10 +423,10 @@ sub find {
     my @order_by_dirs = map { "$_ $order_dir" } @order_bys;
 
     # Build SQL where, order by and limit clauses as string -- same for all situations
-    my $sql_from_where_str = "from group_permission ";
-    $sql_from_where_str .= "where " . join(" and ", @sql_wheres) . " " if (@sql_wheres);
-    $sql_from_where_str .= "order by " . join(",", @order_by_dirs) . " ";
-    $sql_from_where_str .= "limit $offset,$limit" if ($limit);
+    my $sql_from_where_str = "FROM group_permission ";
+    $sql_from_where_str .= "WHERE " . join(" AND ", @sql_wheres) . " " if (@sql_wheres);
+    $sql_from_where_str .= "ORDER BY " . join(",", @order_by_dirs) . " ";
+    $sql_from_where_str .= "LIMIT $offset,$limit" if ($limit);
 
     # Build select list and run SQL, return results
     my $dbh = dbh();
@@ -434,7 +434,7 @@ sub find {
     if ($count) {
 
         # Return count(*)
-        my $sql = "select count(*) $sql_from_where_str";
+        my $sql = "SELECT COUNT(*) $sql_from_where_str";
         debug_sql($sql, \@sql_where_data);
 
         my ($group_count) = $dbh->selectrow_array($sql, undef, @sql_where_data);
@@ -443,7 +443,7 @@ sub find {
     } elsif ($ids_only) {
 
         # Return group_ids
-        my $sql = "select group_id $sql_from_where_str";
+        my $sql = "SELECT group_id $sql_from_where_str";
         debug_sql($sql, \@sql_where_data);
 
         my $sth = $dbh->prepare($sql);
@@ -459,7 +459,7 @@ sub find {
 
         # Return objects
         my $sql_fields = join(",", ("group_id", FIELDS));
-        my $sql = "select $sql_fields $sql_from_where_str";
+        my $sql = "SELECT $sql_fields $sql_from_where_str";
         debug_sql($sql, \@sql_where_data);
 
         my $sth = $dbh->prepare($sql);
@@ -517,9 +517,9 @@ sub save {
     my $group_id = $self->group_id();
 
     # Update group object primary fields in database
-    my $update_sql = "update group_permission set ";
-    $update_sql .= join(", ", map { "$_=?" } FIELDS);
-    $update_sql .= " where group_id=?";
+    my $update_sql = "UPDATE group_permission SET ";
+    $update_sql .= join(", ", map { "$_ = ?" } FIELDS);
+    $update_sql .= " WHERE group_id = ?";
 
     my @update_data = (map { $self->$_ } FIELDS);
     push(@update_data, $group_id);
@@ -537,9 +537,9 @@ sub save {
     }
 
     # Blow away all category perms in database and re-build
-    $dbh->do("delete from category_group_permission where group_id=?", undef, $group_id);
+    $dbh->do("DELETE FROM category_group_permission WHERE group_id = ?", undef, $group_id);
     my $cats_sql =
-      "insert into category_group_permission (group_id,category_id,permission_type) values (?,?,?)";
+      "INSERT INTO category_group_permission (group_id, category_id, permission_type) VALUES (?,?,?)";
     my $cats_sth = $dbh->prepare($cats_sql);
     while (my ($category_id, $permission_type) = each(%categories)) {
         $cats_sth->execute($group_id, $category_id, $permission_type);
@@ -553,9 +553,9 @@ sub save {
     }
 
     # Blow away all desk perms in database and re-build
-    $dbh->do("delete from desk_group_permission where group_id=?", undef, $group_id);
+    $dbh->do("DELETE FROM desk_group_permission WHERE group_id = ?", undef, $group_id);
     my $desks_sql =
-      "insert into desk_group_permission (group_id,desk_id,permission_type) values (?,?,?)";
+      "INSERT INTO desk_group_permission (group_id, desk_id, permission_type) VALUES (?,?,?)";
     my $desks_sth = $dbh->prepare($desks_sql);
     while (my ($desk_id, $permission_type) = each(%desks)) {
         $desks_sth->execute($group_id, $desk_id, $permission_type);
@@ -591,7 +591,7 @@ sub delete {
       group_permission );
 
     foreach my $table (@delete_from_tables) {
-        $dbh->do("delete from $table where group_id=?", undef, $group_id);
+        $dbh->do("DELETE FROM $table WHERE group_id = ?", undef, $group_id);
     }
 }
 
@@ -825,32 +825,32 @@ sub add_category_permissions {
     my $dbh                 = dbh();
     my $sth_get_parent_perm = $dbh->prepare(
         qq/
-                                            select may_see, may_edit from user_category_permission_cache 
-                                            where category_id=? and user_id=?
+                                            SELECT may_see, may_edit FROM user_category_permission_cache 
+                                            WHERE category_id = ? AND user_id = ?
                                             /
     );
 
     # Insert into cache table for each category/group
     my $sth_set_perm = $dbh->prepare(
         qq/
-                                     insert into user_category_permission_cache
-                                     (category_id, user_id, may_see, may_edit) values (?,?,?,?)
+                                     INSERT INTO user_category_permission_cache
+                                     (category_id, user_id, may_see, may_edit) VALUES (?,?,?,?)
                                      /
     );
 
     # Check for existing permissions
     my $sth_check_group_perm = $dbh->prepare(
         qq/
-                                             select permission_type from category_group_permission
-                                             where category_id=? and group_id=?
+                                             SELECT permission_type FROM category_group_permission
+                                             WHERE category_id = ? AND group_id = ?
                                              /
     );
 
     # For new "root" categories
     my $sth_add_group_perm = $dbh->prepare(
         qq/
-                                           insert into category_group_permission
-                                           (category_id, group_id, permission_type) values (?,?,"edit")
+                                           INSERT INTO category_group_permission
+                                           (category_id, group_id, permission_type) VALUES (?,?,"edit")
                                            /
     );
 
@@ -939,29 +939,29 @@ sub add_user_permissions {
     my $dbh = dbh();
 
     # Get rid of permissions cache entries for this user
-    $dbh->do("delete from user_category_permission_cache where user_id=?", undef, $user_id);
+    $dbh->do("DELETE FROM user_category_permission_cache WHERE user_id = ?", undef, $user_id);
 
     # Insert into cache table for each category/group
     my $sth_set_perm = $dbh->prepare(
         qq/
-                                     insert into user_category_permission_cache
-                                     (category_id, user_id, may_see, may_edit) values (?,?,?,?)
+                                     INSERT INTO user_category_permission_cache
+                                     (category_id, user_id, may_see, may_edit) VALUES (?,?,?,?)
                                      /
     );
 
     # Check for existing permissions
     my $sth_check_group_perm = $dbh->prepare(
         qq/
-                                             select permission_type from category_group_permission
-                                             where category_id=? and group_id=?
+                                             SELECT permission_type FROM category_group_permission
+                                             WHERE category_id = ? AND group_id = ?
                                              /
     );
 
     # do a lookup on a parent
     my $sth_get_parent_perm = $dbh->prepare(
         qq/
-                                            select may_see, may_edit from user_category_permission_cache 
-                                            where category_id=? and user_id=?
+                                            SELECT may_see, may_edit FROM user_category_permission_cache 
+                                            WHERE category_id = ? AND user_id = ?
                                             /
     );
 
@@ -1040,10 +1040,10 @@ sub delete_category_permissions {
     my $dbh = dbh();
 
     # Get rid of permissions cache
-    $dbh->do("delete from user_category_permission_cache where category_id=?", undef, $category_id);
+    $dbh->do("DELETE FROM user_category_permission_cache WHERE category_id = ?", undef, $category_id);
 
     # Get rid of permissions
-    $dbh->do("delete from category_group_permission where category_id=?", undef, $category_id);
+    $dbh->do("DELETE FROM category_group_permission WHERE category_id = ?", undef, $category_id);
 }
 
 =item rebuild_category_cache()
@@ -1068,7 +1068,7 @@ sub rebuild_category_cache {
     my $dbh  = dbh();
 
     # Clear cache table
-    $dbh->do("delete from user_category_permission_cache", undef);
+    $dbh->do("DELETE FROM user_category_permission_cache", undef);
 
     # Traverse category hierarchy
     my @root_cats = pkg('Category')->find(parent_id => undef, ignore_user => 1);
@@ -1104,8 +1104,8 @@ sub add_desk_permissions {
     my $dbh                = dbh();
     my $sth_add_group_perm = $dbh->prepare(
         qq/
-                                           insert into desk_group_permission
-                                           (desk_id, group_id, permission_type) values (?,?,"edit")
+                                           INSERT INTO desk_group_permission
+                                           (desk_id, group_id, permission_type) VALUES (?,?,"edit")
                                            /
     );
 
@@ -1142,7 +1142,7 @@ sub delete_desk_permissions {
     my $dbh = dbh();
 
     # Get rid of permissions
-    $dbh->do("delete from desk_group_permission where desk_id=?", undef, $desk_id);
+    $dbh->do("DELETE FROM desk_group_permission WHERE desk_id = ?", undef, $desk_id);
 }
 
 =item user_desk_permissions()
@@ -1190,11 +1190,11 @@ sub user_desk_permissions {
       || croak("No user_id in session");
 
     my $get_all_group_desks_sql = qq/ 
-      select desk_id, permission_type 
-        from desk_group_permission 
-          left join user_group_permission 
-            on desk_group_permission.group_id=user_group_permission.group_id 
-              where user_group_permission.user_id=? /;
+      SELECT desk_id, permission_type 
+        FROM desk_group_permission 
+          LEFT JOIN user_group_permission 
+            ON desk_group_permission.group_id = user_group_permission.group_id 
+              WHERE user_group_permission.user_id = ? /;
     my $dbh = dbh();
     my $sth = $dbh->prepare($get_all_group_desks_sql);
 
@@ -1552,7 +1552,7 @@ sub validate_group {
     my $name     = $self->name();
 
     my $dbh        = dbh();
-    my $is_dup_sql = "select group_id from group_permission where name = ? and group_id != ?";
+    my $is_dup_sql = "SELECT group_id from group_permission WHERE name = ? AND group_id != ?";
     my ($dup_id) = $dbh->selectrow_array($is_dup_sql, undef, $name, $group_id);
 
     # If dup, throw exception
@@ -1566,15 +1566,15 @@ sub insert_new_group {
     my $self = shift;
 
     my $dbh = dbh();
-    $dbh->do("insert into group_permission (group_id) values (NULL)") || die($dbh->errstr);
+    $dbh->do("INSERT INTO group_permission (group_id) VALUES (NULL)") || die($dbh->errstr);
 
     my $group_id = $dbh->{'mysql_insertid'};
     $self->{group_id} = $group_id;
 
     # Insert group/category permissions
-    my $cat_perm_sql = qq/ insert into category_group_permission
+    my $cat_perm_sql = qq/ INSERT INTO category_group_permission
                            (category_id, group_id, permission_type)
-                           values (?,?,"edit") /;
+                           VALUES (?,?,"edit") /;
     my $cat_perm_sth = $dbh->prepare($cat_perm_sql);
     my @root_cats = pkg('Category')->find(ids_only => 1, parent_id => undef);
     foreach my $category_id (@root_cats) {
@@ -1603,7 +1603,7 @@ sub new_from_db {
 
     # Load categories hash (category_id => security level)
     my $cat_sql =
-      "select category_id, permission_type from category_group_permission where group_id=?";
+      "SELECT category_id, permission_type FROM category_group_permission WHERE group_id = ?";
     my $cat_sth = $dbh->prepare($cat_sql);
     $cat_sth->execute($group_id) || die($cat_sth->errstr);
     my %categories = ();
@@ -1614,7 +1614,7 @@ sub new_from_db {
     $group_data->{categories} = \%categories;
 
     # Load desks (desk_id => security level)
-    my $desk_sql = "select desk_id, permission_type from desk_group_permission where group_id=?";
+    my $desk_sql = "SELECT desk_id, permission_type FROM desk_group_permission WHERE group_id = ?";
     my $desk_sth = $dbh->prepare($desk_sql);
     $desk_sth->execute($group_id) || die($desk_sth->errstr);
     my %desks = ();
