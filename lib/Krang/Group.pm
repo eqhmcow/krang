@@ -332,7 +332,6 @@ sub find {
       offset
       count
       ids_only
-
       simple_search
       group_id
       group_ids
@@ -608,8 +607,11 @@ sub dependent_check {
     my $dependents = 0;
     my (@info, $login);
 
-    my $query =
-      "SELECT user.login from user, user_group_permission where user.user_id = user_group_permission.user_id AND user_group_permission.group_id = ?";
+    my $query = qq/
+        SELECT user.login from user, user_group_permission 
+        WHERE user.user_id = user_group_permission.user_id 
+        AND user_group_permission.group_id = ?
+    /;
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
     $sth->execute($id);
@@ -825,33 +827,33 @@ sub add_category_permissions {
     my $dbh                 = dbh();
     my $sth_get_parent_perm = $dbh->prepare(
         qq/
-                                            SELECT may_see, may_edit FROM user_category_permission_cache 
-                                            WHERE category_id = ? AND user_id = ?
-                                            /
+        SELECT may_see, may_edit FROM user_category_permission_cache 
+        WHERE category_id = ? AND user_id = ?
+        /
     );
 
     # Insert into cache table for each category/group
     my $sth_set_perm = $dbh->prepare(
         qq/
-                                     INSERT INTO user_category_permission_cache
-                                     (category_id, user_id, may_see, may_edit) VALUES (?,?,?,?)
-                                     /
+        INSERT INTO user_category_permission_cache
+        (category_id, user_id, may_see, may_edit) VALUES (?,?,?,?)
+        /
     );
 
     # Check for existing permissions
     my $sth_check_group_perm = $dbh->prepare(
         qq/
-                                             SELECT permission_type FROM category_group_permission
-                                             WHERE category_id = ? AND group_id = ?
-                                             /
+        SELECT permission_type FROM category_group_permission
+        WHERE category_id = ? AND group_id = ?
+        /
     );
 
     # For new "root" categories
     my $sth_add_group_perm = $dbh->prepare(
         qq/
-                                           INSERT INTO category_group_permission
-                                           (category_id, group_id, permission_type) VALUES (?,?,"edit")
-                                           /
+        INSERT INTO category_group_permission
+        (category_id, group_id, permission_type) VALUES (?,?,"edit")
+        /
     );
 
     # root categories start with "edit" if not yet setup
@@ -944,25 +946,25 @@ sub add_user_permissions {
     # Insert into cache table for each category/group
     my $sth_set_perm = $dbh->prepare(
         qq/
-                                     INSERT INTO user_category_permission_cache
-                                     (category_id, user_id, may_see, may_edit) VALUES (?,?,?,?)
-                                     /
+        INSERT INTO user_category_permission_cache
+        (category_id, user_id, may_see, may_edit) VALUES (?,?,?,?)
+        /
     );
 
     # Check for existing permissions
     my $sth_check_group_perm = $dbh->prepare(
         qq/
-                                             SELECT permission_type FROM category_group_permission
-                                             WHERE category_id = ? AND group_id = ?
-                                             /
+        SELECT permission_type FROM category_group_permission
+        WHERE category_id = ? AND group_id = ?
+        /
     );
 
     # do a lookup on a parent
     my $sth_get_parent_perm = $dbh->prepare(
         qq/
-                                            SELECT may_see, may_edit FROM user_category_permission_cache 
-                                            WHERE category_id = ? AND user_id = ?
-                                            /
+        SELECT may_see, may_edit FROM user_category_permission_cache 
+        WHERE category_id = ? AND user_id = ?
+        /
     );
 
     # get categories, sorted with parents before children
@@ -1104,9 +1106,9 @@ sub add_desk_permissions {
     my $dbh                = dbh();
     my $sth_add_group_perm = $dbh->prepare(
         qq/
-                                           INSERT INTO desk_group_permission
-                                           (desk_id, group_id, permission_type) VALUES (?,?,"edit")
-                                           /
+        INSERT INTO desk_group_permission
+        (desk_id, group_id, permission_type) VALUES (?,?,"edit")
+        /
     );
 
     # Iterate through groups, default to "edit"
@@ -1190,11 +1192,10 @@ sub user_desk_permissions {
       || croak("No user_id in session");
 
     my $get_all_group_desks_sql = qq/ 
-      SELECT desk_id, permission_type 
-        FROM desk_group_permission 
-          LEFT JOIN user_group_permission 
-            ON desk_group_permission.group_id = user_group_permission.group_id 
-              WHERE user_group_permission.user_id = ? /;
+      SELECT desk_id, permission_type FROM desk_group_permission 
+      LEFT JOIN user_group_permission ON desk_group_permission.group_id = user_group_permission.group_id 
+      WHERE user_group_permission.user_id = ?
+    /;
     my $dbh = dbh();
     my $sth = $dbh->prepare($get_all_group_desks_sql);
 
@@ -1572,9 +1573,10 @@ sub insert_new_group {
     $self->{group_id} = $group_id;
 
     # Insert group/category permissions
-    my $cat_perm_sql = qq/ INSERT INTO category_group_permission
-                           (category_id, group_id, permission_type)
-                           VALUES (?,?,"edit") /;
+    my $cat_perm_sql = qq/
+        INSERT INTO category_group_permission (category_id, group_id, permission_type)
+        VALUES (?,?,"edit")
+    /;
     my $cat_perm_sth = $dbh->prepare($cat_perm_sql);
     my @root_cats = pkg('Category')->find(ids_only => 1, parent_id => undef);
     foreach my $category_id (@root_cats) {
