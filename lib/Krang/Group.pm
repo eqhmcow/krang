@@ -13,45 +13,50 @@ Krang::Group - Interface to manage Krang permissions
     # Include the library
     use Krang::ClassLoader 'Group';
 
-
     # Create a new group
-    my $group = pkg('Group')->new( name => 'Car Editors',
-                                 categories => { 1 => 'read-only', 
-                                                 2 => 'edit', 
-                                                 23 => 'hide' },
-                                 desks      => { 1 => 'read-only', 
-                                                 2 => 'edit', 
-                                                 23 => 'hide' },
-                                 may_publish         => 1,
-                                 may_checkin_all     => 1,
-                                 admin_users         => 1,
-                                 admin_users_limited => 1,
-                                 admin_groups        => 1,
-                                 admin_contribs      => 1,
-                                 admin_sites         => 1,
-                                 admin_categories    => 1,
-                                 admin_categories_ftp    => 1,
-                                 admin_jobs          => 1,
-                                 admin_scheduler     => 1,
-                                 admin_desks         => 1,
-                                 admin_lists         => 1,
-                                 admin_delete        => 1,
-                                 may_view_trash      => 1,
-                                 asset_story         => 'edit',
-                                 asset_media         => 'read-only',
-                                 asset_template      => 'hide' );
+    my $group = pkg('Group')->new(
+        name       => 'Car Editors',
+        categories => {
+            1  => 'read-only',
+            2  => 'edit',
+            23 => 'hide'
+        },
+        desks => {
+            1  => 'read-only',
+            2  => 'edit',
+            23 => 'hide'
+        },
+        may_publish          => 1,
+        may_checkin_all      => 1,
+        admin_users          => 1,
+        admin_users_limited  => 1,
+        admin_groups         => 1,
+        admin_contribs       => 1,
+        admin_sites          => 1,
+        admin_categories     => 1,
+        admin_categories_ftp => 1,
+        admin_jobs           => 1,
+        admin_scheduler      => 1,
+        admin_desks          => 1,
+        admin_lists          => 1,
+        admin_delete         => 1,
+        may_view_trash       => 1,
+        asset_story          => 'edit',
+        asset_media          => 'read-only',
+        asset_template       => 'hide'
+    );
 
     # Retrieve an existing group by ID
-    my ($group) = pkg('Group')->find( group_id => 123 );
+    my ($group) = pkg('Group')->find(group_id => 123);
 
     # Retrieve multiple existing groups by ID
-    my @groups = pkg('Group')->find( group_ids => [1, 2, 3] );
+    my @groups = pkg('Group')->find(group_ids => [1, 2, 3]);
 
     # Find groups by exact name
-    my @groups = pkg('Group')->find( name => 'Boat Editors' );
+    my @groups = pkg('Group')->find(name => 'Boat Editors');
 
     # Find groups by name pattern
-    my @groups = pkg('Group')->find( name_like => '%editor%' );
+    my @groups = pkg('Group')->find(name_like => '%editor%');
 
     # Save group
     $group->save();
@@ -63,27 +68,27 @@ Krang::Group - Interface to manage Krang permissions
     my $group_id = $self->group_id();
 
     # Accessors/Mutators
-    my $name             = $group->name();
-    my $may_publish      = $group->may_publish();
-    my $may_checkin_all  = $group->may_checkin_all();
-    my $admin_users      = $group->admin_users();
-    my $admin_users_limited = $group->admin_users_limited();
-    my $admin_groups     = $group->admin_groups();
-    my $admin_contribs   = $group->admin_contribs();
-    my $admin_sites      = $group->admin_sites();
-    my $admin_categories = $group->admin_categories();
+    my $name                 = $group->name();
+    my $may_publish          = $group->may_publish();
+    my $may_checkin_all      = $group->may_checkin_all();
+    my $admin_users          = $group->admin_users();
+    my $admin_users_limited  = $group->admin_users_limited();
+    my $admin_groups         = $group->admin_groups();
+    my $admin_contribs       = $group->admin_contribs();
+    my $admin_sites          = $group->admin_sites();
+    my $admin_categories     = $group->admin_categories();
     my $admin_categories_ftp = $group->admin_categories_ftp();
-    my $admin_jobs       = $group->admin_jobs();
-    my $admin_scheduler  = $group->admin_scheduler();
-    my $admin_desks      = $group->admin_desks();
-    my $admin_desks      = $group->admin_lists();
-    my $admin_delete     = $group->admin_delete();
-    my $may_view_trash   = $group->may_view_trash();
-    my $asset_story      = $group->asset_story();
-    my $asset_media      = $group->asset_media();
-    my $asset_template   = $group->asset_template();
-    my %categories       = $group->categories();
-    my %desks            = $group->desks();
+    my $admin_jobs           = $group->admin_jobs();
+    my $admin_scheduler      = $group->admin_scheduler();
+    my $admin_desks          = $group->admin_desks();
+    my $admin_desks          = $group->admin_lists();
+    my $admin_delete         = $group->admin_delete();
+    my $may_view_trash       = $group->may_view_trash();
+    my $asset_story          = $group->asset_story();
+    my $asset_media          = $group->asset_media();
+    my $asset_template       = $group->asset_template();
+    my %categories           = $group->categories();
+    my %desks                = $group->desks();
 
     # Category permissions cache management
     pkg('Group')->add_category_permissions($category);
@@ -95,7 +100,7 @@ Krang::Group - Interface to manage Krang permissions
     pkg('Group')->delete_desk_permissions($desk);
 
     # Evaluate permissions for the currently logged-in user
-    my %desk_perms = pkg('Group')->user_desk_permissions();
+    my %desk_perms  = pkg('Group')->user_desk_permissions();
     my %asset_perms = pkg('Group')->user_asset_permissions();
     my %admin_perms = pkg('Group')->user_admin_permissions();
 
@@ -301,8 +306,10 @@ Search terms may be combined to further narrow the result set.
 For example, the following will limit the above search to groups whose
 IDs are in an explicit list:
 
-    my @groups = pkg('Group')->find( name_like => '%admin%',
-                                     group_ids => [1, 5, 10, 34] );
+    my @groups = pkg('Group')->find(
+        name_like => '%admin%',
+        group_ids => [1, 5, 10, 34]
+    );
 
 The following search fields are recognized by C<Krang::Group->find()>:
 
