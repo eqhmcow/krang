@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed the "Edit Media" screen to be able to transform images in multiple
+windows.  [Brad Oaks]
+
+=item *
+
 Prevent users from submitting 2 different actions at the same time when
 editting elements (eg, Add Element + Reorder) before the 1st one has
 finished. [Michael Peters]

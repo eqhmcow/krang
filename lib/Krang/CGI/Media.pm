@@ -2328,6 +2328,7 @@ sub transform_image {
     my $self        = shift;
     my $q           = $self->query();
     my $m           = $self->get_edit_object();
+    my $edit_uuid   = $self->edit_uuid;
     my $apply_trans = $q->param('apply_transform');
     my ($imager, $url);
 
@@ -2335,14 +2336,14 @@ sub transform_image {
         $imager = $self->_do_apply_transform($m, $q);
 
         # change the file_path into a relative url
-        $url = abs2rel($session{image_transform_tmp_file}, KrangRoot);
+        $url = abs2rel($session{$edit_uuid}{'image_transform_tmp_file'}, KrangRoot);
 
     } else {
         $self->_clear_image_transform_session();
         $imager = Imager->new();
         $imager->open(file => $m->file_path) or croak $imager->errstr();
         $url = $m->file_path(relative => 1);
-        $session{image_transform_actions} = {};
+        $session{'image_transform_actions'}{$edit_uuid} = {};
     }
 
     my $t = $self->load_tmpl('transform_image.tmpl');
@@ -2358,16 +2359,17 @@ sub transform_image {
 
 sub _do_apply_transform {
     my ($self, $media, $query) = @_;
-    my $imager = Imager->new();
+    my $imager    = Imager->new();
+    my $edit_uuid = $self->edit_uuid;
 
     # do our work on a temp file
     my $tmp_dir = tempdir(CLEANUP => 0, DIR => catdir(KrangRoot, 'tmp'));
     my $file_path = catfile($tmp_dir, $media->filename);
 
     # copy the old file there
-    my $old_file = $session{image_transform_tmp_file} || $media->file_path;
+    my $old_file = $session{$edit_uuid}{'image_transform_tmp_file'} || $media->file_path;
     copy($old_file, $file_path) or die "Could not copy file $old_file to $file_path: $!\n";
-    $session{image_transform_tmp_file} = $file_path;
+    $session{$edit_uuid}{'image_transform_tmp_file'} = $file_path;
     $imager->open(file => $file_path) or croak $imager->errstr();
 
     # RESIZE
@@ -2376,7 +2378,7 @@ sub _do_apply_transform {
     if ($new_width || $new_height) {
         add_message('image_scaled', width => $new_width, height => $new_height);
         $imager = $imager->scale(xpixels => $new_width, ypixels => $new_height, type => 'nonprop');
-        $session{image_transform_actions}->{resize} = 1;
+        $session{$edit_uuid}{'image_transform_actions'}->{resize} = 1;
     }
 
     # CROP
@@ -2389,7 +2391,7 @@ sub _do_apply_transform {
             height => $crop{height}
         );
         add_message('image_cropped', width => $imager->getwidth, height => $imager->getheight);
-        $session{image_transform_actions}->{crop} = 1;
+        $session{$edit_uuid}{'image_transform_actions'}->{crop} = 1;
     }
 
     # ROTATE
@@ -2397,14 +2399,14 @@ sub _do_apply_transform {
         my $degress = $direction eq 'r' ? 90 : -90;
         $imager = $imager->rotate(degrees => $degress);
         add_message("image_rotated_$direction");
-        $session{image_transform_actions}->{rotate} = 1;
+        $session{$edit_uuid}{'image_transform_actions'}->{rotate} = 1;
     }
 
     # FLIP
     if (my $direction = $query->param('flip_direction')) {
         $imager->flip(dir => $direction);
         add_message("image_flipped_$direction");
-        $session{image_transform_actions}->{flip} = 1;
+        $session{$edit_uuid}{'image_transform_actions'}->{flip} = 1;
     }
 
     # now save it to a tmp place
@@ -2413,17 +2415,18 @@ sub _do_apply_transform {
 }
 
 sub save_image_transform {
-    my $self   = shift;
-    my $m      = $self->get_edit_object();
-    my $imager = $self->_do_apply_transform($m, $self->query);
+    my $self      = shift;
+    my $m         = $self->get_edit_object();
+    my $edit_uuid = $self->edit_uuid;
+    my $imager    = $self->_do_apply_transform($m, $self->query);
 
     # save changes
-    $m->upload_file(filepath => $session{image_transform_tmp_file});
+    $m->upload_file(filepath => $session{$edit_uuid}{'image_transform_tmp_file'});
     $m->save();
     add_message('image_transform_saved');
 
     # now record the history of what was done
-    foreach my $action (keys %{$session{image_transform_actions}}) {
+    foreach my $action (keys %{$session{$edit_uuid}{'image_transform_actions'}}) {
         add_history(object => $m, action => $action);
     }
 
@@ -2438,16 +2441,17 @@ sub cancel_image_transform {
 }
 
 sub _clear_image_transform_session {
-    my $self = shift;
+    my $self      = shift;
+    my $edit_uuid = $self->edit_uuid;
 
     # clear the tmp file
-    if (my $file = $session{image_transform_tmp_file}) {
+    if (my $file = $session{$edit_uuid}{'image_transform_tmp_file'}) {
         unlink $file if -e $file;
-        delete $session{image_transform_tmp_file};
+        delete $session{$edit_uuid}{'image_transform_tmp_file'};
     }
 
     # clear any history actions
-    delete $session{image_transform_actions};
+    delete $session{$edit_uuid}{'image_transform_actions'};
 }
 
 # The "_media_types_popup_menu" method creates the popup menu for
