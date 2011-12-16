@@ -494,7 +494,7 @@ sub _do_advanced_find {
     if (defined($search_media_type_id)) {
         $find_params->{media_type_id}         = $search_media_type_id;
         $persist_vars->{search_media_type_id} = $search_media_type_id;
-#        $t->param(search_media_type_id => $search_media_type_id);
+        #        $t->param(search_media_type_id => $search_media_type_id);
     }
 
     # search_no_attributes
@@ -546,9 +546,7 @@ sub _do_advanced_find {
             name     => 'search_creation_date_to',
             nochoice => 1,
         ),
-        type_chooser    => $self->_media_types_popup_menu(
-            search   => 1,
-        ),
+        type_chooser => $self->_media_types_popup_menu(search => 1,),
     );
 
     return $t->output();
@@ -710,15 +708,15 @@ sub save_stay_add {
 
     # Checkout to Workspace
     eval { $m->checkout() };
-    if( my $e = $@ ) {
-        if( ref $e && $e->isa('Krang::Media::CheckedOut') ) {
+    if (my $e = $@) {
+        if (ref $e && $e->isa('Krang::Media::CheckedOut')) {
             add_alert('media_modified_elsewhere', id => $m->media_id);
             return $self->redirect_to_workspace;
-        } elsif( ref $e && $e->isa('Krang::Media::NoEditAccess') ) {
+        } elsif (ref $e && $e->isa('Krang::Media::NoEditAccess')) {
             add_alert('media_permissions_changed_edit', id => $m->media_id);
             return $self->redirect_to_workspace;
         } else {
-            die $e; # rethrow
+            die $e;    # rethrow
         }
     }
 
@@ -757,15 +755,15 @@ sub checkout_and_edit {
     $self->_cancel_edit_goes_to('media.pl?rm=find', $m->checked_out_by);
 
     eval { $m->checkout };
-    if( my $e = $@ ) {
-        if( ref $e && $e->isa('Krang::Media::CheckedOut') ) {
+    if (my $e = $@) {
+        if (ref $e && $e->isa('Krang::Media::CheckedOut')) {
             add_alert('checked_out', id => $m->media_id, file => $m->filename);
             return $self->redirect_to_workspace;
-        } elsif( ref $e && $e->isa('Krang::Media::NoEditAccess') ) {
+        } elsif (ref $e && $e->isa('Krang::Media::NoEditAccess')) {
             add_alert('media_permissions_changed', id => $m->media_id);
             return $self->redirect_to_workspace;
         } else {
-            die $e; # rethrow
+            die $e;    # rethrow
         }
     }
 
@@ -786,7 +784,7 @@ sub edit {
     my $m        = $self->get_edit_object();
 
     # we expect a media object with an ID, if we don't have it go to add mode
-    if(!$m->media_id) {
+    if (!$m->media_id) {
         # Redirect to add mode
         return $self->_add(%args);
     }
@@ -805,7 +803,7 @@ sub edit {
         die_on_bad_params => 0
     );
     # so the return param for rm is 'edit' even after a 'save_stay_edit', etc.
-    $self->query->param(rm => 'edit');    
+    $self->query->param(rm => 'edit');
     my $media_tmpl_data = $self->make_media_tmpl_data($m);
     $t->param($media_tmpl_data);
 
@@ -857,15 +855,15 @@ sub save_edit {
 
     # Checkout to Workspace
     eval { $m->checkout() };
-    if( my $e = $@ ) {
-        if( ref $e && $e->isa('Krang::Media::CheckedOut') ) {
+    if (my $e = $@) {
+        if (ref $e && $e->isa('Krang::Media::CheckedOut')) {
             add_alert('media_modified_elsewhere', id => $m->media_id);
             return $self->redirect_to_workspace;
-        } elsif( ref $e && $e->isa('Krang::Media::NoEditAccess') ) {
+        } elsif (ref $e && $e->isa('Krang::Media::NoEditAccess')) {
             add_alert('media_permissions_changed_edit', id => $m->media_id);
             return $self->redirect_to_workspace;
         } else {
-            die $e; # rethrow
+            die $e;    # rethrow
         }
     }
 
@@ -937,15 +935,15 @@ sub save_stay_edit {
 
     # Checkout to Workspace
     eval { $m->checkout };
-    if( my $e = $@ ) {
-        if( ref $e && $e->isa('Krang::Media::CheckedOut') ) {
+    if (my $e = $@) {
+        if (ref $e && $e->isa('Krang::Media::CheckedOut')) {
             add_alert('media_modified_elsewhere', id => $m->media_id);
             return $self->redirect_to_workspace;
-        } elsif( ref $e && $e->isa('Krang::Media::NoEditAccess') ) {
+        } elsif (ref $e && $e->isa('Krang::Media::NoEditAccess')) {
             add_alert('media_permissions_changed_edit', id => $m->media_id);
             return $self->redirect_to_workspace;
         } else {
-            die $e; # rethrow
+            die $e;    # rethrow
         }
     }
 
@@ -970,7 +968,7 @@ parameter 'media_id'.  Redirect user to Workspace.
 
 sub delete {
     my $self = shift;
-    my $m = $self->get_edit_object;
+    my $m    = $self->get_edit_object;
 
     # Transfer to trash
     $m->trash();
@@ -1353,13 +1351,13 @@ sub checkout_selected {
     foreach my $media_id (@media_checkout_list) {
         my ($m) = pkg('Media')->find(media_id => $media_id);
         eval { $m->checkout() };
-        if( my $e = $@ ) {
-            if( ref $e && $e->isa('Krang::Media::CheckedOut') ) {
+        if (my $e = $@) {
+            if (ref $e && $e->isa('Krang::Media::CheckedOut')) {
                 add_alert('checked_out', id => $m->media_id, file => $m->filename);
-            } elsif( ref $e && $e->isa('Krang::Media::NoEditAccess') ) {
+            } elsif (ref $e && $e->isa('Krang::Media::NoEditAccess')) {
                 add_alert('media_permissions_changed', id => $m->media_id);
             } else {
-                die $e; # rethrow
+                die $e;    # rethrow
             }
         }
 
@@ -1568,9 +1566,9 @@ sub list_active_row_handler {
 
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url(
-        url    => $media->url(),
-        class  => 'media-preview-link',
-        name   => "media_$media_id",
+        url   => $media->url(),
+        class => 'media-preview-link',
+        name  => "media_$media_id",
     );
 
     # title
@@ -1626,7 +1624,7 @@ sub update_media {
     # Make sure object hasn't been modified elsewhere
     if (my $id = $m->media_id) {
         if (my ($media_in_db) = pkg('Media')->find(media_id => $id)) {
-            if (   !$media_in_db->checked_out
+            if (  !$media_in_db->checked_out
                 || $media_in_db->checked_out_by ne $ENV{REMOTE_USER}
                 || $media_in_db->version > $m->version)
             {
@@ -2034,15 +2032,15 @@ sub make_pager {
 
     my $q     = $self->query();
     my $pager = pkg('HTMLPager')->new(
-        cgi_query        => $q,
-        persist_vars     => $persist_vars,
-        use_module       => pkg('Media'),
-        find_params      => $find_params,
-        columns          => \@columns,
-        column_labels    => \%column_labels,
-        columns_sortable => [qw( media_id title url creation_date )],
+        cgi_query               => $q,
+        persist_vars            => $persist_vars,
+        use_module              => pkg('Media'),
+        find_params             => $find_params,
+        columns                 => \@columns,
+        column_labels           => \%column_labels,
+        columns_sortable        => [qw( media_id title url creation_date )],
         default_sort_order_desc => 1,
-        columns_hidden   => [qw( status )],
+        columns_hidden          => [qw( status )],
         row_handler =>
           sub { $self->find_media_row_handler($show_thumbnails, @_, retired => $retired); },
         id_handler => sub { return $_[0]->media_id },
@@ -2069,9 +2067,9 @@ sub find_media_row_handler {
 
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url(
-        url    => $media->url(),
-        class  => 'media-preview-link',
-        name   => "media_$media_id",
+        url   => $media->url(),
+        class => 'media-preview-link',
+        name  => "media_$media_id",
     );
 
     # title
@@ -2377,7 +2375,7 @@ sub _do_apply_transform {
     my $new_height = $query->param('new_height');
     if ($new_width || $new_height) {
         add_message('image_scaled', width => $new_width, height => $new_height);
-        $imager = $imager->scale(xpixels => $new_width, ypixels => $new_height, type=>'nonprop');
+        $imager = $imager->scale(xpixels => $new_width, ypixels => $new_height, type => 'nonprop');
         $session{image_transform_actions}->{resize} = 1;
     }
 
@@ -2487,7 +2485,7 @@ sub _media_types_popup_menu {
 sub load_tmpl {
     my $self = shift;
     my $tmpl = $self->SUPER::load_tmpl(@_);
-    if( my $edit_uuid = $self->edit_uuid ) {
+    if (my $edit_uuid = $self->edit_uuid) {
         $tmpl->param(edit_uuid => $edit_uuid) if $tmpl->query(name => 'edit_uuid');
     }
     return $tmpl;
