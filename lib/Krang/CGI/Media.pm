@@ -2343,7 +2343,7 @@ sub transform_image {
         $imager = Imager->new();
         $imager->open(file => $m->file_path) or croak $imager->errstr();
         $url = $m->file_path(relative => 1);
-        $session{'image_transform_actions'}{$edit_uuid} = {};
+        $session{$edit_uuid}{'image_transform_actions'} = {};
     }
 
     my $t = $self->load_tmpl('transform_image.tmpl');
