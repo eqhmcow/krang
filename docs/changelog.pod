@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<--groups> option to F<bin/krang_floodfill>. [Michael Peters]
+
+=item *
+
 Fixed the "Edit Media" screen to be able to transform images in multiple
 windows.  [Brad Oaks]
 

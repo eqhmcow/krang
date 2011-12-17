@@ -63,6 +63,10 @@ Whether or not to create templates (one per element).  Defaults to 1.
 
 Number of users to create, defaults to 50
 
+=item * groups
+
+Number of groups to create. Defaults to 0 (Krang comes with 3 built-in groups)
+
 =item * undo_script
 
 Set to the name of a perl script to generate which will undo the floodfill
@@ -133,6 +137,7 @@ my $stories  = 50;
 my $covers;
 my $media     = 25;
 my $users     = 50;
+my $groups    = 0;
 my $templates = 1;
 my $undo_script;
 pod2usage(2)
@@ -145,6 +150,7 @@ pod2usage(2)
     'stories=s'     => \$stories,
     'media=s'       => \$media,
     'users=s'       => \$users,
+    'groups=s'      => \$groups,
     'templates=s'   => \$templates,
     'covers=s'      => \$covers,
     'undo_script=s' => \$undo_script,
@@ -724,16 +730,33 @@ END
     }
 }
 
+# get the existing groups
+my @group_ids = map { $_->group_id } pkg('Group')->find();
+
+# do we need to create any more?
+if ($groups) {
+    for (1 .. $groups) {
+        my $name = ucfirst(get_word('ascii')) . ' ' . ucfirst(get_word('ascii'));
+        my $group = pkg('Group')->new(name => $name);
+        eval { $group->save };
+        redo if $@ && $@ =~ /duplicate/i;
+        die $@ if $@;
+        push(@group_ids, $group->group_id);
+        print STDERR "Created group #" . $group->group_id . " - " . $group->name . "\n";
+    }
+}
+
 # create users
-my %groups = map { $_->group_id, $_->name } pkg('Group')->find();
 my @users;
 for (1 .. $users) {
-    my $login    = lc(get_word());
-    my $fname    = ucfirst(get_word('ascii'));
-    my $lname    = ucfirst(get_word('ascii'));
-    my $password = lc(get_word());
-    my @groups   = grep { int(rand(5)) } keys %groups;
-    @groups = (keys %groups)[0] unless @groups;
+    my $login           = lc(get_word());
+    my $fname           = ucfirst(get_word('ascii'));
+    my $lname           = ucfirst(get_word('ascii'));
+    my $password        = lc(get_word());
+
+    # pick a random subset of groups
+    my $group_count = @group_ids;
+    my @selected_groups = grep { int(rand(2)) } @group_ids;
 
     my $user = pkg('User')->new(
         login      => $login,
@@ -743,13 +766,13 @@ for (1 .. $users) {
         password   => $password,
         phone      => "1-800-$lname",
     );
-    $user->group_ids(@groups);
+    $user->group_ids(@selected_groups);
     eval { $user->save() };
     redo if $@ and $@ =~ /duplicate/;
     push(@users, $user);
     print STDERR "Created user "
-      . join(' ', grep { $_ } ("$login:", $fname, $lname)) . " ("
-      . join(', ', map { $groups{$_} } @groups) . ")" . "\n";
+      . join(' ', grep { $_ } ("$login:", $fname, $lname)) . " (groups "
+      . join(', ', @selected_groups) . ")" . "\n";
 }
 
 # create an undo script if requested
