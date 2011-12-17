@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Optimize C<Krang::Group->add_user_permissions()> so that it doesn't
+perform so many database queries. The count can grow dramatically as
+the number of users and categories increases. [Michael Peters]
+
+=item *
+
 Added C<--groups> option to F<bin/krang_floodfill>. [Michael Peters]
 
 =item *

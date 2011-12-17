@@ -902,7 +902,7 @@ sub add_category_permissions {
     # Insert into cache table for each category/group
     my $sth_set_perm = $dbh->prepare(
         qq/
-        INSERT INTO user_category_permission_cache
+        INSERT IGNORE INTO user_category_permission_cache
         (category_id, user_id, may_see, may_edit) VALUES (?,?,?,?)
         /
     );
@@ -918,7 +918,7 @@ sub add_category_permissions {
     # For new "root" categories
     my $sth_add_group_perm = $dbh->prepare(
         qq/
-        INSERT INTO category_group_permission
+        INSERT IGNORE INTO category_group_permission
         (category_id, group_id, permission_type) VALUES (?,?,"edit")
         /
     );
@@ -1019,11 +1019,8 @@ sub add_user_permissions {
     );
 
     # Check for existing permissions
-    my $sth_check_group_perm = $dbh->prepare(
-        qq/
-        SELECT permission_type FROM category_group_permission
-        WHERE category_id = ? AND group_id = ?
-        /
+    my $sth_cat_group_perm = $dbh->prepare(
+        'SELECT category_id, group_id, permission_type FROM category_group_permission'
     );
 
     # do a lookup on a parent
@@ -1040,6 +1037,14 @@ sub add_user_permissions {
         order_by    => 'url'
     );
 
+    # get all the category/group permissions into a hash so we don't have to keep
+    # looking each combination up individually in the database.
+    $sth_cat_group_perm->execute();
+    my %cat_group_perms;
+    while(my $row = $sth_cat_group_perm->fetchrow_arrayref) {
+        $cat_group_perms{$row->[0]}{$row->[1]} = $row->[2];
+    }
+
     foreach my $category (@category) {
         my $may_see  = 0;
         my $may_edit = 0;
@@ -1047,13 +1052,12 @@ sub add_user_permissions {
 
         # Get category parent -- needed for default perms
         my $parent_id = $category->parent_id();
+        my $cat_id    = $category->category_id();
         my @group_ids = $user->group_ids();
 
         foreach my $group_id (@group_ids) {
-
-            # Apply permissions if they exist (rebuild case)
-            $sth_check_group_perm->execute($category->category_id, $group_id);
-            my ($permission_type) = $sth_check_group_perm->fetchrow_array();
+            # find out if this category already has a permission
+            my $permission_type = $cat_group_perms{$cat_id}{$group_id};
             next unless $permission_type;
             $found = 1;
 
@@ -1069,15 +1073,14 @@ sub add_user_permissions {
             }
         }
 
-        unless ($found) {
-
+        if(!$found) {
             # lookup parent permissions and use them
-            $sth_get_parent_perm->execute($category->parent_id, $user_id);
+            $sth_get_parent_perm->execute($parent_id, $user_id);
             ($may_see, $may_edit) = $sth_get_parent_perm->fetchrow_array();
         }
 
         # commit permissions
-        $sth_set_perm->execute($category->category_id, $user_id, $may_see, $may_edit);
+        $sth_set_perm->execute($cat_id, $user_id, $may_see, $may_edit);
     }
 }
 
