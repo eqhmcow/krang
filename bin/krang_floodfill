@@ -4,8 +4,6 @@ use strict;
 use Getopt::Long;
 use Pod::Usage;
 
-=pod
-
 =head1 NAME
 
 krang_floodfill - create fake Krang data the easy way
@@ -30,27 +28,47 @@ Templates will be checked in and deployed.
 
 =head1 OPTIONS
 
-  --sites    - number of sites to create, defaults to 3
+=over
 
-  --cats     - number of categories to create, defaults to 15
+=item * sites
 
-  --contribs - number of contributors to create, defaults to 50
+Number of sites to create, defaults to 3
 
-  --media    - number of media objects to create, defaults to 25
+=item * cats
 
-  --stories  - number of stories to create, defaults to 50
+Number of categories to create, defaults to 15
 
-  --covers   - number of cover stories to create, defaults to (--cats/2)
-               (must be less than the number of categories)
+=item * contribs
 
-  --templates- whether or not to create templates (one per element). 
-               Defaults to 1.
+Number of contributors to create, defaults to 50
 
-  --users    - number of users to create, defaults to 50
+=item * media
 
-  --undo_script - set to the name of a perl script to generate which will 
-               undo the floodfill by deleting generated content.  Defaults
-               to not create an undo script.
+Number of media objects to create, defaults to 25
+
+=item * stories
+
+Number of stories to create, defaults to 50
+
+=item * covers
+
+Number of cover stories to create, defaults to (--cats/2) (must be less
+than the number of categories)
+
+=item * templates
+
+Whether or not to create templates (one per element).  Defaults to 1.
+
+=item * users
+
+Number of users to create, defaults to 50
+
+=item * undo_script
+
+Set to the name of a perl script to generate which will undo the floodfill
+by deleting generated content.  Defaults to not create an undo script.
+
+=back
 
 =cut
 
