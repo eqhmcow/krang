@@ -783,7 +783,7 @@ sub publish_media {
         push @$publish_list, $args{media};
     }
 
-    $self->_maybe_add_index_story($publish_list);
+    $publish_list = $self->_maybe_add_index_story($publish_list) unless $ENV{KRANG_TEST};
 
     my @urls = $self->_process_assets(
         publish_list        => $publish_list,
@@ -894,14 +894,16 @@ sub asset_list {
         maintain_versions => $maintain_versions,
         initial_assets    => 1
     );
+    my $publish_list = \@publish_list;
 
-    $self->_maybe_add_index_story(\@publish_list) if $mode eq 'publish';
+    $publish_list = $self->_maybe_add_index_story($publish_list)
+      if $mode eq 'publish' and not $ENV{KRANG_TEST};
 
     #     unless ($keep_list) {
     #         $self->_clear_asset_lists();
     #     }
 
-    return \@publish_list;
+    return $publish_list;
 
 }
 
@@ -2510,7 +2512,15 @@ sub _maybe_add_index_story {
         }
     }
 
-    push @$publish_list, values(%publish_index_stories);
+    # merge and uniquify index stories into publish list
+    my (@publish_list, %seen);
+    for my $object (@$publish_list, values(%publish_index_stories)) {
+        my $meth = $object->isa('Krang::Story') ? 'story_id' : 'media_id';
+        push @publish_list, $object
+          unless $seen{$meth}{$object->$meth}++;
+    }
+
+    return \@publish_list;
 }
 
 sub _get_conditional_index_stories {

@@ -875,7 +875,7 @@ sub test_linked_assets {
     $publish_list = $publisher->asset_list(story => $story2, mode => 'publish', version_check => 1);
     test_publish_list($publish_list, \%expected);
 
-   # clear asset lists to not interfere with tests, also untrash, unretire and 'expect' $story again
+    # clear asset lists to not interfere with tests, also untrash, unretire and 'expect' $story again
     $publisher->_clear_asset_lists();
     $story->untrash();
     $story->unretire();
@@ -1098,7 +1098,7 @@ sub test_storylink {
 
     $story_href = $storylink->publish(element => $storylink, publisher => $publisher);
 
-##    ok($story_href eq 'http://' . $dest_story->url(), 'Krang::ElementClass::StoryLink->publish() -- publish-no template');
+    ok($story_href eq 'http://' . $dest_story->url(), 'Krang::ElementClass::StoryLink->publish() -- publish-no template');
 
     ok(
         $story_href eq $publisher->url_for(object => $dest_story),
@@ -1111,7 +1111,7 @@ sub test_storylink {
 
     $story_href = $storylink->publish(element => $storylink, publisher => $publisher);
 
-##    ok($story_href eq "$scheme://" . $dest_story->preview_url(), 'Krang::ElementClass::StoryLink->publish() -- preview-no template');
+    ok($story_href eq "$scheme://" . $dest_story->preview_url(), 'Krang::ElementClass::StoryLink->publish() -- preview-no template');
 
     ok(
         $story_href eq $publisher->url_for(object => $dest_story),
@@ -2111,7 +2111,7 @@ sub test_publish_if_modified_in_category {
     my $story_red   = $creator->create_story(category => [$cat_red], title => 'story_red');
 
     # create an index story (has no CategoryLink yet)
-    my $index = $creator->create_story(title => 'story_index');
+    my $index = $creator->create_story(category => [$cat_color], title => 'story_index');
     $index->checkout;
 
     # newly created without CategoryLink: index should NOT publish
@@ -2178,10 +2178,6 @@ sub test_publish_if_modified_in_category {
     my $media_color = $creator->create_media(category => $cat_color, title => 'media_color');
     my $media_red   = $creator->create_media(category => $cat_red, title => 'media_red');
 
-##    # create an index story (has no CategoryLink yet)
-##    my $index = $creator->create_story(title => 'story_index');
-##    $index->checkout;
-
     # newly created without CategoryLink: index should NOT publish
     not_published_index($media_color, $index, "no catlink");
 
@@ -2244,11 +2240,14 @@ sub test_publish_if_modified_in_category {
     not_published_index($media_red, $index, "deleted catlink: don't publish index media");
 
     # combined story/media catlink
-    my $catlink_story_in = $index->element->add_child(class => 'story_and_media_in_cat');
+    $catlink_story_in = $index->element->add_child(class => 'story_and_media_in_cat');
     $index->element->child('story_and_media_in_cat')->data($cat_color);
     $index->save;
     published_index($story_color, $index, "set category 'color' in catlink: publish index story");
     published_index($media_color, $index, "set category 'color' in catlink: publish index story");
+
+    # test that publishing a modified index should not publish it twice
+    published_index($index, $index, "publish index story in same cat: don't publish it twice");
 }
 
 
@@ -2260,9 +2259,10 @@ sub published_index {
         $to_publish = $publisher->asset_list($key => $object);
     } else {
         $to_publish = [$object];
-        $publisher->_maybe_add_index_story($to_publish);
+        $to_publish = $publisher->_maybe_add_index_story($to_publish);
     }
     is($to_publish->[-1]->title, $index->title, "publish catlink $key: $msg");
+    isnt($to_publish->[-1]->title, ($to_publish->[-2] ? $to_publish->[-2]->title : ''), "unique index file");
     $publisher->_clear_asset_lists;
 }
 
@@ -2274,7 +2274,7 @@ sub not_published_index {
         $to_publish = $publisher->asset_list($key => $object);
     } else {
         $to_publish = [$object];
-        $publisher->_maybe_add_index_story($to_publish);
+        $to_publish = $publisher->_maybe_add_index_story($to_publish);
     }
     isnt($to_publish->[-1]->title, $index->title, "publish catlink $key: $msg");
     $publisher->_clear_asset_lists;
