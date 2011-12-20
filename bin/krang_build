@@ -272,8 +272,8 @@ unless ($skip_all_modules) {
         ExtUtils-ParseXS
         ExtUtils-CBuilder
         IPC-Cmd
-        Module-Load
         Module-Load-Conditional
+        Module-Load-0
         Params-Check
         Locale-Maketext-Simpl
         Module-CoreList
