@@ -572,6 +572,10 @@ sub build_perl_module {
     my ($pkg, %arg) = @_;
     my $name = $arg{name};
     my $dest_dir = $arg{dest_dir} || catdir($ENV{KRANG_ROOT}, 'lib');
+    my $bin_dir = $arg{dest_dir}  || catdir($ENV{KRANG_ROOT}, 'lib', 'bin');
+
+    # make sure our path contains the new bin dir
+    local $ENV{PATH} = "$bin_dir:$ENV{PATH}";
 
     # load expect unless we're building it
     my $use_expect = ($name =~ /IO-Tty/ or $name =~ /Expect/) ? 0 : 1;
@@ -593,14 +597,14 @@ sub build_perl_module {
           . " --install_path lib=$dest_dir"
           . " --install_path libdoc=$trash_dir"
           . " --install_path script=$trash_dir"
-          . " --install_path bin=$trash_dir"
+          . " --install_path bin=$bin_dir"
           . " --install_path bindoc=$trash_dir"
           . " --install_path arch=$dest_dir/$Config{archname}";
 
         $make_cmd = './Build';
     } else {
         $cmd =
-          "$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir INSTALLMAN3DIR=' ' INSTALLMAN1DIR=' '";
+          "$^X Makefile.PL LIB=$dest_dir INSTALLBIN=$bin_dir INSTALLSCRIPT=$bin_dir PREFIX=$trash_dir INSTALLMAN3DIR=' ' INSTALLMAN1DIR=' '";
         $make_cmd = 'make';
     }
 
