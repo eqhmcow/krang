@@ -273,7 +273,7 @@ unless ($skip_all_modules) {
         ExtUtils-CBuilder
         IPC-Cmd
         Module-Load-Conditional
-        Module-Load-0
+        Module-Load
         Params-Check
         Locale-Maketext-Simpl
         Module-CoreList
@@ -283,7 +283,7 @@ unless ($skip_all_modules) {
     );
     foreach my $distribution (@early_modules) {
         my ($file) = grep(/$distribution/, @files);
-        @files = grep(!/$distribution/, @files);
+        @files = grep(!/^$distribution-v?\d+/, @files);
         die "A prerequisite module is not here to be built! $distribution" unless $file;
         unshift @files, $file if $file;
     }
