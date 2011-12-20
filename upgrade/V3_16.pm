@@ -20,6 +20,7 @@ sub per_installation {
         qw(
           src/Module-Build-0.30.tar.gz
           src/Params-Validate-0.88.tar.gz
+          src/ExtUtils-CBuilder-0.24.tar.gz
           )
     );
 
