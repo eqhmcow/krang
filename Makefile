@@ -46,7 +46,7 @@ dist:
 	$(call notify, "Krang Dist created")
 
 clean:	bench_clean
-	- find lib/ -mindepth 1 -maxdepth 1 | grep -v Krang | grep -v .svn | grep -v '.cvsignore' | grep -v '^lib/Devel/CheckLib.pm' | grep -v '^lib/Devel' | xargs rm -rf
+	- find lib/ -mindepth 1 -maxdepth 1 | grep -v Krang | grep -v .svn | grep -v bin | grep -v '.cvsignore' | grep -v '^lib/Devel/CheckLib.pm' | grep -v '^lib/Devel' | xargs rm -rf
 	- find apache/ -mindepth 1 -maxdepth 1 | grep -v .svn | grep -v '.cvsignore' | xargs rm -rf
 	- rm -f data/build.db
 	- rm -f htdocs/data
