@@ -21,6 +21,7 @@ sub per_installation {
           src/Module-Build-0.30.tar.gz
           src/Params-Validate-0.88.tar.gz
           src/ExtUtils-CBuilder-0.24.tar.gz
+          Parse-CPAN-Meta-1.40.tar.gz
           )
     );
 
