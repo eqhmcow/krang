@@ -263,6 +263,7 @@ unless ($skip_all_modules) {
     # since they're needed by later build steps (modules last in this
     # list are actually built first
     my @early_modules = qw(
+        version
         Test-Simple
         Module-Build
         Perl-OSType
