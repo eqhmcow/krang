@@ -596,7 +596,7 @@ sub build_perl_module {
             "$^X Build.PL "
           . " --install_path lib=$dest_dir"
           . " --install_path libdoc=$trash_dir"
-          . " --install_path script=$trash_dir"
+          . " --install_path script=$bin_dir"
           . " --install_path bin=$bin_dir"
           . " --install_path bindoc=$trash_dir"
           . " --install_path arch=$dest_dir/$Config{archname}";
