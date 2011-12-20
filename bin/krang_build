@@ -262,7 +262,7 @@ unless ($skip_all_modules) {
     # shuffle Expect, IO-Tty, Test-Harness and Test-Simple to the front
     # since they're needed by later build steps
     foreach my $distribution
-      qw(Test-Simple Module-Build Perl-OSType Module-Metadata ExtUtils-Install Test-Harness ExtUtils-ParseXS ExtUtils-CBuilder ExtUtils-MakeMaker Expect IO-Tty) {
+      qw(Test-Simple Module-Build Perl-OSType Module-Metadata ExtUtils-Install Test-Harness ExtUtils-ParseXS ExtUtils-CBuilder IPC-Cmd Module-Load Module-Load-Conditional Params-Check Locale-Maketext-Simple Module-CoreList ExtUtils-MakeMaker Expect IO-Tty) {
         my ($file) = grep(/$distribution/, @files);
         @files = grep(!/$distribution/, @files);
         unshift @files, $file if $file;
