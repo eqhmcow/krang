@@ -576,6 +576,7 @@ sub build_perl_module {
 
     # make sure our path contains the new bin dir
     local $ENV{PATH} = "$bin_dir:$ENV{PATH}";
+    local $ENV{PERL5LIB} = "${dest_dir}:" . $ENV{PERL5LIB};
 
     # load expect unless we're building it
     my $use_expect = ($name =~ /IO-Tty/ or $name =~ /Expect/) ? 0 : 1;
