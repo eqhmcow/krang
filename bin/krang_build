@@ -275,14 +275,14 @@ unless ($skip_all_modules) {
         Module-Load-Conditional
         Module-Load
         Params-Check
-        Locale-Maketext-Simpl
+        Locale-Maketext-Simple
         Module-CoreList
         ExtUtils-MakeMaker
         Expect
         IO-Tty
     );
     foreach my $distribution (@early_modules) {
-        my ($file) = grep(/$distribution/, @files);
+        my ($file) = grep(/$distribution-v?\d+/, @files);
         @files = grep(!/^$distribution-v?\d+/, @files);
         die "A prerequisite module is not here to be built! $distribution" unless $file;
         unshift @files, $file if $file;
