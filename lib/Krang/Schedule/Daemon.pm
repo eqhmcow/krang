@@ -44,8 +44,9 @@ $SIG{'TERM'} = sub {
     exit(0);
 };
 
+use Sys::Hostname qw(hostname);
 my $daemon_uuid;
-BEGIN { $daemon_uuid = `hostname` . '_' . $$ }
+BEGIN { $daemon_uuid = hostname . '_' . $$ }
 
 =head1 NAME
 
