@@ -426,6 +426,9 @@ sub _child_work {
                 $t->{daemon_uuid} = undef;
                 $t->save;
                 _notify_user($t->success_notify_id, $t->success_subject, $t->success_message);
+            } else {
+                $t->{daemon_uuid} = undef;
+                $t->save;
             }
         }
     };
