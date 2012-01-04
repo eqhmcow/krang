@@ -28,6 +28,10 @@ my $CHILD_COUNT   = 0;
 my %child_pids    = ();
 my %assigned_jobs = ();
 
+use Sys::Hostname qw(hostname);
+my $daemon_uuid;
+BEGIN { $daemon_uuid = hostname . '_' . $$ }
+
 # handle SIGTERM
 $SIG{'TERM'} = sub {
 
@@ -39,14 +43,11 @@ $SIG{'TERM'} = sub {
     unlink $pidfile if -e $pidfile;
 
     info(__PACKAGE__ . " Exiting.");
+    _clear_my_daemon_uuid_claims();
 
     # get out of here
     exit(0);
 };
-
-use Sys::Hostname qw(hostname);
-my $daemon_uuid;
-BEGIN { $daemon_uuid = hostname . '_' . $$ }
 
 =head1 NAME
 
@@ -663,6 +664,42 @@ sub _query_for_jobs {
 
     return _cull_running_jobs(\@schedules);
 
+}
+
+#
+# _clear_my_daemon_uuid_claims
+#
+# Searches all instances' Schedule database for jobs with our daemon_uuid and clears that value
+#
+
+sub _clear_my_daemon_uuid_claims {
+    debug(__PACKAGE__ . "->_clear_my_daemon_uuid_claims() daemon_uuid is $daemon_uuid");
+
+    foreach my $instance (pkg('Conf')->instances) {
+
+        my @schedules;
+
+        @schedules = pkg('Schedule')->find(
+            select_for_update           => 1,
+            daemon_uuid                 => $daemon_uuid,
+        );
+
+        # update the schedules with the daemon's uuid
+        for my $schedule (@schedules) {
+            debug(__PACKAGE__ . "->_clear_my_daemon_uuid_claims() releasing " . $schedule->schedule_id);
+            $schedule->daemon_uuid(undef);
+            $schedule->save;
+        }
+
+        my $dbh = dbh();
+
+        # commit
+        $dbh->commit or critical( 'error during commit : ' . $dbh->errstr);
+
+        # disconnect this handle since it has AutoCommit => 0 set
+        $dbh->disconnect or critical('error during disconnect : '. $dbh->errstr);
+
+    }
 }
 
 =back
