@@ -653,6 +653,14 @@ sub _query_for_jobs {
         $schedule->save;
     }
 
+    my $dbh = dbh();
+
+    # commit
+    $dbh->commit or critical( 'error during commit : ' . $dbh->errstr);
+
+    # disconnect this handle since it has AutoCommit => 0 set
+    $dbh->disconnect or critical('error during disconnect : '. $dbh->errstr);
+
     return _cull_running_jobs(\@schedules);
 
 }
