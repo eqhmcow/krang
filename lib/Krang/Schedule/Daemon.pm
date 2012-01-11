@@ -210,13 +210,13 @@ sub run {
             }
             $ENV{REMOTE_USER} = $system_user{$instance};
 
-            my @jobs = _query_for_jobs();
-
-            if (@jobs) {
-                debug(sprintf("%s: %i Pending jobs found.", __PACKAGE__, ($#jobs + 1)));
+            my @jobs = ();
+            while (my @tasks = _query_for_jobs()) {
+                push @jobs, @tasks;
             }
 
             if (@jobs) {
+                debug(sprintf("%s: %i Pending jobs found.", __PACKAGE__, ($#jobs + 1)));
                 scheduler_pass(@jobs);
             }
         }
@@ -230,8 +230,8 @@ sub run {
 Polls the schedule database for a given L<Krang::Conf> instance,
 looking for jobs where next_run <= now.
 
-If work to be done is found, a child process is allocated to take care
-of the tasks at hand.
+If work to be done is found, child processes are allocated to take
+care of the tasks at hand.
 
 When a child process is spawned, it will C<execute()> all work in the
 order assigned.  When a task is completed, it is marked as complete,
@@ -244,7 +244,7 @@ entry from the tables tracking work being done.
 
 If there is more work to be done than available child processes,
 C<scheduler_pass()> will block until a child returns, complete
-cleanup, and then spawn a new child to handle the pending work.
+cleanup, and then spawn new children to handle the pending work.
 
 Returns when all work has been assigned.  The first task on the next
 run will be to reap newly-dead (e.g. finished) children.
@@ -268,38 +268,70 @@ sub scheduler_pass {
             __PACKAGE__, $instance, ($#jobs + 1)
         )
     );
+    while (@jobs) {
 
-    my $pid;
+        # allocate first CHUNK_SIZE jobs to be done.
+        my @tasks = ();
+        my $pid;
 
-    # wait for a child to return.
-    if ($CHILD_COUNT >= SchedulerMaxChildren) {
-        _reap_dead_children(1);
+        while ((@tasks < CHUNK_SIZE) && @jobs) {
+            push @tasks, shift @jobs;
+        }
+
+        debug(
+            sprintf(
+                "%s->scheduler_pass(): Allocating %i jobs, %i remaining.",
+                __PACKAGE__,
+                ($#tasks + 1),
+                ($#jobs + 1)
+            )
+        );
+
+        # wait for a child to return.
+        if ($CHILD_COUNT >= SchedulerMaxChildren) {
+            _reap_dead_children(1);
+        }
+
+        # fork a child to take care of the work.
+        if ($pid = fork) {
+            _parent_work($pid, \@tasks);
+        } elsif (defined($pid)) {
+
+            # change handling of SIGTERM -- don't act like your parents!
+            $SIG{'TERM'} = sub {
+                debug(__PACKAGE__ . ": Child caught SIGTERM.  Exiting.");
+                exit(0);
+            };
+            _child_work(\@tasks);
+
+        } else {
+            critical(__PACKAGE__ . "->run($instance): Cannot fork children: $!");
+        }
+
+        debug(
+            sprintf(
+                "%s STATUS: %i children running, %i jobs left to do.",
+                __PACKAGE__, $CHILD_COUNT, ($#jobs + 1)
+            )
+        );
     }
 
-    # fork a child to take care of the work.
-    if ($pid = fork) {
-        _parent_work($pid, \@jobs);
-    } elsif (defined($pid)) {
-
-        # change handling of SIGTERM -- don't act like your parents!
-        $SIG{'TERM'} = sub {
-            debug(__PACKAGE__ . ": Child caught SIGTERM.  Exiting.");
-            exit(0);
-        };
-        _child_work(\@jobs);
-
-    } else {
-        critical(__PACKAGE__ . "->run($instance): Cannot fork children: $!");
+    # all jobs assigned.  Reap dead children.
+    if ($CHILD_COUNT) {
+        _reap_dead_children();
     }
 
     if ($CHILD_COUNT) {
         debug(
-              sprintf(
-                      "%s STATUS: %i children running.",
-                      __PACKAGE__, $CHILD_COUNT
-                     )
-             );
+            sprintf(
+                "%s: All jobs assigned, waiting on %i children to return.",
+                __PACKAGE__, $CHILD_COUNT
+            )
+        );
+    } else {
+        debug(sprintf("%s: All jobs completed.", __PACKAGE__));
     }
+
 }
 
 #
