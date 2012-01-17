@@ -187,6 +187,12 @@ sub unload {
 
 Unlocks the current session. Currently, this just calls C<unload()>.
 
+By default Krang locks all session activity so that if activity is
+happening in multiple windows the session isn't corrupted by multiple
+windows trying to make changes at the same time. But this can be
+detrimental when an activity lasts a long time in one window (like
+publishing) and blocks anything from happening in another.
+
 =cut
 
 sub unlock {
@@ -239,18 +245,6 @@ sub session_id {
     my $pkg = shift;
     return $session{_session_id};
 }
-
-=item C<< Krang::Session->unlock >>
-
-Unlock the current session. This is paired with 
-
-By default Krang locks all session activity so that if activity is happening
-in multiple windows the session isn't corrupted by multiple windows trying to
-make changes at the same time.
-
-But this has 
-
-=cut
 
 =item C<< Krang::Session->clear_session_id() >>
 
