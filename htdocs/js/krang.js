@@ -149,13 +149,28 @@ document.onunload = function() {
     oldOnUnload();
 }
 
+window.onbeforeunload = function(event) {
+    if (window.name) {
+        if (Krang.Window) {
+            Krang.Window.remove_name_from_window_list(window.name);
+        }
+    }
+    // we don't want to have the user need to confirm the unload.
+    return;
+}
+
 /*
     // Log out the current window
     Krang.Window.log_out();
 
 */
 Krang.Window = {
+    cookie_name: 'KRANG_OPEN_WINDOWS',
     log_out : function() {
+        if (window.name) {
+            this.remove_name_from_window_list(window.name);
+        }
+        this.logout_opened_windows();
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
             window.location = 'login.pl?rm=logout';
             window.name = '';
@@ -172,6 +187,49 @@ Krang.Window = {
         // call erase their Krang window.
         var now = new Date();
         window.name = 'krang_' + Math.random().toString().replace(/^0\./, '') + '_' + now.valueOf();
+
+        // save this name in a cookie so logout in any window gives an indication in them all
+        this.add_name_to_window_list(window.name);
+    },
+    logout_opened_windows: function() {
+        var window_list = this.open_cookie();
+        for(var i=0; i<window_list.length; i++) {
+            var w = window.open("/login.pl?rm=logout",window_list[i]);
+        }
+
+    },
+    clear_opened_windows: function() {
+        Krang.Cookie.set(this.cookie_name, '');
+    },
+    open_cookie: function() {
+        var value = Krang.Cookie.get(this.cookie_name);
+        var window_list = [];
+
+        // if we have window cookie, then just use what it gives us
+        if ( value && value != '' ) {
+            window_list = $A(value.split(',')).toArray();
+        }
+        return window_list;
+    },
+    remove_name_from_window_list: function(name) {
+        var window_list = this.open_cookie();
+        var index  = window_list.indexOf( name );
+
+        // if we have it
+        if ( index != -1 ) {
+            delete window_list[index];
+            window_list.splice( index, 1 );
+            Krang.Cookie.set(this.cookie_name, window_list.join(','));
+        }
+    },
+    add_name_to_window_list: function(name) {
+        var window_list = this.open_cookie();
+
+        // if we don't have it already
+        if ( window_list.indexOf(name) == -1 ) {
+            window_list.push(name);
+            Krang.Cookie.set(this.cookie_name, window_list.join(','));
+        }
     }
 };
 
