@@ -392,7 +392,7 @@ Krang.Ajax = {
         }
     },
     // number of seconds between identical requests that we consider a "double click"
-    _double_click_time_diff : 5,
+    _double_click_time_diff : 3,
     // hash of last time a request was submitted so that we can prevent people
     // who don't know how web applications work from double clicking
     _last_submitted : { }
