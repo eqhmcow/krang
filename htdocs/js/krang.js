@@ -380,8 +380,8 @@ Krang.Ajax = {
         var now = new Date();
         now = now.valueOf(); // now is now in milliseconds
 
-        // if it's older than 2 seconds, then it's ok
-        if( last_time + 2000 < now ) {
+        // if it's old enough, then it's ok
+        if( (last_time + (Krang.Ajax._double_click_time_diff * 1000)) < now ) {
             Krang.Ajax._last_submitted[hash_key] = now;
             return false;
         } else {
@@ -391,6 +391,8 @@ Krang.Ajax = {
             return true;
         }
     },
+    // number of seconds between identical requests that we consider a "double click"
+    _double_click_time_diff : 5,
     // hash of last time a request was submitted so that we can prevent people
     // who don't know how web applications work from double clicking
     _last_submitted : { }
@@ -856,12 +858,13 @@ Krang.Form = {
                 }
             } else {
                 if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) {
-                    Krang.hide_indicator();
                     Krang.Form._submitting[form.name] = false;
-                    return;
+                    Krang.hide_indicator();
+                } else {
+                    form.submit();
+                    Krang.Form._submitting[form.name] = false;
+                    Krang.hide_indicator();
                 }
-                form.submit();
-                Krang.hide_indicator();
             }
         }
     },
