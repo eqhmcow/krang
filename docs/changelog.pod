@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+On startup the C<bin/krang_scheduled> daemon clears the claim for any
+stuck Schedule entries where the claim contains the machine's hostname.
+[Brad Oaks]
+
+=item *
+
 Updated C<Krang.Window.log_out()> so that it updates other logged in
 windows or tabs to reflect that the user has logged out. [Brad Oaks]
 

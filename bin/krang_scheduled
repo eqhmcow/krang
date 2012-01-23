@@ -57,5 +57,6 @@ use Krang::ClassLoader 'Script';
 
 use Krang::ClassLoader 'Schedule::Daemon';
 
+pkg('Schedule::Daemon')->clear_daemon_uuid_claims_by_hostname;
 pkg('Schedule::Daemon')->run;
 

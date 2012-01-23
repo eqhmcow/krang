@@ -734,6 +734,43 @@ sub _clear_my_daemon_uuid_claims {
     }
 }
 
+#
+# clear_daemon_uuid_claims_by_hostname
+#
+# Searches all instances' Schedule database for jobs with our hostname in the value and clears that value
+#
+
+sub clear_daemon_uuid_claims_by_hostname {
+    my $hostname = hostname;
+    debug(__PACKAGE__ . "->clear_daemon_uuid_claims_by_hostname() hostname is $hostname");
+
+    foreach my $instance (pkg('Conf')->instances) {
+
+        my @schedules;
+
+        @schedules = pkg('Schedule')->find(
+            select_for_update => 1,
+            daemon_uuid_like  => $hostname . '_%',
+        );
+
+        # update the schedules with the daemon's uuid
+        for my $schedule (@schedules) {
+            debug(__PACKAGE__ . "->clear_daemon_uuid_claims_by_hostname() releasing " . $schedule->schedule_id);
+            $schedule->daemon_uuid(undef);
+            $schedule->save;
+        }
+
+        my $dbh = dbh();
+
+        # commit
+        $dbh->commit or critical( 'error during commit : ' . $dbh->errstr);
+
+        # disconnect this handle since it has AutoCommit => 0 set
+        $dbh->disconnect or critical('error during disconnect : '. $dbh->errstr);
+
+    }
+}
+
 =back
 
 =head1 TODO
