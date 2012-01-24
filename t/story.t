@@ -154,6 +154,7 @@ SKIP: {
 }
 
 # test contribs
+$contrib->selected_contrib_type(undef);
 eval { $story->contribs($contrib); };
 like($@, qr/invalid/);
 $contrib->selected_contrib_type(1);
