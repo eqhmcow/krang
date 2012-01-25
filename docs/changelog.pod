@@ -2,7 +2,7 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 3.17 - In Development
+=head2 3.16 - January, 25 2011
 
 =over
 
@@ -16,12 +16,6 @@ stuck Schedule entries where the claim contains the machine's hostname.
 
 Updated C<Krang.Window.log_out()> so that it updates other logged in
 windows or tabs to reflect that the user has logged out. [Brad Oaks]
-
-=back
-
-=head2 3.16 - December, 21 2011
-
-=over
 
 =item *
 
