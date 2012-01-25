@@ -5,7 +5,6 @@ use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader base => 'Upgrade';
 use Krang::ClassLoader DB   => 'dbh';
 use Krang::ClassLoader 'Story';
-use Krang::ClassLoader Element => qw(foreach_element);
 
 sub per_instance {
     my ($self, %args) = @_;
@@ -35,34 +34,8 @@ sub per_instance {
 
     # look through each story and create any story_category_link entries that need to exist
     for my $story (pkg('Story')->find) {
-        # look down for CategoryLink
-        foreach_element {
-            my $el = $_;
-            return unless $el;
-            if ($el->class->isa('Krang::ElementClass::CategoryLink')) {
-                my $cat = $el->data;
-
-                return unless $cat && $cat->isa('Krang::Category');
-
-                my $sth = dbh()->prepare_cached(
-                    q/
-                    REPLACE INTO story_category_link
-                    (story_id, category_id,
-                    publish_if_modified_story_in_cat, publish_if_modified_story_below_cat, 
-                    publish_if_modified_media_in_cat, publish_if_modified_media_below_cat) 
-                    VALUES (?,?,?,?,?,?)
-                /
-                );
-                $sth->execute(
-                    $el->story->story_id,
-                    $cat->category_id,
-                    $el->class->publish_if_modified_story_in_cat    ? 1 : 0,
-                    $el->class->publish_if_modified_story_below_cat ? 1 : 0,
-                    $el->class->publish_if_modified_media_in_cat    ? 1 : 0,
-                    $el->class->publish_if_modified_media_below_cat ? 1 : 0,
-                );
-            }
-        } $story->element;
+        next if $story->trashed || $story->retired;
+        $story->_save_category_links();
     }
 }
 
