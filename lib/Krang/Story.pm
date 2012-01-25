@@ -3185,7 +3185,7 @@ sub trash {
     $self->checkin();
 
     # delete any story_category_link entries
-    $dbh->do('DELETE FROM story_category_link WHERE story_id = ?', undef, $story_id);
+    dbh()->do('DELETE FROM story_category_link WHERE story_id = ?', undef, $story_id);
 
     # and log it
     add_history(object => $self, action => 'trash');
