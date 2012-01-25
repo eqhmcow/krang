@@ -71,3 +71,21 @@ CREATE TABLE story_contrib (
         PRIMARY KEY (story_id, contrib_id, contrib_type_id),
         INDEX (ord)
 );
+
+/* story_category_link holds entries about category-link elements between a story and a category */
+DROP TABLE IF EXISTS story_category_link;
+CREATE TABLE story_category_link (
+        story_category_link_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        story_id        INT UNSIGNED NOT NULL,
+        category_id     INT UNSIGNED NOT NULL,
+        publish_if_modified_story_in_cat    BOOL NOT NULL DEFAULT 0,
+        publish_if_modified_story_below_cat BOOL NOT NULL DEFAULT 0,
+        publish_if_modified_media_in_cat    BOOL NOT NULL DEFAULT 0,
+        publish_if_modified_media_below_cat BOOL NOT NULL DEFAULT 0,
+        PRIMARY KEY (story_category_link_id),
+        UNIQUE KEY (story_id, category_id),
+        INDEX (category_id, publish_if_modified_story_in_cat),
+        INDEX (category_id, publish_if_modified_story_below_cat),
+        INDEX (category_id, publish_if_modified_media_in_cat),
+        INDEX (category_id, publish_if_modified_media_below_cat)
+);

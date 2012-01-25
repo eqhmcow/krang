@@ -2861,18 +2861,6 @@ sub clean_filename {
     return $filename;
 }
 
-=item C<< $bool = $story->is_modified() >>
-
-Returns 1 if the story has been added or if it has been modified since
-the last publish.
-
-=cut
-sub is_modified {
-    my ($self) = shift;
-    return 1 unless $self->published_version;
-    return 1 if $self->version > $self->published_version;
-}
-
 =back
 
 =cut

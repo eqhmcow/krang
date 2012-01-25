@@ -783,7 +783,7 @@ sub publish_media {
         push @$publish_list, $args{media};
     }
 
-    $publish_list = $self->_maybe_add_index_story($publish_list) unless $ENV{KRANG_TEST};
+    $publish_list = $self->_add_category_linked_stories($publish_list) unless $ENV{KRANG_TEST};
 
     my @urls = $self->_process_assets(
         publish_list        => $publish_list,
@@ -896,7 +896,7 @@ sub asset_list {
     );
     my $publish_list = \@publish_list;
 
-    $publish_list = $self->_maybe_add_index_story($publish_list)
+    $publish_list = $self->_add_category_linked_stories($publish_list)
       if $mode eq 'publish' and not $ENV{KRANG_TEST};
 
     #     unless ($keep_list) {
@@ -2495,26 +2495,50 @@ sub _determine_output_path {
     return $output_path;
 }
 
-sub _maybe_add_index_story {
+sub _add_category_linked_stories {
     my ($self, $publish_list) = @_;
-
-    my $all_index_stories     = $self->_get_conditional_index_stories();
-    my %publish_index_stories = ();
+    my %linked_stories = ();
 
     for my $object (@$publish_list) {
-        next unless $object->is_modified;
-        my $cat   = $object->category;
-        my $type  = $object->isa('Krang::Story') ? 'story' : $object->isa('Krang::Media') ? 'media' : undef;
+        my $cat = $object->category;
+        my $type =
+          $object->isa('Krang::Story') ? 'story' : $object->isa('Krang::Media') ? 'media' : undef;
         next unless $type;
 
-        if (my $index_story = $all_index_stories->{$type}{$cat->category_id}) {
-            $publish_index_stories{$index_story->story_id} = $index_story;
+        # look for any stories that link to this category that should also be published
+        my $sql = qq/
+            SELECT story_id FROM story_category_link
+            WHERE category_id = ? AND publish_if_modified_${type}_in_cat = 1
+        /;
+        my $sth = dbh()->prepare_cached($sql);
+        $sth->execute($cat->category_id);
+        while (my $row = $sth->fetchrow_arrayref) {
+            $linked_stories{$row->[0]} = 1;
         }
+
+        # look for stories that are linked to our parent categories that should also be published
+        #my @parent_cat_ids = ($cat->category_id, $cat->ancestors(ids_only => 1));
+        my @parent_cat_ids = $cat->ancestors(ids_only => 1);
+        my $in_clause = '(' . join(',', ('?') x @parent_cat_ids) . ')';
+        $sql = qq/
+            SELECT story_id FROM story_category_link
+            WHERE category_id IN $in_clause AND publish_if_modified_${type}_below_cat = 1
+        /;
+        $sth = dbh()->prepare_cached($sql);
+        $sth->execute(@parent_cat_ids);
+        while (my $row = $sth->fetchrow_arrayref) {
+            $linked_stories{$row->[0]} = 1;
+        }
+    }
+
+    # if we have any story_ids inflate them to full objects
+    foreach my $story_id (keys %linked_stories) {
+        $linked_stories{$story_id} = (pkg('Story')->find(story_id => $story_id))[0];
     }
 
     # merge and uniquify index stories into publish list
     my (@publish_list, %seen);
-    for my $object (@$publish_list, values(%publish_index_stories)) {
+    for my $object (@$publish_list, values(%linked_stories)) {
         my $meth = $object->isa('Krang::Story') ? 'story_id' : 'media_id';
         push @publish_list, $object
           unless $seen{$meth}{$object->$meth}++;
@@ -2522,51 +2546,6 @@ sub _maybe_add_index_story {
 
     return \@publish_list;
 }
-
-sub _get_conditional_index_stories {
-    my ($self) = shift;
-
-    my %all_index_stories = ();
-
-    for my $story (pkg('Story')->find()) {
-
-        # look down for CategoryLink
-        foreach_element {
-            return unless $_;
-            my $element = $_;
-            if ($element->class->isa('Krang::ElementClass::CategoryLink')) {
-                my $category = $element->data;
-
-                return unless $category && $category->isa('Krang::Category');
-
-                # build story/media-specific tables mapping category id to index story
-                if ($element->class->publish_if_modified_story_in_cat) {
-                    $all_index_stories{story}{$category->category_id} = $story;
-                }
-                if ($element->class->publish_if_modified_story_below_cat) {
-                    $self->_add_conditional_index_stories($story, $category, 'story', \%all_index_stories);
-                }
-                if ($element->class->publish_if_modified_media_in_cat) {
-                    $all_index_stories{media}{$category->category_id} = $story;
-                }
-                if ($element->class->publish_if_modified_media_below_cat) {
-                    $self->_add_conditional_index_stories($story, $category, 'media', \%all_index_stories);
-                }
-            }
-        } $story->element;
-    }
-
-    return \%all_index_stories;
-}
-
-sub _add_conditional_index_stories {
-    my ($self, $story, $category, $type, $all_index_stories) = @_;
-    $all_index_stories->{$type}{$category->category_id} = $story;
-    for my $cat ($category->descendants) {
-        $all_index_stories->{$type}{$cat->category_id} = $story;
-    }
-}
-
 
 ############################################################
 #

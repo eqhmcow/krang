@@ -830,6 +830,9 @@ sub save {
     # prune previous versions from the version table (see TopLevel.pm::versions_to_keep)
     $self->prune_versions(number_to_keep => $self->class->versions_to_keep);
 
+    # save any category links
+    $self->_save_category_links();
+
     # register creation if is the first version
     add_history(
         object => $self,
@@ -841,6 +844,80 @@ sub save {
         object => $self,
         action => 'save',
     ) unless $args{no_history};
+}
+
+sub _save_category_links {
+    my $self = shift;
+    my $dbh  = dbh();
+
+    # remove any existing links
+    $dbh->do('DELETE FROM story_category_link WHERE story_id = ?', {}, $self->story_id);
+
+    # handle to update/insert links
+    my $sth = $dbh->prepare_cached(
+        q/INSERT INTO story_category_link
+        (story_id, category_id,
+        publish_if_modified_story_in_cat, publish_if_modified_story_below_cat, 
+        publish_if_modified_media_in_cat, publish_if_modified_media_below_cat) 
+        VALUES (?,?,?,?,?,?)/
+    );
+    my $update_sth = $dbh->prepare_cached(
+        q/UPDATE story_category_link SET
+        publish_if_modified_story_in_cat = ?, publish_if_modified_story_below_cat = ?,
+        publish_if_modified_media_in_cat = ?, publish_if_modified_media_below_cat = ?
+        WHERE story_id = ? AND category_id = ?/
+    );
+    my $find_entry_sth = $dbh->prepare_cached(
+        q/SELECT publish_if_modified_story_in_cat, publish_if_modified_story_below_cat,
+        publish_if_modified_media_in_cat, publish_if_modified_media_below_cat
+        FROM story_category_link WHERE story_id = ? AND category_id = ?/
+    );
+
+    # look down for CategoryLink
+    foreach_element {
+        my $el = $_;
+        return unless $el;
+        return unless $el->class->isa(pkg('ElementClass::CategoryLink'));
+
+        my $cat = $el->data;
+        return unless $cat && $cat->isa(pkg('Category'));
+
+        my %flags = (
+            story_in    => $el->class->publish_if_modified_story_in_cat    ? 1 : 0,
+            story_below => $el->class->publish_if_modified_story_below_cat ? 1 : 0,
+            media_in    => $el->class->publish_if_modified_media_in_cat    ? 1 : 0,
+            media_below => $el->class->publish_if_modified_media_below_cat ? 1 : 0,
+        );
+
+        eval {
+            local $sth->{PrintError} = 0;
+            $sth->execute(
+                $self->story_id,     $cat->category_id, $flags{story_in},
+                $flags{story_below}, $flags{media_in},  $flags{media_below},
+            );
+        };
+        if (my $e = $@) {
+            if ($e =~ /Duplicate entry/i) {
+                # we have multiple category links for this cat/story combo so try and merge them
+                $find_entry_sth->execute($self->story_id, $cat->category_id);
+                my $row = $find_entry_sth->fetchrow_hashref;
+                $find_entry_sth->finish();
+                $flags{story_in}    ||= $row->{publish_if_modified_story_in_cat};
+                $flags{story_below} ||= $row->{publish_if_modified_story_below_cat};
+                $flags{media_in}    ||= $row->{publish_if_modified_media_in_cat};
+                $flags{media_below} ||= $row->{publish_if_modified_media_below_cat};
+
+                # now try the insert again
+                $update_sth->execute(
+                    $flags{story_in},    $flags{story_below}, $flags{media_in},
+                    $flags{media_below}, $self->story_id,     $cat->category_id,
+                );
+            } else {
+                die $e;
+            }
+        }
+    }
+    $self->element;
 }
 
 # save core Story data
@@ -2420,10 +2497,11 @@ sub _do_delete {
     pkg('History')->delete(object => $self);
 
     my $dbh = dbh;
-    $dbh->do('DELETE FROM story WHERE story_id = ?',          undef, $self->{story_id});
-    $dbh->do('DELETE FROM story_category WHERE story_id = ?', undef, $self->{story_id});
-    $dbh->do('DELETE FROM story_version WHERE story_id = ?',  undef, $self->{story_id});
-    $dbh->do('DELETE FROM story_contrib WHERE story_id = ?',  undef, $self->{story_id});
+    $dbh->do('DELETE FROM story WHERE story_id = ?',               undef, $self->{story_id});
+    $dbh->do('DELETE FROM story_category WHERE story_id = ?',      undef, $self->{story_id});
+    $dbh->do('DELETE FROM story_version WHERE story_id = ?',       undef, $self->{story_id});
+    $dbh->do('DELETE FROM story_contrib WHERE story_id = ?',       undef, $self->{story_id});
+    $dbh->do('DELETE FROM story_category_link WHERE story_id = ?', undef, $self->{story_id});
     $self->element->delete;
 
     # remove from trash
@@ -2991,6 +3069,9 @@ sub retire {
     $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
         undef, 'story', $self->{story_id});
 
+    # delete any story_category_link entries
+    $dbh->do('DELETE FROM story_category_link WHERE story_id = ?', undef, $self->{story_id});
+
     # living in retire
     $self->{retired} = 1;
 
@@ -3071,8 +3152,9 @@ user.
 
 sub trash {
     my ($self, %args) = @_;
+    my $story_id = $args{story_id};
+
     unless (ref $self) {
-        my $story_id = $args{story_id};
         ($self) = pkg('Story')->find(story_id => $story_id);
         croak("Unable to load story '$story_id'.") unless $self;
     }
@@ -3080,7 +3162,7 @@ sub trash {
     # Is user allowed to otherwise edit this object?
     Krang::Story::NoEditAccess->throw(
         message  => "Not allowed to edit story",
-        story_id => $self->story_id
+        story_id => $story_id
     ) unless ($self->may_edit);
 
     # make sure we are the one
@@ -3101,6 +3183,9 @@ sub trash {
 
     # release it
     $self->checkin();
+
+    # delete any story_category_link entries
+    $dbh->do('DELETE FROM story_category_link WHERE story_id = ?', undef, $story_id);
 
     # and log it
     add_history(object => $self, action => 'trash');
@@ -3261,18 +3346,6 @@ sub turn_into_category_index {
 sub is_category_index {
     my $self = shift;
     return $self->category->url eq $self->url ? 1 : 0;
-}
-
-=item C<< $bool = $story->is_modified() >>
-
-Returns 1 if the story has been added or if it has been modified since
-the last publish.
-
-=cut
-sub is_modified {
-    my ($self) = shift;
-    return 1 unless $self->published_version;
-    return 1 if $self->version > $self->published_version;
 }
 
 =back
