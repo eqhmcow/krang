@@ -14,8 +14,8 @@ sub per_instance {
     $dbh->do('ALTER table schedule ENGINE=InnoDB');
     $dbh->do('ALTER table schedule add column daemon_uuid varchar(128) default null');
 
+    $dbh->do('DROP TABLE IF EXISTS story_category_link');
     $dbh->do(q/
-        DROP TABLE IF EXISTS story_category_link;
         CREATE TABLE story_category_link (
                 story_category_link_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
                 story_id        INT UNSIGNED NOT NULL,
