@@ -13,7 +13,7 @@ use Time::Piece;
 use Time::Seconds;
 
 use Krang::ClassLoader Conf =>
-  qw(KrangRoot instance instances SchedulerMaxChildren SchedulerDefaultFailureDelay SMTPServer FromAddress DisableScheduler);
+  qw(KrangRoot instance instances SchedulerMaxChildren SchedulerDefaultFailureDelay SchedulerSleepInterval SMTPServer FromAddress DisableScheduler);
 use Krang::ClassLoader Log => qw/critical debug info reopen_log/;
 use Krang::ClassLoader 'Schedule';
 use Krang::ClassLoader DB => qw(dbh forget_all_dbhs);
@@ -22,7 +22,7 @@ use Krang::ClassLoader 'Cache';
 my $pidfile = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
 
 use constant CHUNK_SIZE     => 5;
-use constant SLEEP_INTERVAL => 1;
+my $SLEEP_INTERVAL = SchedulerSleepInterval || 5;
 
 my $CHILD_COUNT   = 0;
 my %child_pids    = ();
@@ -221,7 +221,7 @@ sub run {
             }
         }
 
-        sleep SLEEP_INTERVAL;
+        sleep $SLEEP_INTERVAL;
     }
 }
 

@@ -76,6 +76,7 @@ our @VALID_DIRECTIVES;
   SavedVersionsPerTemplate
   SchedulerDefaultFailureDelay
   SchedulerMaxChildren
+  SchedulerSleepInterval
   Secret
   SiteServerAddr
   SiteServerPort
