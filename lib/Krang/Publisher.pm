@@ -2518,16 +2518,17 @@ sub _add_category_linked_stories {
 
         # look for stories that are linked to our parent categories that should also be published
         #my @parent_cat_ids = ($cat->category_id, $cat->ancestors(ids_only => 1));
-        my @parent_cat_ids = $cat->ancestors(ids_only => 1);
-        my $in_clause = '(' . join(',', ('?') x @parent_cat_ids) . ')';
-        $sql = qq/
-            SELECT story_id FROM story_category_link
-            WHERE category_id IN $in_clause AND publish_if_modified_${type}_below_cat = 1
-        /;
-        $sth = dbh()->prepare_cached($sql);
-        $sth->execute(@parent_cat_ids);
-        while (my $row = $sth->fetchrow_arrayref) {
-            $linked_stories{$row->[0]} = 1;
+        if (my @parent_cat_ids = $cat->ancestors(ids_only => 1)) {
+            my $in_clause = '(' . join(',', ('?') x @parent_cat_ids) . ')';
+            $sql = qq/
+                SELECT story_id FROM story_category_link
+                WHERE category_id IN $in_clause AND publish_if_modified_${type}_below_cat = 1
+            /;
+            $sth = dbh()->prepare_cached($sql);
+            $sth->execute(@parent_cat_ids);
+            while (my $row = $sth->fetchrow_arrayref) {
+                $linked_stories{$row->[0]} = 1;
+            }
         }
     }
 
