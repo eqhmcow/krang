@@ -440,7 +440,8 @@ Krang.Ajax.request = function(args) {
     var method    = args['method'] || 'get';
 
     // stop double clicks
-    if(Krang.Ajax.is_double_click(url, params)) return;
+    var skip_double_click_check = args['skip_double_click_check'];
+    if(!skip_double_click_check && Krang.Ajax.is_double_click(url, params)) return;
 
     // tell the user that we're doing something
     Krang.show_indicator(indicator);
