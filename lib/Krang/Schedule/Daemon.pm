@@ -199,7 +199,7 @@ sub run {
             # for this instance, needed for permissions checks
             pkg('Conf')->instance($instance);
             if (DisableScheduler) {
-                debug('DisableScheduler directive is in effect for this instance.');
+                info('DisableScheduler directive is in effect for this instance.');
                 next;
             }
             unless ($system_user{$instance}) {
