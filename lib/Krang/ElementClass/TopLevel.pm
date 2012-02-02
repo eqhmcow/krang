@@ -601,4 +601,10 @@ EOF
 
 =cut
 
+#
+# return true if this class should publish when a story_category_link is present.
+#
+
+sub should_category_linked_publish { 1; }
+
 1;

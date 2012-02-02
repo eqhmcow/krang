@@ -2513,11 +2513,25 @@ sub _add_category_linked_stories {
         my $sth = dbh()->prepare_cached($sql);
         $sth->execute($cat->category_id);
         while (my $row = $sth->fetchrow_arrayref) {
-            $linked_stories{$row->[0]} = 1;
+            # inflate story_id value into a story object, but only it isn't already marked for publishing
+            my $candidate_story_id = $row->[0];
+            unless (exists $linked_stories{$candidate_story_id}) {
+                my ($candidate) = pkg('Story')->find(story_id => $candidate_story_id);
+                # only keep if the class method should_category_linked_publish() says the candidate should be published
+                if (
+                    $candidate->element->class->should_category_linked_publish(
+                        publisher => $self,
+                        candidate => $candidate,
+                        object    => $object,
+                    )
+                  )
+                {
+                    $linked_stories{$candidate_story_id} = $candidate;
+                }
+            }
         }
 
         # look for stories that are linked to our parent categories that should also be published
-        #my @parent_cat_ids = ($cat->category_id, $cat->ancestors(ids_only => 1));
         if (my @parent_cat_ids = $cat->ancestors(ids_only => 1)) {
             my $in_clause = '(' . join(',', ('?') x @parent_cat_ids) . ')';
             $sql = qq/
@@ -2527,14 +2541,24 @@ sub _add_category_linked_stories {
             $sth = dbh()->prepare_cached($sql);
             $sth->execute(@parent_cat_ids);
             while (my $row = $sth->fetchrow_arrayref) {
-                $linked_stories{$row->[0]} = 1;
+                my $candidate_story_id = $row->[0];
+                # inflate story_id value into a story object, but only it isn't already marked for publishing
+                unless (exists $linked_stories{$row->[0]}) {
+                    my ($candidate) = pkg('Story')->find(story_id => $candidate_story_id);
+                    # only keep if the class method should_category_linked_publish() says the candidate should be published
+                    if (
+                        $candidate->element->class->should_category_linked_publish(
+                            publisher => $self,
+                            candidate => $candidate,
+                            object    => $object,
+                        )
+                      )
+                    {
+                        $linked_stories{$candidate_story_id} = $candidate;
+                    }
+                }
             }
         }
-    }
-
-    # if we have any story_ids inflate them to full objects
-    foreach my $story_id (keys %linked_stories) {
-        $linked_stories{$story_id} = (pkg('Story')->find(story_id => $story_id))[0];
     }
 
     # merge and uniquify index stories into publish list
