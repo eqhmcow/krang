@@ -210,7 +210,7 @@ sub run_code {
     }
 
     if ($print && defined $result) {
-        print ref $result ? Dumper($result) : $result;
+        print ref $result ? Data::Dumper->new([$result])->Sortkeys(1)->Dump : $result;
     }
 }
 print "\n";
