@@ -193,6 +193,7 @@ sub run {
         # make sure there's nothing dead left out there.
         _reap_dead_children() if ($CHILD_COUNT);
 
+        my $num_jobs = 0;
         foreach my $instance (pkg('Conf')->instances) {
 
             # switch instance and reset REMOTE_USER to the system user
@@ -210,10 +211,8 @@ sub run {
             }
             $ENV{REMOTE_USER} = $system_user{$instance};
 
-            my @jobs = ();
-            while (my @tasks = _query_for_jobs()) {
-                push @jobs, @tasks;
-            }
+            my @jobs = _query_for_jobs();
+            $num_jobs += scalar(@jobs);
 
             if (@jobs) {
                 debug(sprintf("%s: %i Pending jobs found.", __PACKAGE__, ($#jobs + 1)));
@@ -221,6 +220,12 @@ sub run {
             }
         }
 
+        if ($num_jobs) {
+            info("Scheduler run finished, processed $num_jobs total jobs across all instances.");
+            next;
+        }
+
+        # if we didn't find any jobs, sleep for a bit
         sleep $SLEEP_INTERVAL;
     }
 }
