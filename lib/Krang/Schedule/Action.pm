@@ -55,6 +55,7 @@ sub execute {
 
 sub clean_entry {
     my $self = shift;
+    $self->{_clean_entry_called} = 1;
 
     if ($self->{repeat} eq 'never') {
 
@@ -76,6 +77,34 @@ sub clean_entry {
             $self->save;
         }
     }
+}
+
+=over
+
+=item sub delete() sets internal flag and calls SUPER
+
+=back
+
+=cut
+
+sub delete {
+    my $self = shift;
+    $self->{_delete_called} = 1;
+    return $self->SUPER::delete(@_);
+}
+
+=over
+
+=item sub cleaned_or_deleted() returns true if clean_entry() or delete() was called
+
+=back
+
+=cut
+
+sub cleaned_or_deleted {
+    my $self = shift;
+    return 1 if $self->{_clean_entry_called} || $self->{_delete_called};
+    return;
 }
 
 =over

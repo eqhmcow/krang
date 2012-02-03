@@ -52,13 +52,12 @@ sub execute {
     ## side effect of stuffing {object} in _object_exists()
     if ($self->_object_exists()) {
         if ($self->_object_checked_out()) {
-            info(
+            die(
                 sprintf(
                     "%s->execute(): Cannot run Schedule id '%i'.  %s id='%i' is checked out.",
                     __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id
                 )
             );
-            return;
         }
     } else {
         info(

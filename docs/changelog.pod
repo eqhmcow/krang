@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+The Scheduler now makes sure jobs either die or call clean_entry
+or delete.  If they don't do one of those three things before returning,
+we log an error.  This makes sure next_run is always updated.
+[Daniel S. Sterling]
+
+=item *
+
 Added a method to ElementClass which can be overridden to decide
 during a publish if a L<Krang::ElementClass::CategoryLink> should
 cause other stories to be published. [Brad Oaks]

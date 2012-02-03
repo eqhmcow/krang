@@ -393,7 +393,7 @@ sub _child_work {
             eval { $t->execute(); };
             if (my $err = $@) {
 
-                # job failed, so, if it didn't delete the schedule object 
+                # job failed, so, if it didn't delete the schedule object
                 # (which would prevent us from doing anything)..
                 if (
                     $t
@@ -461,13 +461,26 @@ sub _child_work {
                         );
                     }
                 }
-            } elsif ($t->success_notify_id) {
-                $t->{daemon_uuid} = undef;
-                $t->save;
-                _notify_user($t->success_notify_id, $t->success_subject, $t->success_message);
             } else {
+                # task didn't die. make sure it called either delete or
+                # clean_entry, otherwise the main loop will pick it up again
+                # immediately (without sleeping), which is bad
+                unless ($t->cleaned_or_deleted()) {
+                    critical(
+                        sprintf(
+                            "%s->_child_work('%s'): PID %i - Schedule %i did " .
+                            "NOT call either clean_entry or delete. Scheduler " .
+                            "Action classes must either die or call " .
+                            "clean_entry or delete before returning.",
+                            __PACKAGE__, $instance, $$, $t->schedule_id()
+                        )
+                    );
+                }
                 $t->{daemon_uuid} = undef;
                 $t->save;
+                if ($t->success_notify_id) {
+                    _notify_user($t->success_notify_id, $t->success_subject, $t->success_message);
+                }
             }
         }
     };
