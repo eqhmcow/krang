@@ -13,13 +13,14 @@ use Time::Piece::MySQL;
 use Time::Seconds;
 
 use Krang::ClassLoader 'Script';
-use Krang::ClassLoader Conf => qw(KrangRoot InstanceElementSet SchedulerMaxChildren);
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceElementSet SchedulerMaxChildren SchedulerSleepInterval);
 use Krang::ClassLoader 'Schedule';
 use Krang::ClassLoader 'Test::Content';
 
 use Data::Dumper;
 
 my $pidfile;
+my $scheduler_sleep_interval = SchedulerSleepInterval || 5; # 5 is the default value (defined in Krang::Schedule::Daemon)
 
 my $stop_daemon;
 my $schedulectl;
@@ -143,7 +144,7 @@ for my $num (1 .. $num_stories) {
 }
 
 # wait to see if it got published.
-sleep 10 + $num_stories;
+sleep ((10 * $scheduler_sleep_interval) + $num_stories);
 
 foreach my $story (@stories) {
     my @paths = $creator->publish_paths(story => $story);
@@ -169,7 +170,7 @@ my $sched = pkg('Schedule')->new(
 );
 $sched->save();
 push @schedules, $sched;
-sleep 11;
+sleep (11 * $scheduler_sleep_interval);
 
 # trashed story now should be published
 for my $p ($creator->publish_paths(story => $trashed_story)) {
@@ -193,7 +194,7 @@ foreach my $story (@stories) {
 }
 
 # wait to see if it got unpublished.
-sleep 10;
+sleep (10 * $scheduler_sleep_interval);
 
 foreach my $story (@stories) {
     my @paths = $creator->publish_paths(story => $story);
@@ -213,7 +214,7 @@ $sched = pkg('Schedule')->new(
 );
 $sched->save();
 push @schedules, $sched;
-sleep 11;
+sleep (11 * $scheduler_sleep_interval);
 
 # story should now be retired
 for my $p ($creator->publish_paths(story => $trashed_story)) {
@@ -245,11 +246,11 @@ while (1) {
     last if $cnt++ > 3;
     ($found_sched) = pkg('Schedule')->find(schedule_id => $sched->schedule_id);
     last if $found_sched;
-    sleep 1;
+    sleep $scheduler_sleep_interval;
 }
 is($found_sched->failure_max_tries, 2, "scheduled publish successfully saved with max_tries = 2");
 
-sleep 1;
+sleep $scheduler_sleep_interval;
 
 undef $found_sched;
 $cnt = 0;
@@ -257,7 +258,7 @@ while (1) {
     last if $cnt++ > 3;
     ($found_sched) = pkg('Schedule')->find(schedule_id => $sched->schedule_id);
     last if $found_sched;
-    sleep 1;
+    sleep $scheduler_sleep_interval;
 }
 is($found_sched->failure_max_tries, 1,
     "scheduled publish fails due to checked-out story and decrements max_tries to 1");
