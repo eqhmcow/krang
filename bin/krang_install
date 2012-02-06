@@ -186,6 +186,7 @@ my @opt_params = qw(
   FromBackup
   MySQLRootPassword
   DBHost
+  DBSock
   InstallPath
   KrangUser
   KrangGroup
@@ -308,6 +309,7 @@ sub unpack_backup {
     $options{AdminPassword}       ||= '*** RESTORED FROM BACKUP ***';
     $options{DBUser}              ||= $conf->get('DBUser');
     $options{DBPass}              ||= $conf->get('DBPass');
+    $options{DBSock}              ||= $conf->get('DBSock');
     $options{InstanceElementSet}  ||= $conf->get('InstanceElementSet');
     $options{InstanceDBName}      ||= $conf->get('InstanceDBName');
     $options{InstanceHostName}    ||= $conf->get('InstanceHostName');
@@ -440,10 +442,12 @@ sub check_prereqs {
         # MySQLRootPassword must be valid, and MySQL should be running
         my $MySQLRootPassword = $options{'MySQLRootPassword'};
         my $DBHost            = $options{'DBHost'};
+        my $DBSock            = $options{'DBSock'};
         my $mysql_cmd         = "$MYSQL_BIN -uroot";
         my $test_sql          = 'select "world" as hello';
         $mysql_cmd .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
         $mysql_cmd .= " -h$DBHost"            if (defined($DBHost));
+        $mysql_cmd .= " -S$DBSock"            if (defined($DBSock));
         $mysql_cmd .= " 2>&1";
         my $mysql_test_output = `$ECHO_BIN '$test_sql' | $mysql_cmd`;
 
@@ -535,6 +539,7 @@ sub create_mysql_user {
     my $DBUser            = $options{'DBUser'};
     my $DBPass            = $options{'DBPass'};
     my $DBHost            = $options{'DBHost'};
+    my $DBSock            = $options{'DBSock'};
 
     my $grant = "grant all on $InstanceDBName\.* to $DBUser";
     $grant .= '@localhost' if (!defined($DBHost));
@@ -543,6 +548,7 @@ sub create_mysql_user {
     my $mysql_grant = $ECHO_BIN . " \"$grant\" | $mysql_bin -uroot";
     $mysql_grant .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
     $mysql_grant .= " -h$DBHost"            if (defined($DBHost));
+    $mysql_grant .= " -S$DBSock"            if (defined($DBSock));
 
     print "Granting MySQL access to user '$DBUser' for database '$InstanceDBName'\n";
     system($mysql_grant) && exit_error("Can't grant DB access to $DBUser for $InstanceDBName.");
@@ -559,6 +565,7 @@ sub create_mysql_user {
         my $mysql_grant = $ECHO_BIN . " \"$grant\" | $mysql_bin -uroot";
         $mysql_grant .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
         $mysql_grant .= " -h$DBHost"            if (defined($DBHost));
+        $mysql_grant .= " -S$DBSock"            if (defined($DBSock));
         print "Granting MySQL access to user '$DBUser' for database '$InstanceDBName'\n";
         system($mysql_grant) && exit_error("Can't grant DB access to $DBUser for $InstanceDBName.");
         print "  MySQL access granted.\n";
@@ -785,6 +792,8 @@ sub create_database {
               if length $options{'MySQLRootPassword'};
             $cmd .= " -h$options{'DBHost'}"
               if defined $options{'DBHost'};
+            $cmd .= " -S $options{'DBSock'}"
+              if defined $options{'DBSock'};
             system($cmd);
         }
     } else {
@@ -793,9 +802,11 @@ sub create_database {
         print "Creating MySQL database and loading schema\n";
         my $MySQLRootPassword = $options{'MySQLRootPassword'};
         my $DBHost            = $options{'DBHost'};
+        my $DBSock            = $options{'DBSock'};
         my $createdb          = "KRANG_ROOT='' PERL5LIB='' $InstallPath/bin/krang_createdb --all";
         $createdb .= " --password $MySQLRootPassword" if (length($MySQLRootPassword));
         $createdb .= " --hostname $options{'DBHost'}" if (defined($DBHost));
+        $createdb .= " --socket $options{'DBSock'}" if (defined($DBSock));
         system($createdb) == 0
           or die("Error calling krang_createdb.  Unable to continue");
     }
