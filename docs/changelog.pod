@@ -2,7 +2,7 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 3.17 - In Development
+=head2 3.17 - In February, 06, 2012
 
 =over
 
@@ -28,7 +28,7 @@ cause other stories to be published. [Brad Oaks]
 
 =back
 
-=head2 3.16 - January, 25 2011
+=head2 3.16 - January, 25 2012
 
 =over
 
