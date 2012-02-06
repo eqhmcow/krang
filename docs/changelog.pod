@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in which the krang_install script did not respect the DBSock
+conf file option, preventing installation and upgrade when using a 
+nonstandard mysql socket location
+[Rudolf Lippan]
+
+=item *
+
 The Scheduler now makes sure jobs either die or call clean_entry
 or delete.  If they don't do one of those three things before returning,
 we log an error.  This makes sure next_run is always updated.
