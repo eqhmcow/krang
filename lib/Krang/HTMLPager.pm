@@ -1527,6 +1527,8 @@ sub _js_escape {
 
     $$ref =~ s!\\!\\\\!g;
     $$ref =~ s!'!\\'!g;
+    $$ref =~ s{&#39;}{\\&#39;}g;
+    $$ref =~ s{&apos;}{\\&apos;}g;
     $$ref =~ s!"!&quot;!g;
     $$ref =~ s!\n!\\n!g;
     $$ref =~ s!\r!\\r!g;

@@ -2,7 +2,18 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 3.17 - In February, 06, 2012
+=head2 3.18 - In Development
+
+=over
+
+=item *
+
+L<Krang::HTMLPager> now adds double-backslash-escaping to C<&#39;> and C<&apos;>
+entities in the C<command_column_extra_args> for dynamic columns. [Brad Oaks]
+
+=back
+
+=head2 3.17 - February, 06, 2012
 
 =over
 
