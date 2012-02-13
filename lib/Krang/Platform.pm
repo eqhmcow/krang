@@ -736,6 +736,12 @@ sub build_apache_modperl {
     print "\n\n************************************************\n\n", "  Building Apache/mod_perl",
       "\n\n************************************************\n\n";
 
+    # make sure our paths point to our newly built modules
+    my $dest_dir = $arg{dest_dir} || catdir($ENV{KRANG_ROOT}, 'lib');
+    my $bin_dir = $arg{dest_dir} ? catdir($arg{dest_dir}, 'bin') : catdir($ENV{KRANG_ROOT}, 'lib', 'bin');
+    local $ENV{PATH} = "$bin_dir:$ENV{PATH}";
+    local $ENV{PERL5LIB} = "${dest_dir}:" . $ENV{PERL5LIB};
+
     # gather params
     my $apache_params   = $pkg->apache_build_parameters(%arg);
     my $mod_perl_params = $pkg->mod_perl_build_parameters(%arg);
@@ -745,7 +751,7 @@ sub build_apache_modperl {
     chdir($mod_perl_dir) or die "Unable to chdir($mod_perl_dir): $!";
     print "Calling '$^X Makefile.PL $mod_perl_params'...\n";
 
-    my $command = Expect->spawn("$^X Makefile.PL $mod_perl_params");
+    my $command = Expect->spawn("PATH=$ENV{PATH} PERL5LIB=$ENV{PERL5LIB} $^X Makefile.PL $mod_perl_params");
 
     # setup command to answer questions modules ask
     my @responses = qw(y n);
