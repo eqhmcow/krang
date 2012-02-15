@@ -26,7 +26,7 @@ CREATE TABLE template (
         INDEX (category_id),
         INDEX (checked_out_by),
         UNIQUE INDEX (template_uuid)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 
 --
@@ -39,4 +39,4 @@ CREATE TABLE template_version (
         template_id 	int(11) UNSIGNED NOT NULL,
         version 	smallint UNSIGNED NOT NULL,
         PRIMARY KEY (version, template_id)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;

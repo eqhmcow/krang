@@ -10,7 +10,7 @@ CREATE TABLE list_group (
   description text,
   PRIMARY KEY  (list_group_id,name),
   KEY (name)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 DROP TABLE IF EXISTS list;
 
@@ -26,7 +26,7 @@ CREATE TABLE list (
   PRIMARY KEY (list_id),
   KEY (name),
   INDEX (list_group_id)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 DROP TABLE IF EXISTS list_data;
 
@@ -45,6 +45,6 @@ CREATE TABLE list_item (
   INDEX (parent_list_item_id),
   INDEX (ord),
   INDEX (data)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 

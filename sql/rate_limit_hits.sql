@@ -9,5 +9,5 @@ CREATE TABLE rate_limit_hits (
    action    VARCHAR(255)      NOT NULL,
    timestamp INTEGER UNSIGNED NOT NULL,
    INDEX (user_id(15), action(30), timestamp)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 

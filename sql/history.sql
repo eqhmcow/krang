@@ -13,5 +13,5 @@ CREATE TABLE history (
     user_id int(10) unsigned not NULL,
     timestamp datetime default NULL,
     INDEX (object_type, object_id)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 

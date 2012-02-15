@@ -17,4 +17,4 @@ CREATE TABLE category (
         KEY (parent_id),
         KEY (site_id),
         KEY (url)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;

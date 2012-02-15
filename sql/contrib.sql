@@ -18,7 +18,7 @@ CREATE TABLE contrib (
     bio         text,
     url         text,
     PRIMARY KEY contrib_id (contrib_id)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 DROP TABLE IF EXISTS contrib_type;
 
@@ -32,7 +32,7 @@ CREATE TABLE contrib_type (
     contrib_type_id     SMALLINT unsigned NOT NULL auto_increment,
     type varchar(255)   NOT NULL,
     PRIMARY KEY         contrib_type_id (contrib_type_id)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 -- Insert base types
 INSERT INTO contrib_type (contrib_type_id, type) VALUES (1, 'Writer');
@@ -50,5 +50,5 @@ CREATE TABLE contrib_contrib_type (
     contrib_id          int(10) unsigned NOT NULL,
     contrib_type_id     int(10) unsigned NOT NULL,
     PRIMARY KEY         (contrib_id, contrib_type_id)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 

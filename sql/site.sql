@@ -12,4 +12,4 @@ CREATE TABLE site (
        publish_path	varchar(255) NOT NULL,
        creation_date    datetime NOT NULL,
        primary key (site_id)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
