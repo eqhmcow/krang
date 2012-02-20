@@ -31,7 +31,7 @@
 #
 
 ifdef DISPLAY
-notify = notify-send -i $(KRANG_ROOT)/data/notify.png --urgency normal --expire-time 10000 -hint=int:transient:1 $(1) $(2)
+notify = notify-send -i $(KRANG_ROOT)/data/notify.png --urgency normal --expire-time 10000 --hint=int:transient:1 $(1) $(2)
 endif
 
 all:
