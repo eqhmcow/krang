@@ -2511,39 +2511,11 @@ sub _add_category_linked_stories {
         /;
         my $sth = dbh()->prepare_cached($sql);
         for my $cat ($object->categories) {
-        $sth->execute($cat->category_id);
-        while (my $row = $sth->fetchrow_arrayref) {
-            # inflate story_id value into a story object, but only it isn't already marked for publishing
-            my $candidate_story_id = $row->[0];
-            unless (exists $linked_stories{$candidate_story_id}) {
-                my ($candidate) = pkg('Story')->find(story_id => $candidate_story_id);
-                # only keep if the class method should_category_linked_publish() says the candidate should be published
-                if (
-                    $candidate->element->class->should_category_linked_publish(
-                        publisher => $self,
-                        candidate => $candidate,
-                        object    => $object,
-                    )
-                  )
-                {
-                    $linked_stories{$candidate_story_id} = $candidate;
-                }
-            }
-        }
-
-        # look for stories that are linked to our parent categories that should also be published
-        if (my @parent_cat_ids = $cat->ancestors(ids_only => 1)) {
-            my $in_clause = '(' . join(',', ('?') x @parent_cat_ids) . ')';
-            $sql = qq/
-                SELECT story_id FROM story_category_link
-                WHERE category_id IN $in_clause AND publish_if_modified_${type}_below_cat = 1
-            /;
-            $sth = dbh()->prepare_cached($sql);
-            $sth->execute(@parent_cat_ids);
+            $sth->execute($cat->category_id);
             while (my $row = $sth->fetchrow_arrayref) {
-                my $candidate_story_id = $row->[0];
                 # inflate story_id value into a story object, but only it isn't already marked for publishing
-                unless (exists $linked_stories{$row->[0]}) {
+                my $candidate_story_id = $row->[0];
+                unless (exists $linked_stories{$candidate_story_id}) {
                     my ($candidate) = pkg('Story')->find(story_id => $candidate_story_id);
                     # only keep if the class method should_category_linked_publish() says the candidate should be published
                     if (
@@ -2558,7 +2530,35 @@ sub _add_category_linked_stories {
                     }
                 }
             }
-        }
+
+            # look for stories that are linked to our parent categories that should also be published
+            if (my @parent_cat_ids = $cat->ancestors(ids_only => 1)) {
+                my $in_clause = '(' . join(',', ('?') x @parent_cat_ids) . ')';
+                $sql = qq/
+                    SELECT story_id FROM story_category_link
+                    WHERE category_id IN $in_clause AND publish_if_modified_${type}_below_cat = 1
+                /;
+                $sth = dbh()->prepare_cached($sql);
+                $sth->execute(@parent_cat_ids);
+                while (my $row = $sth->fetchrow_arrayref) {
+                    my $candidate_story_id = $row->[0];
+                    # inflate story_id value into a story object, but only it isn't already marked for publishing
+                    unless (exists $linked_stories{$row->[0]}) {
+                        my ($candidate) = pkg('Story')->find(story_id => $candidate_story_id);
+                        # only keep if the class method should_category_linked_publish() says the candidate should be published
+                        if (
+                            $candidate->element->class->should_category_linked_publish(
+                                publisher => $self,
+                                candidate => $candidate,
+                                object    => $object,
+                            )
+                          )
+                        {
+                            $linked_stories{$candidate_story_id} = $candidate;
+                        }
+                    }
+                }
+            }
         }
     }
 
