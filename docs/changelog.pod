@@ -6,7 +6,12 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
-=item * 
+=item *
+
+Publisher now looks at all the categories for a story in the
+C<_add_category_linked_stories()> method. [Brad Oaks]
+
+=item *
 
 Added Fedora 15 & 16 as build platforms. [Michael Peters]
 

@@ -2500,7 +2500,6 @@ sub _add_category_linked_stories {
     my %linked_stories = ();
 
     for my $object (@$publish_list) {
-        my $cat = $object->category;
         my $type =
           $object->isa('Krang::Story') ? 'story' : $object->isa('Krang::Media') ? 'media' : undef;
         next unless $type;
@@ -2511,6 +2510,7 @@ sub _add_category_linked_stories {
             WHERE category_id = ? AND publish_if_modified_${type}_in_cat = 1
         /;
         my $sth = dbh()->prepare_cached($sql);
+        for my $cat ($object->categories) {
         $sth->execute($cat->category_id);
         while (my $row = $sth->fetchrow_arrayref) {
             # inflate story_id value into a story object, but only it isn't already marked for publishing
@@ -2558,6 +2558,7 @@ sub _add_category_linked_stories {
                     }
                 }
             }
+        }
         }
     }
 
