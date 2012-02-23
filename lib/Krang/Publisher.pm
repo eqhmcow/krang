@@ -2497,12 +2497,28 @@ sub _determine_output_path {
 
 sub _add_category_linked_stories {
     my ($self, $publish_list) = @_;
+    my $user_id        = $ENV{REMOTE_USER};
     my %linked_stories = ();
 
     for my $object (@$publish_list) {
         my $type =
           $object->isa('Krang::Story') ? 'story' : $object->isa('Krang::Media') ? 'media' : undef;
         next unless $type;
+
+        # don't look for candidate stories if object is checked out
+        if ($object->checked_out) {
+            if ($user_id != $object->checked_out_by) {
+                debug( sprintf
+                    __PACKAGE__
+                      . ': skipping _add_category_linked_stories on checked out %s object id=%s',
+                      $type, (
+                      $type eq 'story' ? $object->story_id
+                    : $type eq 'media' ? $object->media_id
+                    :                   '')
+                );
+                next;
+            }
+        }
 
         # look for any stories that link to this category that should also be published
         my $sql = qq/
