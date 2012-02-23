@@ -2538,9 +2538,9 @@ sub _add_category_linked_stories {
                     SELECT story_id FROM story_category_link
                     WHERE category_id IN $in_clause AND publish_if_modified_${type}_below_cat = 1
                 /;
-                $sth = dbh()->prepare_cached($sql);
-                $sth->execute(@parent_cat_ids);
-                while (my $row = $sth->fetchrow_arrayref) {
+                my $parents_sth = dbh()->prepare_cached($sql);
+                $parents_sth->execute(@parent_cat_ids);
+                while (my $row = $parents_sth->fetchrow_arrayref) {
                     my $candidate_story_id = $row->[0];
                     # inflate story_id value into a story object, but only it isn't already marked for publishing
                     unless (exists $linked_stories{$row->[0]}) {
