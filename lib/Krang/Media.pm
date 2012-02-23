@@ -352,6 +352,17 @@ sub category {
 
 }
 
+=item $media->categories()
+
+Synonym for C<category>.
+
+=cut
+
+sub categories {
+    my $self = shift;
+    return $self->category(@_);
+}
+
 =item $media->filename()
 
 =item $media->caption()
