@@ -1725,12 +1725,14 @@ sub _rectify_publish_locations {
 #
 
 sub _deploy_testing_templates {
-
     my $self = shift;
     my $path;
 
     my $user_id = $ENV{REMOTE_USER}
       || croak __PACKAGE__ . ": 'REMOTE_USER' environment variable is not set!\n";
+
+    # update our counter so that we can pair with _undeploy_testing_templates()
+    $self->{_undeploy_testing_templates_counter}++;
 
     # find any templates checked out by this user that are marked for testing.
     my @templates = pkg('Template')->find(testing => 1, checked_out_by => $user_id);
@@ -1758,11 +1760,16 @@ sub _deploy_testing_templates {
 # Will croak if there's a system error or it cannot determine the user.
 #
 sub _undeploy_testing_templates {
-
     my $self = shift;
 
     my $user_id = $ENV{REMOTE_USER}
       || croak __PACKAGE__ . ": 'REMOTE_USER' environment variable is not set!\n";
+
+    # decrement our counter if we have one so we know we were used in a pair
+    $self->{_undeploy_testing_templates_counter}-- if $self->{_undeploy_testing_templates_counter};
+
+    # if we're still aren't ready to cleanup then just return
+    return if $self->{_undeploy_testing_templates_counter};
 
     # there's no work if there's no dir.
     return unless exists($self->{testing_template_path}{$user_id});
