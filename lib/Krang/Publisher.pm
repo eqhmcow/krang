@@ -1759,6 +1759,9 @@ sub _deploy_testing_templates {
 #
 # Will croak if there's a system error or it cannot determine the user.
 #
+# Must be used in pairs with _deploy_testing_templates(). So if you call
+# _deploy_testing_templates twice, you must call _undeploy_testing_templates()
+# twice in order to un-deploy the test templates
 sub _undeploy_testing_templates {
     my $self = shift;
 
@@ -1792,6 +1795,7 @@ sub _undeploy_testing_templates {
 # Handles the process for publishing a story out over all its various categories.
 #
 # Returns a list of file-system paths where the story was written
+#
 
 sub _build_story_all_categories {
 
