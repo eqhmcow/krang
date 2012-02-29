@@ -266,6 +266,7 @@ unless ($skip_all_modules) {
         Test-Simple
         ExtUtils-Install
         Module-Build
+        version
         Module-Metadata
         Perl-OSType
         Test-Harness
