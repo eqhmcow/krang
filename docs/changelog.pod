@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Templates that are deployed from the "Find Templates" screen are
+now checked-in if they were checked-out by the person doing the
+deployings. This way deploy from "Find Templates" works the same as
+deploy from "Edit Template" [Michael Peters]
+
+=item *
+
 Publisher now looks at all the categories for a story in the
 C<_add_category_linked_stories()> method. [Brad Oaks]
 

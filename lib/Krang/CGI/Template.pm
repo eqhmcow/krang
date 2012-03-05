@@ -478,6 +478,10 @@ sub deploy_selected {
     for my $t (@template_ids) {
         my $template = (pkg('Template')->find(template_id => $t))[0];
         $template->deploy;
+        # if it's checkedout to this same person, go ahead and check it in
+        if( $template->checked_out && $template->checked_out_by eq $ENV{REMOTE_USER} ) {
+            $template->checkin;
+        }
         add_message('deployed', id => $template->template_id);
     }
 
