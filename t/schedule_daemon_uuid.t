@@ -25,8 +25,8 @@ my $scheduler_sleep_interval = SchedulerSleepInterval || 5; # 5 is the default v
 
 my $stop_daemon;
 my $schedulectl;
-my %stale_schedule_id;
-my %foreign_stale_schedule_id;
+my %this_host_stale_schedule_id;
+my %other_host_stale_schedule_id;
 
 # use the TestSet1 instance, if there is one
 foreach my $instance (pkg('Conf')->instances) {
@@ -63,7 +63,7 @@ BEGIN {
                 pkg('Conf')->instance($instance);
 
                 # set a stale schedule that should be cleared on startup
-                my $sched = pkg('Schedule::Action::clean')->new(
+                my $this_host_sched = pkg('Schedule::Action::clean')->new(
                     action      => 'clean',
                     object_type => 'tmp',
                     repeat      => 'daily',
@@ -71,17 +71,11 @@ BEGIN {
                     minute      => 0,
                     daemon_uuid => hostname . '_1234567890',
                 );
-                $sched->save();
-
-                warn sprintf '# set stale claim schedule_id %s with daemon_uuid %s %s',
-                  $sched->schedule_id,
-                  $sched->daemon_uuid,
-                  pkg('Conf')->instance();
-
-                $stale_schedule_id{$instance} = $sched->schedule_id;
+                $this_host_sched->save();
+                $this_host_stale_schedule_id{$instance} = $this_host_sched->schedule_id;
 
                 # set a stale schedule that should not be cleared on startup
-                my $foreign_sched = pkg('Schedule::Action::clean')->new(
+                my $other_host_sched = pkg('Schedule::Action::clean')->new(
                     action      => 'clean',
                     object_type => 'tmp',
                     repeat      => 'daily',
@@ -89,14 +83,8 @@ BEGIN {
                     minute      => 0,
                     daemon_uuid => 'not' . hostname . '_1234567890',
                 );
-                $foreign_sched->save();
-
-                warn sprintf '# set stale claim schedule_id %s with daemon_uuid %s %s',
-                  $foreign_sched->schedule_id,
-                  $foreign_sched->daemon_uuid,
-                  pkg('Conf')->instance();
-
-                $foreign_stale_schedule_id{$instance} = $foreign_sched->schedule_id;
+                $other_host_sched->save();
+                $other_host_stale_schedule_id{$instance} = $other_host_sched->schedule_id;
             }
 
             # start the scheduler
@@ -124,52 +112,60 @@ END {
     }
 }
 
-my @schedules;
 
 my $creator = pkg('Test::Content')->new();
 
-my $found_sched;
+my $this_host_found_sched;
+my $other_host_found_sched;
 my $cnt = 0;
 
 foreach my $instance (pkg('Conf')->instances) {
     pkg('Conf')->instance($instance);
 
+    my @schedules;
     # look for our stale schedule and check that daemon_uuid is cleared
     # the scheduler might block find(), so try 3 times
     while (1) {
         last if $cnt++ > 3;
-        ($found_sched) = pkg('Schedule')->find(schedule_id => $stale_schedule_id{$instance});
-        if ($found_sched) {
-            push @schedules, $found_sched;
+        ($this_host_found_sched) = pkg('Schedule')->find(schedule_id => $this_host_stale_schedule_id{$instance});
+        if ($this_host_found_sched) {
+            push @schedules, $this_host_found_sched;
             last;
         }
         sleep $scheduler_sleep_interval;
     }
-    ok($found_sched, "stale schedule that had our hostname should still exist");
-    is($found_sched->schedule_id, $stale_schedule_id{$instance}, "stale schedule found");
-    is($found_sched->daemon_uuid, undef, "stale schedule for our hostname should have daemon_uuid cleared");
+    ok($this_host_found_sched, "stale schedule that had our hostname should still exist");
+    SKIP: {
+        skip('we did not find the schedule entry', 2)
+          unless ($this_host_found_sched);
+        is($this_host_found_sched->schedule_id, $this_host_stale_schedule_id{$instance}, "stale schedule found");
+        is($this_host_found_sched->daemon_uuid, undef, "stale schedule for our hostname should have daemon_uuid cleared");
+    }
 
-    # look for the foreign stale schedule and check that daemon_uuid is not cleared
+    # look for the other_host stale schedule and check that daemon_uuid is not cleared
     # the scheduler might block find(), so try 3 times
     while (1) {
         last if $cnt++ > 3;
-        ($found_sched) = pkg('Schedule')->find(schedule_id => $foreign_stale_schedule_id{$instance});
-        if ($found_sched) {
-            push @schedules, $found_sched;
+        ($other_host_found_sched) = pkg('Schedule')->find(schedule_id => $other_host_stale_schedule_id{$instance});
+        if ($other_host_found_sched) {
+            push @schedules, $other_host_found_sched;
             last;
         }
         sleep $scheduler_sleep_interval;
     }
-    ok($found_sched, "stale schedule with another hostname should still exist");
-    is($found_sched->schedule_id, $foreign_stale_schedule_id{$instance}, "stale schedule for another hostname should not cleared");
-    is($found_sched->daemon_uuid, 'not'.hostname.'_1234567890', "stale schedule for another hostname should not have daemon_uuid cleared");
-}
-
-END {
+    ok($other_host_found_sched, "stale schedule with another hostname should still exist");
+    SKIP: {
+        skip('we did not find the schedule entry', 2)
+          unless ($other_host_found_sched);
+        is($other_host_found_sched->schedule_id, $other_host_stale_schedule_id{$instance}, "stale schedule for another hostname should not cleared");
+        is($other_host_found_sched->daemon_uuid, 'not'.hostname.'_1234567890', "stale schedule for another hostname should not have daemon_uuid cleared");
+    }
 
     foreach (@schedules) {
         $_->delete;
     }
+}
 
+END {
     $creator->cleanup();
 }
