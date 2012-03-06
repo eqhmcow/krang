@@ -726,6 +726,7 @@ sub _clear_my_daemon_uuid_claims {
     debug(__PACKAGE__ . "->_clear_my_daemon_uuid_claims() daemon_uuid is $daemon_uuid");
 
     foreach my $instance (pkg('Conf')->instances) {
+        pkg('Conf')->instance($instance);
 
         my @schedules;
 
@@ -763,6 +764,7 @@ sub clear_daemon_uuid_claims_by_hostname {
     debug(__PACKAGE__ . "->clear_daemon_uuid_claims_by_hostname() hostname is $hostname");
 
     foreach my $instance (pkg('Conf')->instances) {
+        pkg('Conf')->instance($instance);
 
         my @schedules;
 

@@ -20,6 +20,12 @@ C<_add_category_linked_stories()> method. [Brad Oaks]
 
 =item *
 
+The Scheduler now checks all instances on startup for jobs with
+daemon_uuid reservations that match our hostname.
+[Daniel S. Sterling]
+
+=item *
+
 Added Fedora 15 & 16 as build platforms. [Michael Peters]
 
 =item *
