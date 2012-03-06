@@ -37,6 +37,11 @@ Krang.onload( function() {
 <tmpl_loop asset_id_list>
   <input name="asset_id_list" value="<tmpl_var escape=html id>" type="hidden">
 </tmpl_loop>
+<input name="return_script" value="<tmpl_var escape=html return_script>" type="hidden">
+<tmpl_loop return_params_loop>
+  <input name="return_params" value="<tmpl_var escape=html name>" type="hidden">
+  <input name="return_params" value="<tmpl_var escape=html value>" type="hidden">
+</tmpl_loop>
 
 <h3>
 <tmpl_lang Publication Materials>

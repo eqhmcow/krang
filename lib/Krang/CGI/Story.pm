@@ -1645,6 +1645,20 @@ sub delete {
     }
 
     $self->clear_edit_object();
+
+    # no need to check for category_linked_stories if deleting a retired story.
+    if (!$story->retired) {
+        if (my $linked_story_ids =
+            Krang::Publisher->what_are_my_category_linked_stories([$story->story_id]))
+        {
+            return $self->goto_publish_story_list(
+                linked_story_ids => $linked_story_ids,
+                return_script    => 'workspace.pl',
+                return_params    => [],
+            );
+        }
+    }
+
     $self->redirect_to_workspace;
 }
 
@@ -2031,6 +2045,24 @@ sub delete_selected {
     }
 
     add_message('selected_stories_deleted');
+
+    # no need to check for category_linked_stories if deleting a retired story.
+    my @unretired_delete_list = grep {
+        my ($story) = pkg('Story')->find(story_id => $_);
+        !$story->retired;
+    } @story_delete_list;
+
+    if (my $linked_story_ids =
+        Krang::Publisher->what_are_my_category_linked_stories(\@unretired_delete_list))
+    {
+        my $return_rm = $q->param('retired') ? 'list_retired' : 'find';
+        return $self->goto_publish_story_list(
+            linked_story_ids => $linked_story_ids,
+            return_script    => 'story.pl',
+            return_params    => ['rm', $return_rm],
+        );
+    }
+
     return $q->param('retired') ? $self->list_retired : $self->find();
 }
 
@@ -2060,6 +2092,15 @@ sub retire_selected {
     }
 
     add_message('selected_stories_retired');
+
+    if (my $linked_story_ids = Krang::Publisher->what_are_my_category_linked_stories(\@story_retire_list)) {
+        return $self->goto_publish_story_list(
+            linked_story_ids => $linked_story_ids,
+            return_script => 'story.pl',
+            return_params => [ 'rm', 'find' ],
+        );
+    }
+
     $q->param(rm => 'find');
     return $self->find();
 }
@@ -2735,11 +2776,57 @@ sub retire {
 
     add_message('story_retired', id => $story_id, url => $story->url);
 
+    if (my $linked_story_ids = Krang::Publisher->what_are_my_category_linked_stories([$story_id])) {
+        return $self->goto_publish_story_list(
+            linked_story_ids => $linked_story_ids,
+            return_script => 'story.pl',
+            return_params => [ 'rm', 'find' ],
+        );
+    }
+
     $q->delete('story_id');
     $q->param(rm => 'find');
 
     return $self->find();
 }
+
+=item goto_publish_story_list
+
+Returns to publish_story_list to publish any category linked stories
+
+=cut
+
+sub goto_publish_story_list {
+    my ($self, %args) = @_;
+
+    my @linked_story_ids = (ref($args{linked_story_ids}) eq 'ARRAY')
+      ? @{$args{linked_story_ids}}
+      : ($args{linked_story_ids})
+    ;
+
+    # redirect to publish
+    my $uri = 'publisher.pl?rm=publish_story_list';
+
+    foreach my $story_id (@linked_story_ids) {
+        $uri .= '&krang_pager_rows_checked=' . $story_id;
+    }
+
+    my $return_script = $args{return_script} || 'story.pl';
+    my @return_params = (ref($args{return_params}) eq 'ARRAY')
+      ? @{$args{return_params}}
+      : ('rm' => 'find')
+    ;
+
+    $uri .= sprintf '&return_script=%s', $return_script;
+    foreach my $param (@return_params) {
+        $uri .= sprintf '&return_params=%s', $param;
+    }
+
+    $self->header_props(-uri => $uri);
+    $self->header_type('redirect');
+    return "";
+}
+
 
 =item unretire
 

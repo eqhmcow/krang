@@ -20,6 +20,11 @@ C<_add_category_linked_stories()> method. [Brad Oaks]
 
 =item *
 
+Deleting or retiring a story in the UI will now redirect to publish_story_list
+if category linked stories need published. [Brad Oaks]
+
+=item *
+
 The Scheduler now checks all instances on startup for jobs with
 daemon_uuid reservations that match our hostname.
 [Daniel S. Sterling]

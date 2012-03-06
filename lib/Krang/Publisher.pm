@@ -2595,9 +2595,42 @@ sub _add_category_linked_stories {
         my $meth = $object->isa('Krang::Story') ? 'story_id' : 'media_id';
         push @publish_list, $object
           unless $seen{$meth}{$object->$meth}++;
+        debug(__PACKAGE__.'::_add_category_linked_stories() adding ' . $meth . ' ' . $object->$meth);
     }
 
     return \@publish_list;
+}
+
+sub what_are_my_category_linked_stories {
+    my ($self, $story_id_list) = @_;
+    my $publish_list = [];
+    my %seen_story_ids;
+
+    # inflate into objects
+    foreach my $story_id (@{$story_id_list}) {
+        my ($story) = pkg('Story')->find(story_id => $story_id);
+        push @{$publish_list}, $story;
+        $seen_story_ids{$story_id}++;
+    }
+
+    my $before_count = scalar @{$publish_list};
+    $publish_list = $self->_add_category_linked_stories($publish_list);
+    my $after_count = scalar @{$publish_list};
+
+    # no linked stories added to the list
+    return unless ($after_count > $before_count);
+
+    # keep a list of the new story_id values
+    my %new_story_ids;
+    foreach my $story (@{$publish_list}) {
+        my $story_id = $story->story_id;
+        $new_story_ids{$story_id}++
+          unless ($seen_story_ids{$story_id});
+    }
+
+    debug(sprintf __PACKAGE__ . '::what_are_my_category_linked_stories() [%s]',
+        join(',', keys(%new_story_ids)));
+    return [keys(%new_story_ids)];
 }
 
 ############################################################

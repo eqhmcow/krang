@@ -212,6 +212,19 @@ sub publish_story_list {
             onchange => "this.form['publish_now'][1].checked = true"
         )
     );
+
+    # setup return form
+    if (    $query->param('return_params')
+        and $query->param('return_script'))
+    {
+        my %return_params = $query->param('return_params');
+        $t->param(
+            return_script => $query->param('return_script'),
+            return_params_loop =>
+              [map { {name => $_, value => $return_params{$_}} } keys %return_params]
+        );
+    }
+
     return $t->output();
 
 }
@@ -264,6 +277,12 @@ sub publish_assets {
         # pass things to the scheduler
         my $date = decode_datetime(name => 'publish_date', query => $query);
         $self->_schedule_assets(\@story_list, \@media_list, $date);
+
+        if (my $location = $self->_return_script_location) {
+            $self->header_props(-uri => $location);
+            $self->header_type('redirect');
+            return "";
+        }
 
         # return to my workspace
         return $self->redirect_to_workspace;
@@ -835,13 +854,41 @@ sub _publish_assets_now {
     # die if you want to
     croak($err) if $err;
 
+    my $location = $self->_return_script_location();
+    $location ||= 'workspace.pl';
+
     # dynamic redirect to workspace, but give the page time to update
     # itself
     print qq|
     <script type="text/javascript">
-        setTimeout(function() { location.replace('workspace.pl') }, 10)
+        setTimeout(function() { location.replace('$location') }, 10)
     </script>|;
 
+    return;
+}
+
+#
+# _return_script_location
+#
+# Looks at the query and constructs a location from return_script and
+# return_params if they are present.
+#
+sub _return_script_location {
+    my $self  = shift;
+    my $query = $self->query;
+    # look for redirect_script and friends
+    if (my $return_script = scalar $query->param('return_script')) {
+        my $location = $return_script;
+        if (my %return_params = $query->param('return_params')) {
+            $location .= '?';
+            foreach my $key (keys %return_params) {
+                my $value = $return_params{$key};
+                $location .= sprintf '%s=%s&', $key, $value;
+            }
+        }
+        debug('return_script value is ' . $location);
+        return $location;
+    }
     return;
 }
 
