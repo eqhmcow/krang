@@ -70,6 +70,7 @@ sub setup {
               deploy
               deploy_selected
               checkout_and_edit
+              checkout_selected
               edit
               edit_save
               edit_checkin
@@ -313,6 +314,41 @@ sub checkout_and_edit {
     }
 
     return $self->edit;
+}
+
+=item checkout_selected
+
+Checkout all the templates which were checked
+
+=cut
+
+sub checkout_selected {
+    my $self = shift;
+    my $q                   = $self->query();
+    my @tmpl_checkout_list = ($q->param('krang_pager_rows_checked'));
+    $q->delete('krang_pager_rows_checked');
+
+    foreach my $tmpl_id (@tmpl_checkout_list) {
+        my ($t) = pkg('Template')->find(template_id => $tmpl_id);
+        eval { $t->checkout() };
+        if (my $e = $@) {
+            if (ref $e && $e->isa('Krang::Template::CheckedOut')) {
+                add_alert('checked_out', id => $t->template_id, file => $t->filename);
+            } elsif (ref $e && $e->isa('Krang::Template::NoEditAccess')) {
+                add_alert('template_permissions_changed', id => $t->template_id);
+            } else {
+                die $e;    # rethrow
+            }
+        }
+
+    }
+
+    if (scalar(@tmpl_checkout_list)) {
+        add_message('selected_template_checkout');
+    }
+
+    # Redirect to workspace.pl
+    $self->redirect_to_workspace;
 }
 
 =item delete

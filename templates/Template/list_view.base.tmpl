@@ -51,6 +51,13 @@ retire_selected = function() {
         Krang.Form.submit('krang_pager_form', { rm: 'retire_selected' }, { to_top: false });
 }
 
+checkout_selected = function() {
+    if ( !Krang.pager_row_checked() )
+        alert( Krang.L10N.loc('Nothing selected to check out!') );
+    else
+        Krang.Form.submit('krang_pager_form', { rm: 'checkout_selected' });
+}
+
 do_deploy = function() {
     if ( !Krang.pager_row_checked() )
         alert( Krang.L10N.loc('Nothing selected to deploy!') );
@@ -168,6 +175,7 @@ retire_template = function(id) {
   <tmpl_if row_count>
     <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
     <input value="<tmpl_lang Retire>" onclick="retire_selected()" type="button" class="list-btn">
+    <input value="<tmpl_lang Check Out>" onclick="checkout_selected()" type="button" class="list-btn">
     <input value="<tmpl_lang Deploy>" onclick="do_deploy()" type="button" class="list-btn">
   </tmpl_if>
 </form></div>
@@ -183,6 +191,7 @@ retire_template = function(id) {
   <tmpl_if row_count>
     <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="list-btn">
     <input value="<tmpl_lang Retire>" onclick="retire_selected()" type="button" class="list-btn">
+    <input value="<tmpl_lang Check Out>" onclick="checkout_selected()" type="button" class="list-btn">
     <input value="<tmpl_lang Deploy>" onclick="do_deploy()" type="button" class="list-btn">
   </tmpl_if>
 </form></div>

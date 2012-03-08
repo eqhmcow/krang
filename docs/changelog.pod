@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Templates can now be checked-out in bulk through the UI just like Stories
+and Media. [Michael Peters]
+
+=item *
+
 Media Bulk Upload UI now remembers the last category that was used just
 like the New Media screen. [Michael Peters]
 
