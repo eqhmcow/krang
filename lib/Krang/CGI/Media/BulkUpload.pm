@@ -87,16 +87,20 @@ for upload.
 =cut
 
 sub choose {
-    my $self  = shift;
-    my $query = $self->query;
-
-    my $template = $self->load_tmpl('choose.tmpl', associate => $query);
+    my $self             = shift;
+    my $query            = $self->query;
+    my $template         = $self->load_tmpl('choose.tmpl', associate => $query);
+    my $category_chooser = category_chooser(
+        name       => 'category_id',
+        query      => $query,
+        may_edit   => 1,
+        persistkey => pkg('CGI::Media::BulkUpload'),
+    );
 
     $template->param(
         enable_ftp => (EnableFTP || 0),
-        category_chooser =>
-          scalar category_chooser(name => 'category_id', query => $query, may_edit => 1),
-        upload_chooser => scalar $query->filefield(-name => 'media_file', -size => 32),
+        category_chooser => $category_chooser,
+        upload_chooser   => $query->filefield(-name => 'media_file', -size => 32),
     );
 
     # FTP Settings

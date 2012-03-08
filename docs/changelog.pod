@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Media Bulk Upload UI now remembers the last category that was used just
+like the New Media screen. [Michael Peters]
+
+=item *
+
 Searching for media by filename no longer wild cards non-word characters
 since those are important in file names (like ".") [Michael Peters]
 
