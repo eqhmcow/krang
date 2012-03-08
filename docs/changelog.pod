@@ -2,7 +2,7 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 3.18 - In Development
+=head2 3.18 - March, 08, 2012
 
 =over
 
