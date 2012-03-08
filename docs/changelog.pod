@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Searching for media by filename no longer wild cards non-word characters
+since those are important in file names (like ".") [Michael Peters]
+
+=item *
+
 Templates that are deployed from the "Find Templates" screen are
 now checked-in if they were checked-out by the person doing the
 deployings. This way deploy from "Find Templates" works the same as
