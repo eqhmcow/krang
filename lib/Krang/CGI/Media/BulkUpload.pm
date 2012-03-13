@@ -3,15 +3,12 @@ use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
-
 use Carp qw(croak);
-
 use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Widget  => qw(category_chooser);
 use Krang::ClassLoader Conf    => qw(KrangRoot FTPHostName FTPPort EnableFTP);
-use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Log     => qw(debug);
 use Krang::ClassLoader 'User';
 use File::Temp qw/ tempdir /;
@@ -87,19 +84,13 @@ for upload.
 =cut
 
 sub choose {
-    my $self             = shift;
-    my $query            = $self->query;
-    my $template         = $self->load_tmpl('choose.tmpl', associate => $query);
-    my $category_chooser = category_chooser(
-        name       => 'category_id',
-        query      => $query,
-        may_edit   => 1,
-        persistkey => pkg('CGI::Media::BulkUpload'),
-    );
+    my $self     = shift;
+    my $query    = $self->query;
+    my $template = $self->load_tmpl('choose.tmpl', associate => $query);
 
     $template->param(
         enable_ftp => (EnableFTP || 0),
-        category_chooser => $category_chooser,
+        category_chooser => $self->_get_category_chooser(),
         upload_chooser   => $query->filefield(-name => 'media_file', -size => 32),
     );
 
@@ -203,11 +194,15 @@ sub upload {
         my ($create_count, $update_count) = create_media();
         add_message('media_uploaded', new_count => $create_count, update_count => $update_count);
 
-        # reset category_id
-        $q->param('category_id' => '');
-
         # remove tempdir
         rmtree($opened_root);
+
+        # kindof a hack, but it's the best way to get the category chooser to remember the category
+        # happens for every return to choose() but not for the redirect to the workspace
+        $self->_get_category_chooser();
+
+        # reset category_id
+        $q->param('category_id' => '');
 
         # redirect to workspace
         my $url = 'workspace.pl';
@@ -568,6 +563,18 @@ sub resize_images {
 
     }
 }
+
+sub _get_category_chooser {
+    my $self = shift;
+    return scalar category_chooser(
+        name       => 'category_id',
+        formname   => 'upload_form',
+        query      => $self->query,
+        may_edit   => 1,
+        persistkey => pkg('CGI::Media::BulkUpload'),
+    );
+}
+
 
 =back
 
