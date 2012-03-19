@@ -1229,10 +1229,8 @@ sub publish {
 
     $self->fill_template(tmpl => $html_template, @_);
 
-    my $html;
-
     # make sure publish returns cleanly
-    eval { $html = $html_template->output(); };
+    my $html = eval { $html_template->output() };
 
     if (my $err = $@) {
 
@@ -1262,12 +1260,6 @@ sub publish {
                 error_msg    => $err
             );
         }
-    }
-
-    # check to make sure the output isn't zero-length - this can be an
-    # indication of trouble.
-    unless ($html) {
-
     }
 
     return $html;
