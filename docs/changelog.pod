@@ -2,6 +2,17 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.19 - In develoment
+
+=over
+
+=item *
+
+C<story> is now passed to a top-level element's extension() and filename()
+methods. [Michael Peters]
+
+=back
+
 =head2 3.18 - March, 08, 2012
 
 =over

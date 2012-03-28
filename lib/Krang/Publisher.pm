@@ -1507,19 +1507,13 @@ something other than what is currently being published.
 =cut
 
 sub story_filename {
-
-    my $self = shift;
-    my %args = @_;
-
-    my $page  = $args{page}  || 0;
+    my ($self, %args) = @_;
+    my $page  = $args{page}  || '';
     my $story = $args{story} || $self->story;
-
     my $element = $story->element();
 
-    if ($page == 0) { $page = ''; }
-
-    return $element->class()->filename() . $page . $element->class()->extension();
-
+    return $element->class()->filename(story => $story) . $page
+      . $element->class()->extension(story => $story);
 }
 
 =item C<< $bool = $publisher->test_publish_status(object => $story, mode => 'publish') >>
