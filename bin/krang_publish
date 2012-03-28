@@ -77,7 +77,7 @@ however prevent media files that are related to stories from getting published.
 
 If true, then stories will be skipped from publishing.
 
-=item --skip-related-assests
+=item --skip-related-assets
 
 If true, do not publish related stories or media.
 
@@ -305,7 +305,7 @@ GetOptions(
     'flavor=s'            => \$flavor,
     'skip-media'          => \$skip_media,
     'skip-stories'        => \$skip_stories,
-    'skip-related-assests'=> \$skip_related_assets,
+    'skip-related-assets' => \$skip_related_assets,
 
     # handle --story-id, --site-id, etc.
     (map { ("$_-id=s", $id{$_}) } keys %id)
