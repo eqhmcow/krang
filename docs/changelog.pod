@@ -11,6 +11,11 @@ This document contains a list of changes for each release of Krang.
 C<story> is now passed to a top-level element's extension() and filename()
 methods. [Michael Peters]
 
+=item *
+
+Fixed misspelling of F<krang_publish> C<--skip-related-assets> option.
+[Michael Peters]
+
 =back
 
 =head2 3.18 - March, 08, 2012
