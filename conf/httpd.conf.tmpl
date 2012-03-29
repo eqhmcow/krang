@@ -221,7 +221,7 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
    RewriteLogLevel <tmpl_var RewriteLogLevel default="0">
    RewriteLog <tmpl_var KrangRoot>/logs/apache_rewrite_log
    RewriteCond %{SERVER_PORT} !^<tmpl_var SSLApachePort>$
-   RewriteRule ^.*$ https://%{SERVER_NAME}:<tmpl_var SSLApachePort>%{REQUEST_URI} [R,L,NE] 
+   RewriteRule ^.*$ https://%{SERVER_NAME}:<tmpl_var SSLApachePort>%{REQUEST_URI} [R,L,NE]
 
 </VirtualHost>
 
@@ -258,15 +258,15 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
 
    #  All SSL configuration in this context applies to the virtual hosts
    #
-   
-   
+
+
    #   SSL Engine Switch:
    #   Enable/Disable SSL for this virtual host.
    SSLEngine on
-   
+
    #   Usable SSL protocol flavours
    SSLProtocol <tmpl_var SSLProtocol default="all -SSLv2">
-   
+
    #   Logging:
    #   The home of the dedicated SSL protocol logfile. Errors are
    #   additionally duplicated in the general error log file.  Put
@@ -276,12 +276,12 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
    #   none, error, warn, info, trace, debug.
    SSLLog      <tmpl_var KrangRoot>/logs/ssl.log
    SSLLogLevel <tmpl_var SSLLogLevel default="info">
-   
+
    #   SSL Cipher Suite:
    #   List the ciphers that the client is permitted to negotiate.
    #   See the mod_ssl documentation for a complete list.
    SSLCipherSuite <tmpl_var SSLCipherSuite default="ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL">
-   
+
    #   Server Certificate:
    #   Point SSLCertificateFile at a PEM encoded certificate.  If
    #   the certificate is encrypted, then you will be prompted for a
@@ -291,14 +291,14 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
    #   certificate you can configure both in parallel (to also allow
    #   the use of DSA ciphers, etc.)
    SSLCertificateFile <tmpl_var KrangRoot>/conf/ssl.crt/server.crt
-   
+
    #   Server Private Key:
    #   If the key is not combined with the certificate, use this
    #   directive to point at the key file.  Keep in mind that if
    #   you've both a RSA and a DSA private key you can configure
    #   both in parallel (to also allow the use of DSA ciphers, etc.)
    SSLCertificateKeyFile <tmpl_var KrangRoot>/conf/ssl.key/server.key
-   
+
    #   Server Certificate Chain:
    #   Point SSLCertificateChainFile at a file containing the
    #   concatenation of PEM encoded CA certificates which form the
@@ -307,14 +307,14 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
    #   when the CA certificates are directly appended to the server
    #   certificate for convinience.
    #SSLCertificateChainFile <tmpl_var KrangRoot>/conf/ssl.crt/ca-bundle.crt
-   
+
    <tmpl_if SSL_VERIFY_CLIENT>
    #
    #   Some MIME-types for downloading Certificates and CRLs
    #
    AddType application/x-x509-ca-cert .crt
    AddType application/x-pkcs7-crl    .crl
-   
+
    #   Certificate Authority (CA):
    #   Set the CA certificate verification path where to find CA
    #   certificates for client authentication or alternatively one
@@ -324,7 +324,7 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
    #         Makefile to update the hash symlinks after changes.
    SSLCACertificatePath <tmpl_var KrangRoot>/conf/ssl.crt
    SSLCACertificateFile <tmpl_var KrangRoot>/conf/ssl.crt/ca_bundle-client.crt
-   
+
    #   Certificate Revocation Lists (CRL):
    #   Set the CA revocation path where to find CA CRLs for client
    #   authentication or alternatively one huge file containing all
@@ -334,7 +334,7 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
    #         Makefile to update the hash symlinks after changes.
    SSLCARevocationPath <tmpl_var KrangRoot>/conf/ssl.crl
    SSLCARevocationFile <tmpl_var KrangRoot>/conf/ssl.crl/ca-bundle-client.crl
-   
+
    #   Client Authentication (Type):
    #   Client certificate verification type and depth.  Types are
    #   none, optional, require and optional_no_ca.  Depth is a
@@ -343,7 +343,7 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
    SSLVerifyClient <tmpl_var SSLVerifyClient default="none">
    SSLVerifyDepth  <tmpl_var SSLVerifyDepth default="1">
    </tmpl_if>
-   
+
    #   SSL Protocol Adjustments:
    #   The safe and default but still SSL/TLS standard compliant shutdown
    #   approach is that mod_ssl sends the close notify alert but doesn't wait for
@@ -374,7 +374,7 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
 
 
    </tmpl_if>
-   
+
 </VirtualHost>
 
 # Use NameVirtuaHosts
@@ -394,7 +394,7 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
    RewriteLogLevel <tmpl_var RewriteLogLevel default="0">
    RewriteLog <tmpl_var KrangRoot>/logs/apache_rewrite_log
    RewriteCond %{SERVER_PORT} !^<tmpl_var SSLApachePort>$
-   RewriteRule ^.*$ https://%{SERVER_NAME}:<tmpl_var SSLApachePort>%{REQUEST_URI} [R,L,NE] 
+   RewriteRule ^.*$ https://%{SERVER_NAME}:<tmpl_var SSLApachePort>%{REQUEST_URI} [R,L,NE]
 
 </VirtualHost>
 
@@ -412,7 +412,7 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
    PerlLogHandler   Krang::Handler->log_handler
 
    <Location />
-       PerlSetVar      flavor instance   
+       PerlSetVar      flavor instance
        PerlSetVar      instance <tmpl_var InstanceName>
 
        AuthType Krang::Handler
@@ -454,7 +454,7 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
 <tmpl_else>
    #SSLCertificateChainFile <tmpl_var KrangRoot>/conf/ssl.crt/ca-bundle.crt
 </tmpl_if>
-   
+
    <tmpl_if SSL_VERIFY_CLIENT>
    AddType application/x-x509-ca-cert .crt
    AddType application/x-pkcs7-crl    .crl
@@ -478,7 +478,7 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
    SSLVerifyClient <tmpl_var SSLVerifyClient default="none">
    SSLVerifyDepth  <tmpl_var SSLVerifyDepth default="1">
    </tmpl_if>
-   
+
    SetEnvIf User-Agent ".*MSIE.*" \
             nokeepalive ssl-unclean-shutdown \
             downgrade-1.0 force-response-1.0
@@ -488,4 +488,4 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
 
 </VirtualHost>
 </tmpl_loop>
-  
+
