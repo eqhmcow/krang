@@ -5,7 +5,7 @@ use warnings;
 use Carp qw(croak);
 use Krang::ClassLoader Conf => qw(KrangUser KrangGroup);
 use Krang::ClassLoader 'User';
-use Krang::ClassLoader Log => qw(debug info critical);
+use Krang::ClassLoader Log => qw(debug info critical reopen_log);
 use Krang::ClassLoader 'FTP::FileHandle';
 use Krang::ClassLoader 'FTP::DirHandle';
 use Krang::ClassLoader DB => qw( forget_dbh );
@@ -126,6 +126,7 @@ change to uid/gid to KrangUser/KrangGroup.
 =cut
 
 sub post_accept_hook {
+    reopen_log();
 
     # get current uid/gid
     my $uid = $>;
@@ -203,8 +204,9 @@ sub transfer_hook {
     my $buffer_ref   = shift;
 
     # prevent "Wide character in syswrite" error when downloading template with utf8 characters.
-    binmode($sock, ":utf8")
-        if $mode eq 'r';
+    if (ref($file) && $file->isa('IO::Scalar') && $mode eq 'r') {
+        binmode($sock, ":utf8")
+    }
 
     return undef;
 }
