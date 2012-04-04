@@ -2506,6 +2506,7 @@ sub _add_category_linked_stories {
     my %linked_stories = ();
 
     for my $object (@$publish_list) {
+        next unless $object;
         my $type =
           $object->isa('Krang::Story') ? 'story' : $object->isa('Krang::Media') ? 'media' : undef;
         next unless $type;
