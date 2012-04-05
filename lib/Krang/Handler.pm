@@ -254,6 +254,7 @@ sub access_handler ($$) {
         ie        => 'IE',
         safari    => 'WebKit',
         konqueror => 'WebKit',
+        chrome    => 'WebKit',
     );
 
     my $bd = $r->pnotes('browser_detector')
@@ -301,6 +302,7 @@ sub supported_browsers {
         firefox   => 1.5,
         safari    => 1.3,
         konqueror => 1,
+        chrome    => 10,
     );
 }
 
