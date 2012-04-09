@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+After a successful login, if we were trying to get someplace else
+originally redirect there instead of always taking the user to the
+workspace. [Michael Peters]
+
+=item *
+
 L<Krang::FTP::Server> now logs properly in C<logs/krang.log>.
 [Daniel S. Sterling]
 

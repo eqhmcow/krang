@@ -118,6 +118,10 @@ sub show_form {
     my %arg      = @_;
     my $template = $self->load_tmpl("login.tmpl", associate => $query);
 
+use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
+warn Dumper \%ENV;
+
     # this can be an arbitrary message coming from some other place
     my $msg = $arg{alert} || $query->param('alert') || $query->param('message');
     add_alert('custom_msg', msg => $msg) if $msg;
@@ -256,7 +260,7 @@ sub _do_login {
 
 sub _redirect_to_root {
     my ($self) = @_;
-    my $target = './';
+    my $target = $self->query->param('target') || './';
     $self->header_add(-uri => $target);
     $self->header_type('redirect');
     return "Redirect: <a href=\"$target\">$target</a>";

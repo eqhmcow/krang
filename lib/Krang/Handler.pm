@@ -57,6 +57,7 @@ use CSS::Minifier::XS;
 use JavaScript::Minifier::XS;
 use Mail::Sender;
 use Data::Dumper;
+use URI::Escape qw(uri_escape);
 
 BEGIN { pkg('AddOn')->call_handler('InitHandler') }
 
@@ -697,13 +698,17 @@ sub siteserver_trans_handler ($$) {
 
 sub _redirect_to_login {
     my ($self, $r, $flavor, $instance) = @_;
-
     my $login_app = $self->login_uri();
+
+    # preserve the target URL we were trying to get
+    my $uri = $r->uri;
+    $uri =~ s/\?.*//;
+    $login_app .= '?target=' . uri_escape($uri);
 
     # for ajaxy redirect
     my %content = $r->content;
     if ($content{ajax}) {
-        $login_app .= '?rm=redirect_to_login&ajax=1';
+        $login_app .= '&rm=redirect_to_login&ajax=1';
     }
 
     my $new_uri = ($flavor eq 'instance' ? "/$login_app" : "/$instance/$login_app");
