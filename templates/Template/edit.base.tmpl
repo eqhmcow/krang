@@ -10,6 +10,20 @@ save_editor_text = function() {
     }
 }
 
+// not sure why, but if the form element isn't disabled, then CodePress won't get
+// the new value for the content, but will just return the old one (the one
+reset_editor = function() {
+    if(use_editor) {
+        var form = document.forms['edit_template_form'];
+        if( form ) {
+            var content_input = form.elements['content'];
+            if( content_input ) {
+                content_input.disabled = true;
+            }
+        }
+    }
+}
+
 Krang.onload( function() {
   Krang.Nav.edit_mode();
   Krang.Help.set( 'template_<tmpl_if add_mode>new<tmpl_else>edit</tmpl_if>' );
@@ -28,7 +42,8 @@ do_save_stay = function() {
           update: false,
           onComplete: function(args, resp) { 
               // messages will come back as application/json
-              Krang.Messages.add_and_show(resp.responseJSON) 
+              Krang.Messages.add_and_show(resp.responseJSON);
+              reset_editor();
           }
       }
   );
@@ -36,17 +51,29 @@ do_save_stay = function() {
 
 do_save = function() {
   save_editor_text();
-  Krang.Form.submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save' });
+  Krang.Form.submit( 
+    'edit_template_form', 
+    { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save' },
+    { onComplete : function() { reset_editor() } }
+  );
 }
 
 do_deploy = function() {
   save_editor_text();
-  Krang.Form.submit('edit_template_form', { rm: 'deploy' });
+  Krang.Form.submit(
+    'edit_template_form', 
+    { rm: 'deploy' },
+    { onComplete : function() { reset_editor() } }
+  );
 }
 
 save_and_view_log = function() {
   save_editor_text();
-  Krang.Form.submit('edit_template_form', { rm: 'save_and_view_log' });
+  Krang.Form.submit(
+    'edit_template_form', 
+    { rm: 'save_and_view_log' },
+    { onComplete : function() { reset_editor() } }
+  );
 }
 
 <tmpl_if add_mode>
@@ -94,7 +121,11 @@ save_and_view_log = function() {
       }
     }
     save_editor_text();
-    Krang.Form.submit('edit_template_form', { rm: 'view_version' });
+    Krang.Form.submit(
+      'edit_template_form', 
+      { rm: 'view_version' },
+      { onComplete : function() { reset_editor() } }
+    );
   }
 
   do_delete = function() {

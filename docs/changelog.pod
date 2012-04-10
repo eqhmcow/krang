@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixing bug in template editor when code editor (CodePress) is on
+that prevented edits after an initial "Save & Stay" from actually
+saving. [Michael Peters]
+
+=item *
+
 After a successful login, if we were trying to get someplace else
 originally redirect there instead of always taking the user to the
 workspace. [Michael Peters]
