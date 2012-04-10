@@ -20,7 +20,7 @@ workspace. [Michael Peters]
 
 =item *
 
-L<Krang::FTP::Server> now logs properly in C<logs/krang.log>.
+L<Krang::FTP::Server> now logs properly in F<logs/krang.log>.
 [Daniel S. Sterling]
 
 =item *
@@ -30,8 +30,8 @@ L<Krang::FTP::Server> only call binmode utf8 for templates, not for media.
 
 =item *
 
-C<story> is now passed to a top-level element's extension() and filename()
-methods. [Michael Peters]
+C<story> is now passed to a top-level element's C<extension()> and
+C<filename()> methods. [Michael Peters]
 
 =item *
 
