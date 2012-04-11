@@ -118,10 +118,6 @@ sub show_form {
     my %arg      = @_;
     my $template = $self->load_tmpl("login.tmpl", associate => $query);
 
-use Data::Dumper;
-$Data::Dumper::Sortkeys = 1;
-warn Dumper \%ENV;
-
     # this can be an arbitrary message coming from some other place
     my $msg = $arg{alert} || $query->param('alert') || $query->param('message');
     add_alert('custom_msg', msg => $msg) if $msg;
