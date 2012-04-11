@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Don't convert hyphens in media filenames into underscores since hyphens
+are valid in URLs and filenames. [Michael Peters]
+
+=item *
+
 Added C<no_anchor> option to L<Krang::Widget::autocomplete_values>.
 [Michael Peters]
 

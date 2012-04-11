@@ -2868,7 +2868,7 @@ sub clean_filename {
     return $filename unless $filename;
     $filename =~ s/[^\w\s\.\-]//g;     # clean invalid chars
     $filename =~ s/(^\s+|\s+$)+//g;    # trim leading and trailing whitespace
-    $filename =~ s/[\s\-\_]+/_/g;      # use underscores btw words
+    $filename =~ s/[\s\_]+/_/g;        # use underscores btw words
     return $filename;
 }
 
