@@ -1046,6 +1046,12 @@ into individual words. But sometimes it's useful to have the whole
 phrase returned instead. Set this flag to true to accomplish this.
 This is optional
 
+=item no_anchor
+
+By default we anchor the search for text that starts either at the beginning
+of the string or at a word boundary. Specifiying this optional as true
+will instead do something like C<"%PHRASE%"> instead.
+
 =item dbh
 
 The database handle to use. If none is provided it will default
@@ -1063,8 +1069,8 @@ using C<AND>.
 
 sub autocomplete_values {
     my %args = @_;
-    my ($phrase, $table, $fields, $dbh, $where, $no_split) =
-      @args{qw(phrase table fields dbh where no_split)};
+    my ($phrase, $table, $fields, $dbh, $where, $no_split, $no_anchor) =
+      @args{qw(phrase table fields dbh where no_split no_anchor)};
     $dbh ||= dbh();
 
     if (!$phrase) {
@@ -1072,17 +1078,25 @@ sub autocomplete_values {
         $phrase = $cgi->param('phrase');
     }
 
+    my ($pattern, $pattern_op);
+    if ($no_anchor) {
+        $pattern    = '%' . $phrase . '%';
+        $pattern_op = 'LIKE';
+    } else {
+        $pattern    = '(^|[[:blank:]_.//])' . quotemeta($phrase);
+        $pattern_op = 'REGEXP';
+    }
+
     # query the db for these values
     my $sql =
         "SELECT "
       . join(', ', map { "`$_`" } @$fields)
       . " FROM `$table` WHERE ("
-      . join(' OR ', map { "`$_` REGEXP ?" } @$fields) . ')';
+      . join(' OR ', map { "`$_` $pattern_op ?" } @$fields) . ')';
     $sql .= " AND $where" if $where;
 
-    my $regex = '(^|[[:blank:]_.//])' . quotemeta($phrase);
     my $sth   = $dbh->prepare_cached($sql);
-    my @binds = map { $regex } @$fields;
+    my @binds = map { $pattern } @$fields;
     $sth->execute(@binds);
 
     # split into individual words and then sort
