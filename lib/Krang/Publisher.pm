@@ -2587,6 +2587,7 @@ sub _add_category_linked_stories {
     # merge and uniquify index stories into publish list
     my (@publish_list, %seen);
     for my $object (@$publish_list, values(%linked_stories)) {
+        next unless $object;
         my $meth = $object->isa('Krang::Story') ? 'story_id' : 'media_id';
         push @publish_list, $object
           unless $seen{$meth}{$object->$meth}++;
