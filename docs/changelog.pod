@@ -2,6 +2,18 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.20 - development
+
+=over
+
+=item *
+
+Fixed bug where some publish time exceptions were being silently
+disguarded and the user would be left with a successful message even
+though the item was never published. [Michael Peters]
+
+=back
+
 =head2 3.19 - April 13, 2012
 
 =over
