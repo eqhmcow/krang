@@ -733,9 +733,11 @@ sub _publish_assets_now {
                     callback => \&_progress_callback
                 );
             };
+            my $err = $@;
+
             pkg('Session')->load();
 
-            if (my $err = $@) {
+            if ($err) {
                 # if there is an error, figure out what it is, create the
                 # appropriate message and return.
                 if (ref $err
