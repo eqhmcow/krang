@@ -85,22 +85,7 @@ sub new {
 
     # maybe add a utf-8 decoding filter
     if (pkg('Charset')->is_utf8) {
-        my @filters = ();
-        my $filter  = $arg{filter};
-        if ($filter) {
-            if (ref($filter) eq 'CODE') {
-                push @filters, $filter;
-            } elsif (ref($filter) eq 'ARRAY') {
-                @filters = @$filter;
-            } else {
-                croak
-                  "Filter argument to Krang::HTMLTemplate must be a code or an array reference, "
-                  . "but ref($filter) returned '"
-                  . ref($filter) . "'";
-            }
-        }
-        push @filters, sub { ${$_[0]} = decode_utf8(${$_[0]}) };
-        $arg{filter} = \@filters;
+        $arg{utf8} = 1;
     }
 
     return $pkg->SUPER::new(%arg);
