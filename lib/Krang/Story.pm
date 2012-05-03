@@ -1993,7 +1993,7 @@ sub transform_stories {
 
         # transform and save the live story
         $story = $callback->(story => $story, live => 1, version => $story->version);
-        $story->save(keep_version => 1, no_history => 1, no_verify_checkout => 1);
+        $story->save(keep_version => 1, no_history => 1, no_verify_checkout => 1, ignore_permissions => 1);
 
         if ($past_versions) {
             my $dbh = dbh;
