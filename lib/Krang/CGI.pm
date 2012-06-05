@@ -477,7 +477,15 @@ sub redirect_to_login {
 
 sub _redirect_to_url_with_msg {
     my ($self, $url, $msg) = @_;
-    $url .= "&message=" . uri_escape($msg) if $msg;
+
+    if( $msg ) {
+        if( $url =~ /\?/ ) {
+            $url .= '&';
+        } else {
+            $url .= '?';
+        }
+        $url .= "message=" . uri_escape($msg);
+    }
 
     if ($self->param('ajax')) {
         return qq{<script type="text/javascript">location.replace("$url")</script>};
