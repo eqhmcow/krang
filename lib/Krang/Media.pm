@@ -971,111 +971,96 @@ Find and return media object(s) with parameters specified. Supported paramter ke
 
 =over 4
 
-=item *
+=item * media_id 
 
-media_id (can optionally take a list of ids)
+(can optionally take a list of ids)
 
-=item *
+=item * media_uuid
 
-media_uuid
+=item * version 
 
-=item *
+combined with a single C<media_id> (and only C<media_id>), loads a
+specific version of a media object.  Unlike C<revert()>, this object
+has C<version> set to the actual version number of the loaded object.
 
-version - combined with a single C<media_id> (and only C<media_id>),
-loads a specific version of a media object.  Unlike C<revert()>, this
-object has C<version> set to the actual version number of the loaded
-object.
+=item * title
 
-=item *
+=item * title_like
 
-title
+case insensitive match on title. Must include '%' on either end for
+substring match.
 
-=item *
+=item * alt_tag
 
-title_like - case insensitive match on title. Must include '%' on
-either end for substring match.
+=item * alt_tag_like
 
-=item *
+case insensitive match on alt_tag. Must include '%' on either end for
+substring match.
 
-alt_tag
+=item * category_id
 
-=item *
+=item * below_category_id
 
-alt_tag_like - case insensitive match on alt_tag. Must include '%' on
-either end for substring match.
+will return media in category and in categories below as well.
 
-=item *
+=item * site_id
 
-category_id
+returns all media objects associated with a given site.
 
-=item *
+=item * media_type_id
 
-below_category_id - will return media in category and in categories
-below as well.
+=item * contrib_id 
 
-=item *
+=item * filename
 
-site_id - returns all media objects associated with a given site.
+=item * filename_like
 
-=item *
+case insensitive match on filename. Must include '%' on either end for
+substring match.
 
-media_type_id
+=item * mime_type
 
-=item * 
+=item * published
 
-contrib_id 
+only returns items that have been published previously.
 
-=item *
+=item * simple_search
 
-filename
+Performs a per-word LIKE substring match against title, filename, and url,
+and an exact match against media_id if value passed in is a number.
 
-=item *
+=item * exclude_media_ids
 
-mime_type
+excludes (an array ref of) IDs from the result set
 
-=item *
+=item * no_attributes
 
-published - only returns items that have been published previously.
+returns objects where the fields caption, copyright, notes, and alt_tag
+are empty if this is set.
 
-=item *
+=item * order_by
 
-filename_like - case insensitive match on filename. Must include '%' on either end for substring match.
+field to order search by, defaults to media_id
 
-=item *
+=item * order_desc
 
-simple_search - Performs a per-word LIKE substring match against title, filename, and url, and an exact match against media_id if value passed in is a number.
+results will be in ascending order unless this is set to 1 (making
+them descending).
 
-=item *
+=item * limit
 
-exclude_media_ids - excludes (an array ref of) IDs from the result set
+limits result to number passed in here, else no limit.
 
-=item *
+=item * offset
 
-no_attributes - returns objects where the fields caption, copyright, notes, and alt_tag are empty if this is set.
+offset results by this number, else no offset.
 
-=item *
+=item * url
 
-order_by - field to order search by, defaults to media_id
+=item * url_like
 
-=item *
-
-order_desc - results will be in ascending order unless this is set to 1 (making them descending).
-
-=item *
-
-limit - limits result to number passed in here, else no limit.
-
-=item *
-
-offset - offset results by this number, else no offset.
-
-=item *
-
-url
-
-=item *
-
-url_like - case insensitive match on url. Must include '%' on either end for substring match.
+case insensitive match on url. Must include '%' on either end for
+substring match.
 
 =item * checked_out
 
@@ -1086,36 +1071,35 @@ checked out media.  The default, C<undef> returns all media.
 
 Set to a user_id to find media checked-out by a user.
 
-=item *
+=item * ids_only
 
-ids_only - return only media_ids, not objects if this is set true.
+return only media_ids, not objects if this is set true.
 
-=item *
+=item * count
 
-count - return only a count if this is set to true. Cannot be used with ids_only.
+return only a count if this is set to true. Cannot be used with ids_only.
 
-=item *
+=item * creation_date
 
-creation_date - May be either a single date (a L<Time::Piece> object) or an
-array of 2 dates specifying a range.  In ranges either member may be
-C<undef>, specifying no limit in that direction.
+May be either a single date (a L<Time::Piece> object) or an array of
+2 dates specifying a range.  In ranges either member may be C<undef>,
+specifying no limit in that direction.
 
 =item * include_live
 
-Include live media in the search result. Live media are media
-that are neither retired nor have been moved to the trashbin. Set
-this option to 0, if find() should not return live media.  The
-default is 1.
+Include live media in the search result. Live media are media that are
+neither retired nor have been moved to the trashbin. Set this option to 0,
+if find() should not return live media.  The default is 1.
 
 =item * include_retired
 
-Set this option to 1 if you want to include retired media in the
-search result. The default is 0.
+Set this option to 1 if you want to include retired media in the search
+result. The default is 0.
 
 =item  * include_trashed
 
-Set this option to 1 if you want to include trashed media in the
-search result. Trashed media live in the trashbin. The default is 0.
+Set this option to 1 if you want to include trashed media in the search
+result. Trashed media live in the trashbin. The default is 0.
 
 B<NOTE:>When searching for media_id, these three include_* flags are
 not taken into account!
@@ -1128,7 +1112,7 @@ option should be set with an array containing the element name and the
 value to match against.  For example, to search for media objects containing
 'boston' in their location, assuming location is an indexed element:
 
-  @media = pkg('Media')->find(element_index_like => [location => '%boston%']);
+    @media = pkg('Media')->find(element_index_like => [location => '%boston%']);
 
 =back
 
