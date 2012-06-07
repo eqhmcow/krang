@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Unload/Unlock the session in a post-run hook instead of waiting until the
+full request is done (and the session object goes out of scope) so we don't
+have to wait on clients to finish getting the request before we can start
+handling another one. [Michael Peters]
+
+=item *
+
 Fixed bug where query string wasn't preserved when you had to login and it
 tried to preserve the target destination after the login. [Michael Peters]
 

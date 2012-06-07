@@ -364,6 +364,18 @@ BEGIN {
         }
     );
 
+    # make sure our session gets unloaded as soon as we're done processing
+    # rather than waiting until the client actually gets all the information
+    # (eg, waiting until the object goes out of scope)
+    # NOTE: after this is run, if the session is needed in another postrun or
+    # teardown callback then it will be reloaded and thus re-locked
+    __PACKAGE__->add_callback(
+        postrun => sub {
+            my $self = shift;
+            pkg('Session')->unload();
+        }
+    );
+
     __PACKAGE__->add_callback(
         prerun => sub {
             my $self = shift;
