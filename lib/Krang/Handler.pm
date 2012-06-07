@@ -702,7 +702,10 @@ sub _redirect_to_login {
 
     # preserve the target URL we were trying to get
     my $uri = $r->uri;
-    $uri =~ s/\?.*//;
+    if( my $query = $r->args ) {
+        $uri .= "?$query";
+    }
+
     if( $uri ne '/' ) {
         $login_app .= '?target=' . uri_escape($uri);
     }
