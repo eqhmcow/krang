@@ -346,6 +346,7 @@ sub _do_advanced_find {
       krang_pager_sort_order_desc
       show_thumbnails
       search_alt_tag
+      search_full_text
       search_below_category_id
       search_filename
       search_filter
@@ -457,6 +458,18 @@ sub _do_advanced_find {
         $find_params->{alt_tag_like}    = "\%$search_alt_tag\%";
         $persist_vars->{search_alt_tag} = $search_alt_tag;
         $t->param(search_alt_tag => $search_alt_tag);
+    }
+
+    # search_full_text
+    my $search_full_text =
+      defined($q->param('search_full_text'))
+      ? $q->param('search_full_text')
+      : $session{KRANG_PERSIST}{pkg('Media')}{search_full_text};
+
+    if ($search_full_text) {
+        $find_params->{full_text} = $search_full_text;
+        $persist_vars->{search_full_text} = $search_full_text;
+        $t->param(search_full_text => $search_full_text);
     }
 
     # search_title

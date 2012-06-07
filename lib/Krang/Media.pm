@@ -27,6 +27,7 @@ use Time::Piece;
 use Time::Seconds;
 use Time::Piece::MySQL;
 use File::Temp qw(tempdir);
+use File::Slurp qw(read_file);
 use Image::Size;
 use FileHandle;
 
@@ -34,7 +35,7 @@ use FileHandle;
 use constant THUMBNAIL_SIZE     => 35;
 use constant MED_THUMBNAIL_SIZE => 200;
 use constant FIELDS =>
-  qw(media_id media_uuid element_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published published_version preview_version publish_date checked_out_by retired trashed read_only);
+  qw(media_id media_uuid element_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published published_version preview_version publish_date checked_out_by retired trashed read_only full_text);
 
 # setup exceptions
 use Exception::Class (
@@ -264,6 +265,7 @@ use Krang::ClassLoader MethodMaker => new_with_init => 'new',
       retired
       trashed
       read_only
+      full_text
       )
   ];
 
@@ -591,6 +593,16 @@ sub upload_file {
     # guess the mime_type and media_type
     $self->{mime_type} = $self->guess_mime_type($path);
     $self->{media_type_id} = $self->guess_media_type($path);
+
+    $self->_update_full_text();
+}
+
+sub _update_full_text {
+    my $self = shift;
+    return unless $self->is_text;
+    
+    my $full_text = read_file($self->file_path);
+    $self->{full_text} = $full_text;
 }
 
 =item $media->store_temp_file(filename => $filename, content=> $text)
@@ -636,6 +648,8 @@ sub store_temp_file {
     # guess the mime_type
     $self->{mime_type} = $self->guess_mime_type($filepath);
     $self->{media_type_id} = $self->guess_media_type($filepath);
+
+    $self->_update_full_text();
 
     return $self;
 }
@@ -1062,6 +1076,11 @@ offset results by this number, else no offset.
 case insensitive match on url. Must include '%' on either end for
 substring match.
 
+=item * full_text
+
+If the media is text-based then we will look at it's contents and
+do a full text search for this phrase.
+
 =item * checked_out
 
 Set to 0 to find only non-checked-out media.  Set to 1 to find only
@@ -1162,7 +1181,8 @@ sub find {
         include_retired    => 1,
         include_trashed    => 1,
         exclude_media_ids  => 1,
-        element_index_like => 1
+        element_index_like => 1,
+        full_text          => 1,
     );
 
     # check for invalid params and croak if one is found
@@ -1268,6 +1288,15 @@ sub find {
         $where_string .= " and " if $where_string;
         $where_string .= "media.alt_tag like ?";
         push @where, 'alt_tag_like';
+    }
+
+    # add full_text to where_string if present
+    if ($args{full_text}) {
+        $where_string .= " AND " if $where_string;
+        $where_string .= "media.full_text like ?";
+        push @where, 'full_text';
+
+        $args{full_text} = '%' . $args{full_text} . '%' unless $args{full_text} =~ /^%.*%$/;
     }
 
     # add ids of category and cats below if below_category_id is passed in
@@ -2744,7 +2773,23 @@ Returns true if this media object appears to be text (HTML, JS, CSS, etc);
 
 sub is_text {
     my $self = shift;
-    return $self->filename && $self->mime_type && $self->mime_type =~ /^text\//;
+    my $filename = $self->filename;
+    my $mime_type = $self->mime_type;
+
+    # we need a filename and a mime type
+    return 0 unless $filename;
+    return 0 unless $mime_type;
+
+    if( $mime_type =~ /^text\// ) {
+        return 1;
+    } elsif( $mime_type eq 'application/javascript' ) {
+        return 1;
+    } elsif( $mime_type eq 'application/json' ) {
+        return 1;
+    } elsif( $filename =~ /\.ssi$/ ) {
+        return 1;
+    }
+    return 0;
 }
 
 =item C<< $media->is_image() >>

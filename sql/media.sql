@@ -28,6 +28,7 @@ CREATE TABLE media (
     trashed                 bool NOT NULL DEFAULT 0,
     published               bool NOT NULL DEFAULT 0,
     read_only               bool NOT NULL DEFAULT 0,
+    full_text               LONGTEXT NULL,
     PRIMARY KEY (media_id),
     KEY (category_id), KEY (media_type_id),
     KEY (url), KEY (title),
