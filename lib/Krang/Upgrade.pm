@@ -6,6 +6,7 @@ use strict;
 use Krang::ClassLoader 'Conf';
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader 'AddOn';
+use Krang::ClassLoader 'Script';
 use Carp qw(croak);
 use File::Spec::Functions qw(catfile);
 
