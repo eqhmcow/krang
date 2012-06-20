@@ -36,7 +36,7 @@ do_save_stay = function() {
   // browser doesn't reset the big textareas you're working on to be back at the top
   Krang.Form.submit(
       'edit_template_form', 
-      { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save_stay' }, 
+      { rm: 'edit_save_stay' }, 
       { 
           to_top: false,
           update: false,
@@ -46,6 +46,15 @@ do_save_stay = function() {
               reset_editor();
           }
       }
+  );
+}
+
+do_add_save_stay = function() {
+  save_editor_text();
+  Krang.Form.submit( 
+    'edit_template_form', 
+    { rm: 'add_save_stay' }, 
+    { onComplete : function() { reset_editor() } }
   );
 }
 
@@ -280,7 +289,7 @@ Krang.onload( function() {
 <ul class="east">
   <li class="menu">
     <input value="<tmpl_lang Save> &#9660;" onclick="do_save()" type="button">
-    <ul><li><a href="javascript:do_save_stay()"><tmpl_lang Save &amp; Stay></a></li></ul>
+    <ul><li><a href="javascript:do_<tmpl_if add_mode>add_</tmpl_if>save_stay()"><tmpl_lang Save &amp; Stay></a></li></ul>
   </li>
   <li><input value="<tmpl_lang Deploy>" onclick="do_deploy()" type="button"></li>
 </ul>

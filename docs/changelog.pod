@@ -2,6 +2,17 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.21 - In development
+
+=over
+
+=item *
+
+Fixed bug where New Template -> Save & Stay would hang and not
+complete. [Michael Peters]
+
+=back
+
 =head2 3.20 - June 7th, 2012
 
 =over
