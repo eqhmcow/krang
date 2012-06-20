@@ -530,8 +530,6 @@ sub deploy_selected {
 Displays the properties of a template object and allows the user to modify the
 writable fields of the object.
 
-This runmode expects the query parameter 'template_id'.
-
 =cut
 
 sub edit {
