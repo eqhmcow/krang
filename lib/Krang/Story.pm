@@ -721,7 +721,7 @@ sub tags {
           unless ref $tags && ref $tags eq 'ARRAY';
 
         local $dbh->{AutoCommit} = 0;
-        my $sth = $dbh->prepare_cached('INSERT INTO story_tag (story_id, tag, ord) VALUES (?,?, ?)');
+        my $sth = $dbh->prepare_cached('INSERT INTO story_tag (story_id, tag, ord) VALUES (?,?,?)');
         eval {
             # clear out any old tags before we insert the new ones
             $dbh->do('DELETE FROM story_tag WHERE story_id = ?', {}, $id);
@@ -734,6 +734,9 @@ sub tags {
             $dbh->rollback();
             die $e;
         }
+        $self->{cached_tags} = $tags;
+    } elsif ($self->{cached_tags}) {
+        $tags = $self->{cached_tags};
     } else {
         $tags = [];
         my $sth = $dbh->prepare_cached('SELECT tag FROM story_tag WHERE story_id = ? ORDER BY ord');
@@ -741,6 +744,7 @@ sub tags {
         while (my $row = $sth->fetchrow_arrayref) {
             push(@$tags, $row->[0]);
         }
+        $self->{cached_tags} = $tags;
     }
     return @$tags;
 }
