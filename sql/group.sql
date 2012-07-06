@@ -33,7 +33,6 @@ CREATE TABLE group_permission (
         asset_story          ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
         asset_media          ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
         asset_template       ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
-
         INDEX (group_uuid)
 );
 

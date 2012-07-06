@@ -3,9 +3,7 @@ DROP TABLE IF EXISTS story;
 CREATE TABLE story (
         story_id            INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         version             SMALLINT UNSIGNED NOT NULL,
-
         story_uuid          CHAR(36) NOT NULL,
-
         title               VARCHAR(255) NOT NULL,
         slug                VARCHAR(255) NOT NULL,
         cover_date          DATETIME,
@@ -13,21 +11,15 @@ CREATE TABLE story (
         published_version   INT UNSIGNED,
         preview_version     INT UNSIGNED,
         notes               TEXT,
-        
         element_id          INT UNSIGNED NOT NULL,
         class               VARCHAR(255) NOT NULL,
-
         hidden              BOOL NOT NULL DEFAULT 0,
-
         checked_out         BOOL NOT NULL,
         checked_out_by      INT UNSIGNED NOT NULL,
-
         desk_id             SMALLINT UNSIGNED,
         last_desk_id        SMALLINT UNSIGNED,
-
         retired             BOOL NOT NULL DEFAULT 0,
         trashed             BOOL NOT NULL DEFAULT 0,
-
         INDEX(desk_id),
         INDEX(title),
         INDEX(checked_out),

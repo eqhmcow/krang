@@ -7,7 +7,6 @@ CREATE TABLE element (
         class       VARCHAR(255) NOT NULL,
         ord         SMALLINT UNSIGNED NOT NULL,
         data        MEDIUMTEXT,
-
         INDEX       (root_id),
         INDEX       (parent_id),
         INDEX       (ord),

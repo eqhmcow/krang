@@ -23,7 +23,6 @@ CREATE TABLE schedule (
         failure_notify_id INT UNSIGNED,
         success_notify_id INT UNSIGNED,
         daemon_uuid       VARCHAR(128) DEFAULT NULL,
-
         PRIMARY KEY (schedule_id),
         INDEX       (object_type, object_id),
         INDEX       (next_run)
