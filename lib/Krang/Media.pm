@@ -54,18 +54,20 @@ use Exception::Class (
 =head1 SYNOPSIS
 
     # create new media object
-    my $media = pkg('Media')->new( title => 'test media', 
-                                   caption => 'test caption',
-                                   copyright => 'AP 1999', 
-                                   media_type_id => $media_type_id, 
-                                   category_id => $category_id );
+    my $media = pkg('Media')->new(
+        title         => 'test media',
+        caption       => 'test caption',
+        copyright     => 'AP 1999',
+        media_type_id => $media_type_id,
+        category_id   => $category_id
+    );
 
     # Find permissions for this media (for this user)
     $media->may_see();
     $media->may_edit();
 
     # add actual media file to media object
-    $media->upload_file( filehandle => $filehandle, filename => 'media.jpg' );
+    $media->upload_file(filehandle => $filehandle, filename => 'media.jpg');
 
     # get MIME type of uploaded file
     $mime_type = $media->mime_type();
@@ -75,8 +77,10 @@ use Exception::Class (
     $thumbnail_path = $media->thumbnail_path();
 
     # assign 2 contributors to media object, specifying thier contributor type
-    $media->contribs({contrib_id => 1, contrib_type_id => 3},
-                     {contrib_id => 44, contrib_type_id => 4});
+    $media->contribs(
+        {contrib_id => 1,  contrib_type_id => 3},
+        {contrib_id => 44, contrib_type_id => 4},
+    );
 
     # get contrib objects attached to this media
     @contribs = $media->contribs();
@@ -84,9 +88,9 @@ use Exception::Class (
     # change assignment to include just the first contributor
     $media->contribs($contribs[0]);
 
-    # get media element 
+    # get media element
     my $element = $media->element();
-    $element_id = $media->element_id; # undef until after save()
+    $element_id = $media->element_id;    # undef until after save()
 
     # save the object to the database
     $media->save();
@@ -98,7 +102,7 @@ use Exception::Class (
     $media->caption('new caption');
 
     # again, save the object to the database (upping version)
-    $media->save(); 
+    $media->save();
 
     # get current version number, in this example 2
     $version = $media->version();
@@ -109,14 +113,14 @@ use Exception::Class (
     # preview media object
     $media->preview
 
-    # publish media object
-    $media->publish
+      # publish media object
+      $media->publish
 
-    # get id for this object
-    my $media_id = $media->media_id();
+      # get id for this object
+      my $media_id = $media->media_id();
 
     # return object by id
-    ($media_obj) = pkg('Media')->find( media_id => $media_id );
+    ($media_obj) = pkg('Media')->find(media_id => $media_id);
 
 =head1 DESCRIPTION
 
