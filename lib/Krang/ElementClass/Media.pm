@@ -114,7 +114,8 @@ sub publish {
         eval { $child->publish(media => $media, publisher => $publisher, element => $child) };
     }
 
-# also call toplevel's publish() just in case it has been overridden to support other media-specific behavior
+    # also call toplevel's publish() just in case it has been overridden to support i
+    # other media-specific behavior
     eval { $pkg->SUPER::publish(%args) };
 }
 
