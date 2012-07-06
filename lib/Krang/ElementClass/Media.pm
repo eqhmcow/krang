@@ -18,21 +18,32 @@ Krang::ElementClass::Media - media element class
 
 =head1 DESCRIPTION
 
-Provides a simple wrapper around TopLevel that media elements
-can use to identify themselves.
+Provides a simple wrapper around TopLevel that media elements can use
+to identify themselves.
 
 =head1 INTERFACE
 
-All the normal L<Krang::ElementClass::TopLevel> attributes and methods are available.
+All the normal L<Krang::ElementClass::TopLevel> attributes and methods
+are available.
 
-In addition, ElementClass::Media provides:
+In addition, C<ElementClass::Media> provides:
 
-An element_class_name method that returns the name of the first toplevel 
-element that inherits from ElementClass::Media.
+=over
 
-A publish method that is called when a Media object is published.
+=item *
 
-An unpublish method that is called when a Media object is deleted.
+An C<element_class_name()> method that returns the name of the first
+toplevel element that inherits from C<ElementClass::Media>.
+
+=item * 
+
+A C<publish()> method that is called when a Media object is published.
+
+=item *
+
+An C<unpublish() method that is called when a Media object is deleted.
+
+=back
 
 =cut
 
