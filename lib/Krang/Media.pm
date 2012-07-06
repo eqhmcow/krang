@@ -111,13 +111,13 @@ use Exception::Class (
     $media->revert(1);
 
     # preview media object
-    $media->preview
+    $media->preview;
 
-      # publish media object
-      $media->publish
+    # publish media object
+    $media->publish;
 
-      # get id for this object
-      my $media_id = $media->media_id();
+    # get id for this object
+    my $media_id = $media->media_id();
 
     # return object by id
     ($media_obj) = pkg('Media')->find(media_id => $media_id);
