@@ -627,6 +627,7 @@ sub init {
 
     # add any tags
     $self->tags($tags) if $tags;
+
     return $self;
 }
 
@@ -734,9 +735,9 @@ sub tags {
             $dbh->rollback();
             die $e;
         }
-        $self->{cached_tags} = $tags;
-    } elsif ($self->{cached_tags}) {
-        $tags = $self->{cached_tags};
+        $self->{tags} = $tags;
+    } elsif ($self->{tags}) {
+        $tags = $self->{tags};
     } else {
         $tags = [];
         my $sth = $dbh->prepare_cached('SELECT tag FROM story_tag WHERE story_id = ? ORDER BY ord');
@@ -744,9 +745,27 @@ sub tags {
         while (my $row = $sth->fetchrow_arrayref) {
             push(@$tags, $row->[0]);
         }
-        $self->{cached_tags} = $tags;
+        $self->{tags} = $tags;
     }
     return @$tags;
+}
+
+=item C<< Krang::Story->known_tags() >>
+
+Returns a sorted list of all known tags used on story objects. 
+
+=cut
+
+sub known_tags {
+    my $pkg = shift;
+    my @tags;
+    my $sth = dbh()->prepare_cached('SELECT DISTINCT(tag) FROM story_tag ORDER BY tag');
+
+    $sth->execute();
+    while (my $row = $sth->fetchrow_arrayref) {
+        push(@tags, $row->[0]);
+    }
+    return @tags;
 }
 
 =item C<< $all_version_numbers = $story->all_versions(); >>
@@ -884,6 +903,9 @@ sub save {
     # save any category links
     $self->_save_category_links();
 
+    # save any tags
+    $self->_save_tags();
+
     # register creation if is the first version
     add_history(
         object => $self,
@@ -895,6 +917,23 @@ sub save {
         object => $self,
         action => 'save',
     ) unless $args{no_history};
+}
+
+sub _save_tags {
+    my $self = shift;
+    my $dbh  = dbh();
+    my $id   = $self->story_id;
+
+    if (my $tags = $self->{tags}) {
+        # clear out any old tags before we insert the new ones
+        $dbh->do('DELETE FROM story_tag WHERE story_id = ?', {}, $id);
+
+        my $sth = $dbh->prepare_cached('INSERT INTO story_tag (story_id, tag, ord) VALUES (?,?,?)');
+        my $ord = 1;
+        foreach my $tag (@$tags) {
+            $sth->execute($id, $tag, $ord++);
+        }
+    }
 }
 
 sub _save_category_links {
@@ -2093,24 +2132,6 @@ sub transform_stories {
     }
 }
 
-=item C<< Krang::Story->known_tags() >>
-
-Returns a sorted list of all known tags used on story objects. 
-
-=cut
-
-sub known_tags {
-    my $pkg = shift;
-    my @tags;
-    my $sth = dbh()->prepare_cached('SELECT DISTINCT(tag) FROM story_tag ORDER BY tag');
-
-    $sth->execute();
-    while (my $row = $sth->fetchrow_arrayref) {
-        push(@tags, $row->[0]);
-    }
-    return @tags;
-}
-
 sub _load_version {
     my ($pkg, $story_id, $version) = @_;
     my $dbh = dbh;
@@ -2931,7 +2952,7 @@ sub deserialize_xml {
     # parse it up
     my $data = pkg('XML')->simple(
         xml           => $xml,
-        forcearray    => ['contrib', 'category_id', 'url', 'element', 'data',],
+        forcearray    => ['contrib', 'category_id', 'url', 'element', 'data', 'tag'],
         suppressempty => 1
     );
 
@@ -2990,7 +3011,7 @@ sub deserialize_xml {
         $story->title($data->{title} || "");
 
         # handle the tags
-        $story->tags($data->{tag}) if $data->{tag};
+        $story->tags($data->{tag} || []);
 
         # get category objects for story
         my @category_ids =
@@ -3042,7 +3063,7 @@ sub deserialize_xml {
             class              => $data->{class},
             no_verify_unique   => 1,
             no_verify_reserved => 1,
-            tags               => $data->{tag},
+            tags               => $data->{tag} || [],
         );
     }
 
