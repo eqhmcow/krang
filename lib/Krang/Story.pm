@@ -564,6 +564,8 @@ existing story or category.
 
 sub init {
     my ($self, %args) = @_;
+    my $tags = delete $args{tags};
+
     exists $args{$_}
       or croak("Missing required parameter '$_'.")
       for ('class', 'categories', 'slug', 'title');
@@ -624,7 +626,7 @@ sub init {
     );
 
     # add any tags
-    $self->tags($args{tags}) if $args{tags});
+    $self->tags($tags) if $tags;
     return $self;
 }
 
