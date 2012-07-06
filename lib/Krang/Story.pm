@@ -2862,6 +2862,11 @@ sub serialize_xml {
     $writer->dataElement(retired    => $self->retired);
     $writer->dataElement(trashed    => $self->trashed);
 
+    # tags
+    for my $tag ($self->tags) {
+        $writer->dataElement(tag => $tag);
+    }
+
     # categories
     for my $category ($self->categories) {
         $writer->dataElement(category_id => $category->category_id);
@@ -2976,6 +2981,9 @@ sub deserialize_xml {
         $story->slug($data->{slug}   || "");
         $story->title($data->{title} || "");
 
+        # handle the tags
+        $story->tags($data->{tag}) if $data->{tag};
+
         # get category objects for story
         my @category_ids =
           map { $set->map_id(class => pkg('Category'), id => $_) } @{$data->{category_id}};
@@ -3027,6 +3035,9 @@ sub deserialize_xml {
             no_verify_unique   => 1,
             no_verify_reserved => 1,
         );
+
+        # handle the tags
+        $story->tags($data->{tag}) if $data->{tag};
     }
 
     # preserve UUID if available

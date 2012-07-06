@@ -40,6 +40,7 @@
         <xs:element name="notes"/>
         <xs:element name="retired" type="xs:boolean"/>
         <xs:element name="trashed"  type="xs:boolean"/>
+        <xs:element name="tag" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element name="category_id" type="xs:int" maxOccurs="unbounded"/>
         <xs:element name="url" maxOccurs="unbounded">
           <xs:simpleType>
