@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added tags to stories for classification and searching. [Michael Peters]
+
+=item *
+
 Fixed bug where New Template -> Save & Stay would hang and not
 complete. [Michael Peters]
 

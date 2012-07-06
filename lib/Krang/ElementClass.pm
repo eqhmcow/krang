@@ -886,6 +886,11 @@ A variable called C<slug> containing C<< $story->slug() >>.
 
 A variable called C<page_break> containing C<< Krang::Publisher->page_break() >>
 
+=item *
+
+A loop C<tag_loop> that contain all of the tags for this story. Each
+iteration of the loop contains 1 variable named C<tag>.
+
 =back
 
 B<NOTE:> If you're developing your own elements, be aware that there exists the potential for naming collisions.  For example, if you create a child element named C<title>, you create a collsion with C<< $story->title >>.  Default behavior is that element children take precedence over everything else in a naming collision.  Avoid this by choosing better names for your elements.
@@ -956,6 +961,10 @@ sub fill_template {
     # add the contributors loop if desired
     $params{contrib_loop} = $self->_build_contrib_loop(@_)
       if exists($template_vars{contrib_loop});
+
+    # add the tags loop if desired
+    $params{tags} = map { { tag => $_ } } $publisher->story->tags()
+      if exists($template_vars{tag_loop});
 
     # add the category trail loop
     $params{category_trail_loop} = $self->_build_cat_trail_loop(@_)

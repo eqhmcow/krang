@@ -222,6 +222,11 @@ save_and_publish = function() {
     </tr>
   </tmpl_if>
 
+  <tr class="even<tmpl_if bad_tags> err</tmpl_if>">
+  <td class="f"><tmpl_lang Tags></td>
+  <td class="l"><input name="tags" value="<tmpl_var escape=html tags>"></td>
+  </tr>
+
   </tbody>
 
   <tbody>

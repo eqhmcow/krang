@@ -156,6 +156,10 @@ Krang::Story - the Krang story class
   # get list of media linked to from this story
   my @linked_media = $story->linked_media;
 
+  $story->tags(['foo', 'bar']);
+  $story->tags([]);
+  my @tags = $story->tags();
+
 =head1 DESCRIPTION
 
 This class provides methods to operate on story objects.  A story
@@ -698,6 +702,45 @@ Removes all contributor associatisons.
 
 sub clear_contribs { shift->{contrib_ids} = []; }
 
+=item $story->tags()
+
+Get/Set the tags for this story
+
+=cut
+
+sub tags {
+    my ($self, $tags) = @_;
+    my $dbh = dbh;
+    my $id  = $self->story_id;
+    if ($tags) {
+        die "invalid data passed to tags: must be an array reference"
+          unless ref $tags && ref $tags eq 'ARRAY';
+
+        local $dbh->{AutoCommit} = 0;
+        my $sth = $dbh->prepare_cached('INSERT INTO story_tag (story_id, tag, ord) VALUES (?,?, ?)');
+        eval {
+            # clear out any old tags before we insert the new ones
+            $dbh->do('DELETE FROM story_tag WHERE story_id = ?', {}, $id);
+            my $ord = 1;
+            foreach my $tag (@$tags) {
+                $sth->execute($id, $tag, $ord++);
+            }
+        };
+        if (my $e = $@) {
+            $dbh->rollback();
+            die $e;
+        }
+    } else {
+        $tags = [];
+        my $sth = $dbh->prepare_cached('SELECT tag FROM story_tag WHERE story_id = ? ORDER BY ord');
+        $sth->execute($id);
+        while (my $row = $sth->fetchrow_arrayref) {
+            push(@$tags, $row->[0]);
+        }
+    }
+    return @$tags;
+}
+
 =item C<< $all_version_numbers = $story->all_versions(); >>
 
 Returns an arrayref containing all the existing version numbers for this story.
@@ -1126,6 +1169,10 @@ Search by title.
 =item slug 
 
 Search by slug.
+
+=item tag
+
+Search for stories that have the given tag.
 
 =item url 
 
@@ -1559,6 +1606,13 @@ or actions where the resulting data is not shown to the end user.
                 next;
             }
 
+            # handle search by tag
+            if( $key eq 'tag' ) {
+                push(@where, 'st.tag = ?');
+                push(@param, $value);
+                next;
+            }
+
             # handle contrib_simple
             if ($key eq 'contrib_simple') {
                 $from{"story_contrib as scon"} = 1;
@@ -1791,6 +1845,12 @@ or actions where the resulting data is not shown to the end user.
             $from .= " LEFT JOIN user_category_permission_cache as ucpc
                    ON sc.category_id = ucpc.category_id ";
         }
+
+        # join to the story_tag table if needed
+        if( $args{tag} ) {
+            $from .= ' LEFT JOIN story_tag AS st ON (s.story_id = st.story_id) ';
+        }
+
         my $group_by = 0;
 
         if ($count) {
@@ -2023,6 +2083,24 @@ sub transform_stories {
             }
         }
     }
+}
+
+=item C<< Krang::Story->known_tags() >>
+
+Returns a sorted list of all known tags used on story objects. 
+
+=cut
+
+sub known_tags {
+    my $pkg = shift;
+    my @tags;
+    my $sth = dbh()->prepare_cached('SELECT DISTINCT(tag) FROM story_tag ORDER BY tag');
+
+    $sth->execute();
+    while (my $row = $sth->fetchrow_arrayref) {
+        push(@tags, $row->[0]);
+    }
+    return @tags;
 }
 
 sub _load_version {

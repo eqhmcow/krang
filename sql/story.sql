@@ -81,3 +81,14 @@ CREATE TABLE story_category_link (
         INDEX (category_id, publish_if_modified_media_in_cat),
         INDEX (category_id, publish_if_modified_media_below_cat)
 );
+
+/* story_tag holds tag information about stories managed by Krang::Story */
+DROP TABLE IF EXISTS story_tag;
+CREATE TABLE story_tag (
+        story_tag_id    INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        story_id        INT UNSIGNED NOT NULL,
+        tag             VARCHAR(255) NOT NULL,
+        ord             SMALLINT UNSIGNED NOT NULL,
+        INDEX(tag),
+        INDEX(story_id, ord)
+);

@@ -503,14 +503,16 @@ sub edit {
             # maintain query's title & slug, even if empty
             $template->param(
                 title => $query->param('title') || '',
-                slug  => $query->param('slug')  || ''
+                slug  => $query->param('slug')  || '',
+                tags  => $query->param('tags')  || '',
             );
         } else {
 
             # otherwise grab them from the session
             $template->param(
                 title => $story->title || '',
-                slug  => $story->slug  || ''
+                slug  => $story->slug  || '',
+                tags  => join(', ', $story->tags),
             );
         }
 
@@ -722,6 +724,7 @@ sub view {
             is_root           => 1,
             title             => $story->title,
             slug              => $story->slug,
+            tags              => join(', ', $story->tags),
             published_version => $story->published_version,
         );
 
@@ -1322,6 +1325,7 @@ sub _save {
     {
         my $title      = $query->param('title');
         my $slug       = $query->param('slug') || '';
+        my $tags       = $query->param('tags') || '',
         my $cover_date = decode_datetime(name => 'cover_date', query => $query);
         my @bad;
 
@@ -1349,6 +1353,7 @@ sub _save {
         $story->title($title);
         $story->slug($slug);
         $story->cover_date($cover_date);
+        $story->tags([split(/\s*,\s*/, $tags)]);
     }
 
     # success, no output
@@ -1392,7 +1397,8 @@ sub add_category {
         category   => $category,
         slug       => $story->slug,
         title      => $story->title,
-        cover_date => $story->cover_date
+        tags       => [$story->tags],
+        cover_date => $story->cover_date,
     );
     unless ($validate == 1) {
         add_alert('bad_category', explanation => $validate || '');
@@ -1502,6 +1508,7 @@ sub replace_category {
         category   => $new_category,
         slug       => $story->slug,
         title      => $story->title,
+        tags       => [$story->tags],
         cover_date => $story->cover_date
     );
     unless ($validate == 1) {
@@ -1770,6 +1777,7 @@ sub _do_find {
         # Set up advanced search
         my @auto_search_params = qw(
           title
+          tag
           url
           class
           below_category_id
@@ -1786,7 +1794,7 @@ sub _do_find {
               ? $q->param("search_" . $_)
               : $session{KRANG_PERSIST}{pkg('Story')}{"search_" . $_};
 
-            $template->param("search_$key" => $val);
+            $template->param("search_$key" => $val) if $template->query(name => "search_$key");
 
             # Persist parameter
             $persist_vars{"search_" . $_} = $val;
@@ -1880,6 +1888,14 @@ sub _do_find {
                 -values  => [('', map { $_->name } @classes)],
                 -labels  => \%class_labels
             )
+        );
+
+        # add a tag chooser
+        my @tags = pkg('Story')->known_tags();
+        $tmpl_data{search_tag_chooser} = $q->popup_menu(
+            -name => 'search_tag',
+            -default => ($persist_vars{search_tag} || ''),
+            -values => ['', @tags],
         );
     } else {
 
