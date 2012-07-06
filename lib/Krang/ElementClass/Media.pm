@@ -97,16 +97,19 @@ sub publish {
         }
     }
 
-# now we try to call each child element's publish() method. in stories, this "element walk" is done
-# when the top-level publish() calls fill_template(), which calls each child's publish() method, gathering
-# their returned html into its tmpl params, and they in turn take care of calling their kids' publish methods
-# to build their html. since we're not building up a structure of template params, we simply call each child's
-# publish method for any desired side effects, ignoring return values.
+    # now we try to call each child element's publish() method. in stories, this
+    # "element walk" is done when the top-level publish() calls fill_template(),
+    # which calls each child's publish() method, gathering their returned
+    # html into its tmpl params, and they in turn take care of calling their
+    # kids' publish methods to build their html. since we're not building up a
+    # structure of template params, we simply call each child's publish method
+    # for any desired side effects, ignoring return values.
 
-# we use an eval block around the publish() call because if one of the child elements is a container whose publish()
-# method has not been overridden, the SUPER's publish() method will look for an appropriate template, and, if it
-# finds none, die (which in our case shouldn't yield an error -- we're just calling these publish methods to do due
-# diligence.)
+    # we use an eval block around the publish() call because if one of the child
+    # elements is a container whose publish() method has not been overridden,
+    # the SUPER's publish() method will look for an appropriate template, and,
+    # if it finds none, die (which in our case shouldn't yield an error --
+    # we're just calling these publish methods to do due diligence.)
     for my $child ($element->children) {
         eval { $child->publish(media => $media, publisher => $publisher, element => $child) };
     }
