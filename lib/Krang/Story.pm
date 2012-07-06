@@ -623,6 +623,8 @@ sub init {
         },
     );
 
+    # add any tags
+    $self->tags($args{tags}) if $args{tags});
     return $self;
 }
 
@@ -3034,10 +3036,8 @@ sub deserialize_xml {
             class              => $data->{class},
             no_verify_unique   => 1,
             no_verify_reserved => 1,
+            tags               => $data->{tag},
         );
-
-        # handle the tags
-        $story->tags($data->{tag}) if $data->{tag};
     }
 
     # preserve UUID if available
