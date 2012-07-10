@@ -1500,8 +1500,6 @@ sub user_admin_permissions {
 
     my @admin_perms = qw( may_publish
       may_checkin_all
-      admin_users
-      admin_users_limited
       admin_groups
       admin_contribs
       admin_sites
@@ -1520,21 +1518,10 @@ sub user_admin_permissions {
     foreach my $admin_perm (@admin_perms) {
         my $admin_perm_method = $admin_perm;
 
-        if ($admin_perm eq "admin_users_limited") {
-
-            # admin_users_limited is opposite: 0 is higher perm than 1
-            %levels = (
-                0 => 2,
-                1 => 1
-            );
-        } else {
-
-            # Everything else is normal
-            %levels = (
-                0 => 1,
-                1 => 2
-            );
-        }
+        %levels = (
+            0 => 1,
+            1 => 2
+        );
 
         # Iterate through groups
         foreach my $group (@groups) {
@@ -1547,6 +1534,28 @@ sub user_admin_permissions {
             if ($new_access_level > $curr_access_level) {
                 $admin_perm_access{$admin_perm} = $permission_type;
             }
+        }
+    }
+
+    # Now consider admin_users and admin_users_limited since they matter as a pair
+    $admin_perm_access{'admin_users'} = 0;
+    $admin_perm_access{'admin_users_limited'} = 0;
+    foreach my $group (@groups) {
+
+        # if find full access from this group, record it and quit looking
+        if ($group->admin_users() && !$group->admin_users_limited()) {
+            debug(sprintf 'the group [%s] gives us full admin_user permissions; no need to look further.', $group->name);
+            $admin_perm_access{'admin_users'} = 1;
+            $admin_perm_access{'admin_users_limited'} = 0;
+            last;
+        }
+
+        # if find limited access, record it but keep looking
+        if ($group->admin_users() && $group->admin_users_limited()) {
+            $admin_perm_access{'admin_users'} = 1;
+            $admin_perm_access{'admin_users_limited'} = 1;
+            debug(sprintf 'the group [%s] gives us limited admin_user permissions; will keep looking for full.', $group->name);
+            next;
         }
     }
 

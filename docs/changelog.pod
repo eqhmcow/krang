@@ -40,6 +40,12 @@ tried to preserve the target destination after the login. [Michael Peters]
 
 =item *
 
+Fixed bug where a user being in a group with admin_user_limited perms
+would be given full admin_user access if they were in another group
+with neither admin_user nor admin_user_limited perms. [Brad Oaks]
+
+=item *
+
 Fixed bug where some publish time exceptions were being silently
 disguarded and the user would be left with a successful message even
 though the item was never published. [Michael Peters]
