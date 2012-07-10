@@ -12,6 +12,12 @@ Added tags to stories for classification and searching. [Michael Peters]
 
 =item *
 
+Fixed bug where a user being in a group with admin_user_limited perms
+would be given full admin_user access if they were in another group
+with neither admin_user nor admin_user_limited perms. [Brad Oaks]
+
+=item *
+
 Fixed bug where New Template -> Save & Stay would hang and not
 complete. [Michael Peters]
 
@@ -37,12 +43,6 @@ handling another one. [Michael Peters]
 
 Fixed bug where query string wasn't preserved when you had to login and it
 tried to preserve the target destination after the login. [Michael Peters]
-
-=item *
-
-Fixed bug where a user being in a group with admin_user_limited perms
-would be given full admin_user access if they were in another group
-with neither admin_user nor admin_user_limited perms. [Brad Oaks]
 
 =item *
 
