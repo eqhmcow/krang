@@ -22,6 +22,18 @@ sub per_instance {
                 INDEX(story_id, ord)
         )
     /);
+
+    # add the media_tag table
+    $dbh->do(q/
+        CREATE TABLE media_tag (
+                media_tag_id    INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                media_id        INT UNSIGNED NOT NULL,
+                tag             VARCHAR(255) NOT NULL,
+                ord             SMALLINT UNSIGNED NOT NULL,
+                INDEX(tag),
+                INDEX(media_id, ord)
+        )
+    /);
 }
 
 sub per_installation {

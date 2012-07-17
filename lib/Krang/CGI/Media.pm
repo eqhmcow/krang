@@ -353,6 +353,7 @@ sub _do_advanced_find {
       search_media_id
       search_media_type_id
       search_title
+      search_tag
       search_creation_date_day
       search_creation_date_month
       search_creation_date_year
@@ -484,6 +485,24 @@ sub _do_advanced_find {
         $persist_vars->{search_title} = $search_title;
         $t->param(search_title => $search_title);
     }
+
+    # search_tag
+    my $search_tag =
+      defined($q->param('search_tag'))
+      ? $q->param('search_tag')
+      : $session{KRANG_PERSIST}{pkg('Media')}{search_tag};
+
+    if (defined($search_tag)) {
+        $find_params->{tag}         = $search_tag;
+        $persist_vars->{search_tag} = $search_tag;
+    }
+    my @tags    = pkg('Media')->known_tags();
+    my $chooser = $q->popup_menu(
+        -name    => 'search_tag',
+        -default => ($persist_vars->{search_tag} || ''),
+        -values  => ['', @tags],
+    );
+    $t->param(search_tag_chooser => $chooser);
 
     # search_media_id
     my $search_media_id =
@@ -1718,6 +1737,10 @@ sub update_media {
         #$q->delete($mf);
     }
 
+    # save the tags
+    my $tags = $q->param('tags') || '';
+    $m->tags([split(/\s*,\s/, $tags)]);
+
     # Success
     return 1;
 }
@@ -1828,6 +1851,9 @@ sub make_media_tmpl_data {
     }
     $tmpl_data{contribs} = \@contribs;
 
+    # add the tags
+    $tmpl_data{tags} = join(', ', $m->tags);
+
     # Handle simple scalar fields
     my @m_fields = qw(
       title
@@ -1907,6 +1933,9 @@ sub make_media_view_tmpl_data {
     # Display creation_date
     my $creation_date = $m->creation_date();
     $tmpl_data{creation_date} = $creation_date->strftime(localize('%m/%d/%Y %I:%M %p'));
+
+    # add the tags
+    $tmpl_data{tags} = join(', ', $m->tags);
 
     # Handle simple scalar fields
     my @m_fields = qw(

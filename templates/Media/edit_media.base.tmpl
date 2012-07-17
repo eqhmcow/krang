@@ -222,6 +222,11 @@ Krang.onload( function() {
     <td><input name="title" value="<tmpl_var escape=html title>"></td>
     </tr>
 
+    <tr class="even<tmpl_if error_invalid_tags> err</tmpl_if>">
+    <th><tmpl_lang Tags></th>
+    <td><input name="tags" value="<tmpl_var escape=html tags>"></td>
+    </tr>
+
     <tr<tmpl_if duplicate_url> class="err"<tmpl_else><tmpl_if error_category_id> class="err"</tmpl_if></tmpl_if>>
     <th>*<tmpl_lang Site/Category></th>
     <td><tmpl_var category_chooser></td>
@@ -276,23 +281,22 @@ Krang.onload( function() {
 
       <tr class="even<tmpl_if error_media_type_id> err</tmpl_if>">
       <th class="f">*<tmpl_lang Type></td>
-      <td class="l">
-      <tmpl_var type_chooser>
-      </td>
+      <td class="l"><tmpl_var type_chooser></td>
       </tr>
 
       <tr<tmpl_if error_invalid_title> class="err"</tmpl_if>>
       <th class="f">*<tmpl_lang Title></td>
-      <td class="l">
-      <input name="title" value="<tmpl_var escape=html title>">
-      </td>
+      <td class="l"><input name="title" value="<tmpl_var escape=html title>"></td>
+      </tr>
+
+      <tr<tmpl_if error_invalid_tags> class="err"</tmpl_if>>
+      <th class="f">*<tmpl_lang Tags></td>
+      <td class="l"><input name="tags" value="<tmpl_var escape=html tags>"></td>
       </tr>
 
       <tr class="even<tmpl_if duplicate_url> err<tmpl_else><tmpl_if error_category_id> err</tmpl_if></tmpl_if>">
       <th class="f">*<tmpl_lang Site/Category></td>
-      <td class="l">
-      <tmpl_var category_chooser>
-      </td>
+      <td class="l"><tmpl_var category_chooser></td>
       </tr>
     
       <tr>

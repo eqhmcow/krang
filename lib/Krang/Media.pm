@@ -88,6 +88,13 @@ use Exception::Class (
     # change assignment to include just the first contributor
     $media->contribs($contribs[0]);
 
+    # get the tags for this media
+    @tags = $media->tags;
+
+    # change the tags for this media
+    $media->tags(['foo', 'bar']);
+    $media->tags([]);
+
     # get media element
     my $element = $media->element();
     $element_id = $media->element_id;    # undef until after save()
@@ -290,23 +297,21 @@ sub _notify {
 }
 
 sub init {
-    my $self = shift;
-    my %args = @_;
+    my ($self, %args) = @_;
+    my $filename   = $self->clean_filename($args{filename});
+    my $filehandle = delete $args{filehandle};
+    my $tags       = delete $args{tags};
 
-    my $filename = $self->clean_filename($args{'filename'});
-
-    my $filehandle = delete $args{'filehandle'};
-
-    $self->{contrib_ids}        = [];
-    $self->{version}            = 0;                   # versions start at 0
-    $self->{published}          = 0;
-    $self->{published_version}  = 0;
-    $self->{preview_version}    = 0;
-    $self->{checked_out_by}     = $ENV{REMOTE_USER};
-    $self->{creation_date}      = localtime unless defined $self->{creation_date};
-    $self->{retired}            = 0;
-    $self->{trashed}            = 0;
-    $self->{read_only}          = 0;
+    $self->{contrib_ids}       = [];
+    $self->{version}           = 0;                   # versions start at 0
+    $self->{published}         = 0;
+    $self->{published_version} = 0;
+    $self->{preview_version}   = 0;
+    $self->{checked_out_by}    = $ENV{REMOTE_USER};
+    $self->{creation_date} = localtime unless defined $self->{creation_date};
+    $self->{retired}       = 0;
+    $self->{trashed}       = 0;
+    $self->{read_only}     = 0;
 
     # Set up temporary permissions
     $self->{may_see}  = 1;
@@ -324,6 +329,8 @@ sub init {
     $self->hash_init(%args);
 
     $self->upload_file(filename => $filename, filehandle => $filehandle) if $filehandle;
+
+    $self->tags($tags);
 
     return $self;
 }
@@ -501,6 +508,53 @@ Removes all contributor associatisons.
 =cut
 
 sub clear_contribs { shift->{contrib_ids} = []; }
+
+=item $media->tags()
+
+Get/Set the tags for this media
+
+=cut
+
+sub tags {
+    my ($self, $tags) = @_;
+    my $dbh = dbh;
+    my $id  = $self->media_id;
+    if ($tags) {
+        die "invalid data passed to tags: must be an array reference"
+          unless ref $tags && ref $tags eq 'ARRAY';
+
+        $self->{tags} = $tags;
+    } elsif ($self->{tags}) {
+        $tags = $self->{tags};
+    } else {
+        $tags = [];
+        my $sth = $dbh->prepare_cached('SELECT tag FROM media_tag WHERE media_id = ? ORDER BY ord');
+        $sth->execute($id);
+        while (my $row = $sth->fetchrow_arrayref) {
+            push(@$tags, $row->[0]);
+        }
+        $self->{tags} = $tags;
+    }
+    return @$tags;
+}
+
+=item C<< Krang::Media->known_tags() >>
+
+Returns a sorted list of all known tags used on media objects. 
+
+=cut
+
+sub known_tags {
+    my $pkg = shift;
+    my @tags;
+    my $sth = dbh()->prepare_cached('SELECT DISTINCT(tag) FROM media_tag ORDER BY tag');
+
+    $sth->execute();
+    while (my $row = $sth->fetchrow_arrayref) {
+        push(@tags, $row->[0]);
+    }
+    return @tags;
+}
 
 =item C<< $all_version_numbers = $media->all_versions(); >>
 
@@ -971,6 +1025,9 @@ sub save {
     # prune previous versions from the version table
     $self->prune_versions();
 
+    # save the tags
+    $self->_save_tags();
+
     add_history(
         object => $self,
         action => 'new',
@@ -981,6 +1038,23 @@ sub save {
         action => 'save',
     );
 
+}
+
+sub _save_tags {
+    my $self = shift;
+    my $dbh  = dbh();
+    my $id   = $self->media_id;
+
+    if (my $tags = $self->{tags}) {
+        # clear out any old tags before we insert the new ones
+        $dbh->do('DELETE FROM media_tag WHERE media_id = ?', {}, $id);
+
+        my $sth = $dbh->prepare_cached('INSERT INTO media_tag (media_id, tag, ord) VALUES (?,?,?)');
+        my $ord = 1;
+        foreach my $tag (@$tags) {
+            $sth->execute($id, $tag, $ord++);
+        }
+    }
 }
 
 =item @media = Krang::Media->find($param)
@@ -1007,6 +1081,10 @@ has C<version> set to the actual version number of the loaded object.
 
 case insensitive match on title. Must include '%' on either end for
 substring match.
+
+=item * tag
+
+Search for media that have the given tag.
 
 =item * alt_tag
 
@@ -1154,6 +1232,7 @@ sub find {
         version            => 1,
         title              => 1,
         title_like         => 1,
+        tag                => 1,
         alt_tag            => 1,
         alt_tag_like       => 1,
         url                => 1,
@@ -1260,6 +1339,11 @@ sub find {
     push(@where_fields, "ucpc.user_id");
     push(@where,        "user_id");
     $args{user_id} = $user_id;
+
+    if( $args{tag} ) {
+        push(@where, 'tag');
+        push(@where_fields, 'mt.tag');
+    }
 
     # Build query
     my $where_string = "";
@@ -1448,18 +1532,18 @@ sub find {
     my $select_string;
     my $group_by = 0;
     if ($args{'count'}) {
-        $select_string = 'count(distinct media.media_id) as count';
+        $select_string = 'COUNT(distinct media.media_id) AS count';
     } elsif ($args{'ids_only'}) {
         $select_string = 'media.media_id';
     } else {
         my @fields = map { "media.$_" } (grep { ($_ ne 'media_id') } FIELDS);
-        push(@fields, "ucpc.may_see as may_see");
+        push(@fields, "ucpc.may_see AS may_see");
 
         # Handle asset_media/may_edit
         if ($media_access eq "edit") {
-            push(@fields, "ucpc.may_edit as may_edit");
+            push(@fields, "ucpc.may_edit AS may_edit");
         } else {
-            push(@fields, $dbh->quote("0") . " as may_edit");
+            push(@fields, $dbh->quote("0") . " AS may_edit");
         }
 
         $select_string = 'media.media_id, ' . join(',', @fields);
@@ -1472,47 +1556,47 @@ sub find {
     unless ($args{media_id} or $args{media_uuid}) {
         if ($include_live) {
             unless ($include_retired) {
-                $where_string .= ' and ' if $where_string;
+                $where_string .= ' AND ' if $where_string;
                 $where_string .= ' media.retired = 0';
             }
             unless ($include_trashed) {
-                $where_string .= ' and ' if $where_string;
+                $where_string .= ' AND ' if $where_string;
                 $where_string .= ' media.trashed  = 0';
             }
         } else {
             if ($include_retired) {
                 if ($include_trashed) {
-                    $where_string .= ' and ' if $where_string;
+                    $where_string .= ' AND ' if $where_string;
                     $where_string .= ' media.retired = 1 AND media.trashed = 1';
                 } else {
-                    $where_string .= ' and ' if $where_string;
+                    $where_string .= ' AND ' if $where_string;
                     $where_string .= ' media.retired = 1 AND media.trashed = 0';
                 }
             } else {
                 if ($include_trashed) {
-                    $where_string .= ' and ' if $where_string;
+                    $where_string .= ' AND ' if $where_string;
                     $where_string .= ' media.trashed = 1';
                 }
             }
         }
     }
 
-    my $sql = qq( select $select_string from media
-                  left join user_category_permission_cache as ucpc
-                  ON ucpc.category_id = media.category_id
-                  );
+    my $sql = qq/SELECT $select_string FROM media
+      LEFT JOIN user_category_permission_cache AS ucpc ON (ucpc.category_id = media.category_id) /;
+    $sql .= 'LEFT JOIN media_tag AS mt ON (mt.media_id = media.media_id) ' if $args{tag};
     $sql .= ', element, element_index' if $args{element_index_like};
     $sql .= ", media_contrib"          if $args{'contrib_id'};
     $sql .= ', category'               if $args{site_id};
-    $sql .= " where " . $where_string  if $where_string;
-    $sql .= " group by media.media_id" if ($group_by);
-    $sql .= " order by $order_by";
+
+    $sql .= " WHERE " . $where_string  if $where_string;
+    $sql .= " GROUP BY media.media_id" if ($group_by);
+    $sql .= " ORDER BY $order_by";
 
     # add limit and/or offset if defined
     if ($limit) {
-        $sql .= " limit $offset, $limit";
+        $sql .= " LIMIT $offset, $limit";
     } elsif ($offset) {
-        $sql .= " limit $offset, 18446744073709551615";
+        $sql .= " LIMIT $offset, 18446744073709551615";
     }
 
     debug(__PACKAGE__ . "::find() SQL: " . $sql);
@@ -2226,6 +2310,11 @@ sub serialize_xml {
     $writer->dataElement(trashed   => $self->trashed);
     $writer->dataElement(read_only => $self->read_only);
 
+    # tags
+    for my $tag ($self->tags) {
+        $writer->dataElement(tag => $tag);
+    }
+
     # add category to set
     $set->add(object => $self->category, from => $self);
 
@@ -2285,7 +2374,7 @@ sub deserialize_xml {
     # parse it up
     my $data = pkg('XML')->simple(
         xml           => $xml,
-        forcearray    => ['contrib', 'element', 'data'],
+        forcearray    => ['contrib', 'element', 'data', 'tag'],
         suppressempty => 1
     );
 
@@ -2326,6 +2415,9 @@ sub deserialize_xml {
         );
         $media->category_id($category_id);
 
+        # handle the tags
+        $media->tags($data->{tag} || []);
+
     } else {
 
         # create a new media object with category and simple fields
@@ -2343,9 +2435,9 @@ sub deserialize_xml {
 
         $media = pkg('Media')->new(
             category_id => $category_id,
-            (map { ($_, $data->{$_}) } keys %simple)
+            tags        => $data->{tag} || [],
+            (map { ($_, $data->{$_}) } keys %simple),
         );
-
     }
 
     # preserve UUID if available

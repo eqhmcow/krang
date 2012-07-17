@@ -176,15 +176,20 @@ publish_selected = function() {
   <tr>
   <th><tmpl_lang Title></th>
   <td><input name="search_title" value="<tmpl_var escape=html search_title>"></td>
+  <th><tmpl_lang Tag></th>
+  <td><tmpl_var search_tag_chooser></td>
+  </tr>
+
+  <tr>
   <th><tmpl_lang Alt Text></th>
   <td><input name="search_alt_tag" value="<tmpl_var escape=html search_alt_tag>"></td>
+  <th><tmpl_lang Full Text Search></th>
+  <td><input name="search_full_text" value="<tmpl_var escape=html search_full_text>"></td>
   </tr>
 
   <tr>
   <th><tmpl_lang Type></th>
   <td><tmpl_var type_chooser></td>
-  <th><tmpl_lang Full Text Search></th>
-  <td><input name="search_full_text" value="<tmpl_var escape=html search_full_text>"></td>
   </tr>
 
   </tbody>

@@ -92,3 +92,15 @@ CREATE TABLE media_contrib (
     KEY (media_id),
     KEY (contrib_id)
 );
+
+/* media_tag holds tag information about stories managed by Krang::Media */
+DROP TABLE IF EXISTS media_tag;
+CREATE TABLE media_tag (
+        media_tag_id    INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        media_id        INT UNSIGNED NOT NULL,
+        tag             VARCHAR(255) NOT NULL,
+        ord             SMALLINT UNSIGNED NOT NULL,
+        INDEX(tag),
+        INDEX(media_id, ord)
+);
+
