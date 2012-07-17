@@ -1835,6 +1835,10 @@ sub clone {
     return $copy;
 }
 
+# dummy method because both Story and Media have it and there's lots of code
+# in publishing that can assume similar methods in these 3 types of objects
+sub tags { }
+
 =head1 TO DO
 
  * Prevent duplicate template objects and paths once pkg('Category') is
