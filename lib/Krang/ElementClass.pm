@@ -963,7 +963,7 @@ sub fill_template {
       if exists($template_vars{contrib_loop});
 
     # add the tags loop if desired
-    $params{tags} = map { { tag => $_ } } $publisher->story->tags()
+    $params{tag_loop} = map { { tag => $_ } } $publisher->story->tags()
       if exists($template_vars{tag_loop});
 
     # add the category trail loop
