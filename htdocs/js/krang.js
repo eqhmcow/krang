@@ -441,7 +441,10 @@ Krang.Ajax.request = function(args) {
 
     // stop double clicks
     var skip_double_click_check = args['skip_double_click_check'];
-    if(!skip_double_click_check && Krang.Ajax.is_double_click(url, params)) return;
+    if(!skip_double_click_check && Krang.Ajax.is_double_click(url, params)) {
+        Krang.hide_indicator(indicator);
+        return;
+    }
 
     // tell the user that we're doing something
     Krang.show_indicator(indicator);
@@ -570,7 +573,10 @@ Krang.Ajax.update = function(args) {
     }
 
     // stop double clicks
-    if(Krang.Ajax.is_double_click(url, params)) return;
+    if(Krang.Ajax.is_double_click(url, params)) {
+        Krang.hide_indicator(indicator);
+        return;
+    }
 
     // tell the user that we're doing something
     Krang.show_indicator(indicator);
@@ -800,6 +806,7 @@ Krang.Form = {
         if( options.new_window ) {
             if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) {
                 Krang.Form._submitting[form_name] = false;
+                Krang.hide_indicator(options.indicator);
                 return false;
             }
 
@@ -811,7 +818,7 @@ Krang.Form = {
             form.target = old_target;
             form.action = old_action;
         } else {
-            Krang.show_indicator();
+            Krang.show_indicator(options.indicator);
 
             // we don't use AJAX if the form specifically disallows it
             // or it has a file input
@@ -860,11 +867,11 @@ Krang.Form = {
             } else {
                 if(Krang.Ajax.is_double_click(form.action, Form.serialize(form, true))) {
                     Krang.Form._submitting[form.name] = false;
-                    Krang.hide_indicator();
+                    Krang.hide_indicator(options.indicator);
                 } else {
                     form.submit();
                     Krang.Form._submitting[form.name] = false;
-                    Krang.hide_indicator();
+                    Krang.hide_indicator(options.indicator);
                 }
             }
         }
