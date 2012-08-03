@@ -16,6 +16,12 @@ Added tags to media for classification and searching. [Michael Peters]
 
 =item *
 
+New categories created with Media Bulk Upload will now have spaces
+replaced by underscores to be consisten with how we also handle
+filenames. [Michael Peters]
+
+=item *
+
 Fixed bug where a user being in a group with admin_user_limited perms
 would be given full admin_user access if they were in another group
 with neither admin_user nor admin_user_limited perms. [Brad Oaks]

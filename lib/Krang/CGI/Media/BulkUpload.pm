@@ -165,6 +165,7 @@ sub upload {
         $chosen_cat_url = (pkg('Category')->find(category_id => $chosen_cat_id))[0]->url
           if $chosen_cat_id;
 
+
         # find all files and dirs in archive
         File::Find::find(\&build_image_list, $opened_root);
 
@@ -236,7 +237,7 @@ sub create_media {
             $media->preview();
             $update_count++;
         } else {
-            #else create new media object
+            # else create new media object
             my $category_id = $category_list{$file->{category}};
             my $fh          = IO::File->new($file->{full_path});
             my $name        = $file->{name};
@@ -327,7 +328,7 @@ sub check_categories {
                 unless ($f_cat) {
                     my $parent_cat = (pkg('Category')->find(url => $realcat))[0];
 
-         # return with message if a category that doesnt match a site appears in the root of archive
+                    # return with message if a category that doesnt match a site appears in the root of archive
                     if (not $parent_cat) {
                         add_alert("bad_category", url => $realcat . $splitcat . '/');
                         $not_found = 1;
@@ -450,6 +451,8 @@ sub build_image_list {
     $media_in_root = 1 if ((not $chosen_cat_id) and (not $path));
 
     $path = $path ? "$chosen_cat_url$path/" : $chosen_cat_url;
+    $path =~ s/\s+/_/g;
+
     $temp->{name}      = $file;
     $temp->{category}  = $path;
     $temp->{full_path} = $full_path;
@@ -560,7 +563,6 @@ sub resize_images {
         # rename the scaled file to the original name
         move($scaled_name, $original_name)
           or warn "Could not move file $scaled_name to $original_name: $!";
-
     }
 }
 
