@@ -117,17 +117,15 @@ latter in children of $element (the legacy bulk edit behavior).
 
 sub save {
     my ($self, %arg) = @_;
-    my $editor  = $arg{element_editor};
-    my $element = $arg{element};
-    my $query   = $editor->query;
-
-    my $sep = $query->param('bulk_edit_sep');
-    $sep = ($sep eq "__TWO_NEWLINE__") ? "\r?\n[ \t]*\r?\n" : "\r?\n?[ \t]*${sep}[ \t]*\r?\n?";
-    my $data     = $query->param('bulk_data');
-    my $name     = $query->param('bulk_edit_child');
-    my @children = grep { $_->name eq $name } $element->children;
-
-    my @data     = split(/$sep/, $data);
+    my $editor      = $arg{element_editor};
+    my $element     = $arg{element};
+    my $query       = $editor->query;
+    my $sep         = $query->param('bulk_edit_sep');
+    my $sep_pattern = ($sep eq "__TWO_NEWLINE__") ? "\r?\n[ \t]*\r?\n" : "\r?\n?[ \t]*${sep}[ \t]*\r?\n?";
+    my $data        = $query->param('bulk_data');
+    my $name        = $query->param('bulk_edit_child');
+    my @children    = grep { $_->name eq $name } $element->children;
+    my @data        = split(/$sep_pattern/, $data);
 
     # if the separator is <p> then strip off any closing </p> tags
     @data = map { $_ =~ s|\s*<\s*/\s*p\s*>\s*$||; $_; } @data if $sep eq '<p>';
