@@ -444,6 +444,7 @@ sub _do_advanced_find {
       : $session{KRANG_PERSIST}{pkg('Media')}{search_filename};
 
     if (defined($search_filename)) {
+        $search_filename =~ s/_/\\_/g;
         $find_params->{filename_like}    = "\%$search_filename\%";
         $persist_vars->{search_filename} = $search_filename;
         $t->param(search_filename => $search_filename)

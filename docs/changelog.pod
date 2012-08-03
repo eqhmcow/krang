@@ -42,6 +42,17 @@ Fixed a bug where category choosers on New Media and New Template screens
 didn't remember the last chosen category if it wasn't a "Save & Stay"
 action. [Michael Peters]
 
+=item *
+
+Fixed a bug where switching between searching live and retired Media could
+sometimes result in an ISE. [Michael Peters]
+
+=item *
+
+Advanced search on Media filename no longer treats underscores as SQL
+wildcard characters since they are really common in file names. [Michael
+Peters]
+
 =back
 
 =head2 3.20 - June 7th, 2012
