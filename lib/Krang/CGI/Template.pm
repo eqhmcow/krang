@@ -191,6 +191,10 @@ sub add_save {
     my $q        = $self->query();
     my $template = $self->get_edit_object();
 
+    # make sure the category_chooser remembers what was chosen, so recreate the chooser
+    # to let it work it's magic
+    $self->_edit_category_chooser();
+
     # update template with CGI values
     $self->update_template($template) || return $self->redirect_to_workspace;
 
@@ -1198,12 +1202,7 @@ sub get_tmpl_params {
         # make sure category_id is set for category chooser
         $q->param('category_id', $template->category_id);
 
-        $tmpl_params{category_chooser} = category_chooser(
-            query    => $q,
-            name     => 'category_id',
-            formname => 'edit_template_form',
-            may_edit => 1,
-        );
+        $tmpl_params{category_chooser} = $self->_edit_category_chooser();
 
         # we don't need it anymore
         $q->delete('category_id');
@@ -1690,6 +1689,18 @@ sub unretire {
 =cut
 
 sub edit_object_package { pkg('Template') }
+
+sub _edit_category_chooser {
+    my $self = shift;
+    return category_chooser(
+        query      => $self->query,
+        name       => 'category_id',
+        formname   => 'edit_template_form',
+        may_edit   => 1,
+        persistkey => pkg('Template'),
+    );
+}
+
 
 
 1;

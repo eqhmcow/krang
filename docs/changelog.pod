@@ -30,6 +30,12 @@ complete. [Michael Peters]
 Fixed bug where Transform Image would try to operate on an image with
 a known extension, but actually of the wrong type. [Michael Peters]
 
+=item *
+
+Fixed a bug where category choosers on New Media and New Template screens
+didn't remember the last chosen category if it wasn't a "Save & Stay"
+action. [Michael Peters]
+
 =back
 
 =head2 3.20 - June 7th, 2012

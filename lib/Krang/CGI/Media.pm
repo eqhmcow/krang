@@ -686,6 +686,10 @@ sub checkin_add {
     my $q    = $self->query();
     my $m    = $self->get_edit_object;
 
+    # make sure the category_chooser remembers what was chosen, so recreate the chooser
+    # to let it work it's magic
+    $self->_edit_category_chooser();
+
     # Update object in session
     $self->update_media($m) || return $self->redirect_to_workspace;
 
@@ -1824,14 +1828,7 @@ sub make_media_tmpl_data {
     # Build category chooser
     my $category_id = $q->param('category_id');
     $q->param('category_id', $m->category_id) unless ($category_id);
-    my $category_chooser = category_chooser(
-        query      => $q,
-        name       => 'category_id',
-        formname   => 'edit_media_form',
-        may_edit   => 1,
-        persistkey => pkg('Media'),
-    );
-    $tmpl_data{category_chooser} = $category_chooser;
+    $tmpl_data{category_chooser} = $self->_edit_category_chooser();
 
     # If we have a filename, show it.
     $tmpl_data{file_size} = sprintf("%.1fk", ($m->file_size() / 1024))
@@ -2522,6 +2519,17 @@ sub _media_types_popup_menu {
         -values  => \@media_type_ids,
         -labels  => \%media_types,
         -default => $type_id,
+    );
+}
+
+sub _edit_category_chooser {
+    my $self = shift;
+    return category_chooser(
+        query      => $self->query,
+        name       => 'category_id',
+        formname   => 'edit_media_form',
+        may_edit   => 1,
+        persistkey => pkg('Media'),
     );
 }
 
