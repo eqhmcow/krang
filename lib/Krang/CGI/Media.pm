@@ -1811,10 +1811,9 @@ sub make_media_tmpl_data {
     } elsif ($m->is_image) {
         $tmpl_data{is_image} = 1;
 
-        # can we transform it with Imager?
-        $extension = lc($extension);
-        $extension = 'jpeg' if $extension eq 'jpg';    # Imager doesn't recognize "jpg"
-        $tmpl_data{can_transform_image} = $Imager::formats{$extension};
+        # can we transform it with Imager? Try and if it blows up we can't
+        eval { Imager->new->open(file => $m->file_path) or die };
+        $tmpl_data{can_transform_image} = $@ ? 0 : 1;
     }
 
     # persist media_type_id in session for next time someone adds media..

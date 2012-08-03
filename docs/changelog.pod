@@ -25,6 +25,11 @@ with neither admin_user nor admin_user_limited perms. [Brad Oaks]
 Fixed bug where New Template -> Save & Stay would hang and not
 complete. [Michael Peters]
 
+=item *
+
+Fixed bug where Transform Image would try to operate on an image with
+a known extension, but actually of the wrong type. [Michael Peters]
+
 =back
 
 =head2 3.20 - June 7th, 2012
