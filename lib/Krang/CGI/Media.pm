@@ -363,7 +363,8 @@ sub _do_advanced_find {
       do_advanced_search
     );
 
-    $t->param(return_params => $self->make_return_params(@return_param_list));
+    $t->param(return_params => $self->make_return_params(@return_param_list)) 
+        if $t->query(name => 'return_params');
 
     # find live or retired stories?
     my %include_options = $retired ? (include_live => 0, include_retired => 1) : ();
@@ -445,7 +446,8 @@ sub _do_advanced_find {
     if (defined($search_filename)) {
         $find_params->{filename_like}    = "\%$search_filename\%";
         $persist_vars->{search_filename} = $search_filename;
-        $t->param(search_filename => $search_filename);
+        $t->param(search_filename => $search_filename)
+          if $t->query(name => 'search_filename');
     }
 
     # search_alt_tag
@@ -458,7 +460,8 @@ sub _do_advanced_find {
         $search_alt_tag =~ s/\W+/\%/g;
         $find_params->{alt_tag_like}    = "\%$search_alt_tag\%";
         $persist_vars->{search_alt_tag} = $search_alt_tag;
-        $t->param(search_alt_tag => $search_alt_tag);
+        $t->param(search_alt_tag => $search_alt_tag)
+          if $t->query(name => 'search_alt_tag');
     }
 
     # search_full_text
@@ -470,7 +473,8 @@ sub _do_advanced_find {
     if ($search_full_text) {
         $find_params->{full_text} = $search_full_text;
         $persist_vars->{search_full_text} = $search_full_text;
-        $t->param(search_full_text => $search_full_text);
+        $t->param(search_full_text => $search_full_text)
+          if $t->query(name => 'search_full_text');
     }
 
     # search_title
@@ -483,7 +487,8 @@ sub _do_advanced_find {
         $search_title =~ s/\W+/\%/g;
         $find_params->{title_like}    = "\%$search_title\%";
         $persist_vars->{search_title} = $search_title;
-        $t->param(search_title => $search_title);
+        $t->param(search_title => $search_title)
+          if $t->query(name => 'search_title');
     }
 
     # search_tag
@@ -502,7 +507,8 @@ sub _do_advanced_find {
         -default => ($persist_vars->{search_tag} || ''),
         -values  => ['', @tags],
     );
-    $t->param(search_tag_chooser => $chooser);
+    $t->param(search_tag_chooser => $chooser) 
+        if $t->query(name => 'search_tag_chooser');
 
     # search_media_id
     my $search_media_id =
@@ -513,7 +519,8 @@ sub _do_advanced_find {
     if (defined($search_media_id)) {
         $find_params->{media_id}         = $search_media_id;
         $persist_vars->{search_media_id} = $search_media_id;
-        $t->param(search_media_id => $search_media_id);
+        $t->param(search_media_id => $search_media_id) 
+          if $t->query(name => 'search_media_id');
     }
 
     # search_media_type_id
@@ -525,7 +532,8 @@ sub _do_advanced_find {
     if (defined($search_media_type_id)) {
         $find_params->{media_type_id}         = $search_media_type_id;
         $persist_vars->{search_media_type_id} = $search_media_type_id;
-        #        $t->param(search_media_type_id => $search_media_type_id);
+        $t->param(search_media_type_id => $search_media_type_id) 
+          if $t->query(name => 'search_media_type_id');
     }
 
     # search_no_attributes
@@ -536,7 +544,8 @@ sub _do_advanced_find {
 
     $find_params->{no_attributes}         = $search_no_attributes;
     $persist_vars->{search_no_attributes} = $search_no_attributes;
-    $t->param(search_no_attributes => $search_no_attributes);
+    $t->param(search_no_attributes => $search_no_attributes)
+      if $t->query(name => 'search_no_attributes');
 
     # Run pager
     my $pager = $self->make_pager($persist_vars, $find_params, $show_thumbnails, $retired);
