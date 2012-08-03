@@ -608,16 +608,13 @@ sub preview_media {
 # for assets linked to by these stories.
 #
 sub _build_asset_list {
-    my $self = shift;
-    my ($story_list, $media_list) = @_;
-
-    my $user_id = $ENV{REMOTE_USER};
-
+    my ($self, $story_list, $media_list) = @_;
+    my $user_id      = $ENV{REMOTE_USER};
     my $publish_list = [];
     my @stories      = ();
     my @media        = ();
-
-    my $publisher = pkg('Publisher')->new();
+    my $q            = $self->query;
+    my $publisher    = pkg('Publisher')->new();
 
     # retrieve all stories linked to the submitted list.
     push(@{$publish_list}, @{$publisher->asset_list(story => $story_list, mode => 'publish')})
@@ -640,9 +637,8 @@ sub _build_asset_list {
             my $checked_out_by = $asset->checked_out_by();
             if ($user_id != $checked_out_by) {
                 $checked_out = 1;
-                $status =
-                  localize('Checked out by') . ' <b>'
-                  . (pkg('User')->find(user_id => $asset->checked_out_by))[0]->login . '</b>';
+                my $cob = (pkg('User')->find(user_id => $asset->checked_out_by))[0]->display_name;
+                $status = localize('Checked out by') . ' <b>' . $q->escapeHTML($cob) . '</b>';
             }
         }
         $checked_out_assets = $checked_out if $checked_out;

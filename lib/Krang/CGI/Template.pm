@@ -1331,10 +1331,9 @@ sub make_pager {
 
 # Handles rows for search run mode
 sub search_row_handler {
-
     my ($self, $row, $template, $pager, %args) = @_;
-
     my $list_retired        = $args{retired};
+    my $q                   = $self->query;
     my $may_edit_and_retire = (
         not($template->may_edit)
           or (  ($template->checked_out)
@@ -1387,11 +1386,13 @@ sub search_row_handler {
         } else {
             $pager->column_display(status => 1);
             if ($template->checked_out) {
-                $row->{status} =
-                    localize('Live')
+                my $cob = (pkg('User')->find(user_id => $template->checked_out_by))[0]->display_name;
+                $row->{status} = localize('Live')
                   . ' <br/> '
-                  . localize('Checked out by') . '<b>'
-                  . (pkg('User')->find(user_id => $template->checked_out_by))[0]->login . '</b>';
+                  . localize('Checked out by') 
+                  . '<b>'
+                  . $q->escapeHTML($cob) 
+                  . '</b>';
             } else {
                 $row->{status} = localize('Live');
             }
@@ -1423,9 +1424,11 @@ sub search_row_handler {
               . qq|')" type="button" class="button">|
               if $may_edit_and_retire;
             if ($template->checked_out) {
-                $row->{status} =
-                  localize('Checked out by') . ' <b>'
-                  . (pkg('User')->find(user_id => $template->checked_out_by))[0]->login . '</b>';
+                my $cob = (pkg('User')->find(user_id => $template->checked_out_by))[0]->display_name;
+                $row->{status} = localize('Checked out by')
+                  . ' <b>'
+                  . $q->escapeHTML($cob) 
+                  . '</b>';
             } else {
                 $row->{status} = '&nbsp;';
             }
@@ -1589,7 +1592,7 @@ sub list_active_row_handler {
 
     # user
     my ($user) = pkg('User')->find(user_id => $template->checked_out_by);
-    $row->{user} = $q->escapeHTML($user->first_name . " " . $user->last_name);
+    $row->{user} = $q->escapeHTML($user->display_name);
 }
 
 sub autocomplete {

@@ -2234,7 +2234,7 @@ sub steal_selected {
 
             # this story was checked out to someone else; steal it and keep track of victim
             my ($victim) = pkg('User')->find(user_id => $s->checked_out_by);
-            my $victim_name = $q->escapeHTML($victim->first_name . ' ' . $victim->last_name);
+            my $victim_name = $q->escapeHTML($victim->display_name);
             add_history(object => $s, action => 'steal');
             $s->checkin();
             $s->checkout();
@@ -2392,11 +2392,13 @@ sub find_story_row_handler {
         } else {
             $pager->column_display(status => 1);
             if ($story->checked_out) {
+                my $cob = (pkg('User')->find(user_id => $story->checked_out_by))[0]->display_name;
                 $row->{status} =
                     localize('Live')
                   . ' <br/> '
                   . localize('Checked out by') . ' <b>'
-                  . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login . '</b>';
+                  . $q->escapeHTML($cob) 
+                  . '</b>';
             } elsif ($story->desk_id) {
                 $row->{status} =
                     localize('Live')
@@ -2424,13 +2426,16 @@ sub find_story_row_handler {
               <li><input value="$txt{Retire}" onclick="retire_story($story_id)" $button></li>
             | if $may_edit_and_retire;
             if ($story->checked_out) {
-                $row->{status} =
-                  localize('Checked out by') . ' <b>'
-                  . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login . '</b>';
+                my $cob = (pkg('User')->find(user_id => $story->checked_out_by))[0]->display_name;
+                $row->{status} = localize('Checked out by') 
+                  . ' <b>'
+                  . $q->escapeHTML($cob) 
+                  . '</b>';
             } elsif ($story->desk_id) {
-                $row->{status} =
-                    localize('On') . ' <b>'
-                  . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name . '</b> '
+                $row->{status} = localize('On') 
+                  . ' <b>'
+                  . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name 
+                  . '</b> '
                   . localize('Desk');
             } else {
                 $row->{status} = '&nbsp;';
@@ -2478,7 +2483,7 @@ sub list_active_row_handler {
 
     # user
     my ($user) = pkg('User')->find(user_id => $story->checked_out_by);
-    $row->{user} = $q->escapeHTML($user->first_name . " " . $user->last_name);
+    $row->{user} = $q->escapeHTML($user->display_name);
 }
 
 sub autocomplete {
@@ -2991,7 +2996,7 @@ sub pe_get_status {
         $cob = 'me' if $story->checked_out_by eq $ENV{REMOTE_USER};
         unless ($cob) {
             my ($owner) = pkg('User')->find(user_id => $story->checked_out_by);
-            $cob = CGI->escapeHTML($owner->first_name . ' ' . $owner->last_name);
+            $cob = CGI->escapeHTML($owner->display_name);
         }
     }
 

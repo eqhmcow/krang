@@ -22,6 +22,12 @@ filenames. [Michael Peters]
 
 =item *
 
+Consistently show the user's display name (first and last if we have
+it) instead of login on different screens that refer to users by
+name. [Michael Peters]
+
+=item *
+
 Fixed bug where a user being in a group with admin_user_limited perms
 would be given full admin_user access if they were in another group
 with neither admin_user nor admin_user_limited perms. [Brad Oaks]

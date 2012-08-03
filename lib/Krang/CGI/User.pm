@@ -266,7 +266,7 @@ sub delete {
 
     unless ($logged_in_user->may_delete_user($user_id)) {
         my ($u) = pkg('User')->find(user_id => $user_id);
-        add_alert('may_not_delete_user', user => $u->login);
+        add_alert('may_not_delete_user', user => $u->display_name);
         return $self->edit;
     }
 
@@ -279,7 +279,7 @@ sub delete {
             my ($user) = pkg('User')->find(user_id => $user_id);
             add_alert(
                 'error_deletion_failure',
-                login   => $user->login,
+                login   => $user->display_name,
                 user_id => $user->user_id,
             );
             return $self->search();
@@ -342,7 +342,7 @@ sub delete_selected {
                 my ($user) = pkg('User')->find(user_id => $u);
                 add_alert(
                     'error_deletion_failure',
-                    login   => $user->login,
+                    login   => $user->display_name,
                     user_id => $user->user_id,
                 );
                 delete $user_delete_list{$u};
@@ -808,16 +808,16 @@ sub add_message_for_delete_selected {
 
     if (@users_not_deleted) {
         if (scalar(@users_not_deleted) == 1) {
-            add_alert('may_not_delete_user', user => $users_not_deleted[0]->login);
+            add_alert('may_not_delete_user', user => $users_not_deleted[0]->display_name);
         } else {
             my $u     = pop(@users_not_deleted);
-            my $users = $u->login;
+            my $users = $u->display_name;
             while (@users_not_deleted) {
                 my $u = pop(@users_not_deleted);
                 if (scalar(@users_not_deleted)) {
-                    $users .= ', ' . $u->login;
+                    $users .= ', ' . $u->display_name;
                 } else {
-                    $users .= ' ' . localize('and') . ' ' . $u->login;
+                    $users .= ' ' . localize('and') . ' ' . $u->display_name;
                 }
             }
             add_alert('may_not_delete_users', users => $users);

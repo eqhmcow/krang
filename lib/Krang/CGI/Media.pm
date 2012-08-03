@@ -1635,7 +1635,7 @@ sub list_active_row_handler {
 
     # user
     my ($user) = pkg('User')->find(user_id => $media->checked_out_by);
-    $row->{user} = $q->escapeHTML($user->first_name . " " . $user->last_name);
+    $row->{user} = $q->escapeHTML($user->display_name);
 }
 
 # Return an add form.  This method expects a media object in the session.
@@ -2098,10 +2098,9 @@ sub make_pager {
 
 # Pager row handler for media find run-modes
 sub find_media_row_handler {
-    my $self = shift;
-    my ($show_thumbnails, $row, $media, $pager, %args) = @_;
-
+    my ($self, $show_thumbnails, $row, $media, $pager, %args) = @_;
     my $list_retired        = $args{retired};
+    my $q                   = $self->query;
     my $may_edit_and_retire = (
         not($media->may_edit)
           or (  ($media->checked_out)
@@ -2187,11 +2186,13 @@ sub find_media_row_handler {
         } else {
             $pager->column_display(status => 1);
             if ($media->checked_out) {
-                $row->{status} =
-                    localize('Live') 
+                my $cob = (pkg('User')->find(user_id => $media->checked_out_by))[0]->display_name;
+                $row->{status} = localize('Live') 
                   . '<br />'
-                  . localize('Checked out by') . '<b>'
-                  . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login . '</b>';
+                  . localize('Checked out by') 
+                  . '<b>'
+                  . $q->escapeHTML($cob) 
+                  . '</b>';
             } else {
                 $row->{status} = localize('Live');
             }
@@ -2215,9 +2216,11 @@ sub find_media_row_handler {
                 <li><input value="$txt{Retire}" onclick="retire_media($media_id)" $button></li>
             | if $may_edit_and_retire;
             if ($media->checked_out) {
-                $row->{status} =
-                  localize('Checked out by') . " <b>"
-                  . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login . '</b>';
+                my $cob =(pkg('User')->find(user_id => $media->checked_out_by))[0]->display_name;
+                $row->{status} = localize('Checked out by') 
+                  . " <b>"
+                  . $q->escapeHTML($cob) 
+                  . '</b>';
             } else {
                 $row->{status} = '&nbsp;';
             }
