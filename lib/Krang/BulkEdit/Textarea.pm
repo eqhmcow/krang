@@ -126,10 +126,11 @@ sub save {
     my $data     = $query->param('bulk_data');
     my $name     = $query->param('bulk_edit_child');
     my @children = grep { $_->name eq $name } $element->children;
+
     my @data     = split(/$sep/, $data);
 
     # if the separator is <p> then strip off any closing </p> tags
-    @data = map { $_ =~ s|\s*<\s*/\s*p\s*>\s*$||; $_; } @data;
+    @data = map { $_ =~ s|\s*<\s*/\s*p\s*>\s*$||; $_; } @data if $sep eq '<p>';
 
     # don't create empty elements, so make sure there is more than just empty space
     @data = grep { $_ =~ /\S/ } @data;

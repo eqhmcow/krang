@@ -55,6 +55,11 @@ sometimes result in an ISE. [Michael Peters]
 
 =item *
 
+Fixed a bug where closing C<< </p> >> tags were being stripped during
+Bulk Edit even when the separator wasn't C<< <p> >>. [Michael Peters]
+
+=item *
+
 Advanced search on Media filename no longer treats underscores as SQL
 wildcard characters since they are really common in file names. [Michael
 Peters]
