@@ -20,7 +20,7 @@ sub per_instance {
                 ord             SMALLINT UNSIGNED NOT NULL,
                 INDEX(tag),
                 INDEX(story_id, ord)
-        )
+        ) ENGINE=InnoDB
     /);
 
     # add the media_tag table
@@ -32,7 +32,7 @@ sub per_instance {
                 ord             SMALLINT UNSIGNED NOT NULL,
                 INDEX(tag),
                 INDEX(media_id, ord)
-        )
+        ) ENGINE=InnoDB
     /);
 }
 

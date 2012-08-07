@@ -19,6 +19,7 @@ use Time::Piece;
 use Time::Seconds;
 use Time::Piece::MySQL;
 use File::Spec::Functions qw(catdir canonpath);
+use Scalar::Util qw(blessed);
 
 # setup exceptions
 use Exception::Class
@@ -715,38 +716,26 @@ Get/Set the tags for this story
 
 sub tags {
     my ($self, $tags) = @_;
-    my $dbh = dbh;
+    my $dbh = dbh();
     my $id  = $self->story_id;
     if ($tags) {
         die "invalid data passed to tags: must be an array reference"
           unless ref $tags && ref $tags eq 'ARRAY';
-
-        local $dbh->{AutoCommit} = 0;
-        my $sth = $dbh->prepare_cached('INSERT INTO story_tag (story_id, tag, ord) VALUES (?,?,?)');
-        eval {
-            # clear out any old tags before we insert the new ones
-            $dbh->do('DELETE FROM story_tag WHERE story_id = ?', {}, $id);
-            my $ord = 1;
-            foreach my $tag (@$tags) {
-                $sth->execute($id, $tag, $ord++);
-            }
-        };
-        if (my $e = $@) {
-            $dbh->rollback();
-            die $e;
-        }
         $self->{tags} = $tags;
-    } elsif ($self->{tags}) {
-        $tags = $self->{tags};
-    } else {
-        $tags = [];
-        my $sth = $dbh->prepare_cached('SELECT tag FROM story_tag WHERE story_id = ? ORDER BY ord');
-        $sth->execute($id);
-        while (my $row = $sth->fetchrow_arrayref) {
-            push(@$tags, $row->[0]);
-        }
-        $self->{tags} = $tags;
+        return @$tags;
     }
+
+    if ($self->{tags}) {
+        return @{ $self->{tags} };
+    }
+
+    $tags = [];
+    my $sth = $dbh->prepare_cached('SELECT tag FROM story_tag WHERE story_id = ? ORDER BY ord');
+    $sth->execute($id);
+    while (my $row = $sth->fetchrow_arrayref) {
+        push(@$tags, $row->[0]);
+    }
+    $self->{tags} = $tags;
     return @$tags;
 }
 
@@ -921,19 +910,29 @@ sub save {
 
 sub _save_tags {
     my $self = shift;
-    my $dbh  = dbh();
-    my $id   = $self->story_id;
+    my $dbh = dbh();
+    my $id  = $self->story_id;
 
-    if (my $tags = $self->{tags}) {
+    my $tags = $self->{tags};
+    return unless $tags;
+
+    local $dbh->{AutoCommit} = 0;
+    my $sth = $dbh->prepare_cached('INSERT INTO story_tag (story_id, tag, ord) VALUES (?,?,?)');
+    eval {
         # clear out any old tags before we insert the new ones
         $dbh->do('DELETE FROM story_tag WHERE story_id = ?', {}, $id);
-
-        my $sth = $dbh->prepare_cached('INSERT INTO story_tag (story_id, tag, ord) VALUES (?,?,?)');
         my $ord = 1;
         foreach my $tag (@$tags) {
+            next unless defined $tag && length $tag;
             $sth->execute($id, $tag, $ord++);
         }
+    };
+    if (my $e = $@) {
+        $dbh->rollback();
+        die $e;
     }
+
+    return;
 }
 
 sub _save_category_links {
@@ -2100,7 +2099,13 @@ sub transform_stories {
 
         # transform and save the live story
         $story = $callback->(story => $story, live => 1, version => $story->version);
-        $story->save(keep_version => 1, no_history => 1, no_verify_checkout => 1, ignore_permissions => 1);
+        $story->save(
+            keep_version        => 1,
+            no_history          => 1,
+            no_verify_checkout  => 1,
+            ignore_permissions  => 1,
+            no_verify_unique    => 1,
+        );
 
         if ($past_versions) {
             my $dbh = dbh;
@@ -2112,7 +2117,7 @@ sub transform_stories {
                 eval { ($old_story) = $pkg->_load_version($story_id, $v) };
 
                 # if we can't even load, just skip it
-                if ($@) {
+                if ($@ || !$old_story || (! blessed($old_story))) {
                     if ($prune_corrupt) {
                         warn "Removing corrupt story $story_id version $v";
                         $dbh->do('DELETE FROM story_version WHERE story_id = ? AND version = ?',
@@ -2129,7 +2134,9 @@ sub transform_stories {
                     undef, $story_id, $v, nfreeze($old_story));
             }
         }
+        undef $story;
     }
+    return;
 }
 
 sub _load_version {
