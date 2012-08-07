@@ -260,14 +260,14 @@ sub access_handler ($$) {
 
     my $bd = $r->pnotes('browser_detector')
       || HTTP::BrowserDetect->new($r->header_in('User-Agent'));
+    $r->pnotes(browser_detector => $bd);
+
     foreach my $browser (keys %allow_browsers) {
         if ($bd->$browser) {
-            $allow_browsers{$browser} =~ /(\d)+(\.\d+)?/;
+            $allow_browsers{$browser} =~ /(\d+)(\.\d+)?/;
             my ($major, $minor) = ($1, $2);
             $minor ||= ".0";
-            if ($bd->major > $major
-                or ($bd->major == $major && $bd->minor >= $minor))
-            {
+            if ($bd->major > $major or ($bd->major == $major && $bd->minor >= $minor)) {
                 if ($engine_of{$browser} eq 'Gecko') {
                     my $gecko_version = $bd->gecko_version();
                     debug("Krang::Handler:  Gecko Version: ".$gecko_version);
@@ -754,7 +754,7 @@ sub _can_handle_gzip {
         my $bd = $r->pnotes('browser_detector');
         if (!$bd) {
             $bd = HTTP::BrowserDetect->new($r->header_in('User-Agent'));
-            $r->pnotes(browser_detecor => $bd);
+            $r->pnotes(browser_detector => $bd);
         }
         if ($bd->ie && $bd->version <= 6) {
             return 0;
