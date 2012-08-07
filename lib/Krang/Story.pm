@@ -931,6 +931,7 @@ sub _save_tags {
         my $sth = $dbh->prepare_cached('INSERT INTO story_tag (story_id, tag, ord) VALUES (?,?,?)');
         my $ord = 1;
         foreach my $tag (@$tags) {
+            next unless defined $tag && length $tag;
             $sth->execute($id, $tag, $ord++);
         }
     }
