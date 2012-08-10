@@ -6,12 +6,11 @@ Krang.onload( function() {
 } );
 
 do_search = function(chbx) {
-    var val = chbx.checked ? '1' : '0';
-    Krang.Form.submit('search_form', { show_thumbnails: val });
+    var val = chbx && chbx.checked ? '1' : '0';
+    Krang.Form.submit('search_form', { show_thumbnails: val }, { to_top: false });
 }
 
-show_advanced_search = function( show_advanced )
-{
+show_advanced_search = function(show_advanced) {
   Krang.Form.submit( 'search_form', { do_advanced_search: show_advanced }, { to_top: false } );
 }
 
@@ -24,8 +23,7 @@ other_search_rm = function() {
 }
 
 <tmpl_if do_advanced_search>
-  clear_advanced_search = function()
-  {
+  clear_advanced_search = function() {
     Krang.Form.submit( 'clear_advanced_search_form', {}, { to_top: false } );
   }
 </tmpl_if>
@@ -67,8 +65,7 @@ other_search_rm = function() {
 <tmpl_lang Retired Media>
 </h2>
 
-<form id="search_form" name="search_form" action="media.pl" method="post">
-
+<form id="search_form" name="search_form" action="media.pl" method="post" onsubmit="do_search(); return false;">
 <input name="rm" value="list_retired" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
 <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
@@ -112,9 +109,9 @@ other_search_rm = function() {
   <table class="request" summary="">
 
   <colgroup>
-  <col class="c-label-tiny">
+  <col class="c-mini">
   <col>
-  <col class="c-label-tiny">
+  <col class="c-mini">
   <col>
   </colgroup>
 
@@ -123,17 +120,22 @@ other_search_rm = function() {
   <tr>
   <th><tmpl_lang File Name></th>
   <td><input name="search_filename" value="<tmpl_var escape=html search_filename>"></td>
-  <th>
-
-  <p><tmpl_lang Media ID></th>
+  <th><tmpl_lang Media ID></th>
   <td><input name="search_media_id" value="<tmpl_var escape=html search_media_id>"></td>
   </tr>
 
   <tr>
   <th><tmpl_lang Title></th>
   <td><input name="search_title" value="<tmpl_var escape=html search_title>"></td>
+  <th><tmpl_lang Tag></th>
+  <td><tmpl_var search_tag_chooser></td>
+  </tr>
+
+  <tr>
   <th><tmpl_lang Alt Text></th>
   <td><input name="search_alt_tag" value="<tmpl_var escape=html search_alt_tag>"></td>
+  <th><tmpl_lang Full Text Search></th>
+  <td><input name="search_full_text" value="<tmpl_var escape=html search_full_text>"></td>
   </tr>
 
   <tr>
