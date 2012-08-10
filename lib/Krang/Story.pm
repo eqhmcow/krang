@@ -715,38 +715,26 @@ Get/Set the tags for this story
 
 sub tags {
     my ($self, $tags) = @_;
-    my $dbh = dbh;
+    my $dbh = dbh();
     my $id  = $self->story_id;
     if ($tags) {
         die "invalid data passed to tags: must be an array reference"
           unless ref $tags && ref $tags eq 'ARRAY';
-
-        local $dbh->{AutoCommit} = 0;
-        my $sth = $dbh->prepare_cached('INSERT INTO story_tag (story_id, tag, ord) VALUES (?,?,?)');
-        eval {
-            # clear out any old tags before we insert the new ones
-            $dbh->do('DELETE FROM story_tag WHERE story_id = ?', {}, $id);
-            my $ord = 1;
-            foreach my $tag (@$tags) {
-                $sth->execute($id, $tag, $ord++);
-            }
-        };
-        if (my $e = $@) {
-            $dbh->rollback();
-            die $e;
-        }
         $self->{tags} = $tags;
-    } elsif ($self->{tags}) {
-        $tags = $self->{tags};
-    } else {
-        $tags = [];
-        my $sth = $dbh->prepare_cached('SELECT tag FROM story_tag WHERE story_id = ? ORDER BY ord');
-        $sth->execute($id);
-        while (my $row = $sth->fetchrow_arrayref) {
-            push(@$tags, $row->[0]);
-        }
-        $self->{tags} = $tags;
+        return @$tags;
     }
+
+    if ($self->{tags}) {
+        return @{$self->{tags}};
+    }
+
+    $tags = [];
+    my $sth = $dbh->prepare_cached('SELECT tag FROM story_tag WHERE story_id = ? ORDER BY ord');
+    $sth->execute($id);
+    while (my $row = $sth->fetchrow_arrayref) {
+        push(@$tags, $row->[0]);
+    }
+    $self->{tags} = $tags;
     return @$tags;
 }
 
@@ -924,17 +912,26 @@ sub _save_tags {
     my $dbh  = dbh();
     my $id   = $self->story_id;
 
-    if (my $tags = $self->{tags}) {
+    my $tags = $self->{tags};
+    return unless $tags;
+
+    local $dbh->{AutoCommit} = 0;
+    my $sth = $dbh->prepare_cached('INSERT INTO story_tag (story_id, tag, ord) VALUES (?,?,?)');
+    eval {
         # clear out any old tags before we insert the new ones
         $dbh->do('DELETE FROM story_tag WHERE story_id = ?', {}, $id);
-
-        my $sth = $dbh->prepare_cached('INSERT INTO story_tag (story_id, tag, ord) VALUES (?,?,?)');
         my $ord = 1;
         foreach my $tag (@$tags) {
             next unless defined $tag && length $tag;
             $sth->execute($id, $tag, $ord++);
         }
+    };
+    if (my $e = $@) {
+        $dbh->rollback();
+        die $e;
     }
+
+    return;
 }
 
 sub _save_category_links {

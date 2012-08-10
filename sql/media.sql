@@ -102,5 +102,5 @@ CREATE TABLE media_tag (
         ord             SMALLINT UNSIGNED NOT NULL,
         INDEX(tag),
         INDEX(media_id, ord)
-);
+) ENGINE=InnoDB;
 

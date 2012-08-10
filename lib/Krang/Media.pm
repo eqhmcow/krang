@@ -1045,16 +1045,26 @@ sub _save_tags {
     my $dbh  = dbh();
     my $id   = $self->media_id;
 
-    if (my $tags = $self->{tags}) {
+    my $tags = $self->{tags};
+    return unless $tags;
+
+    local $dbh->{AutoCommit} = 0;
+    my $sth = $dbh->prepare_cached('INSERT INTO media_tag (media_id, tag, ord) VALUES (?,?,?)');
+    eval {
         # clear out any old tags before we insert the new ones
         $dbh->do('DELETE FROM media_tag WHERE media_id = ?', {}, $id);
-
-        my $sth = $dbh->prepare_cached('INSERT INTO media_tag (media_id, tag, ord) VALUES (?,?,?)');
         my $ord = 1;
         foreach my $tag (@$tags) {
+            next unless defined $tag && length $tag;
             $sth->execute($id, $tag, $ord++);
         }
+    };
+    if (my $e = $@) {
+        $dbh->rollback();
+        die $e;
     }
+
+    return;
 }
 
 =item @media = Krang::Media->find($param)

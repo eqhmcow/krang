@@ -91,4 +91,4 @@ CREATE TABLE story_tag (
         ord             SMALLINT UNSIGNED NOT NULL,
         INDEX(tag),
         INDEX(story_id, ord)
-);
+) ENGINE=InnoDB;
