@@ -2,11 +2,10 @@ package Krang::Upgrade;
 use Krang::ClassFactory qw(pkg);
 use warnings;
 use strict;
-
 use Krang::ClassLoader 'Conf';
-use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader 'AddOn';
-use Krang::ClassLoader 'Script';
+use Krang::ClassLoader DB     => qw(dbh);
+use Krang::ClassLoader Script => 'instance_agnostic';
 use Carp qw(croak);
 use File::Spec::Functions qw(catfile);
 
