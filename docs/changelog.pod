@@ -64,6 +64,11 @@ Advanced search on Media filename no longer treats underscores as SQL
 wildcard characters since they are really common in file names. [Michael
 Peters]
 
+=item *
+
+Added new C<save_args> option to L<Krang::Story>'s C<transform_stories()>
+method. [Michael Peters]
+
 =back
 
 =head2 3.20 - June 7th, 2012
