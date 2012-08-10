@@ -16,7 +16,7 @@ add_story = function() {
 }
 
 do_search = function() {
-  Krang.Form.submit('search_form');
+  Krang.Form.submit('search_form', { }, { to_top: false });
 }
 
 other_search_rm = function() {
@@ -128,8 +128,7 @@ other_search_rm = function() {
 <tmpl_lang Find Stories>
 </h2>
 
-<form name="search_form" id="search_form" method="post" action="story.pl">
-
+<form name="search_form" id="search_form" method="post" action="story.pl" onsubmit="do_search(); return false">
 <input name="rm" value="find" type="hidden">
 <input name="searched" value="1" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
