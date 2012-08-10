@@ -539,7 +539,7 @@ sub _do_advanced_find {
 
     # search_no_attributes
     my $search_no_attributes =
-      ($q->param('rm') eq 'advanced_find')
+      (($q->param('rm') || '') eq 'advanced_find')
       ? $q->param('search_no_attributes')
       : $session{KRANG_PERSIST}{pkg('Media')}{search_no_attributes};
 
