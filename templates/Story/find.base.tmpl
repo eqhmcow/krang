@@ -6,8 +6,7 @@ Krang.onload( function() {
   Krang.Form.toggle_list_btn();
 } );
 
-show_advanced_search = function( show_advanced )
-{
+show_advanced_search = function( show_advanced ) {
   Krang.Form.submit( 'search_form', { do_advanced_search: show_advanced }, { to_top: false } );
 }
 
@@ -28,60 +27,55 @@ other_search_rm = function() {
 }
 
 <tmpl_if do_advanced_search>
-  clear_advanced_search = function()
-  {
+clear_advanced_search = function() {
     Krang.Form.submit( 'clear_advanced_search_form', {}, { to_top: false } );
-  }
+}
 </tmpl_if>
 
 <tmpl_if row_count>
-  edit_story = function( id )
-  {
+edit_story = function( id ) {
     Krang.Form.submit( 'find_story', { rm: 'checkout_and_edit', story_id: id } );
-  }
+}
 
-  view_story = function( id )
-  {
+view_story = function( id ) {
     Krang.Form.submit( 'find_story', { rm: 'view', story_id: id } );
-  }
+}
 
-  view_story_log = function( id )
-  {
+view_story_log = function( id ) {
     Krang.Form.submit( 'view_story_log_form', { id: id } );
-  }
+}
 
-  copy_story = function(id) {
+copy_story = function(id) {
     Krang.Form.submit('find_story', { rm: 'copy', story_id: id });
-  }
+}
 
-  delete_selected = function() {
+delete_selected = function() {
       var question = '';
       var num_rows_checked = Krang.pager_row_checked();
 
       if (!num_rows_checked) {
-        alert( Krang.L10N.loc('Nothing selected to delete!') );
+          alert( Krang.L10N.loc('Nothing selected to delete!') );
       } else {
-        if (num_rows_checked > 1) {
-	  question = Krang.L10N.loc('Are you SURE you want to delete the checked Stories?');
-        } else {
-	  question = Krang.L10N.loc('Are you SURE you want to delete the checked Story?');
-        }
-        if (confirm(question)) {
-      Krang.Form.submit( 'krang_pager_form', { rm: 'delete_selected' }, { to_top: false } );
-  }
+          if (num_rows_checked > 1) {
+	          question = Krang.L10N.loc('Are you SURE you want to delete the checked Stories?');
+          } else {
+	          question = Krang.L10N.loc('Are you SURE you want to delete the checked Story?');
+          }
+          if (confirm(question)) {
+              Krang.Form.submit( 'krang_pager_form', { rm: 'delete_selected' }, { to_top: false } );
+          }
       }
-  }
+}
 
-  checkout_selected = function()
-  {
+checkout_selected = function() {
     if ( !Krang.pager_row_checked() )
       alert( Krang.L10N.loc('Nothing selected to check out!') );
     else
       Krang.Form.submit( 'krang_pager_form', { rm: 'checkout_selected' } );
-  }
+}
 
-  <tmpl_if may_publish>
-  publish_selected = function() {
+<tmpl_if may_publish>
+publish_selected = function() {
     var question = '';
     var num_rows_checked = Krang.pager_row_checked();
     if (!num_rows_checked) {
@@ -97,9 +91,9 @@ other_search_rm = function() {
             Krang.Form.submit( 'krang_pager_form', { rm: 'publish_story_list' } );
         }
     }
-  }
+}
 
-  retire_selected = function() {
+retire_selected = function() {
     var question = '';
     var num_rows_checked = Krang.pager_row_checked();
     if (!num_rows_checked) {
@@ -114,13 +108,13 @@ other_search_rm = function() {
             Krang.Form.submit( 'krang_pager_form', { rm: 'retire_selected' }, { to_top: false } );
         }
     }
-  }
-  </tmpl_if>
+}
+</tmpl_if>
 
-  retire_story = function(id) {
+retire_story = function(id) {
     if (confirm('Are you SURE you want to retire this Story?'))
       Krang.Form.submit('find_story', { rm: 'retire', story_id: id });
-  }
+}
 </tmpl_if>
 </script>
 

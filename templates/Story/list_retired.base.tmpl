@@ -6,8 +6,7 @@ Krang.onload( function() {
   Krang.Form.toggle_list_btn();
 } );
 
-show_advanced_search = function( show_advanced )
-{
+show_advanced_search = function( show_advanced ) {
   Krang.Form.submit( 'search_form', { do_advanced_search: show_advanced }, { to_top: false } );
 }
 
@@ -24,28 +23,25 @@ other_search_rm = function() {
 }
 
 <tmpl_if do_advanced_search>
-  clear_advanced_search = function()
-  {
+clear_advanced_search = function() {
     Krang.Form.submit('clear_advanced_search_form', {}, { to_top: false });
-  }
+}
 </tmpl_if>
 
 <tmpl_if row_count>
-  view_story = function( id )
-  {
+view_story = function( id ) {
     Krang.Form.submit('find_story', { rm: 'view', story_id: id, retired: 1 });
-  }
+}
 
-  view_story_log = function( id )
-  {
+view_story_log = function( id ) {
     Krang.Form.submit( 'view_story_log_form', { id: id } );
-  }
+}
 
-  copy_story = function(id) {
+copy_story = function(id) {
     Krang.Form.submit('find_story', { rm: 'copy', story_id: id, retired: 1 });
-  }
+}
 
-  delete_selected = function() {
+delete_selected = function() {
     var question = '';
     var num_rows_checked = Krang.pager_row_checked();
 
@@ -61,11 +57,11 @@ other_search_rm = function() {
             Krang.Form.submit( 'krang_pager_form', { rm : 'delete_selected' }, { to_top : false } );
         }
     }
-  }
+}
 
-  unretire_story = function(id) {
+unretire_story = function(id) {
     Krang.Form.submit('find_story', { rm: 'unretire', story_id: id }, { to_top: false });
-  }
+}
 </tmpl_if>
 </script>
 
