@@ -19,6 +19,7 @@ use Time::Piece;
 use Time::Seconds;
 use Time::Piece::MySQL;
 use File::Spec::Functions qw(catdir canonpath);
+use Scalar::Util qw(blessed);
 
 # setup exceptions
 use Exception::Class
@@ -2110,7 +2111,7 @@ sub transform_stories {
                 eval { ($old_story) = $pkg->_load_version($story_id, $v) };
 
                 # if we can't even load, just skip it
-                if ($@) {
+                if ($@ || !$old_story || !blessed($old_story)) {
                     if ($prune_corrupt) {
                         warn "Removing corrupt story $story_id version $v";
                         $dbh->do('DELETE FROM story_version WHERE story_id = ? AND version = ?',
@@ -2135,8 +2136,7 @@ sub _load_version {
     my $dbh = dbh;
 
     my ($data) = $dbh->selectrow_array(
-        'SELECT data FROM story_version
-                                        WHERE story_id = ? AND version = ?',
+        'SELECT data FROM story_version WHERE story_id = ? AND version = ?',
         undef, $story_id, $version
     );
     croak("Unable to load version '$version' of story '$story_id'")
