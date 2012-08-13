@@ -2109,7 +2109,7 @@ sub transform_stories {
     my $prune_corrupt = delete $args{prune_corrupt_versions};
     my $save_args     = delete $args{save_args} || {};
 
-    croak('You must provide a callback for transform_stories()') unless $callbac;
+    croak('You must provide a callback for transform_stories()') unless $callback;
 
     # make find() do all the hard stuff
     my @stories = $pkg->find(%args);
