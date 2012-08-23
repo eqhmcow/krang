@@ -92,7 +92,7 @@ BEGIN {
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
-    eval { require Krang::Conf };
+    eval q{ use Krang::ClassLoader 'Conf' };
     warn << "END" and exit(1) if $@;
 ######################################################################
 
@@ -117,8 +117,6 @@ use Getopt::Long;
 use Pod::Usage;
 
 my ($help, $man, $path);
-my $user          = "admin";
-my $password      = "";
 my $force_checkin = 0;
 my $makecats      = 0;
 my $verbose       = 0;
@@ -127,9 +125,7 @@ my $grep          = "";
 pod2usage(2)
   unless GetOptions(
     'path=s'        => \$path,
-    'user=s'        => \$user,
     'grep=s'        => \$grep,
-    'password=s'    => \$password,
     'verbose+'      => \$verbose,
     'force-checkin' => \$force_checkin,
     'makecats'      => \$makecats,
