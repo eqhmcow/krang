@@ -104,7 +104,7 @@ sub show {
         column_labels    => \%labels,
         columns_sortable => ['id', 'type', 'title', 'url', 'date'],
         command_column_commands => ['log', 'edit'],
-        command_column_labels => {log => 'View Log', edit => 'Edit'},
+        command_column_labels => {log => localize('View Log'), edit => localize('Edit')},
         id_handler            => sub  { $self->_obj2id(@_) },
         row_handler           => sub  { $self->_row_handler(@_) },
     );
