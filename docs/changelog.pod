@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added "View Details" command to workspace screen. [Michael Peters]
+
+=item *
+
 Fixed Workspace sorting to work like normal krang pager style sortable
 tables. [Michael Peters]
 
