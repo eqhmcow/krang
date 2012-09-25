@@ -17,6 +17,11 @@ Krang.onload( function() {
     Krang.Form.submit('krang_pager_form', { rm: 'goto_edit', id: id });
   }
 
+  details = function( id )
+  {
+    Krang.Form.submit('krang_pager_form', { rm: 'goto_details', id: id });
+  }
+
   link_toggle_checkbox = function( nameForm, nameCheckbox, id )
   {
     var CBOX = document.forms[ nameForm ][ nameCheckbox ];
@@ -194,46 +199,65 @@ Krang.onload( function() {
     <!-- Commands -->
     <div class="buttonbar clearfix">
     <ul>
-    <tmpl_var command_column>
-    <tmpl_unless may_edit>
-      <li><input value="<tmpl_lang View Log>" onclick="log('<tmpl_var escape=html id>')" type="button" class="button"></li>
-    <tmpl_else>
-      <tmpl_if is_story>
-        <tmpl_if may_publish>
-          <li><input value="<tmpl_lang Publish>" onclick="publish_story('<tmpl_var escape=html id>')" type="button" class="button"></li>
-        </tmpl_if>
-        <li><input value="<tmpl_lang Copy>" onclick="copy('<tmpl_var escape=html id>')" type="button" class="button"></li>
-        <tmpl_if desk_loop>
-          <li class="menu">
-          <input value="<tmpl_lang Check In To> &#9660;" type="button" class="button">
-          <ul>
-          <tmpl_loop desk_loop>
-            <li>
-              <a href="#" onclick="checkin('<tmpl_var escape=html id>', <tmpl_var choice_desk_id>);">
-              <tmpl_var escape=html choice_desk_name> <tmpl_lang Desk></a>
-            </li>
-          </tmpl_loop desk_loop>
-          </ul>
-          </li>
-        </tmpl_if>
-      <tmpl_else><tmpl_if is_media>
-        <tmpl_if may_publish>
-          <li><input value="<tmpl_lang Publish>" onclick="publish_media('<tmpl_var escape=html id>')" type="button" class="button"></li>
-        </tmpl_if>
-      <tmpl_else><tmpl_if is_template>
-        <li><input value="<tmpl_lang Deploy>" onclick="deploy('<tmpl_var escape=html id>')" type="button" class="button"></li>
-      </tmpl_if></tmpl_if></tmpl_if>
-    </tmpl_unless>
+
+    <tmpl_if is_story>
+      <li class="menu">
+        <input value="<tmpl_lang View> &#9660;" type="button" class="button">
+        <ul>
+          <li><a href="#" onclick="details('<tmpl_var escape=html id>');"><tmpl_lang Details></a></li>
+          <li><a href="#" onclick="log('<tmpl_var escape=html id>');"><tmpl_lang Log></a></li>
+        </ul>
+      </li>
+      <li><input value="<tmpl_lang Edit>" onclick="edit('<tmpl_var escape=html id>')" class="button" type="button"></li>
+      <tmpl_if desk_loop>
+        <li class="menu">
+        <input value="<tmpl_lang Check In To> &#9660;" type="button" class="button">
+        <ul>
+        <tmpl_loop desk_loop>
+          <li><a href="#" onclick="checkin('<tmpl_var escape=html id>', <tmpl_var choice_desk_id>);"><tmpl_var escape=html choice_desk_name> <tmpl_lang Desk></a></li>
+        </tmpl_loop desk_loop>
+        </ul>
+        </li>
+      </tmpl_if>
+      <tmpl_if may_publish>
+      <li><input value="<tmpl_lang Publish>" onclick="publish_story('<tmpl_var escape=html id>')" type="button" class="button"></li>
+      </tmpl_if>
+      <li><input value="<tmpl_lang Copy>" onclick="copy('<tmpl_var escape=html id>')" type="button" class="button"></li>
+    </tmpl_if>
+
+    <tmpl_if is_media>
+      <li class="menu">
+        <input value="<tmpl_lang View> &#9660;" type="button" class="button">
+        <ul>
+          <li><a href="#" onclick="details('<tmpl_var escape=html id>');"><tmpl_lang Details></a></li>
+          <li><a href="#" onclick="log('<tmpl_var escape=html id>');"><tmpl_lang Log></a></li>
+        </ul>
+      </li>
+      <li><input value="<tmpl_lang Edit>" onclick="edit('<tmpl_var escape=html id>')" class="button" type="button"></li>
+      <tmpl_if may_publish>
+        <li><input value="<tmpl_lang Publish>" onclick="publish_media('<tmpl_var escape=html id>')" type="button" class="button"></li>
+      </tmpl_if>
+    </tmpl_if>
+
     <tmpl_if is_template>
+      <li class="menu">
+        <input value="<tmpl_lang View> &#9660;" type="button" class="button">
+        <ul>
+          <li><a href="#" onclick="details('<tmpl_var escape=html id>');"><tmpl_lang Details></a></li>
+          <li><a href="#" onclick="log('<tmpl_var escape=html id>');"><tmpl_lang Log></a></li>
+        </ul>
+      </li>
+      <li><input value="<tmpl_lang Edit>" onclick="edit('<tmpl_var escape=html id>')" class="button" type="button"></li>
+      <li><input value="<tmpl_lang Deploy>" onclick="deploy('<tmpl_var escape=html id>')" type="button" class="button"></li>
       <li>
         <input name="testing_<tmpl_var escape=html id>" value="1" type="checkbox" class="checkbox" 
         onclick="update_testing('<tmpl_var escape=html id>')"<tmpl_if testing> checked</tmpl_if>>
         <a href="javascript:link_toggle_checkbox('krang_pager_form','testing_<tmpl_var escape=html id>','<tmpl_var escape=html id>')"><tmpl_lang Use this version in Preview?></a>
       </li>
     </tmpl_if>
+
     </ul>
     </div>
-
     </td>
 
     <tmpl_if thumbnail>

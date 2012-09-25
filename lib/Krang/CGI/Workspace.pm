@@ -48,6 +48,7 @@ sub setup {
               delete_checked
               goto_edit
               goto_log
+              goto_details
               copy
               checkin
               checkin_checked
@@ -98,15 +99,13 @@ sub show {
 
     # setup paging list of objects
     my $pager = pkg('HTMLPager')->new(
-        cgi_query    => $query,
-        use_module   => pkg('Workspace'),
-        columns          => ['id', 'type', 'title', 'url', 'date', 'command_column', 'checkbox_column'],
-        column_labels    => \%labels,
+        cgi_query     => $query,
+        use_module    => pkg('Workspace'),
+        columns       => ['id', 'type', 'title', 'url', 'date', 'checkbox_column'],
+        column_labels => \%labels,
         columns_sortable => ['id', 'type', 'title', 'url', 'date'],
-        command_column_commands => ['log', 'edit'],
-        command_column_labels => {log => localize('View Log'), edit => localize('Edit')},
-        id_handler            => sub  { $self->_obj2id(@_) },
-        row_handler           => sub  { $self->_row_handler(@_) },
+        id_handler       => sub    { $self->_obj2id(@_) },
+        row_handler      => sub    { $self->_row_handler(@_) },
     );
 
     # Run the pager
@@ -412,6 +411,34 @@ sub goto_log {
 
     $self->header_props(-uri => $uri);
     $self->header_type('redirect');
+    return "";
+}
+
+=item goto_details
+
+Redirects to the details screen for this object
+
+=cut
+
+sub goto_details {
+    my $self  = shift;
+    my $query = $self->query;
+    my $obj   = $self->_id2obj($query->param('id'));
+
+    # redirect as appropriate
+    my $history_url = '&return_script=workspace.pl&return_params=rm&return_params=show';
+    if ($obj->isa('Krang::Story')) {
+        $self->header_props(-uri => "story.pl?rm=view$history_url&story_id=" . $obj->story_id);
+    } elsif ($obj->isa('Krang::Media')) {
+        $self->header_props(-uri => "media.pl?rm=view$history_url&media_id=" . $obj->media_id);
+    } elsif ($obj->isa('Krang::Template')) {
+        $self->header_props(-uri => "template.pl?rm=view$history_url&template_id=" . $obj->template_id);
+    } else {
+        croak('Unknown object type!');
+    }
+
+    $self->header_type('redirect');
+    $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER});
     return "";
 }
 
