@@ -66,8 +66,8 @@ requires no parameters.
 =cut
 
 sub show {
-    my $self     = shift;
-    my $query    = $self->query;
+    my $self  = shift;
+    my $query = $self->query;
 
     # this can be an arbitrary message coming from some other place
     my $msg = $query->param('message');
@@ -81,12 +81,9 @@ sub show {
         global_vars       => 1
     );
 
-    # setup sort selector
-    my $sort = $query->param('krang_pager_sort_field') || 'type';
-
     my %labels = (
-        type  => 'Type',
         id    => 'ID',
+        type  => 'Type',
         title => 'Title',
         url   => 'URL',
         date  => 'Date',
@@ -95,34 +92,21 @@ sub show {
     %labels = map { $_ => localize($labels{$_}) } keys %labels
       unless $session{language} and $session{language} eq 'en';
 
-    $template->param(
-        'sort_select' => scalar $query->popup_menu(
-            -name     => 'sort_select',
-            -values   => [keys %labels],
-            -labels   => \%labels,
-            -default  => $sort,
-            -override => 1,
-            -onchange => "Krang.Pager.sort(this.options[this.selectedIndex].value,0)",
-        )
-    );
-
     # permissions
     my %admin_perms = pkg('Group')->user_admin_permissions();
     $template->param(may_publish => $admin_perms{may_publish});
 
     # setup paging list of objects
     my $pager = pkg('HTMLPager')->new(
-        cgi_query  => $query,
-        use_module => pkg('Workspace'),
-        columns    => [
-            'id',         'version',   'url',            'title',
-            'story_type', 'thumbnail', 'command_column', 'checkbox_column'
-        ],
-        columns_sortable        => [],
+        cgi_query    => $query,
+        use_module   => pkg('Workspace'),
+        columns          => ['id', 'type', 'title', 'url', 'date', 'command_column', 'checkbox_column'],
+        column_labels    => \%labels,
+        columns_sortable => ['id', 'type', 'title', 'url', 'date'],
         command_column_commands => ['log', 'edit'],
-        command_column_labels   => {log => 'View Log', edit => 'Edit'},
-        id_handler  => sub { $self->_obj2id(@_) },
-        row_handler => sub { $self->_row_handler(@_) },
+        command_column_labels => {log => 'View Log', edit => 'Edit'},
+        id_handler            => sub  { $self->_obj2id(@_) },
+        row_handler           => sub  { $self->_row_handler(@_) },
     );
 
     # Run the pager

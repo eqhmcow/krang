@@ -104,23 +104,12 @@ Krang.onload( function() {
 
 <tmpl_else>
 
-  <h3>
-  <tmpl_lang Checked Out Content>
-  </h3>
-
   <form name="krang_pager_form" id="krang_pager_form" method="post" action="workspace.pl">
   <input name="rm" type="hidden">
   <input name="id" type="hidden">
   <input name="desk_id" type="hidden">
 
-  <tmpl_include HTMLPager/<tmpl_lang en>/pager-internals.tmpl>
-
   <div class="panel clearfix buttonbar">
-  <div class="west">
-  <tmpl_lang Sorted by>
-  <tmpl_var sort_select>
-  </div>
-
   <ul class="east">
   <li><input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button" class="list-btn"></li>
   <tmpl_if desk_loop>
@@ -142,6 +131,8 @@ Krang.onload( function() {
   </ul>
   </div>
 
+  <tmpl_include HTMLPager/<tmpl_lang en>/pager-internals.tmpl>
+
   <tmpl_include HTMLPager/<tmpl_lang en>/pager-pagination.tmpl>
 
   <div class="table-container">
@@ -160,11 +151,11 @@ Krang.onload( function() {
 
   <thead>
   <tr>
-  <th class="f"><tmpl_lang ID></th>
-  <th><tmpl_lang Type></th>
-  <th><tmpl_lang Title> | <tmpl_lang URL></th>
+  <th class="f"><tmpl_var colhead_id></th>
+  <th><tmpl_var colhead_type></th>
+  <th><tmpl_var colhead_title> | <tmpl_var colhead_url></th>
   <th></th>
-  <th><tmpl_lang Date></th>
+  <th><tmpl_var colhead_date></th>
   <th class="l tick"><tmpl_var colhead_checkbox_column></th>
   </tr>
   </thead>
@@ -265,11 +256,6 @@ Krang.onload( function() {
   <tmpl_include HTMLPager/<tmpl_lang en>/pager-pagination.tmpl>
 
   <div class="panel capped clearfix buttonbar">
-  <div class="west">
-  <tmpl_lang Sorted by>
-  <tmpl_var sort_select>
-  </div>
-
   <ul class="east">
   <li><input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button" class="list-btn"></li>
   <tmpl_if desk_loop>

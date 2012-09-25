@@ -2,6 +2,17 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.22
+
+=over
+
+=item *
+
+Fixed Workspace sorting to work like normal krang pager style sortable
+tables. [Michael Peters]
+
+=back
+
 =head2 3.21 - August 10th, 2012
 
 =over

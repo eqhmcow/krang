@@ -94,11 +94,11 @@ sub find {
     my $dbh  = dbh();
 
     # get search parameters out of args, leaving just field specifiers
-    my $order_by = delete $args{order_by} || 'type';
-    my $order_dir = delete $args{order_desc} ? 'DESC' : 'ASC';
-    my $limit  = delete $args{limit}  || 0;
-    my $offset = delete $args{offset} || 0;
-    my $count  = delete $args{count}  || 0;
+    my $order_by   = delete $args{order_by}   || 'type';
+    my $order_desc = delete $args{order_desc} || 0;
+    my $limit      = delete $args{limit}      || 0;
+    my $offset     = delete $args{offset}     || 0;
+    my $count      = delete $args{count}      || 0;
 
     # an order_by of type really means type,class,id.  Go figure.
     $order_by = 'type,class,id' if $order_by eq 'type';
@@ -148,7 +148,7 @@ UNION
 SQL
 
     # mix in order_by
-    $query .= " ORDER BY $order_by $order_dir " if $order_by and not $count;
+    $query .= " ORDER BY $order_by " if $order_by && !$count;
 
     # add LIMIT clause, if any
     if ($limit) {
@@ -220,7 +220,7 @@ SQL
         }
     }
 
-    return @objects;
+    return $order_desc ? reverse @objects : @objects;
 }
 
 1;
