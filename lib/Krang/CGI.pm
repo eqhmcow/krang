@@ -546,11 +546,9 @@ sub cancel_edit {
     }
 
     # regardless, grab previous URL and check-out status
-    my $type           = ref $object;
-    my $id_meth        = $object->id_meth;
-    my $id             = $object->$id_meth || 0;
-    my $pre_edit_url   = delete $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL}{$type}{$id} || '';
-    my $pre_edit_owner = delete $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID}{$type}{$id};
+    my $type           = ref $self;
+    my $pre_edit_url   = delete $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL}{$type} || '';
+    my $pre_edit_owner = delete $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID}{$type};
 
     # if it's an object we opened from workspace, we'll leave it there, otherwise...
     unless ($pre_edit_url eq 'workspace.pl') {
@@ -584,23 +582,21 @@ sub cancel_edit {
 
 sub _cancel_edit_goes_to {
     my ($self, $pre_edit_url, $pre_edit_owner) = @_;
-    my $type    = ref $object;
-    my $id_meth = $object->id_meth;
-    my $id      = $object->$id_meth;
+    my $type = ref $self;
 
     if (!$pre_edit_url) {
         # get
         return (
-            $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL}{$type}{$id},
-            $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID}{$type}{$id}
+            $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL}{$type},
+            $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID}{$type}
         );
     } else {
         my $object = $self->get_edit_object()
           || die("No object returned from get_edit_object()");
 
         # set
-        $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL}{$type}{$id}      = $pre_edit_url;
-        $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID}{$type}{$id} = $pre_edit_owner;
+        $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL}{$type}      = $pre_edit_url;
+        $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID}{$type} = $pre_edit_owner;
     }
 }
 
