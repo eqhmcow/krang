@@ -584,21 +584,21 @@ sub cancel_edit {
 
 sub _cancel_edit_goes_to {
     my ($self, $pre_edit_url, $pre_edit_owner) = @_;
-    if (!$pre_edit_url) {
+    my $type    = ref $object;
+    my $id_meth = $object->id_meth;
+    my $id      = $object->$id_meth;
 
+    if (!$pre_edit_url) {
         # get
         return (
-            $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL},
-            $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID}
+            $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL}{$type}{$id},
+            $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID}{$type}{$id}
         );
     } else {
         my $object = $self->get_edit_object()
           || die("No object returned from get_edit_object()");
 
         # set
-        my $type    = ref $object;
-        my $id_meth = $object->id_meth;
-        my $id      = $object->$id_meth;
         $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL}{$type}{$id}      = $pre_edit_url;
         $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID}{$type}{$id} = $pre_edit_owner;
     }
