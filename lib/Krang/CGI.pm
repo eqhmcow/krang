@@ -548,7 +548,7 @@ sub cancel_edit {
     # regardless, grab previous URL and check-out status
     my $type           = ref $object;
     my $id_meth        = $object->id_meth;
-    my $id             = $object->$id_meth;
+    my $id             = $object->$id_meth || 0;
     my $pre_edit_url   = delete $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL}{$type}{$id} || '';
     my $pre_edit_owner = delete $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID}{$type}{$id};
 
