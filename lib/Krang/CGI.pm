@@ -546,9 +546,11 @@ sub cancel_edit {
     }
 
     # regardless, grab previous URL and check-out status
-    my $pre_edit_url   = delete $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL};
-    my $pre_edit_owner = delete $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID};
-    die("cancel_edit wasn't told where to send browser!") unless $pre_edit_url;
+    my $type           = ref $object;
+    my $id_meth        = $object->id_meth;
+    my $id             = $object->$id_meth;
+    my $pre_edit_url   = delete $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL}{$type}{$id} || '';
+    my $pre_edit_owner = delete $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID}{$type}{$id};
 
     # if it's an object we opened from workspace, we'll leave it there, otherwise...
     unless ($pre_edit_url eq 'workspace.pl') {
@@ -575,7 +577,7 @@ sub cancel_edit {
     $self->clear_edit_object();
 
     # finally, return to pre-edit URL
-    $self->header_props(uri => $pre_edit_url);
+    $self->header_props(uri => $pre_edit_url || 'workspace.pl');
     $self->header_type('redirect');
     return "";
 }
@@ -590,10 +592,15 @@ sub _cancel_edit_goes_to {
             $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID}
         );
     } else {
+        my $object = $self->get_edit_object()
+          || die("No object returned from get_edit_object()");
 
         # set
-        $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL}      = $pre_edit_url;
-        $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID} = $pre_edit_owner;
+        my $type    = ref $object;
+        my $id_meth = $object->id_meth;
+        my $id      = $object->$id_meth;
+        $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL}{$type}{$id}      = $pre_edit_url;
+        $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID}{$type}{$id} = $pre_edit_owner;
     }
 }
 
