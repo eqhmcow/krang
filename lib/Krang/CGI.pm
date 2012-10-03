@@ -591,9 +591,6 @@ sub _cancel_edit_goes_to {
             $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID}{$type}
         );
     } else {
-        my $object = $self->get_edit_object()
-          || die("No object returned from get_edit_object()");
-
         # set
         $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL}{$type}      = $pre_edit_url;
         $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID}{$type} = $pre_edit_owner;
