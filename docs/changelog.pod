@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where stealing stories from deleted users would result in an
+ISE [Michael Peters]
+
+=item *
+
 Fixed bug where changing elements' classes and order at the same
 time on Edit Story screens would garble data. [Michael Peters]
 

@@ -2220,8 +2220,7 @@ directly to the edit screen.
 =cut
 
 sub steal_selected {
-    my $self = shift;
-
+    my $self      = shift;
     my $q         = $self->query();
     my @story_ids = ($q->param('krang_pager_rows_checked'));
     $q->delete('krang_pager_rows_checked');
@@ -2234,11 +2233,11 @@ sub steal_selected {
 
             # this story was checked out to someone else; steal it and keep track of victim
             my ($victim) = pkg('User')->find(user_id => $s->checked_out_by);
-            my $victim_name = $q->escapeHTML($victim->display_name);
+            my $victim_name = $victim ? $q->escapeHTML($victim->display_name) : '';
             add_history(object => $s, action => 'steal');
             $s->checkin();
             $s->checkout();
-            $victims{$victim_name} = $victim->user_id;
+            $victims{$victim_name} = $victim ? $victim->user_id : 0;
             push @stolen_ids, $story_id;
         } else {
 
@@ -2483,7 +2482,7 @@ sub list_active_row_handler {
 
     # user
     my ($user) = pkg('User')->find(user_id => $story->checked_out_by);
-    $row->{user} = $q->escapeHTML($user->display_name);
+    $row->{user} = $q->escapeHTML($user->display_name) if $user;
 }
 
 sub autocomplete {
