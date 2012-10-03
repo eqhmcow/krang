@@ -320,7 +320,6 @@ sub element_edit {
                 -labels   => \%parents_potential_children,
                 -style    => 'width: 9em',
                 -override => 1,
-                -onchange => 'change_element_class(this)',
                 -id       => 'for_' . $child->xpath,
             );
         } else {
@@ -1143,20 +1142,31 @@ sub _make_child_class_changes {
     my $q                  = $self->query;
     my $element            = $self->_find_element($root, $path);
     my %potential_children = map { $_->name => $_ } $element->class->children();
-    my $index              = 0;
+    my (@old_xpaths, %old_param_names, %query_data);
 
+    # get the original xpath values for our children because they can change if we change things around
+    my $index = 0;
     foreach my $child ($element->children) {
-        my $old_xpath = $child->xpath;
+        my $xpath = $child->xpath;
+        $old_xpaths[$index++] = $xpath;
+        $old_param_names{$xpath} = [$child->param_names];
+    }
+
+    # now loop through and see if we need to change any elements
+    $index = 0;
+    foreach my $child ($element->children) {
         my $new_class = $q->param("change_element_class_$index");
+        my $old_xpath = $old_xpaths[$index];
+        my $new_xpath;
+
         if ($new_class && $new_class ne $child->class->name) {
             if ($potential_children{$new_class}) {
-                my $new_xpath;
                 eval {
-                    my $new_child = $element->replace_child(
+                    $child = $element->replace_child(
                         class    => $potential_children{$new_class},
                         position => $index,
                     );
-                    $new_xpath = $new_child->xpath;
+                    $new_xpath = $child->xpath;
                 };
                 my $e;
                 if ($e = Exception::Class->caught('Krang::Element::MaxChildClassViolation')) {
@@ -1184,8 +1194,22 @@ sub _make_child_class_changes {
                   . $root->name . "'!\n";
             }
         }
+        $new_xpath ||= $child->xpath;
+
+        # if there's been change we need to move things around from the old param name to the new
+        if( $new_xpath ne $old_xpath) {
+            # elements can have multiple paramers in the query so make sure we move them all
+            my @old_params = @{$old_param_names{$old_xpath}};
+            my @new_params = $child->param_names;
+            foreach my $i (0..$#old_params) {
+                $query_data{$new_params[$i]} = [$q->param($old_params[$i])];
+            }
+        }
         $index++;
     }
+
+    # now update the query data
+    $q->param($_ => @{$query_data{$_}}) for keys %query_data;
 }
 
 sub element_save {

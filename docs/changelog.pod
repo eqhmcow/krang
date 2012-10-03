@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where changing elements' classes and order at the same
+time on Edit Story screens would garble data. [Michael Peters]
+
+=item *
+
 "Cancel" on edit screens is now multi-window friendly when editing
 multiple objects in multiple screens. [Michael Peters]
 
