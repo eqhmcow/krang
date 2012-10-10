@@ -21,6 +21,7 @@ use Krang::ClassLoader Widget => qw/
 use Krang::ClassLoader 'Publisher';
 use Krang::ClassLoader Localization => qw(localize);
 use Carp qw(verbose croak);
+use Krang::ClassLoader History => qw(add_history);
 
 =head1 NAME
 
@@ -65,6 +66,7 @@ sub setup {
               advanced_search
               cancel_edit
               checkin_selected
+              steal_selected
               delete
               delete_selected
               deploy
@@ -279,6 +281,85 @@ sub checkin_selected {
     }
     return $self->list_active;
 }
+
+=item steal_selected
+
+Steal all the template which were checked on the list_active screen,
+and either go to workspace of user, or - if only one template was checked -
+directly to the edit screen.
+
+=cut
+
+sub steal_selected {
+    my $self      = shift;
+    my $q         = $self->query();
+    my @tmpl_ids = ($q->param('krang_pager_rows_checked'));
+    $q->delete('krang_pager_rows_checked');
+
+    # loop through selected template, checking ownership
+    my (@owned_ids, @stolen_ids, %victims);
+    foreach my $tmpl_id (@tmpl_ids) {
+        my ($s) = pkg('Template')->find(template_id => $tmpl_id);
+        if ($s->checked_out_by ne $ENV{REMOTE_USER}) {
+
+            # this template was checked out to someone else; steal it and keep track of victim
+            my ($victim) = pkg('User')->find(user_id => $s->checked_out_by);
+            my $victim_name = $victim ? $q->escapeHTML($victim->display_name) : '';
+            add_history(object => $s, action => 'steal');
+            $s->checkin();
+            $s->checkout();
+            $victims{$victim_name} = $victim ? $victim->user_id : 0;
+            push @stolen_ids, $tmpl_id;
+        } else {
+
+            # this template was already ours!
+            push @owned_ids, $tmpl_id;
+        }
+    }
+    # if there's only one template, grab it so we can check access
+    my ($single_tmpl) = pkg('Template')->find(template_id => $tmpl_ids[0])
+      if (@tmpl_ids) == 1;
+
+    # explain our actions to user
+    if ((@tmpl_ids == 1) && $single_tmpl->may_edit()) {
+        %victims
+          ? add_message(
+            'one_tmpl_stolen_and_opened',
+            id     => $tmpl_ids[0],
+            victim => (keys %victims)[0]
+          )
+          : add_message('one_tmpl_yours_and_opened', id => $tmpl_ids[0]);
+    } elsif (@owned_ids && !@stolen_ids) {
+        add_message('all_selected_tmpl_yours');
+    } else {
+        if (@owned_ids) {
+            (@owned_ids > 1)
+              ? add_message('multiple_tmpl_yours', ids => join(' & ', @owned_ids))
+              : add_message('one_tmpl_yours', id => $owned_ids[0]);
+        }
+        if (@stolen_ids) {
+            (@stolen_ids > 1)
+              ? add_message(
+                'multiple_tmpl_stolen',
+                ids     => join(' & ', @stolen_ids),
+                victims => join(' & ', sort keys %victims)
+              )
+              : add_message('one_tmpl_stolen', id => $stolen_ids[0], victim => (keys %victims)[0]);
+        }
+    }
+
+    # if user selected one template, and it's editable....
+    if ((@tmpl_ids == 1) && ($single_tmpl->may_edit)) {
+        # open it (after storing cancel info)
+        $self->set_edit_object($single_tmpl);
+        $self->_cancel_edit_goes_to('template.pl?rm=list_active', %victims ? (values %victims)[0] : $ENV{REMOTE_USER});
+        return $self->edit;
+    } else {
+        # otherwise go to Workspace
+        return $self->redirect_to_workspace;
+    }
+}
+
 
 =item checkout_and_edit
 
