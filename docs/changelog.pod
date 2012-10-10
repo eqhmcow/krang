@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added "Steal" capability to "Active Media" screen. [Michael Peters]
+
+=item *
+
 Fixed bug where stealing stories from deleted users would result in an
 ISE [Michael Peters]
 

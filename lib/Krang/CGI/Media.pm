@@ -75,6 +75,7 @@ sub setup {
               save_stay_add
               checkout_and_edit
               checkout_selected
+              steal_selected
               edit
               save_edit
               save_stay_edit
@@ -1076,6 +1077,84 @@ sub retire_selected {
 
     add_message('message_selected_retired');
     return $self->find;
+}
+
+=item steal_selected
+
+Steal all the media which were checked on the list_active screen,
+and either go to workspace of user, or - if only one media was checked -
+directly to the edit screen.
+
+=cut
+
+sub steal_selected {
+    my $self      = shift;
+    my $q         = $self->query();
+    my @media_ids = ($q->param('krang_pager_rows_checked'));
+    $q->delete('krang_pager_rows_checked');
+
+    # loop through selected media, checking ownership
+    my (@owned_ids, @stolen_ids, %victims);
+    foreach my $media_id (@media_ids) {
+        my ($s) = pkg('Media')->find(media_id => $media_id);
+        if ($s->checked_out_by ne $ENV{REMOTE_USER}) {
+
+            # this media was checked out to someone else; steal it and keep track of victim
+            my ($victim) = pkg('User')->find(user_id => $s->checked_out_by);
+            my $victim_name = $victim ? $q->escapeHTML($victim->display_name) : '';
+            add_history(object => $s, action => 'steal');
+            $s->checkin();
+            $s->checkout();
+            $victims{$victim_name} = $victim ? $victim->user_id : 0;
+            push @stolen_ids, $media_id;
+        } else {
+
+            # this media was already ours!
+            push @owned_ids, $media_id;
+        }
+    }
+    # if there's only one media, grab it so we can check access
+    my ($single_media) = pkg('Media')->find(media_id => $media_ids[0])
+      if (@media_ids) == 1;
+
+    # explain our actions to user
+    if ((@media_ids == 1) && $single_media->may_edit()) {
+        %victims
+          ? add_message(
+            'one_media_stolen_and_opened',
+            id     => $media_ids[0],
+            victim => (keys %victims)[0]
+          )
+          : add_message('one_media_yours_and_opened', id => $media_ids[0]);
+    } elsif (@owned_ids && !@stolen_ids) {
+        add_message('all_selected_media_yours');
+    } else {
+        if (@owned_ids) {
+            (@owned_ids > 1)
+              ? add_message('multiple_media_yours', ids => join(' & ', @owned_ids))
+              : add_message('one_media_yours', id => $owned_ids[0]);
+        }
+        if (@stolen_ids) {
+            (@stolen_ids > 1)
+              ? add_message(
+                'multiple_media_stolen',
+                ids     => join(' & ', @stolen_ids),
+                victims => join(' & ', sort keys %victims)
+              )
+              : add_message('one_media_stolen', id => $stolen_ids[0], victim => (keys %victims)[0]);
+        }
+    }
+
+    # if user selected one media, and it's editable....
+    if ((@media_ids == 1) && ($single_media->may_edit)) {
+        # open it (after storing cancel info)
+        $self->set_edit_object($single_media);
+        $self->_cancel_edit_goes_to('media.pl?rm=list_active', %victims ? (values %victims)[0] : $ENV{REMOTE_USER});
+        return $self->edit;
+    } else {
+        # otherwise go to Workspace
+        return $self->redirect_to_workspace;
+    }
 }
 
 =item save_and_edit_schedule
