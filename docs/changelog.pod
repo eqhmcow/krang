@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Changed dates on messages about scheduled publishes to be a more user
+friendly format [Michael Peters]
+
+=item *
+
 Added "Steal" capability to "Active Templates" screen. [Michael Peters]
 
 =item *
