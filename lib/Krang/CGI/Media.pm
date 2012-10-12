@@ -229,23 +229,27 @@ sub _do_simple_find {
       : $session{KRANG_PERSIST}{pkg('Media')}{search_filter};
 
     my $show_thumbnails;
-    if (defined($q->param('show_thumbnails'))) {
-        $show_thumbnails = $q->param('show_thumbnails');
+    if ($q->param('searched')) {
+        $show_thumbnails = $q->param('show_thumbnails') ? 1 : 0;
     } elsif (defined($session{KRANG_PERSIST}{pkg('Media')}{show_thumbnails})) {
         $show_thumbnails = $session{KRANG_PERSIST}{pkg('Media')}{show_thumbnails};
-    } elsif (defined($q->param('show_thumbnails'))) {
-        $show_thumbnails = $q->param('show_thumbnails');
     } else {
         $show_thumbnails = 1;
     }
-
     $session{KRANG_PERSIST}{pkg('Media')}{show_thumbnails} = $show_thumbnails;
 
-    unless (defined($search_filter)) {
-
-        # Define search_filter
-        $search_filter = '';
+    my $search_filter_check_full_text;
+    if ($q->param('searched')) {
+        $search_filter_check_full_text = $q->param('search_filter_check_full_text') ? 1 : 0;
+    } elsif (defined($session{KRANG_PERSIST}{pkg('Media')}{search_filter_check_full_text})) {
+        $search_filter_check_full_text = $session{KRANG_PERSIST}{pkg('Media')}{search_filter_check_full_text};
+    } else {
+        $search_filter_check_full_text = 0;
     }
+    $session{KRANG_PERSIST}{pkg('Media')}{search_filter_check_full_text} = $search_filter_check_full_text;
+
+    # Define search_filter
+    $search_filter = '' if !defined $search_filter;
 
     # find live or retired stories?
     my %include_options = $retired ? (include_live => 0, include_retired => 1) : ();
@@ -254,17 +258,19 @@ sub _do_simple_find {
         rm => ($retired ? 'list_retired' : 'find'),
         search_filter      => $search_filter,
         show_thumbnails    => $show_thumbnails,
+        search_filter_check_full_text => $search_filter_check_full_text,
         asset_type         => 'media',
         $include           => 1,
         do_advanced_search => 0,
     };
 
     my $find_params = {
-        may_see       => 1,
-        simple_search => $search_filter,
+        may_see => 1,
+        $search_filter_check_full_text ? (full_text => $search_filter) : (simple_search => $search_filter),
         %include_options
     };
 
+    # Run pager
     my $pager = $self->make_pager($persist_vars, $find_params, $show_thumbnails, $retired);
     my $pager_tmpl = $self->load_tmpl(
         'list_view_pager.tmpl',
@@ -276,12 +282,12 @@ sub _do_simple_find {
     $pager->fill_template($pager_tmpl);
     $pager_tmpl->param(show_thumbnails => $show_thumbnails);
 
-    # Run pager
     $t->param(
-        pager_html      => $pager_tmpl->output(),
-        row_count       => $pager->row_count(),
-        show_thumbnails => $show_thumbnails,
-        search_filter   => $search_filter
+        pager_html                    => $pager_tmpl->output(),
+        row_count                     => $pager->row_count(),
+        show_thumbnails               => $show_thumbnails,
+        search_filter                 => $search_filter,
+        search_filter_check_full_text => $search_filter_check_full_text,
     );
 
     return $t->output();

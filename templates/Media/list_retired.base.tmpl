@@ -67,6 +67,7 @@ other_search_rm = function() {
 
 <form id="search_form" name="search_form" action="media.pl" method="post" onsubmit="do_search(); return false;">
 <input name="rm" value="list_retired" type="hidden">
+<input name="searched" value="1" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
 <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
@@ -102,6 +103,8 @@ other_search_rm = function() {
   <div class="faux-p">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
   <input value="<tmpl_lang Search>" type="submit" class="button">
+  <input name="search_filter_check_full_text" type="checkbox" <tmpl_if search_filter_check_full_text>checked</tmpl_if>>
+  <span><tmpl_lang Search full text?></span>
   </div>
 
 <tmpl_else>
