@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where "Show Thumbnails" checkbox would become unchecked
+on "Find Media" screen when a search was done. [Michael Peters]
+
+=item *
+
 Changed dates on messages about scheduled publishes to be a more user
 friendly format [Michael Peters]
 

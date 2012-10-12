@@ -10,8 +10,9 @@ add_media = function() {
     Krang.Form.submit('search_form', { rm: 'add_media' });
 }
 
-do_search = function(chbx) {
-    var val = chbx && chbx.checked ? '1' : '0';
+do_search = function() {
+    var show_thumbnails_input = $('show_thumbnails_ck');
+    var val = show_thumbnails_input && show_thumbnails_input.checked ? '1' : '0';
     Krang.Form.submit('search_form', { show_thumbnails: val }, { to_top: false });
 }
 
@@ -128,7 +129,7 @@ publish_selected = function() {
 <div class="tabset finder">
 
 <p class="tab-option">
-<input id="show_thumbnails_ck" name="show_thumbnails_ck" value="1" type="checkbox" onclick="do_search(this)"<tmpl_if show_thumbnails> checked</tmpl_if>>
+<input id="show_thumbnails_ck" name="show_thumbnails_ck" value="1" type="checkbox" onclick="do_search()"<tmpl_if show_thumbnails> checked</tmpl_if>>
 <label for="show_thumbnails"><tmpl_lang Show Thumbnails></label>
 <input name="show_thumbnails" value="<tmpl_var show_thumbnails>" type="hidden"/>
 </p>
