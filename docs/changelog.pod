@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added "limit" option to Krang::Widget::autocomplete_values. [Michael Peters]
+
+=item *
+
 Added "Search Full Text?" checkbox on "Find Media" screen just like the
 one on "Find Stories" screen. [Michael Peters]
 

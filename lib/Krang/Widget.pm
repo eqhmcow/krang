@@ -1063,14 +1063,19 @@ This is optional.
 Any additional logic that will added the generated SQL's C<WHERE> clause
 using C<AND>.
 
+=item limit
+
+A limit on the number of results to return at once. By default there is
+no limit.
+
 =back
 
 =cut
 
 sub autocomplete_values {
     my %args = @_;
-    my ($phrase, $table, $fields, $dbh, $where, $no_split, $no_anchor) =
-      @args{qw(phrase table fields dbh where no_split no_anchor)};
+    my ($phrase, $table, $fields, $dbh, $where, $no_split, $no_anchor, $limit) =
+      @args{qw(phrase table fields dbh where no_split no_anchor limit)};
     $dbh ||= dbh();
 
     if (!$phrase) {
@@ -1094,6 +1099,8 @@ sub autocomplete_values {
       . " FROM `$table` WHERE ("
       . join(' OR ', map { "`$_` $pattern_op ?" } @$fields) . ')';
     $sql .= " AND $where" if $where;
+
+    $sql .= " LIMIT $limit " if $limit;
 
     my $sth   = $dbh->prepare_cached($sql);
     my @binds = map { $pattern } @$fields;
