@@ -1019,7 +1019,17 @@ sub find {
     debug(__PACKAGE__ . "->find() SQL: $query");
     debug(__PACKAGE__ . "->find() SQL ARGS: @params");
 
-    $sth->execute(@params);
+    while (1) {
+        eval { $sth->execute(@params); };
+        my $error = $@;
+        last unless $error;
+        # try again if we hit a deadlock
+        if ($error =~ m/Deadlock found when trying to get lock; try restarting transaction/) {
+            sleep 1;
+            next;
+        }
+        die $error;
+    }
 
     # holders for query results and new objects
     my ($row, @schedules);

@@ -2,6 +2,16 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.23 - In Development
+
+=over
+
+=item *
+
+Bug fix for scheduler crash: Deadlock found when trying to get lock. [Daniel S. Sterling]
+
+=back
+
 =head2 3.22 - October 18th, 2012
 
 =over
