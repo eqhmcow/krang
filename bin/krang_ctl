@@ -103,7 +103,7 @@ foreach my $service (@ctl) {
     # we need sudo if we aren't already root and this service uses a port less than 1024
     my $port = $service->{port};
     if (($< != 0 || $> != 0) && $port && pkg('Conf')->get($port) <= 1024) {
-        $script = "sudo $script";
+        $script = "sudo -E $script";
     }
 
     print STDERR "=> krang_ctl calling '$script $command'...\n";
