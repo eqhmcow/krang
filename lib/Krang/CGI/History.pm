@@ -160,8 +160,8 @@ sub show {
         return_hidden => $return_hidden,
         label         => localize($label . ' Log'),
     );
-    if ($tmpl->query(name => 'id_meth')) {
-        $tmpl->param(id_meth => $id_meth);
+    if ($template->query(name => 'id_meth')) {
+        $template->param(id_meth => $id_meth);
     }
 
     # setup the pager
