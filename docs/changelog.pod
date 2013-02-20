@@ -10,6 +10,10 @@ This document contains a list of changes for each release of Krang.
 
 Bug fix for scheduler crash: Deadlock found when trying to get lock. [Daniel S. Sterling]
 
+=item *
+
+Add run mode for help.pl to email the site administrator (C<BadHelpNotify>) about a missing help topic. [Brad Oaks]
+
 =back
 
 =head2 3.22 - October 18th, 2012
