@@ -98,7 +98,7 @@ sub bad_help_notify {
         $sender->MailMsg(
             {
                 to      => $email_to,
-                subject => "[Krang] Repeated failed login attempts",
+                subject => "[Krang] undefined Help topic encountered",
                 msg     => $msg,
             }
         );
