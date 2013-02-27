@@ -14,6 +14,10 @@ Bug fix for scheduler crash: Deadlock found when trying to get lock. [Daniel S. 
 
 Add run mode for help.pl to email the site administrator (C<BadHelpNotify>) about a missing help topic. [Brad Oaks]
 
+=item *
+
+Fixed a case where swapping story names could prevent files from being cleared when the story is retired. [Brad Oaks]
+
 =back
 
 =head2 3.22 - October 18th, 2012

@@ -543,12 +543,21 @@ sub unpublish_story {
         next unless -f $path;
 
         # make sure this path isn't claimed by another story
-        my ($claimed) =
+        my ($claimed_by_story_id) =
           $dbh->selectrow_array(
-            "SELECT 1 FROM publish_story_location WHERE path = ? AND story_id != ?",
+            "SELECT story_id FROM publish_story_location WHERE path = ? AND story_id != ?",
             undef, $path, $story->story_id);
 
-        next if $claimed;
+        if ($claimed_by_story_id) {
+            next unless $self->_is_path_claim_stale(
+                type         => 'story',
+                claimed_id   => $claimed_by_story_id,
+                claimed_path => $path,
+            );
+            debug(__PACKAGE__ . ": clearing stale publish_story_location entry for path=" . $path . " by story id=" . $claimed_by_story_id);
+            # clean the stale claim
+            $dbh->do('DELETE FROM publish_story_location WHERE story_id = ? AND path = ?', undef, $claimed_by_story_id, $path);
+        }
 
         unlink($path)
           or croak("Unable to delete file '$path' during unpublish : $!");
@@ -1703,6 +1712,35 @@ sub _rectify_publish_locations {
             undef, map { ($id, $preview, $_) } @$paths
         ) if @$paths;
     }
+}
+
+#
+# _is_path_claim_stale
+#
+#
+# Used soley in unpublish_story to see if claims in the publish_story_location table
+# reflect the current path of the saved story.
+# If the slug of a story is changed and the story is not published or previewed, there can
+# be conflicts which used to prevent the files and the table entry from being removed.
+#
+
+sub _is_path_claim_stale {
+    my $self         = shift;
+    my %args         = @_;
+    my $type         = $args{type};
+    my $claimed_id   = $args{claimed_id};
+    my $claimed_path = $args{claimed_path};
+
+    if ($type eq 'story') {
+        my ($claimed_story) = pkg('Story')->find(story_id => $claimed_id);
+        if ($claimed_story) {
+            foreach my $current_path ($claimed_story->publish_path, $claimed_story->preview_path) {
+                $current_path .= '/index.html';
+                return if $current_path eq $claimed_path;
+            }
+        }
+    }
+    return 1;
 }
 
 #
