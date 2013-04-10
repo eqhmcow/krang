@@ -82,7 +82,7 @@ instance is active and change that url to
 
 sub get {
     my ($self, $url, @other_args) = @_;
-    if ($url !~ /^http/ && $url =~ /^(\w+\.pl)/) {
+    if ($url !~ /^http/ && $url =~ /^\/?(\w+\.pl)/) {
         $url = $self->script_url($url);
     }
 

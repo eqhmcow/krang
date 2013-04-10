@@ -782,7 +782,25 @@ Krang.Form = {
     studied_forms : { },
     study : function(form) {
         form = Krang.Form.get_form(form);
-        Krang.Form.studied_forms[form.name] = Form.serialize(form);
+        Krang.Form.studied_forms[form.name] = Object.toQueryString(Krang.Form.serialize(form, { inclue_file_inputs: true }));
+    },
+    serialize : function(form, options) {
+        form = Krang.Form.get_form(form);
+        if( options && options.inclue_file_inputs ) {
+            var form_content = Form.serialize(form, { hash: true });
+            // we need to handle file fields ourselves since prototype.js will skip those in serializing the form
+            if( Krang.Form.has_file_field(form) ) {
+                for(var i=0; i<form.elements.length; i++) {
+                    var e = form.elements[i];
+                    if( e.name && e.type == 'file' && e.value && !e.disabled ) {
+                        form_content[e.name] = e.value;
+                    }
+                }
+            }
+            return form_content;
+        } else {
+            return Form.serialize(form, { hash: true });
+        }
     },
     has_form_changed : function(form) {
         form = Krang.Form.get_form(form);
@@ -790,7 +808,7 @@ Krang.Form = {
         if(!old_value && console && console.warn) {
             console.warn('Calling Krang.Form.has_form_changed() before Krang.Form.study()');
         }
-        var new_value = Form.serialize(form);
+        var new_value = Object.toQueryString(Krang.Form.serialize(form, { inclue_file_inputs: true }));
         return old_value != new_value;
     },
     submit : function(form, inputs, options) {
@@ -911,7 +929,7 @@ Krang.Form = {
         var inputs = form.elements;
         for(var i=0; i < inputs.length; i++) {
             var field = inputs[i];
-            if( field.type == 'file' && field.value ) {
+            if( field.type == 'file' && !field.disabled && field.value ) {
                 return true;
             }
         }

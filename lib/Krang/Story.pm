@@ -2065,6 +2065,23 @@ if the element libraries change too drastically) then there's not much that
 can be done for that version of the story. If this flag is true, then we will delete
 that version of the story completely from the database.
 
+=item * save_args
+
+This is a hash-ref of arguments to pass to the Story's C<save()> function. You can use this to
+either override the defaults or to add new arguments. The defaults are:
+
+=over
+
+=item * keep_version => 1
+
+=item * no_history => 1
+
+=item * no_verify_checkout => 1
+
+=item * ignore_permissions => 1
+
+=back
+
 =back
 
 Any other arguments passed in will be sent to the C<find()> method.
@@ -2087,10 +2104,12 @@ Any other arguments passed in will be sent to the C<find()> method.
 
 sub transform_stories {
     my ($pkg, %args) = @_;
-    my $callback = delete $args{callback}
-      or croak('You must provide a callback for transform_stories()');
+    my $callback      = delete $args{callback};
     my $past_versions = delete $args{past_versions};
     my $prune_corrupt = delete $args{prune_corrupt_versions};
+    my $save_args     = delete $args{save_args} || {};
+
+    croak('You must provide a callback for transform_stories()') unless $callback;
 
     # make find() do all the hard stuff
     my @stories = $pkg->find(%args);
@@ -2100,11 +2119,11 @@ sub transform_stories {
         # transform and save the live story
         $story = $callback->(story => $story, live => 1, version => $story->version);
         $story->save(
-            keep_version        => 1,
-            no_history          => 1,
-            no_verify_checkout  => 1,
-            ignore_permissions  => 1,
-            no_verify_unique    => 1,
+            keep_version       => 1,
+            no_history         => 1,
+            no_verify_checkout => 1,
+            ignore_permissions => 1,
+            %$save_args
         );
 
         if ($past_versions) {
@@ -2117,7 +2136,7 @@ sub transform_stories {
                 eval { ($old_story) = $pkg->_load_version($story_id, $v) };
 
                 # if we can't even load, just skip it
-                if ($@ || !$old_story || (! blessed($old_story))) {
+                if ($@ || !$old_story || !blessed($old_story)) {
                     if ($prune_corrupt) {
                         warn "Removing corrupt story $story_id version $v";
                         $dbh->do('DELETE FROM story_version WHERE story_id = ? AND version = ?',
@@ -2144,8 +2163,7 @@ sub _load_version {
     my $dbh = dbh;
 
     my ($data) = $dbh->selectrow_array(
-        'SELECT data FROM story_version
-                                        WHERE story_id = ? AND version = ?',
+        'SELECT data FROM story_version WHERE story_id = ? AND version = ?',
         undef, $story_id, $version
     );
     croak("Unable to load version '$version' of story '$story_id'")

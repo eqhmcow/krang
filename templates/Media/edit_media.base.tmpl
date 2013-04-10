@@ -217,22 +217,22 @@ Krang.onload( function() {
     <td><tmpl_var type_chooser></td>
     </tr>
 
-    <tr class="even<tmpl_if error_invalid_title> err</tmpl_if>">
+    <tr class="even <tmpl_if error_invalid_title>err</tmpl_if>">
     <th>*<tmpl_lang Title></th>
     <td><input name="title" value="<tmpl_var escape=html title>"></td>
     </tr>
 
-    <tr class="even<tmpl_if error_invalid_tags> err</tmpl_if>">
+    <tr class="<tmpl_if error_invalid_tags>err</tmpl_if>">
     <th><tmpl_lang Tags></th>
     <td><input name="tags" value="<tmpl_var escape=html tags>"></td>
     </tr>
 
-    <tr<tmpl_if duplicate_url> class="err"<tmpl_else><tmpl_if error_category_id> class="err"</tmpl_if></tmpl_if>>
+    <tr class="even <tmpl_if duplicate_url>err<tmpl_else><tmpl_if error_category_id>err</tmpl_if></tmpl_if>">
     <th>*<tmpl_lang Site/Category></th>
     <td><tmpl_var category_chooser></td>
     </tr>
 
-    <tr class="even<tmpl_if duplicate_url> err<tmpl_else><tmpl_if error_media_file> err</tmpl_if></tmpl_if>">
+    <tr class="<tmpl_if duplicate_url>err<tmpl_else><tmpl_if error_media_file>err</tmpl_if></tmpl_if>">
     <th><tmpl_lang Upload File></th>
     <td>
     <tmpl_if filename>
@@ -289,17 +289,17 @@ Krang.onload( function() {
       <td class="l"><input name="title" value="<tmpl_var escape=html title>"></td>
       </tr>
 
-      <tr<tmpl_if error_invalid_tags> class="err"</tmpl_if>>
+      <tr class="even <tmpl_if error_invalid_tags>err</tmpl_if>">
       <th class="f">*<tmpl_lang Tags></td>
       <td class="l"><input name="tags" value="<tmpl_var escape=html tags>"></td>
       </tr>
 
-      <tr class="even<tmpl_if duplicate_url> err<tmpl_else><tmpl_if error_category_id> err</tmpl_if></tmpl_if>">
+      <tr class="<tmpl_if duplicate_url>err<tmpl_else><tmpl_if error_category_id>err</tmpl_if></tmpl_if>">
       <th class="f">*<tmpl_lang Site/Category></td>
       <td class="l"><tmpl_var category_chooser></td>
       </tr>
     
-      <tr>
+      <tr class="even">
       <th class="f">Current Version</td>
       <td class="l">
         <tmpl_var escape=html version>&nbsp;&nbsp;
@@ -315,7 +315,7 @@ Krang.onload( function() {
       </td>
       </tr>
 
-      <tr class="even <tmpl_if duplicate_url> err<tmpl_else><tmpl_if error_media_file> err</tmpl_if></tmpl_if>">
+      <tr class="<tmpl_if duplicate_url>err<tmpl_else><tmpl_if error_media_file>err</tmpl_if></tmpl_if>">
       <th class="f"><tmpl_lang Upload File></td>
       <td class="l">
       <tmpl_if filename>

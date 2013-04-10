@@ -10,9 +10,8 @@ add_media = function() {
     Krang.Form.submit('search_form', { rm: 'add_media' });
 }
 
-do_search = function(chbx) {
-    var val = chbx.checked ? '1' : '0';
-    Krang.Form.submit('search_form', { show_thumbnails: val });
+do_search = function() {
+    Krang.Form.submit('search_form', { }, { to_top: false });
 }
 
 show_advanced_search = function( show_advanced ) {
@@ -113,9 +112,9 @@ publish_selected = function() {
 <tmpl_lang Find Media>
 </h2>
 
-<form name="search_form" id="search_form" action="media.pl" method="post">
-
+<form name="search_form" id="search_form" action="media.pl" method="post" onsubmit="do_search(); return false">
 <input name="rm" value="find" type="hidden">
+<input name="searched" value="1" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
 <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
@@ -129,9 +128,8 @@ publish_selected = function() {
 <div class="tabset finder">
 
 <p class="tab-option">
-<input id="show_thumbnails_ck" name="show_thumbnails_ck" value="1" type="checkbox" onclick="do_search(this)"<tmpl_if show_thumbnails> checked</tmpl_if>>
+<input id="show_thumbnails" name="show_thumbnails" value="1" type="checkbox" onclick="do_search()"<tmpl_if show_thumbnails> checked</tmpl_if>>
 <label for="show_thumbnails"><tmpl_lang Show Thumbnails></label>
-<input name="show_thumbnails" value="<tmpl_var show_thumbnails>" type="hidden"/>
 </p>
 
 <ul class="tabs"><li>
@@ -151,6 +149,8 @@ publish_selected = function() {
   <div class="faux-p">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
   <input value="<tmpl_lang Search>" type="submit" class="button">
+  <input name="search_filter_check_full_text" type="checkbox" <tmpl_if search_filter_check_full_text>checked</tmpl_if>>
+  <span><tmpl_lang Search full text?></span>
   </div>
 
 <tmpl_else>

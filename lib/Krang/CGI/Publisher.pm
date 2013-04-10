@@ -914,7 +914,7 @@ sub _schedule_assets {
             'story_schedule',
             story_id         => $story->story_id,
             version          => $story->version,
-            publish_datetime => $date->cdate()
+            publish_datetime => $date->strftime(localize('%A, %B %e at %l:%M %p %Z')),
         );
 
         # check scheduled story back in.
@@ -934,7 +934,7 @@ sub _schedule_assets {
             'media_schedule',
             media_id         => $media->media_id,
             version          => $media->version,
-            publish_datetime => $date->cdate()
+            publish_datetime => $date->strftime(localize('%A, %B %e at %l:%M %p %Z')),
         );
         $media->checkin();
     }

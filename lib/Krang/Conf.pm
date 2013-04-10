@@ -13,6 +13,7 @@ our @VALID_DIRECTIVES;
   ApacheMaxUnsharedSize
   Assertions
   AvailableLanguages
+  BadHelpNotify
   BadLoginCount
   BadLoginWait
   BadLoginNotify

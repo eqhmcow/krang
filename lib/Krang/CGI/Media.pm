@@ -75,6 +75,7 @@ sub setup {
               save_stay_add
               checkout_and_edit
               checkout_selected
+              steal_selected
               edit
               save_edit
               save_stay_edit
@@ -228,23 +229,27 @@ sub _do_simple_find {
       : $session{KRANG_PERSIST}{pkg('Media')}{search_filter};
 
     my $show_thumbnails;
-    if (defined($q->param('show_thumbnails'))) {
-        $show_thumbnails = $q->param('show_thumbnails');
+    if ($q->param('searched')) {
+        $show_thumbnails = $q->param('show_thumbnails') ? 1 : 0;
     } elsif (defined($session{KRANG_PERSIST}{pkg('Media')}{show_thumbnails})) {
         $show_thumbnails = $session{KRANG_PERSIST}{pkg('Media')}{show_thumbnails};
-    } elsif (defined($q->param('show_thumbnails'))) {
-        $show_thumbnails = $q->param('show_thumbnails');
     } else {
         $show_thumbnails = 1;
     }
-
     $session{KRANG_PERSIST}{pkg('Media')}{show_thumbnails} = $show_thumbnails;
 
-    unless (defined($search_filter)) {
-
-        # Define search_filter
-        $search_filter = '';
+    my $search_filter_check_full_text;
+    if ($q->param('searched')) {
+        $search_filter_check_full_text = $q->param('search_filter_check_full_text') ? 1 : 0;
+    } elsif (defined($session{KRANG_PERSIST}{pkg('Media')}{search_filter_check_full_text})) {
+        $search_filter_check_full_text = $session{KRANG_PERSIST}{pkg('Media')}{search_filter_check_full_text};
+    } else {
+        $search_filter_check_full_text = 0;
     }
+    $session{KRANG_PERSIST}{pkg('Media')}{search_filter_check_full_text} = $search_filter_check_full_text;
+
+    # Define search_filter
+    $search_filter = '' if !defined $search_filter;
 
     # find live or retired stories?
     my %include_options = $retired ? (include_live => 0, include_retired => 1) : ();
@@ -253,17 +258,19 @@ sub _do_simple_find {
         rm => ($retired ? 'list_retired' : 'find'),
         search_filter      => $search_filter,
         show_thumbnails    => $show_thumbnails,
+        search_filter_check_full_text => $search_filter_check_full_text,
         asset_type         => 'media',
         $include           => 1,
         do_advanced_search => 0,
     };
 
     my $find_params = {
-        may_see       => 1,
-        simple_search => $search_filter,
+        may_see => 1,
+        $search_filter_check_full_text ? (full_text => $search_filter) : (simple_search => $search_filter),
         %include_options
     };
 
+    # Run pager
     my $pager = $self->make_pager($persist_vars, $find_params, $show_thumbnails, $retired);
     my $pager_tmpl = $self->load_tmpl(
         'list_view_pager.tmpl',
@@ -275,12 +282,12 @@ sub _do_simple_find {
     $pager->fill_template($pager_tmpl);
     $pager_tmpl->param(show_thumbnails => $show_thumbnails);
 
-    # Run pager
     $t->param(
-        pager_html      => $pager_tmpl->output(),
-        row_count       => $pager->row_count(),
-        show_thumbnails => $show_thumbnails,
-        search_filter   => $search_filter
+        pager_html                    => $pager_tmpl->output(),
+        row_count                     => $pager->row_count(),
+        show_thumbnails               => $show_thumbnails,
+        search_filter                 => $search_filter,
+        search_filter_check_full_text => $search_filter_check_full_text,
     );
 
     return $t->output();
@@ -539,7 +546,7 @@ sub _do_advanced_find {
 
     # search_no_attributes
     my $search_no_attributes =
-      ($q->param('rm') eq 'advanced_find')
+      (($q->param('rm') || '') eq 'advanced_find')
       ? $q->param('search_no_attributes')
       : $session{KRANG_PERSIST}{pkg('Media')}{search_no_attributes};
 
@@ -1076,6 +1083,84 @@ sub retire_selected {
 
     add_message('message_selected_retired');
     return $self->find;
+}
+
+=item steal_selected
+
+Steal all the media which were checked on the list_active screen,
+and either go to workspace of user, or - if only one media was checked -
+directly to the edit screen.
+
+=cut
+
+sub steal_selected {
+    my $self      = shift;
+    my $q         = $self->query();
+    my @media_ids = ($q->param('krang_pager_rows_checked'));
+    $q->delete('krang_pager_rows_checked');
+
+    # loop through selected media, checking ownership
+    my (@owned_ids, @stolen_ids, %victims);
+    foreach my $media_id (@media_ids) {
+        my ($s) = pkg('Media')->find(media_id => $media_id);
+        if ($s->checked_out_by ne $ENV{REMOTE_USER}) {
+
+            # this media was checked out to someone else; steal it and keep track of victim
+            my ($victim) = pkg('User')->find(user_id => $s->checked_out_by);
+            my $victim_name = $victim ? $q->escapeHTML($victim->display_name) : '';
+            add_history(object => $s, action => 'steal');
+            $s->checkin();
+            $s->checkout();
+            $victims{$victim_name} = $victim ? $victim->user_id : 0;
+            push @stolen_ids, $media_id;
+        } else {
+
+            # this media was already ours!
+            push @owned_ids, $media_id;
+        }
+    }
+    # if there's only one media, grab it so we can check access
+    my ($single_media) = pkg('Media')->find(media_id => $media_ids[0])
+      if (@media_ids) == 1;
+
+    # explain our actions to user
+    if ((@media_ids == 1) && $single_media->may_edit()) {
+        %victims
+          ? add_message(
+            'one_media_stolen_and_opened',
+            id     => $media_ids[0],
+            victim => (keys %victims)[0]
+          )
+          : add_message('one_media_yours_and_opened', id => $media_ids[0]);
+    } elsif (@owned_ids && !@stolen_ids) {
+        add_message('all_selected_media_yours');
+    } else {
+        if (@owned_ids) {
+            (@owned_ids > 1)
+              ? add_message('multiple_media_yours', ids => join(' & ', @owned_ids))
+              : add_message('one_media_yours', id => $owned_ids[0]);
+        }
+        if (@stolen_ids) {
+            (@stolen_ids > 1)
+              ? add_message(
+                'multiple_media_stolen',
+                ids     => join(' & ', @stolen_ids),
+                victims => join(' & ', sort keys %victims)
+              )
+              : add_message('one_media_stolen', id => $stolen_ids[0], victim => (keys %victims)[0]);
+        }
+    }
+
+    # if user selected one media, and it's editable....
+    if ((@media_ids == 1) && ($single_media->may_edit)) {
+        # open it (after storing cancel info)
+        $self->set_edit_object($single_media);
+        $self->_cancel_edit_goes_to('media.pl?rm=list_active', %victims ? (values %victims)[0] : $ENV{REMOTE_USER});
+        return $self->edit;
+    } else {
+        # otherwise go to Workspace
+        return $self->redirect_to_workspace;
+    }
 }
 
 =item save_and_edit_schedule

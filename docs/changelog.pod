@@ -2,7 +2,82 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 3.21 - August 5th, 2012
+=head2 3.23 - In Development
+
+=over
+
+=item *
+
+Bug fix for scheduler crash: Deadlock found when trying to get lock. [Daniel S. Sterling]
+
+=item *
+
+Add run mode for help.pl to email the site administrator (C<BadHelpNotify>) about a missing help topic. [Brad Oaks]
+
+=item *
+
+Fixed a case where swapping story names could prevent files from being cleared when the story is retired. [Brad Oaks]
+
+=back
+
+=head2 3.22 - October 18th, 2012
+
+=over
+
+=item *
+
+Added "limit" option to Krang::Widget::autocomplete_values. [Michael Peters]
+
+=item *
+
+Added "Search Full Text?" checkbox on "Find Media" screen just like the
+one on "Find Stories" screen. [Michael Peters]
+
+=item *
+
+Fixed bug where "Show Thumbnails" checkbox would become unchecked
+on "Find Media" screen when a search was done. [Michael Peters]
+
+=item *
+
+Changed dates on messages about scheduled publishes to be a more user
+friendly format [Michael Peters]
+
+=item *
+
+Added "Steal" capability to "Active Templates" screen. [Michael Peters]
+
+=item *
+
+Added "Steal" capability to "Active Media" screen. [Michael Peters]
+
+=item *
+
+Fixed bug where stealing stories from deleted users would result in an
+ISE [Michael Peters]
+
+=item *
+
+Fixed bug where changing elements' classes and order at the same
+time on Edit Story screens would garble data. [Michael Peters]
+
+=item *
+
+"Cancel" on edit screens is now multi-window friendly when editing
+multiple objects in multiple screens. [Michael Peters]
+
+=item *
+
+Added "View Details" command to workspace screen. [Michael Peters]
+
+=item *
+
+Fixed Workspace sorting to work like normal krang pager style sortable
+tables. [Michael Peters]
+
+=back
+
+=head2 3.21 - August 10th, 2012
 
 =over
 
@@ -63,6 +138,11 @@ Bulk Edit even when the separator wasn't C<< <p> >>. [Michael Peters]
 Advanced search on Media filename no longer treats underscores as SQL
 wildcard characters since they are really common in file names. [Michael
 Peters]
+
+=item *
+
+Added new C<save_args> option to L<Krang::Story>'s C<transform_stories()>
+method. [Michael Peters]
 
 =back
 

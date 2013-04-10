@@ -7,23 +7,29 @@ Krang.onload( function() {
 } );
 
 <tmpl_if row_count>
-  view_media = function(id) {
+view_media = function(id) {
     Krang.Form.submit('find_media', { rm: 'view', media_id: id });
-  }
+}
 
-  view_log = function(id) {
+view_log = function(id) {
     Krang.Form.submit('find_media', { rm: 'view_log', media_id: id });
-  }
+}
 
-  <tmpl_if may_checkin_all>
-    checkin_selected = function()
-    {
-      if ( !Krang.pager_row_checked() )
+<tmpl_if may_checkin_all>
+checkin_selected = function() {
+    if ( !Krang.pager_row_checked() )
         alert( Krang.L10N.loc('Nothing selected to check in!') );
-      else
+    else
         Krang.Form.submit('krang_pager_form', { rm: 'checkin_selected' }, { to_top: false });
-    }
-  </tmpl_if>
+}
+
+steal_selected = function() {
+    if ( !Krang.pager_row_checked() )
+        alert( Krang.L10N.loc('Nothing selected to steal!') );
+    else
+        Krang.Form.submit('krang_pager_form', { rm: 'steal_selected' }, { to_top: false });
+}
+</tmpl_if>
 </tmpl_if>
 </script>
 
@@ -32,6 +38,7 @@ Krang.onload( function() {
 </h2>
 
 <tmpl_if row_count><tmpl_if may_checkin_all><div class="panel"><form>
+  <input value="<tmpl_lang Steal>" onclick="steal_selected()" type="button" class="list-btn">
   <input value="<tmpl_lang Check In>" onclick="checkin_selected()" type="button" class="list-btn">
 </form></div></tmpl_if></tmpl_if>
 
@@ -40,6 +47,7 @@ Krang.onload( function() {
 <!--:Krang::HTMLPager-->
 
 <tmpl_if row_count><tmpl_if may_checkin_all><div class="panel capped"><form>
+  <input value="<tmpl_lang Steal>" onclick="steal_selected()" type="button" class="list-btn">
   <input value="<tmpl_lang Check In>" onclick="checkin_selected()" type="button" class="list-btn">
 </form></div></tmpl_if></tmpl_if>
 

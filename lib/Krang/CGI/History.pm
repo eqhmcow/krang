@@ -160,6 +160,9 @@ sub show {
         return_hidden => $return_hidden,
         label         => localize($label . ' Log'),
     );
+    if ($template->query(name => 'id_meth')) {
+        $template->param(id_meth => $id_meth);
+    }
 
     # setup the pager
     my $pager = pkg('HTMLPager')->new(
