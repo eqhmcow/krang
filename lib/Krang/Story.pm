@@ -2310,7 +2310,7 @@ sub checkout {
     add_history(
         object => $self,
         action => 'checkout',
-    );
+    ) unless $args->{skip_history};
 }
 
 =item C<< Krang::Story->checkin($story_id) >>
@@ -2362,7 +2362,7 @@ sub checkin {
     add_history(
         object => $self,
         action => 'checkin',
-    );
+    ) unless $args->{skip_history};
 }
 
 =item C<< $story->mark_as_published() >>
@@ -2612,7 +2612,7 @@ sub delete {
 sub _do_delete {
     my $self = shift;
 
-    $self->checkout;
+    $self->checkout(undef, {skip_history => 1});
 
     # Is user allowed to delete objects from the trashbin?
     Krang::Story::NoDeleteAccess->throw(
@@ -3186,7 +3186,7 @@ sub retire {
     ) unless ($self->may_edit);
 
     # make sure we are the one
-    $self->checkout;
+    $self->checkout(undef, {skip_history => 1});
 
     # run the element class's retire_hook
     my $element = $self->element;
@@ -3214,7 +3214,7 @@ sub retire {
     # living in retire
     $self->{retired} = 1;
 
-    $self->checkin();
+    $self->checkin({skip_history => 1});
 
     add_history(
         object => $self,
@@ -3249,7 +3249,7 @@ sub unretire {
     ) unless ($self->may_edit);
 
     # make sure we are the one
-    $self->checkout;
+    $self->checkout(undef, {skip_history => 1});
 
     # make sure no other story occupies our initial place (URL)
     $self->_verify_unique;
@@ -3269,7 +3269,7 @@ sub unretire {
     $element->class->unretire_hook(element => $element);
 
     # check it back in
-    $self->checkin() unless $args{dont_checkin};
+    $self->checkin({skip_history => 1}) unless $args{dont_checkin};
 
     add_history(
         object => $self,
@@ -3305,7 +3305,7 @@ sub trash {
     ) unless ($self->may_edit);
 
     # make sure we are the one
-    $self->checkout;
+    $self->checkout(undef, {skip_history => 1});
 
     # run the element class's trash_hook
     my $element = $self->element;
@@ -3321,7 +3321,7 @@ sub trash {
     $self->{trashed} = 1;
 
     # release it
-    $self->checkin();
+    $self->checkin({skip_history => 1});
 
     # delete any story_category_link entries
     dbh()->do('DELETE FROM story_category_link WHERE story_id = ?', undef, $story_id);
@@ -3365,7 +3365,7 @@ sub untrash {
     }
 
     # make sure we are the one
-    $self->checkout;
+    $self->checkout(undef, {skip_history => 1});
 
     # unset trash flag in story table
     my $dbh = dbh();
@@ -3387,7 +3387,7 @@ sub untrash {
     $element->class->untrash_hook(element => $element);
 
     # check back in
-    $self->checkin();
+    $self->checkin({skip_history => 1});
 
     add_history(
         object => $self,
