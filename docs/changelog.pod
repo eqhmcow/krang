@@ -18,6 +18,10 @@ Add run mode for help.pl to email the site administrator (C<BadHelpNotify>) abou
 
 Fixed a case where swapping story names could prevent files from being cleared when the story is retired. [Brad Oaks]
 
+=item *
+
+Fixed retired or trashed archive stories (having a story_category_link entry) being included for publish. [Brad Oaks]
+
 =back
 
 =head2 3.22 - October 18th, 2012
