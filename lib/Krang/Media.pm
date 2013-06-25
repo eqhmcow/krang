@@ -1820,8 +1820,8 @@ Will throw a C<Krang::Media::CheckedOut> exception if the media is already check
 =cut
 
 sub checkout {
-    my $self     = shift;
-    my $media_id = shift;
+    my ($self, $media_id, $args) = @_;
+    $args        ||= {};
     my $dbh      = dbh;
     my $user_id  = $ENV{REMOTE_USER};
 
@@ -1878,7 +1878,7 @@ sub checkout {
     add_history(
         object => $self,
         action => 'checkout'
-    );
+    ) unless $args->{skip_history};
 }
 
 =item $media->checkin() || Krang::Media->checkin($media_id)
@@ -1906,6 +1906,7 @@ sub checkin {
         # Set $media_id -- we need it later
         $media_id = $self->{media_id};
     }
+    my $args = shift || {};
 
     # Is user allowed to otherwise edit this object?
     Krang::Media::NoEditAccess->throw(
@@ -1920,7 +1921,7 @@ sub checkin {
     add_history(
         object => $self,
         action => 'checkin'
-    );
+    ) unless $args->{skip_history};
 }
 
 =item C<< $media->mark_as_published() >>
@@ -2168,7 +2169,7 @@ sub delete {
     my $dbh  = dbh;
     my $root = KrangRoot;
 
-    $self->checkout();
+    $self->checkout(undef, {skip_history => 1});
 
     # unpublish
     pkg('Publisher')->new->unpublish_media(media => $self);
@@ -2617,7 +2618,7 @@ sub retire {
     ) unless ($self->may_edit);
 
     # make sure we are the one
-    $self->checkout;
+    $self->checkout(undef, {skip_history => 1});
 
     # run the element class's retire_hook
     my $element = $self->element;
@@ -2642,7 +2643,7 @@ sub retire {
     # living in retire
     $self->{retired} = 1;
 
-    $self->checkin();
+    $self->checkin(undef, {skip_history => 1});
 
     add_history(
         object => $self,
@@ -2680,7 +2681,7 @@ sub unretire {
     $self->duplicate_check();
 
     # make sure we are the one
-    $self->checkout;
+    $self->checkout(undef, {skip_history => 1});
 
     # alive again
     $self->{retired} = 0;
@@ -2700,7 +2701,7 @@ sub unretire {
     );
 
     # check it back in
-    $self->checkin();
+    $self->checkin(undef, {skip_history => 1});
 }
 
 =item C<< $media->trash() >>
@@ -2730,7 +2731,7 @@ sub trash {
     ) unless ($self->may_edit);
 
     # make sure we are the one
-    $self->checkout;
+    $self->checkout(undef, {skip_history => 1});
 
     # run the element class's trash_hook
     my $element = $self->element;
@@ -2746,7 +2747,7 @@ sub trash {
     $self->{trashed} = 1;
 
     # release it
-    $self->checkin();
+    $self->checkin(undef, {skip_history => 1});
 
     # and log it
     add_history(object => $self, action => 'trash');
@@ -2783,7 +2784,7 @@ sub untrash {
     $self->duplicate_check() unless $self->retired;
 
     # make sure we are the one
-    $self->checkout;
+    $self->checkout(undef, {skip_history => 1});
 
     # unset trashed flag in media table
     my $dbh = dbh();
@@ -2805,7 +2806,7 @@ sub untrash {
     $element->class->untrash_hook(element => $element);
 
     # check back in
-    $self->checkin();
+    $self->checkin(undef, {skip_history => 1});
 
     add_history(
         object => $self,

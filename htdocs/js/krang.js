@@ -1050,11 +1050,12 @@ Krang.Nav = {
         if (!Krang.Nav.edit_mode_flag || ignore_edit_flag || confirm(Krang.Nav.edit_message)) {
             if( ajax ) {
                 var matches = url.match(/(.*)\?(.*)/);
-                var query   = matches[2] || '';
-                Krang.Ajax.update({
-                    url    : matches[1],
-                    params : Krang.Ajax.toQueryParams(matches[2])
-                });
+                var query = '';
+                if( matches ) {
+                    url = matches[1];
+                    query = matches[2] || '';
+                }
+                Krang.Ajax.update({ url : url, params : Krang.Ajax.toQueryParams(query) });
             } else {
                 if(! hide_indicator ) Krang.show_indicator();
                 if (Prototype.Browser.IE) {

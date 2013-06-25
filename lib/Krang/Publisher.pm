@@ -2577,6 +2577,19 @@ sub _add_category_linked_stories {
                 my $candidate_story_id = $row->[0];
                 unless (exists $linked_stories{$candidate_story_id}) {
                     my ($candidate) = pkg('Story')->find(story_id => $candidate_story_id);
+
+                    if($candidate->can('wont_publish') && $candidate->wont_publish()) {
+                        debug( sprintf
+                            __PACKAGE__
+                              . ': skipping candidate %s object id=%s that wont_publish',
+                              $type, (
+                              $type eq 'story' ? $candidate->story_id
+                            : $type eq 'media' ? $candidate->media_id
+                            :                   '')
+                        );
+                        next;
+                    }
+
                     # only keep if the class method should_category_linked_publish() says the candidate should be published
                     if (
                         $candidate->element->class->should_category_linked_publish(
@@ -2605,6 +2618,19 @@ sub _add_category_linked_stories {
                     # inflate story_id value into a story object, but only it isn't already marked for publishing
                     unless (exists $linked_stories{$row->[0]}) {
                         my ($candidate) = pkg('Story')->find(story_id => $candidate_story_id);
+
+                        if($candidate->can('wont_publish') && $candidate->wont_publish()) {
+                            debug( sprintf
+                                __PACKAGE__
+                                  . ': skipping candidate %s object id=%s that wont_publish',
+                                  $type, (
+                                  $type eq 'story' ? $candidate->story_id
+                                : $type eq 'media' ? $candidate->media_id
+                                :                   '')
+                            );
+                            next;
+                        }
+
                         # only keep if the class method should_category_linked_publish() says the candidate should be published
                         if (
                             $candidate->element->class->should_category_linked_publish(
