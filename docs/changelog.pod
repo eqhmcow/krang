@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Copying a story will now copy the tags. [Michael Peters]
+
+=item *
+
 Bug fix for scheduler crash: Deadlock found when trying to get lock. [Daniel S. Sterling]
 
 =item *

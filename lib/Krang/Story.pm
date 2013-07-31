@@ -2716,6 +2716,10 @@ sub clone {
 
     # new story should be editable even if old one wasn't
     $copy->{may_edit} = 1;
+
+    # copy the tags
+    $copy->tags($self->tags || []);
+
     return $copy;
 }
 
