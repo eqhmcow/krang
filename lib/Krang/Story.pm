@@ -2718,7 +2718,7 @@ sub clone {
     $copy->{may_edit} = 1;
 
     # copy the tags
-    $copy->tags($self->tags || []);
+    $copy->tags([$self->tags]);
 
     return $copy;
 }
