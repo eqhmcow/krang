@@ -95,6 +95,11 @@ view_log = function()
   </tr>
 
   <tr class="even">
+  <td class="f"><tmpl_lang Tags></td>
+  <td class="l"><tmpl_if tags><tmpl_var escape=html tags><tmpl_else><em>none</em></tmpl_if></td>
+  </tr>
+
+  <tr class="even">
   <td class="f"><tmpl_lang Cover Date></td>
   <td class="l"><tmpl_var escape=html cover_date></td>
   </tr>
