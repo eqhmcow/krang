@@ -1369,11 +1369,15 @@ sub _object_exists {
         my $type    = $self->object_type();
         my $id      = $self->object_id();
         my %context = defined($self->{context}) ? @{$self->{context}} : ();
+        my %find_params;
+        foreach my $key (qw(version)){
+            $find_params{$key} = $context{$key} if defined $context{$key};
+        }
 
         if ($type eq 'media') {
-            ($object) = pkg('Media')->find(media_id => $id, %context);
+            ($object) = pkg('Media')->find(media_id => $id, %find_params);
         } elsif ($type eq 'story') {
-            ($object) = pkg('Story')->find(story_id => $id, %context);
+            ($object) = pkg('Story')->find(story_id => $id, %find_params);
         } else {
             my $msg = sprintf("%s: unknown object type '%s'", __PACKAGE__, $type);
             die $msg;
