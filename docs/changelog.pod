@@ -6,6 +6,10 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Upgraded HTML::Template for bug fixes (2.91 -> 2.95) [Michael Peters]
+
 =item * 
 
 Fixed bug where sometimes ordering by URL when searching stories changed the results. [Michael Peters]
