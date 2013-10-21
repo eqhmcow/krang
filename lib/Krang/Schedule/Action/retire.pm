@@ -70,7 +70,7 @@ sub execute {
         return;
     }
 
-    $self->_expire();
+    $self->_retire();
 
     $self->clean_entry();
 }
@@ -88,7 +88,7 @@ will propegate errors thrown by the object itself.
 
 =cut
 
-sub _expire {
+sub _retire {
 
     my $self = shift;
     my $obj  = $self->{object};
