@@ -213,15 +213,7 @@ sub show_row_handler {
       ' (' . localize("scheduled") . ')'
       if $history->schedule_id;
 
-    # setup user
-    my ($user) = pkg('User')->find(user_id => $history->user_id);
-    if ($user) {
-        $row->{user} = $q->escapeHTML($user->first_name . " " . $user->last_name);
-    } else {
-
-        # user does not exist, might have been deleted
-        $row->{user} = localize("Unknown User");
-    }
+    $row->{user} = $self->user_name($history);
 
     # setup date
     $row->{timestamp} = $history->timestamp->strftime(localize('%m/%d/%Y %I:%M %p'));
@@ -246,6 +238,18 @@ sub object_label {
 sub action_label {
     my ($self, $action) = @_;
     return $ACTION_LABELS{$action} || $action;
+}
+
+sub user_name {
+    my ($self, $history) = @_;
+    my $q = $self->query;
+    my ($user) = pkg('User')->find(user_id => $history->user_id);
+    if ($user) {
+        return $q->escapeHTML($user->first_name . " " . $user->last_name);
+    } else {
+        # user does not exist, might have been deleted
+        return localize("Unknown User");
+    }
 }
 
 =back
