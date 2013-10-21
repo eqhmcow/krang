@@ -11,7 +11,8 @@ sub per_instance {
     return if $args{no_db};
     my $dbh = dbh();
     $dbh->do('ALTER TABLE history
-    ADD COLUMN `schedule_id` INT(10) UNSIGNED DEFAULT NULL after `user_id`
+    ADD COLUMN `schedule_id` INT(10) UNSIGNED DEFAULT NULL after `user_id`,
+    ADD COLUMN `origin` VARCHAR(255) DEFAULT NULL after `schedule_id`
     ');
 
 }

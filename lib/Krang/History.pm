@@ -83,7 +83,7 @@ Override this method to extend the list
 =cut
 
     sub fields {
-        return qw( object_type object_id action version desk_id user_id schedule_id timestamp );
+        return qw( object_type object_id action version desk_id user_id schedule_id origin timestamp );
     }
 
 }

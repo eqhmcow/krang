@@ -233,6 +233,8 @@ sub show_row_handler {
     $attr .=
       localize("Desk:") . ' ' . localize((pkg('Desk')->find(desk_id => $history->desk_id))[0]->name)
       if $history->desk_id;
+    $attr .= localize("from") . ' ' . $history->origin
+      if $history->origin;
     $row->{attr} = $q->escapeHTML($attr);
 }
 

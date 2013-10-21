@@ -12,6 +12,7 @@ CREATE TABLE history (
     desk_id int(10) unsigned default NULL,
     user_id int(10) unsigned not NULL,
     schedule_id int(10) unsigned default NULL,
+    origin varchar(255) default NULL,
     timestamp datetime default NULL,
     INDEX (object_type, object_id)
 ) ENGINE=MyISAM;
