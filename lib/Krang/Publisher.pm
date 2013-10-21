@@ -2153,9 +2153,9 @@ sub _implication_key {
     my $self = shift;
     my $o    = shift;
     if ($o->isa('Krang::Story')) {
-        return 'story' . $o->story_id;
+        return 'story ' . $o->story_id;
     } else {
-        return 'media' . $o->media_id;
+        return 'media ' . $o->media_id;
     }
 }
 

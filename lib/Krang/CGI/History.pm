@@ -183,7 +183,7 @@ sub show {
             action    => 'Action',
             user      => 'Triggered By',
             timestamp => 'Date',
-            attr      => 'Attributes',
+            attr      => 'Notes',
         },
         columns_sortable        => [qw( timestamp action )],
         default_sort_order_desc => 1,
@@ -210,7 +210,7 @@ sub show_row_handler {
     $row->{action} =
       $q->escapeHTML("$object_label " . localize($self->action_label($history->action)));
     $row->{action} .=
-      ' (' . localize("from schedule") . ')'
+      ' (' . localize("scheduled") . ')'
       if $history->schedule_id;
 
     # setup user
@@ -233,7 +233,7 @@ sub show_row_handler {
     $attr .=
       localize("Desk:") . ' ' . localize((pkg('Desk')->find(desk_id => $history->desk_id))[0]->name)
       if $history->desk_id;
-    $attr .= localize("from") . ' ' . $history->origin
+    $attr .= localize("By publishing") . ' ' . $history->origin
       if $history->origin;
     $row->{attr} = $q->escapeHTML($attr);
 }
