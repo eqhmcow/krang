@@ -393,6 +393,7 @@ sub get_object {
 
 sub get_existing_schedule {
     my ($self, $object_type, $object_id) = @_;
+    my $query = $self->query;
 
     my @schedules = pkg('Schedule')->find('object_type' => $object_type, 'object_id' => $object_id);
 
@@ -404,6 +405,17 @@ sub get_existing_schedule {
     foreach my $schedule (@schedules) {
         my %context = $schedule->context  ? @{$schedule->context} : ();
         my $version = $context{'version'} ? $context{'version'}   : '';
+        my $user = '';
+        if (my $user_id = $context{'user_id'}) {
+            ($user) = pkg('User')->find(user_id => $user_id);
+            if ($user) {
+                $user = $query->escapeHTML($user->first_name . " " . $user->last_name);
+            } else {
+                # user does not exist, might have been deleted
+                $user = localize("Unknown User");
+            }
+        }
+
         my $frequency = ($schedule->repeat eq 'never') ? 'One Time' : ucfirst($schedule->repeat);
         my $s_params;
 
@@ -441,6 +453,7 @@ sub get_existing_schedule {
                   ->strftime(localize('%m/%d/%Y %I:%M %p')),
                 'action'  => localize($ALL_ACTION_LABELS{$schedule->action}),
                 'version' => $version,
+                'user'    => $user,
             }
         );
     }
@@ -486,8 +499,10 @@ sub add {
 
     my $action  = $q->param('action');
     my $version = $q->param('version');
+    my $user_id = $ENV{REMOTE_USER};
     my @context;
     push @context, (version => $version) if $version;
+    push @context, (user_id => $user_id) if $user_id;
 
     my $object_type = $q->param('object_type');
 
@@ -590,8 +605,10 @@ sub add_admin {
 
     my $action  = $q->param('action');
     my $version = $q->param('version');
+    my $user_id = $ENV{REMOTE_USER};
     my @context;
     push @context, (version => $version) if $version;
+    push @context, (user_id => $user_id) if $user_id;
 
     my $object_type = $q->param('object_type') || 'admin';
 
@@ -697,8 +714,10 @@ sub add_simple {
     my $self    = shift;
     my $q       = $self->query();
     my $version = $q->param('version');
+    my $user_id = $ENV{REMOTE_USER};
     my @context;
     push @context, (version => $version) if $version;
+    push @context, (user_id => $user_id) if $user_id;
 
     my $date = decode_datetime(name => 'publish_date', query => $q);
 
