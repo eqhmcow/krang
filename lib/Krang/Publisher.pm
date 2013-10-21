@@ -310,9 +310,7 @@ sub preview_story {
 
     $self->_clear_asset_lists() unless ($keep_asset_list);
 
-    my $preview_url = catfile($story->preview_url, $self->story_filename(story => $story));
-
-    return $preview_url;
+    return $story->preview_url;
 }
 
 =item C<< $publisher->publish_story(story => $story, callback => \%onpublish) >>
