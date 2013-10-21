@@ -1845,8 +1845,6 @@ or actions where the resulting data is not shown to the end user.
 
         # handle ordering by primary URL, which is in story_category
         if ($order_by eq 'url') {
-            push(@where, 's.story_id = sc.story_id');
-            push(@where, 'sc.ord = 0');
             $order_by = 'sc.url';
         } elsif ($order_by !~ /\w+\./) {
             $order_by = "s." . $order_by;

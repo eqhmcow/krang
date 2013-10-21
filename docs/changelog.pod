@@ -2,6 +2,16 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.24 - (in development)
+
+=over
+
+=item * 
+
+Fixed bug where sometimes ordering by URL when searching stories changed the results [Michael Peters]
+
+=back
+
 =head2 3.23 - July 31st, 2013
 
 =over
