@@ -447,6 +447,10 @@ sub publish_story {
     my $unsaved           = (exists($args{unsaved}))           ? $args{unsaved}           : 0;
     my $version_check     = (exists($args{version_check}))     ? $args{version_check}     : 1;
     my $maintain_versions = (exists($args{maintain_versions})) ? $args{maintain_versions} : 0;
+    my %history_args;
+    if ( exists($args{scheduled_by}) ) {
+        $history_args{scheduled_by}  = $args{scheduled_by};
+    }
 
     # callbacks
     my $callback      = $args{callback};
@@ -507,7 +511,8 @@ sub publish_story {
         skip_callback       => $skip_callback,
         callback            => $callback,
         user_id             => $user_id,
-        remember_asset_list => $keep_asset_list
+        remember_asset_list => $keep_asset_list,
+        history_args        => \%history_args
     ) if scalar(@$publish_list);
 
     $self->_clear_asset_lists() unless ($keep_asset_list);
@@ -782,6 +787,10 @@ sub publish_media {
     my $keep_asset_list   = $args{remember_asset_list} || 0;
 
     croak(__PACKAGE__ . ": Missing argument 'media'!\n") unless (exists($args{media}));
+    my %history_args;
+    if ( exists($args{scheduled_by}) ) {
+        $history_args{scheduled_by}  = $args{scheduled_by};
+    }
 
     my $publish_list;
     if (ref $args{media} eq 'ARRAY') {
@@ -797,7 +806,8 @@ sub publish_media {
         skip_callback       => $skip_callback,
         callback            => $callback,
         user_id             => $ENV{REMOTE_USER},
-        remember_asset_list => $keep_asset_list
+        remember_asset_list => $keep_asset_list,
+        history_args        => \%history_args
     ) if scalar(@$publish_list);
 
     $self->_clear_asset_lists() unless ($keep_asset_list);
@@ -975,7 +985,10 @@ sub _process_assets {
             }
 
             eval {
-                my @paths = $self->_build_story_all_categories(story => $object);
+                my @paths = $self->_build_story_all_categories(
+                    story        => $object,
+                    history_args => $args{history_args},
+                );
 
                 # fix up publish locations
                 $self->_rectify_publish_locations(
@@ -1041,7 +1054,8 @@ sub _process_assets {
                 push @media_urls, $self->_write_media(media => $object);
 
                 # log event
-                add_history(object => $object, action => 'publish');
+                my %history_args = $args{history_args} ? %{$args{history_args}} : ();
+                add_history(object => $object, action => 'publish', %history_args);
 
                 $object->mark_as_published();
 
@@ -1842,13 +1856,14 @@ sub _build_story_all_categories {
         push @paths,
           $self->_build_story_single_category(
             story    => $story,
-            category => $categories[$i]
+            category => $categories[$i],
           );
     }
 
     # log history
     if ($self->{is_publish}) {
-        add_history(object => $story, action => 'publish');
+        my %history_args = $args{history_args} ? %{$args{history_args}} : ();
+        add_history(object => $story, action => 'publish', %history_args);
     }
 
     return @paths;
