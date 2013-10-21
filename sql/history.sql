@@ -10,7 +10,7 @@ CREATE TABLE history (
     action varchar(255) default NULL,
     version int(10) unsigned default NULL,
     desk_id int(10) unsigned default NULL,
-    user_id int(10) unsigned not NULL,
+    user_id int(10) unsigned default NULL,
     schedule_id int(10) unsigned default NULL,
     origin varchar(255) default NULL,
     timestamp datetime default NULL,
