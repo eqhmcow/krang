@@ -104,6 +104,7 @@ sub _publish {
         eval {
             $publisher->publish_media(
                 media        => $object,
+                schedule_id  => $self->schedule_id,
                 scheduled_by => $user_id
             );
         };
@@ -130,6 +131,7 @@ sub _publish {
             $publisher->publish_story(
                 story         => $object,
                 version_check => 0,
+                schedule_id   => $self->schedule_id,
                 scheduled_by  => $user_id
             );
         };

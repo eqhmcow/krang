@@ -209,6 +209,9 @@ sub show_row_handler {
     my $object_label = $self->object_label($history);
     $row->{action} =
       $q->escapeHTML("$object_label " . localize($self->action_label($history->action)));
+    $row->{action} .=
+      ' (' . localize("from schedule") . ')'
+      if $history->schedule_id;
 
     # setup user
     my ($user) = pkg('User')->find(user_id => $history->user_id);

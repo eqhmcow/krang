@@ -450,6 +450,7 @@ sub publish_story {
     my %history_args;
     if ( exists($args{scheduled_by}) ) {
         $history_args{scheduled_by}  = $args{scheduled_by};
+        $history_args{schedule_id}   = $args{schedule_id};
     }
 
     # callbacks
