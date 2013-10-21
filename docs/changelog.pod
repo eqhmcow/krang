@@ -8,7 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item * 
 
-Fixed bug where sometimes ordering by URL when searching stories changed the results [Michael Peters]
+Fixed bug where sometimes ordering by URL when searching stories changed the results. [Michael Peters]
+
+=item *
+
+Fixed bug where tag information was lost on stories when editting the categories. [Michael Peters]
 
 =back
 
