@@ -2643,9 +2643,15 @@ sub retire {
 
     $self->checkin(undef, {skip_history => 1});
 
+    my %history_args;
+    if (exists($args{scheduled_by})) {
+        $history_args{scheduled_by} = $args{scheduled_by};
+        $history_args{schedule_id}  = $args{schedule_id};
+    }
     add_history(
         object => $self,
-        action => 'retire'
+        action => 'retire',
+        %history_args
     );
 }
 
@@ -2716,6 +2722,7 @@ user.
 
 sub trash {
     my ($self, %args) = @_;
+    warn Data::Dumper->new([\%args],['args'])->Dump.' ';use Data::Dumper;#wbo#
     unless (ref $self) {
         my $media_id = $args{media_id};
         ($self) = pkg('Media')->find(media_id => $media_id);
@@ -2748,7 +2755,12 @@ sub trash {
     $self->checkin(undef, {skip_history => 1});
 
     # and log it
-    add_history(object => $self, action => 'trash');
+    my %history_args;
+    if (exists($args{scheduled_by})) {
+        $history_args{scheduled_by} = $args{scheduled_by};
+        $history_args{schedule_id}  = $args{schedule_id};
+    }
+    add_history(object => $self, action => 'trash', %history_args);
 }
 
 =item C<< $media->untrash() >>

@@ -3218,9 +3218,15 @@ sub retire {
 
     $self->checkin({skip_history => 1});
 
+    my %history_args;
+    if (exists($args{scheduled_by})) {
+        $history_args{scheduled_by} = $args{scheduled_by};
+        $history_args{schedule_id}  = $args{schedule_id};
+    }
     add_history(
         object => $self,
-        action => 'retire'
+        action => 'retire',
+        %history_args
     );
 }
 
@@ -3293,6 +3299,7 @@ user.
 
 sub trash {
     my ($self, %args) = @_;
+    warn Data::Dumper->new([\%args],['args'])->Dump.' ';use Data::Dumper;#wbo#
     my $story_id = $args{story_id};
 
     unless (ref $self) {
@@ -3329,7 +3336,12 @@ sub trash {
     dbh()->do('DELETE FROM story_category_link WHERE story_id = ?', undef, $story_id);
 
     # and log it
-    add_history(object => $self, action => 'trash');
+    my %history_args;
+    if (exists($args{scheduled_by})) {
+        $history_args{scheduled_by} = $args{scheduled_by};
+        $history_args{schedule_id}  = $args{schedule_id};
+    }
+    add_history(object => $self, action => 'trash', %history_args);
 }
 
 =item C<< $story->untrash() >>

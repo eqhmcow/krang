@@ -93,11 +93,18 @@ sub _retire {
     my $self = shift;
     my $obj  = $self->{object};
 
-    $obj->retire();
+    # get the user_id from the job context
+    my %context = $self->context ? @{$self->context} : ();
+    my $user_id = $context{user_id} ? $context{user_id} : $ENV{REMOTE_USER};
+
+    $obj->retire(
+        schedule_id  => $self->schedule_id,
+        scheduled_by => $user_id
+    );
     debug(
         sprintf(
-            "%s->_retire(): Retired %s id '%i'.",
-            __PACKAGE__, $self->{object_type}, $self->{object_id}
+            "%s->_retire(): Retired %s id '%i', user_id '%i'.",
+            __PACKAGE__, $self->{object_type}, $self->{object_id}, $user_id
         )
     );
 

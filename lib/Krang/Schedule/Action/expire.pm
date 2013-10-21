@@ -89,11 +89,18 @@ sub _expire {
     my $self = shift;
     my $obj  = $self->{object};
 
-    $obj->trash();
+    # get the user_id from the job context
+    my %context = $self->context ? @{$self->context} : ();
+    my $user_id = $context{user_id} ? $context{user_id} : $ENV{REMOTE_USER};
+
+    $obj->trash(
+        schedule_id  => $self->schedule_id,
+        scheduled_by => $user_id
+    );
     debug(
         sprintf(
-            "%s->_expire(): Deleted %s id '%i'.",
-            __PACKAGE__, $self->{object_type}, $self->{object_id}
+            "%s->_expire(): Deleted %s id '%i', user_id '%i'.",
+            __PACKAGE__, $self->{object_type}, $self->{object_id}, $user_id
         )
     );
 
