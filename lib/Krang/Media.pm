@@ -2722,7 +2722,6 @@ user.
 
 sub trash {
     my ($self, %args) = @_;
-    warn Data::Dumper->new([\%args],['args'])->Dump.' ';use Data::Dumper;#wbo#
     unless (ref $self) {
         my $media_id = $args{media_id};
         ($self) = pkg('Media')->find(media_id => $media_id);

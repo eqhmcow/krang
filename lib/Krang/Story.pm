@@ -3299,7 +3299,6 @@ user.
 
 sub trash {
     my ($self, %args) = @_;
-    warn Data::Dumper->new([\%args],['args'])->Dump.' ';use Data::Dumper;#wbo#
     my $story_id = $args{story_id};
 
     unless (ref $self) {
