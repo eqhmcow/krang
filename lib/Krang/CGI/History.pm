@@ -183,7 +183,7 @@ sub show {
             action    => 'Action',
             user      => 'Triggered By',
             timestamp => 'Date',
-            attr      => 'Attributes',
+            attr      => 'Notes',
         },
         columns_sortable        => [qw( timestamp action )],
         default_sort_order_desc => 1,
@@ -209,16 +209,11 @@ sub show_row_handler {
     my $object_label = $self->object_label($history);
     $row->{action} =
       $q->escapeHTML("$object_label " . localize($self->action_label($history->action)));
+    $row->{action} .=
+      ' (' . localize("scheduled") . ')'
+      if $history->schedule_id;
 
-    # setup user
-    my ($user) = pkg('User')->find(user_id => $history->user_id);
-    if ($user) {
-        $row->{user} = $q->escapeHTML($user->first_name . " " . $user->last_name);
-    } else {
-
-        # user does not exist, might have been deleted
-        $row->{user} = localize("Unknown User");
-    }
+    $row->{user} = $self->user_name($history);
 
     # setup date
     $row->{timestamp} = $history->timestamp->strftime(localize('%m/%d/%Y %I:%M %p'));
@@ -230,6 +225,8 @@ sub show_row_handler {
     $attr .=
       localize("Desk:") . ' ' . localize((pkg('Desk')->find(desk_id => $history->desk_id))[0]->name)
       if $history->desk_id;
+    $attr .= localize("By publishing") . ' ' . $history->origin
+      if $history->origin;
     $row->{attr} = $q->escapeHTML($attr);
 }
 
@@ -241,6 +238,18 @@ sub object_label {
 sub action_label {
     my ($self, $action) = @_;
     return $ACTION_LABELS{$action} || $action;
+}
+
+sub user_name {
+    my ($self, $history) = @_;
+    my $q = $self->query;
+    my ($user) = pkg('User')->find(user_id => $history->user_id);
+    if ($user) {
+        return $q->escapeHTML($user->first_name . " " . $user->last_name);
+    } else {
+        # user does not exist, might have been deleted
+        return localize("Unknown User");
+    }
 }
 
 =back

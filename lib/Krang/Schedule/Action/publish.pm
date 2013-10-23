@@ -96,8 +96,18 @@ sub _publish {
     my $object = $self->{object};
     my $err;
 
+    # get the user_id from the job context
+    my %context = $self->context ? @{$self->context} : ();
+    my $user_id = $context{user_id} ? $context{user_id} : $ENV{REMOTE_USER};
+
     if ($object->isa(pkg('Media'))) {
-        eval { $publisher->publish_media(media => $object); };
+        eval {
+            $publisher->publish_media(
+                media        => $object,
+                schedule_id  => $self->schedule_id,
+                scheduled_by => $user_id
+            );
+        };
 
         if ($err = $@) {
             my $msg = sprintf("%s->_publish(): error publishing Media ID=%i: %s",
@@ -117,7 +127,14 @@ sub _publish {
             return;
         }
 
-        eval { $publisher->publish_story(story => $object, version_check => 0); };
+        eval {
+            $publisher->publish_story(
+                story         => $object,
+                version_check => 0,
+                schedule_id   => $self->schedule_id,
+                scheduled_by  => $user_id
+            );
+        };
 
         if (my $err = $@) {
             my $msg = sprintf("%s->_publish(): error publishing Story ID=%i: ERR=%s",

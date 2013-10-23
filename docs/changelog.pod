@@ -2,6 +2,36 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.24 - October 21, 2013
+
+=over
+
+=item *
+
+Preview URL returned by Krang::Publisher::preview_story is now the same as Krang::Story::preview_url [Michael Peters] 
+
+=item *
+
+Upgraded HTML::Template for bug fixes (2.91 -> 2.95) [Michael Peters]
+
+=item * 
+
+Fixed bug where sometimes ordering by URL when searching stories changed the results. [Michael Peters]
+
+=item *
+
+Fixed bug where tag information was lost on stories when editting the categories. [Michael Peters]
+
+=item *
+
+Scheduled jobs created after this release record the user_id for use in add_history. [Brad Oaks]
+
+=item *
+
+The history screen will show that an asset is published because of its link to another asset. [Brad Oaks]
+
+=back
+
 =head2 3.23 - July 31st, 2013
 
 =over

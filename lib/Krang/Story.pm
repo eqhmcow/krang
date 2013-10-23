@@ -1845,8 +1845,6 @@ or actions where the resulting data is not shown to the end user.
 
         # handle ordering by primary URL, which is in story_category
         if ($order_by eq 'url') {
-            push(@where, 's.story_id = sc.story_id');
-            push(@where, 'sc.ord = 0');
             $order_by = 'sc.url';
         } elsif ($order_by !~ /\w+\./) {
             $order_by = "s." . $order_by;
@@ -3222,9 +3220,15 @@ sub retire {
 
     $self->checkin({skip_history => 1});
 
+    my %history_args;
+    if (exists($args{scheduled_by})) {
+        $history_args{scheduled_by} = $args{scheduled_by};
+        $history_args{schedule_id}  = $args{schedule_id};
+    }
     add_history(
         object => $self,
-        action => 'retire'
+        action => 'retire',
+        %history_args
     );
 }
 
@@ -3333,7 +3337,12 @@ sub trash {
     dbh()->do('DELETE FROM story_category_link WHERE story_id = ?', undef, $story_id);
 
     # and log it
-    add_history(object => $self, action => 'trash');
+    my %history_args;
+    if (exists($args{scheduled_by})) {
+        $history_args{scheduled_by} = $args{scheduled_by};
+        $history_args{schedule_id}  = $args{schedule_id};
+    }
+    add_history(object => $self, action => 'trash', %history_args);
 }
 
 =item C<< $story->untrash() >>

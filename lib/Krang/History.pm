@@ -83,7 +83,7 @@ Override this method to extend the list
 =cut
 
     sub fields {
-        return qw( object_type object_id action version desk_id user_id timestamp );
+        return qw( object_type object_id action version desk_id user_id schedule_id origin timestamp );
     }
 
 }
@@ -145,10 +145,10 @@ In addition to tracking actions on objects, the user who performed the action is
 =cut
 
 sub add_history {
-    my %args   = @_;
-    my $object = delete $args{'object'};
+    my %args         = @_;
+    my $scheduled_by = delete $args{'scheduled_by'};
+    my $object       = delete $args{'object'};
     croak("No object specified") unless ($object);
-
     my $history = pkg('History')->new(%args);
 
     my $version;
@@ -159,7 +159,7 @@ sub add_history {
             || ($args{action} eq 'rename'));
     };
     $history->{version} = $version if $version;
-    $history->{user_id} = $ENV{REMOTE_USER};
+    $history->{user_id} = defined $scheduled_by ? $scheduled_by : $ENV{REMOTE_USER};
 
     my $object_type = ref $object;
     $history->{object_type} = $object_type;

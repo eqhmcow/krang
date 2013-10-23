@@ -126,6 +126,7 @@ do_return = function()
 
   <colgroup>
   <col>
+  <col class="c-user">
   <col class="series">
   <col>
   <col class="c-ldate">
@@ -135,6 +136,7 @@ do_return = function()
   <thead>
   <tr>
   <th class="f"><tmpl_lang Action></th>
+  <th><tmpl_lang Scheduled By></th>
   <th><tmpl_lang Version></th>
   <th><tmpl_lang Trigger></th>
   <th><tmpl_lang Next Event></th>
@@ -145,6 +147,11 @@ do_return = function()
   <tbody><tmpl_loop existing_schedule_loop>
     <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
     <td class="f"><tmpl_var escape=html action></td>
+    <td><tmpl_if user>
+      <tmpl_var escape=html user>
+    <tmpl_else>
+      <!-- <tmpl_lang [legacy]> -->
+    </tmpl_if></td>
     <td><tmpl_if version>
       <tmpl_var escape=html version>
     <tmpl_else>
@@ -157,7 +164,7 @@ do_return = function()
   </tmpl_loop></tbody>
 
   <tr class="command-row">
-  <td class="f" colspan="4">&nbsp;</td>
+  <td class="f" colspan="5">&nbsp;</td>
   <td class="series l"><input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="mini-list-btn"></td>
   </tr>
 

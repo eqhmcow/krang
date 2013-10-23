@@ -310,9 +310,7 @@ sub preview_story {
 
     $self->_clear_asset_lists() unless ($keep_asset_list);
 
-    my $preview_url = catfile($story->preview_url, $self->story_filename(story => $story));
-
-    return $preview_url;
+    return $story->preview_url;
 }
 
 =item C<< $publisher->publish_story(story => $story, callback => \%onpublish) >>
@@ -449,6 +447,13 @@ sub publish_story {
     my $unsaved           = (exists($args{unsaved}))           ? $args{unsaved}           : 0;
     my $version_check     = (exists($args{version_check}))     ? $args{version_check}     : 1;
     my $maintain_versions = (exists($args{maintain_versions})) ? $args{maintain_versions} : 0;
+    my %history_args;
+    if ( exists($args{scheduled_by}) ) {
+        $history_args{scheduled_by}  = $args{scheduled_by};
+        $history_args{schedule_id}   = $args{schedule_id};
+    }
+
+    my $implication_map = { map {$self->_implication_key($_) => 'original publish list'} (ref $story eq 'ARRAY') ? @$story : ($story) };
 
     # callbacks
     my $callback      = $args{callback};
@@ -499,6 +504,7 @@ sub publish_story {
     } else {
         $publish_list = $self->asset_list(
             story             => $story,
+            implication_map   => $implication_map,
             version_check     => $version_check,
             maintain_versions => $maintain_versions
         );
@@ -506,10 +512,12 @@ sub publish_story {
 
     $self->_process_assets(
         publish_list        => $publish_list,
+        implication_map     => $implication_map,
         skip_callback       => $skip_callback,
         callback            => $callback,
         user_id             => $user_id,
-        remember_asset_list => $keep_asset_list
+        remember_asset_list => $keep_asset_list,
+        history_args        => \%history_args
     ) if scalar(@$publish_list);
 
     $self->_clear_asset_lists() unless ($keep_asset_list);
@@ -784,6 +792,11 @@ sub publish_media {
     my $keep_asset_list   = $args{remember_asset_list} || 0;
 
     croak(__PACKAGE__ . ": Missing argument 'media'!\n") unless (exists($args{media}));
+    my %history_args;
+    if ( exists($args{scheduled_by}) ) {
+        $history_args{scheduled_by}  = $args{scheduled_by};
+    }
+    my $implication_map = { map {$self->_implication_key($_) => 'original publish list'} (ref $args{media} eq 'ARRAY') ? @{$args{media}} : ($args{media}) };
 
     my $publish_list;
     if (ref $args{media} eq 'ARRAY') {
@@ -792,14 +805,16 @@ sub publish_media {
         push @$publish_list, $args{media};
     }
 
-    $publish_list = $self->_add_category_linked_stories($publish_list) unless $ENV{KRANG_TEST};
+    $publish_list = $self->_add_category_linked_stories($publish_list, $implication_map) unless $ENV{KRANG_TEST};
 
     my @urls = $self->_process_assets(
         publish_list        => $publish_list,
+        implication_map     => $implication_map,
         skip_callback       => $skip_callback,
         callback            => $callback,
         user_id             => $ENV{REMOTE_USER},
-        remember_asset_list => $keep_asset_list
+        remember_asset_list => $keep_asset_list,
+        history_args        => \%history_args
     ) if scalar(@$publish_list);
 
     $self->_clear_asset_lists() unless ($keep_asset_list);
@@ -877,6 +892,7 @@ sub asset_list {
 
     my $story = $args{story} || croak __PACKAGE__ . ": Missing parameter 'story'";
     my $mode = $args{mode};
+    my $implication_map = $args{implication_map};
 
     #    my $keep_list     = $args{keep_asset_list} || 0;
     #    my $keep_list = 0;
@@ -899,13 +915,14 @@ sub asset_list {
 
     my @publish_list = $self->_build_asset_list(
         object            => $story,
+        implication_map   => $implication_map,
         version_check     => $version_check,
         maintain_versions => $maintain_versions,
         initial_assets    => 1
     );
     my $publish_list = \@publish_list;
 
-    $publish_list = $self->_add_category_linked_stories($publish_list)
+    $publish_list = $self->_add_category_linked_stories($publish_list, $implication_map)
       if $mode eq 'publish' and not $ENV{KRANG_TEST};
 
     #     unless ($keep_list) {
@@ -966,6 +983,7 @@ sub _process_assets {
     my @media_urls;
 
     foreach my $object (@{$args{publish_list}}) {
+        $args{history_args}{origin} = $self->_stringify_implication_chain($args{implication_map}, $object);
         if ($object->isa('Krang::Story')) {
             if ($object->checked_out) {
                 if ($user_id != $object->checked_out_by) {
@@ -977,7 +995,10 @@ sub _process_assets {
             }
 
             eval {
-                my @paths = $self->_build_story_all_categories(story => $object);
+                my @paths = $self->_build_story_all_categories(
+                    story        => $object,
+                    history_args => $args{history_args},
+                );
 
                 # fix up publish locations
                 $self->_rectify_publish_locations(
@@ -1043,7 +1064,8 @@ sub _process_assets {
                 push @media_urls, $self->_write_media(media => $object);
 
                 # log event
-                add_history(object => $object, action => 'publish');
+                my %history_args = $args{history_args} ? %{$args{history_args}} : ();
+                add_history(object => $object, action => 'publish', %history_args);
 
                 $object->mark_as_published();
 
@@ -1844,13 +1866,14 @@ sub _build_story_all_categories {
         push @paths,
           $self->_build_story_single_category(
             story    => $story,
-            category => $categories[$i]
+            category => $categories[$i],
           );
     }
 
     # log history
     if ($self->{is_publish}) {
-        add_history(object => $story, action => 'publish');
+        my %history_args = $args{history_args} ? %{$args{history_args}} : ();
+        add_history(object => $story, action => 'publish', %history_args);
     }
 
     return @paths;
@@ -2037,6 +2060,7 @@ sub _build_asset_list {
     my ($self, %args) = @_;
 
     my $object            = $args{object};
+    my $implication_map   = $args{implication_map};
     my $version_check     = (exists($args{version_check})) ? $args{version_check} : 1;
     my $initial_assets    = (exists($args{initial_assets})) ? $args{initial_assets} : 0;
     my $maintain_versions = (exists($args{maintain_versions})) ? $args{maintain_versions} : 0;
@@ -2074,8 +2098,16 @@ sub _build_asset_list {
         if ($check_links) {
             my $check_stories = !($self->is_preview && IgnorePreviewRelatedStoryAssets);
             my $check_media   = !($self->is_preview && IgnorePreviewRelatedMediaAssets);
-            push @check_list, $o->linked_stories(publisher => $self) if $check_stories;
-            push @check_list, $o->linked_media if $check_media;
+            if ($check_stories) {
+                my @linked_stories = $o->linked_stories(publisher => $self);
+                $self->_update_implication_map($implication_map, $o, \@linked_stories);
+                push @check_list, @linked_stories;
+            }
+            if ($check_media) {
+                my @linked_media = $o->linked_media;
+                $self->_update_implication_map($implication_map, $o, \@linked_media);
+                push @check_list, @linked_media;
+            }
         }
     }
 
@@ -2083,12 +2115,48 @@ sub _build_asset_list {
     push @asset_list,
       $self->_build_asset_list(
         object            => \@check_list,
+        implication_map   => $implication_map,
         version_check     => $version_check,
         maintain_versions => $maintain_versions,
         initial_assets    => 0,
       ) if (@check_list);
 
     return @asset_list;
+}
+
+sub _stringify_implication_chain {
+    my $self            = shift;
+    my $implication_map = shift;
+    my $o               = shift;
+    die "Error: cannot find a chain without a starting point" unless $o;
+
+    my $object_key = $self->_implication_key($o);
+    die sprintf 'Error: object_key [%s] not found in implication_map', ($object_key || '-undef-')
+      unless (defined $implication_map->{$object_key});
+    return if ($implication_map->{$object_key} eq 'original publish list');
+    return $implication_map->{$object_key};
+}
+sub _update_implication_map {
+    my $self            = shift;
+    my $implication_map = shift;
+    my $o               = shift;
+    my $linked_assets   = shift;
+    my $object_key      = $self->_implication_key($o);
+    map {
+        my $candidate_key = $self->_implication_key($_);
+        next if $implication_map->{$candidate_key};
+        $implication_map->{$candidate_key} = $object_key;
+    } @{$linked_assets};
+}
+
+sub _implication_key {
+    my $self = shift;
+    my $o    = shift;
+    if ($o->isa('Krang::Story')) {
+        return 'story ' . $o->story_id;
+    } else {
+        return 'media ' . $o->media_id;
+    }
 }
 
 #
@@ -2539,7 +2607,7 @@ sub _determine_output_path {
 }
 
 sub _add_category_linked_stories {
-    my ($self, $publish_list) = @_;
+    my ($self, $publish_list, $implication_map) = @_;
     my $user_id        = $ENV{REMOTE_USER};
     my %linked_stories = ();
 
@@ -2600,6 +2668,7 @@ sub _add_category_linked_stories {
                       )
                     {
                         $linked_stories{$candidate_story_id} = $candidate;
+                        $self->_update_implication_map($implication_map, $object, [$candidate]);
                     }
                 }
             }
@@ -2641,6 +2710,7 @@ sub _add_category_linked_stories {
                           )
                         {
                             $linked_stories{$candidate_story_id} = $candidate;
+                            $self->_update_implication_map($implication_map, $object, [$candidate]);
                         }
                     }
                 }

@@ -393,6 +393,7 @@ sub get_object {
 
 sub get_existing_schedule {
     my ($self, $object_type, $object_id) = @_;
+    my $query = $self->query;
 
     my @schedules = pkg('Schedule')->find('object_type' => $object_type, 'object_id' => $object_id);
 
@@ -404,6 +405,17 @@ sub get_existing_schedule {
     foreach my $schedule (@schedules) {
         my %context = $schedule->context  ? @{$schedule->context} : ();
         my $version = $context{'version'} ? $context{'version'}   : '';
+        my $user = '';
+        if (my $user_id = $context{'user_id'}) {
+            ($user) = pkg('User')->find(user_id => $user_id);
+            if ($user) {
+                $user = $query->escapeHTML($user->first_name . " " . $user->last_name);
+            } else {
+                # user does not exist, might have been deleted
+                $user = localize("Unknown User");
+            }
+        }
+
         my $frequency = ($schedule->repeat eq 'never') ? 'One Time' : ucfirst($schedule->repeat);
         my $s_params;
 
@@ -441,6 +453,7 @@ sub get_existing_schedule {
                   ->strftime(localize('%m/%d/%Y %I:%M %p')),
                 'action'  => localize($ALL_ACTION_LABELS{$schedule->action}),
                 'version' => $version,
+                'user'    => $user,
             }
         );
     }
@@ -486,6 +499,10 @@ sub add {
 
     my $action  = $q->param('action');
     my $version = $q->param('version');
+    my $user_id = $ENV{REMOTE_USER};
+    my @context;
+    push @context, (version => $version) if $version;
+    push @context, (user_id => $user_id) if $user_id;
 
     my $object_type = $q->param('object_type');
 
@@ -510,44 +527,23 @@ sub add {
             return $self->edit('invalid_datetime');
         }
 
-        if ($version) {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => $action,
-                repeat      => 'never',
-                context     => [version => $version],
-                date        => $date
-            );
-        } else {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => $action,
-                repeat      => 'never',
-                date        => $date
-            );
-        }
-
+        $schedule = pkg('Schedule')->new(
+            object_type => $object_type,
+            object_id   => $object_id,
+            action      => $action,
+            repeat      => 'never',
+            context     => \@context,
+            date        => $date
+        );
     } elsif ($repeat eq 'hourly') {
-        if ($version) {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => $action,
-                context     => [version => $version],
-                repeat      => 'hourly',
-                minute      => $q->param('hourly_minute')
-            );
-        } else {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => $action,
-                repeat      => 'hourly',
-                minute      => $q->param('hourly_minute')
-            );
-        }
+        $schedule = pkg('Schedule')->new(
+            object_type => $object_type,
+            object_id   => $object_id,
+            action      => $action,
+            context     => \@context,
+            repeat      => 'hourly',
+            minute      => $q->param('hourly_minute')
+        );
     } elsif ($repeat eq 'daily') {
         my ($hour, $minute) = decode_time(name => 'daily_time', query => $q);
         $minute = 0 if (!defined $minute);
@@ -556,27 +552,15 @@ sub add {
             return $self->edit('no_hour');
         }
 
-        if ($version) {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => $action,
-                context     => [version => $version],
-                repeat      => 'daily',
-                minute      => $minute,
-                hour        => $hour
-            );
-        } else {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => $action,
-                repeat      => 'daily',
-                minute      => $minute,
-                hour        => $hour
-            );
-
-        }
+        $schedule = pkg('Schedule')->new(
+            object_type => $object_type,
+            object_id   => $object_id,
+            action      => $action,
+            context     => \@context,
+            repeat      => 'daily',
+            minute      => $minute,
+            hour        => $hour
+        );
     } elsif ($repeat eq 'weekly') {
         my ($hour, $minute) = decode_time(name => 'weekly_time', query => $q);
         $minute = 0 if (!defined $minute);
@@ -587,29 +571,16 @@ sub add {
 
         my $day = $q->param('weekly_day');
 
-        if ($version) {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => $action,
-                repeat      => 'weekly',
-                context     => [version => $version],
-                day_of_week => $day,
-                minute      => $minute,
-                hour        => $hour
-            );
-        } else {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => $action,
-                repeat      => 'weekly',
-                day_of_week => $day,
-                minute      => $minute,
-                hour        => $hour
-            );
-
-        }
+        $schedule = pkg('Schedule')->new(
+            object_type => $object_type,
+            object_id   => $object_id,
+            action      => $action,
+            repeat      => 'weekly',
+            context     => \@context,
+            day_of_week => $day,
+            minute      => $minute,
+            hour        => $hour
+        );
     }
 
     $schedule->save();
@@ -634,6 +605,10 @@ sub add_admin {
 
     my $action  = $q->param('action');
     my $version = $q->param('version');
+    my $user_id = $ENV{REMOTE_USER};
+    my @context;
+    push @context, (version => $version) if $version;
+    push @context, (user_id => $user_id) if $user_id;
 
     my $object_type = $q->param('object_type') || 'admin';
 
@@ -663,44 +638,23 @@ sub add_admin {
             return $self->edit_admin('invalid_datetime');
         }
 
-        if ($version) {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => $action,
-                repeat      => 'never',
-                context     => [version => $version],
-                date        => $date
-            );
-        } else {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => $action,
-                repeat      => 'never',
-                date        => $date
-            );
-        }
-
+        $schedule = pkg('Schedule')->new(
+            object_type => $object_type,
+            object_id   => $object_id,
+            action      => $action,
+            repeat      => 'never',
+            context     => \@context,
+            date        => $date
+        );
     } elsif ($repeat eq 'hourly') {
-        if ($version) {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => $action,
-                context     => [version => $version],
-                repeat      => 'hourly',
-                minute      => $q->param('hourly_minute')
-            );
-        } else {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => $action,
-                repeat      => 'hourly',
-                minute      => $q->param('hourly_minute')
-            );
-        }
+        $schedule = pkg('Schedule')->new(
+            object_type => $object_type,
+            object_id   => $object_id,
+            action      => $action,
+            context     => \@context,
+            repeat      => 'hourly',
+            minute      => $q->param('hourly_minute')
+        );
     } elsif ($repeat eq 'daily') {
         my ($hour, $minute) = decode_time(name => 'daily_time', query => $q);
         $minute = 0 if (!defined $minute);
@@ -709,27 +663,15 @@ sub add_admin {
             return $self->edit_admin('no_hour');
         }
 
-        if ($version) {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => $action,
-                context     => [version => $version],
-                repeat      => 'daily',
-                minute      => $minute,
-                hour        => $hour
-            );
-        } else {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => $action,
-                repeat      => 'daily',
-                minute      => $minute,
-                hour        => $hour
-            );
-
-        }
+        $schedule = pkg('Schedule')->new(
+            object_type => $object_type,
+            object_id   => $object_id,
+            action      => $action,
+            context     => \@context,
+            repeat      => 'daily',
+            minute      => $minute,
+            hour        => $hour
+        );
     } elsif ($repeat eq 'weekly') {
         my ($hour, $minute) = decode_time(name => 'weekly_time', query => $q);
         $minute = 0 if (!defined $minute);
@@ -740,29 +682,16 @@ sub add_admin {
 
         my $day = $q->param('weekly_day');
 
-        if ($version) {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => $action,
-                repeat      => 'weekly',
-                context     => [version => $version],
-                day_of_week => $day,
-                minute      => $minute,
-                hour        => $hour
-            );
-        } else {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => $action,
-                repeat      => 'weekly',
-                day_of_week => $day,
-                minute      => $minute,
-                hour        => $hour
-            );
-
-        }
+        $schedule = pkg('Schedule')->new(
+            object_type => $object_type,
+            object_id   => $object_id,
+            action      => $action,
+            repeat      => 'weekly',
+            context     => \@context,
+            day_of_week => $day,
+            minute      => $minute,
+            hour        => $hour
+        );
     }
 
     $schedule->save();
@@ -782,8 +711,13 @@ Adds simple scheduling (publish only) to schedule.
 =cut
 
 sub add_simple {
-    my $self = shift;
-    my $q    = $self->query();
+    my $self    = shift;
+    my $q       = $self->query();
+    my $version = $q->param('version');
+    my $user_id = $ENV{REMOTE_USER};
+    my @context;
+    push @context, (version => $version) if $version;
+    push @context, (user_id => $user_id) if $user_id;
 
     my $date = decode_datetime(name => 'publish_date', query => $q);
 
@@ -794,25 +728,14 @@ sub add_simple {
     my $object_id = ($object_type eq 'story') ? $object->story_id : $object->media_id;
 
     if ($date) {
-        my $schedule;
-        if ($q->param('version')) {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => 'publish',
-                repeat      => 'never',
-                context     => [version => $q->param('version')],
-                date        => $date
-            );
-        } else {
-            $schedule = pkg('Schedule')->new(
-                object_type => $object_type,
-                object_id   => $object_id,
-                action      => 'publish',
-                repeat      => 'never',
-                date        => $date
-            );
-        }
+        my $schedule = pkg('Schedule')->new(
+            object_type => $object_type,
+            object_id   => $object_id,
+            action      => 'publish',
+            repeat      => 'never',
+            context     => \@context,
+            date        => $date
+        );
 
         $schedule->save();
 
