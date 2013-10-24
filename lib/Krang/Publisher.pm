@@ -2144,7 +2144,7 @@ sub _update_implication_map {
     my $object_key      = $self->_implication_key($o);
 
     foreach my $asset (@{$linked_assets}) {
-        my $candidate_key = $self->_implication_key($o);
+        my $candidate_key = $self->_implication_key($asset);
         next if $implication_map->{$candidate_key};
         $implication_map->{$candidate_key} = $object_key;
     }
