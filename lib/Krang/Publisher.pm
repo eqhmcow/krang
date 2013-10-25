@@ -2142,11 +2142,12 @@ sub _update_implication_map {
     my $o               = shift;
     my $linked_assets   = shift;
     my $object_key      = $self->_implication_key($o);
-    map {
-        my $candidate_key = $self->_implication_key($_);
+
+    foreach my $asset (@{$linked_assets}) {
+        my $candidate_key = $self->_implication_key($asset);
         next if $implication_map->{$candidate_key};
         $implication_map->{$candidate_key} = $object_key;
-    } @{$linked_assets};
+    }
 }
 
 sub _implication_key {
