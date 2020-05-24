@@ -19,9 +19,9 @@ CREATE TABLE user (
 );
 
 /* default account 'admin', password 'whale' */
-INSERT INTO user (email, login, password, first_name, last_name, password_changed) VALUES
-('Joe@Admin.com', 'admin', 'f1a93f635e172bd5be55ae08dd41553a', 'Joe', 'Admin', UNIX_TIMESTAMP(NOW()));
+INSERT INTO user (email, login, password, first_name, last_name, password_changed, user_uuid) VALUES
+('Joe@Admin.com', 'admin', 'f1a93f635e172bd5be55ae08dd41553a', 'Joe', 'Admin', UNIX_TIMESTAMP(NOW()), UUID());
 
 /* default account 'system', hidden with no password*/
-INSERT INTO user (email, login, password, first_name, last_name, hidden) VALUES
-('system@noemail.com', 'system', '*', 'System', 'User', 1);
+INSERT INTO user (email, login, password, first_name, last_name, hidden, user_uuid) VALUES
+('system@noemail.com', 'system', '*', 'System', 'User', 1, UUID());
