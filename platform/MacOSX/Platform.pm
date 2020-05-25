@@ -91,7 +91,7 @@ sub _check_libs
 {
     my ($pkg, %args) = @_;
 
-    if ( not defined %MacOSX::Platform::libFiles and not defined %MacOSX::Platform::incFiles)
+    if ( not %MacOSX::Platform::libFiles and not %MacOSX::Platform::incFiles)
     {
         $pkg->findIncsAndLibs();
     }
