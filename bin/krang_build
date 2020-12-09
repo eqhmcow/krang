@@ -182,7 +182,7 @@ if (!$skip_all_modules && @modules) {
     $rebuild     = 1;
     $skip_apache = 1;
     my %modules = map { $_ => 1 } @modules;
-    foreach my $required qw(Expect IO-Tty) {
+    foreach my $required (qw(Expect IO-Tty)) {
         push @modules, $required unless $modules{$required};
     }
 }
@@ -253,7 +253,7 @@ unless ($skip_all_modules) {
     }
 
     # shuffle some to the back to get proper build order
-    foreach my $distribution qw(DBD-mysql Image-BioChrome Linux-Pid) {
+    foreach my $distribution (qw(DBD-mysql Image-BioChrome Linux-Pid)) {
         my ($file) = grep(/$distribution/, @files);
         @files = grep(!/$distribution/, @files);
         push @files, $file if $file;
